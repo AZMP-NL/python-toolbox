@@ -13,12 +13,15 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 ## ------------------- Parameters to be edited ----------------- ##
+YLIMS = [0, 500]
+St27 = [47.550, -52.590]
 
-filelist = np.genfromtxt('SEGB2017.list', dtype=str)
-bathy = np.array([52, 180, 170, 126, 89, 81, 79, 71, 70, 71, 70, 65, 66, 171, 396, 1466, 2502, 2854, 3125, 3247, 3380])
+#filelist = np.genfromtxt('SEGB2017.list', dtype=str)
+#bathy = np.array([52, 180, 170, 126, 89, 81, 79, 71, 70, 71, 70, 65, 66, 171, 396, 1466, 2502, 2854, 3125, 3247, 3380])
 
 #filelist = np.genfromtxt('SESPB2017.list', dtype=str)
 #filelist = np.genfromtxt('SWSPB2017.list', dtype=str)
+filelist = np.genfromtxt('FC2017.list', dtype=str)
 
 ## ------------------------------------------------------------- ##
 
@@ -65,7 +68,6 @@ for fname in filelist:
 # List2Array
 LATarray = np.array(LATlist)
 LONarray = np.array(LONlist)
-myCasts = np.zeros((len(LATarray)))-5
 
 Tarray = np.transpose(np.array(Tlist))
 Sarray = np.transpose(np.array(Slist))
@@ -94,32 +96,39 @@ distance = np.zeros(np.shape(LATarray))
 for i in range(len(LATarray)):
     distance[i] = haversine(LONarray[0], LATarray[0], LONarray[i], LATarray[i])
 
+# Check which direction we are going (approaching St.27 or not)
+if haversine(LONarray[0], LATarray[0], St27[1], St27[0]) > haversine(LONarray[-1], LATarray[-1], St27[1], St27[0]):
+    distance = distance[::-1] 
+    
 # for bathymetry:
-bathy_x = np.append(distance, [distance[-1], distance[0], distance[0] ])
-bathy_y = np.append(bathy, [np.max(bathy), np.max(bathy), bathy[0]])
-bathymetry = zip(bathy_x, bathy_y)
-
+if 'bathy' in locals():
+    bathy_x = np.append(distance, [distance[-1], distance[0], distance[0] ])
+    bathy_y = np.append(bathy, [np.max(bathy), np.max(bathy), bathy[0]])
+    bathymetry = zip(bathy_x, bathy_y)
+    
 ## ---- now plot ---- ##
-
 fig, axes = plt.subplots(nrows=4, ncols=1)
 
 # S0 - T
 plt.axes(axes[0])
 ctf = plt.contourf(distance, Pbin, Tarray, 30, cmap=plt.cm.RdBu_r, y_dir='reverse')
 ct = plt.contour(distance, Pbin, SIGarray, 10, colors='k', linewidths=0.5)
-#plt.plot(distance, myCasts)
 cl = plt.colorbar(ctf, orientation='vertical')
 #plt.plot(grid=True)
 axes[0].tick_params(labelbottom='off')
-axes[0].set_ylim(0,250)
+axes[0].set_ylim(YLIMS)
 axes[0].set_ylabel('Depth (m)')
+#axes[0].invert_xaxis()
 axes[0].invert_yaxis()
-for i in range(0,len(distance)):
-    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
-axes[0].text(5, 225, r'T($^{\circ}$C)', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
+axes[0].text(5, YLIMS[1]*.90, r'T($^{\circ}$C)', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
 # print bathymetry
-Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
-axes[0].add_patch(Bgon)
+if 'bathy' in locals():
+    for i in range(0,len(distance)):
+        plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    axes[0].add_patch(Bgon)
+else:
+    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], Pbin[-1]]), '--k', linewidth=0.1)
 
 # S1 - S
 plt.axes(axes[1])
@@ -127,16 +136,19 @@ ctf = plt.contourf(distance, Pbin, Sarray, 30, cmap=plt.cm.RdBu_r)
 ct = plt.contour(distance, Pbin, SIGarray, 10, colors='k', linewidths=0.5)
 cl = plt.colorbar(ctf, orientation='vertical')
 axes[1].tick_params(labelbottom='off')
-axes[1].set_ylim(0,250)
+axes[1].set_ylim(YLIMS)
 axes[1].set_ylabel('Depth (m)')
+#axes[1].invert_xaxis()
 axes[1].invert_yaxis()
-for i in range(0,len(distance)):
-    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
-axes[1].text(5, 225, r'$\rm S_p$', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
-# print bathymetry
-Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
-axes[1].add_patch(Bgon)
-
+axes[1].text(5, YLIMS[1]*.90, r'$\rm S_p$', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
+if 'bathy' in locals():
+    for i in range(0,len(distance)):
+        plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    axes[1].add_patch(Bgon)
+else:
+    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], Pbin[-1]]), '--k', linewidth=0.1)
+  
 
 # S2 - O2
 plt.axes(axes[2])
@@ -144,35 +156,41 @@ ctf = plt.contourf(distance, Pbin, Oarray, 30, cmap=plt.cm.RdBu)
 ct = plt.contour(distance, Pbin, SIGarray, 10, linewidths=0.5, colors='k')
 cl = plt.colorbar(ctf, orientation='vertical')
 axes[2].tick_params(labelbottom='off')
-axes[2].set_ylim(0,250)
+axes[2].set_ylim(YLIMS)
 axes[2].set_ylabel('Depth (m)')
 axes[2].invert_yaxis()
-for i in range(0,len(distance)):
-    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
-axes[2].text(5, 225, r'$\rm O_2$($\rm ml L^{-1}$)', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
-# print bathymetry
-Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
-axes[2].add_patch(Bgon)
+#axes[2].invert_xaxis()
+axes[2].text(5, YLIMS[1]*.90, r'$\rm O_2$($\rm ml L^{-1}$)', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
+if 'bathy' in locals():
+    for i in range(0,len(distance)):
+        plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    axes[2].add_patch(Bgon)
+else:
+    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], Pbin[-1]]), '--k', linewidth=0.1)
 
 # S3 - CHL
 plt.axes(axes[3])
-ctf = plt.contourf(distance, Pbin, Farray, 30, cmap=plt.cm.PuBuGn)
-ct = plt.contour(distance, Pbin, SIGarray, 10, linewidths=0.5, colors='k')
-cl = plt.colorbar(ctf, orientation='vertical')
-axes[3].set_ylim(0,250)
+cf = plt.contourf(distance, Pbin, Farray, levels=np.arange(0, 15, 1), cmap=plt.cm.PuBuGn, extend="max") #extend='both'
+cc = plt.contour(distance, Pbin, SIGarray, 10, linewidths=0.5, colors='k')
+cf.cmap.set_under('k')
+cf.set_clim(0, 15)
+cb = plt.colorbar(cf)
+axes[3].set_ylim(YLIMS)
 axes[3].set_ylabel('Depth (m)')
-#axes[3].set_xlabel('Latitude ($^{\circ}$N)')
 axes[3].set_xlabel('Along-transect distance (km)')
 axes[3].invert_yaxis()
 #axes[3].invert_xaxis()
-for i in range(0,len(distance)):
-    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
-axes[3].text(5, 225, r'chl-a($\rm mg m^{-3}$)', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
-# print bathymetry
-Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
-axes[3].add_patch(Bgon)
+axes[3].text(5, YLIMS[1]*.90, r'chl-a($\rm mg m^{-3}$)', horizontalalignment='left', verticalalignment='center', fontsize=16, color='k')
+if 'bathy' in locals():
+    for i in range(0,len(distance)):
+        plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], bathy[i]]), '--k', linewidth=0.1)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    axes[3].add_patch(Bgon)
+else:
+    plt.plot(np.array([distance[i], distance[i]]), np.array([Pbin[0], Pbin[-1]]), '--k', linewidth=0.1)
 
-    
+
 fig.set_size_inches(w=6,h=8)
 fig.tight_layout()
 fig_name = 'transect_to-be-rename.pdf'
