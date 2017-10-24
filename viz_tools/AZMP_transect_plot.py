@@ -13,7 +13,7 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 ## ------------------- Parameters to be edited ----------------- ##
-YLIMS = [0, 500]
+YLIMS = [0, 1000]
 CHL_MAX = 12 
 St27 = [47.550, -52.590]
 
@@ -23,7 +23,13 @@ St27 = [47.550, -52.590]
 #filelist = np.genfromtxt('SESPB2017.list', dtype=str)
 #filelist = np.genfromtxt('SWSPB2017.list', dtype=str)
 #filelist = np.genfromtxt('FC2017.list', dtype=str)
-filelist = np.genfromtxt('BB2017.list', dtype=str)
+#filelist = np.genfromtxt('BB2017.list', dtype=str)
+#filelist = np.genfromtxt('TEL176_FC.list', dtype=str)
+#filelist = np.genfromtxt('TEL176_BB.list', dtype=str)
+#filelist = np.genfromtxt('TEL176_WB.list', dtype=str)
+#filelist = np.genfromtxt('TEL176_SI.list', dtype=str)
+filelist = np.genfromtxt('TEL176_MB.list', dtype=str)
+#filelist = np.genfromtxt('TEL176_BI.list', dtype=str)
 
 ## ------------------------------------------------------------- ##
 
@@ -40,7 +46,7 @@ PHlist = [];
 
 Pbin = np.arange(2.5, 1200, 5)
 
-    
+
 for fname in filelist:
     profile = fCNV(fname)
 
@@ -59,7 +65,7 @@ for fname in filelist:
    
     Ibtm = np.argmax(P)    
     digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
-
+    
     Tlist.append([T[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
     Slist.append([S[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
     Plist.append([P[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
@@ -102,7 +108,20 @@ def haversine(lon1, lat1, lon2, lat2):
 distance = np.zeros(np.shape(LATarray))
 for i in range(len(LATarray)):
     distance[i] = haversine(LONarray[0], LATarray[0], LONarray[i], LATarray[i])
-        
+
+# Sort arrays according to distance
+I = np.argsort(distance)
+distance = distance[I]
+LATarray = LATarray[I]
+LONarray = LONarray[I]
+Tarray = Tarray[:,I]
+Sarray = Sarray[:,I]
+Parray = Parray[:,I]
+SIGarray = SIGarray[:,I]
+Farray = Farray[:,I]
+Oarray = Oarray[:,I]
+PHarray = PHarray[:,I]
+     
 ## # for bathymetry:
 ## if 'bathy' in locals():
 ##     bathy_x = np.append(distance, [distance[-1], distance[0], distance[0] ])
@@ -156,7 +175,9 @@ for i in distance:
 bathy_x = np.append(distance_bathy, [distance_bathy[-1], distance_bathy[0], distance_bathy[0] ])
 bathy_y = np.append(bathy, [np.max(bathy), np.max(bathy), bathy[0]])
 bathymetry = zip(bathy_x, bathy_y)
-               
+
+
+        
 ## ---- now plot ---- ##
 fig, axes = plt.subplots(nrows=5, ncols=1)
 
