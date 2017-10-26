@@ -43,6 +43,8 @@ proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/research/AZMP_surveys/STANDARD_SECTIONS.xlsx'
 fig_name = 'AZMP_lines.png'
+ephem = 'ephem_calval.txt'
+swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
 ## ---- Bathymetry ---- ####
 v = np.linspace(-4000, 0, 9)
@@ -95,6 +97,26 @@ index_SESPB = df.SECTION[df.SECTION=="SOUTHEAST ST PIERRE BANK"].index.tolist()
 index_SWSPB = df.SECTION[df.SECTION=="SOUTHWEST ST PIERRE BANK"].index.tolist()
 index_SS = df.SECTION[df.SECTION=="SMITH SOUND"].index.tolist()
 
+## ---- Ephemerides ---- ##
+eph = np.genfromtxt(ephem, dtype=str)
+swot_lon = eph[:,1].astype(np.float)-180.0
+swot_lat = eph[:,2].astype(np.float)
+
+asign = np.sign(swot_lon)
+signchange = ((np.roll(asign, 1) - asign) != 0).astype(int)
+signchange = np.squeeze(np.array(np.where(signchange==1), int))
+
+swot_segment_lat = []
+swot_segment_lon = []
+idx_end = 0
+for g in signchange:
+    idx_beg = idx_end+1
+    idx_end = g
+    swot_segment_lat.append(swot_lat[idx_beg:idx_end])
+    swot_segment_lon.append(swot_lon[idx_beg:idx_end])
+swot_segment_lat.append(swot_lat[idx_end:-1])
+swot_segment_lon.append(swot_lon[idx_end:-1])
+    
 ## ---- plot ---- ##
 fig = plt.figure(1)
 #m = Basemap(projection='ortho',lon_0=lon_0,lat_0=lat_0,resolution=None)
@@ -150,6 +172,14 @@ plt.text(x[-1], y[-1], 'SWSPB ', horizontalalignment='right', verticalalignment=
 x, y = m(stationLon[index_SS],stationLat[index_SS])
 m.scatter(x,y,3,marker='o',color='lightcoral')
 plt.text(x[0], y[0], 'SS ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
+
+
+## # Plot swot path (comment if not wanted)
+## for i in range(0,len(swot_segment_lat)):
+##     x_swot, y_swot = m(swot_segment_lon[i], swot_segment_lat[i])
+##     m.plot(x_swot, y_swot, 'k')
+
+    
 
 #### ---- Save Figure ---- ####
 fig.set_size_inches(w=8, h=9)

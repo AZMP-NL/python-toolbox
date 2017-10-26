@@ -121,14 +121,14 @@ def bin_pressure_from_dataframe(df, Pbin, var):
     P = np.array(df['pres'])
     Ibtm = np.argmax(P)
     digitized = np.digitize(P[0:Ibtm], Pbin) 
-
+        
     if var in df.columns: # This if part should be put in a function.
         X = df[var]
         X = np.array([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
-        X = X.reshape(len(X),1)
+        X = X.reshape(1, len(X)) # row shape for appending in netCDF
     else:
         X = Pbin*np.nan
-        X = X.reshape(len(X),1)
+        X = X.reshape(1, len(X))
 
     return X
 
@@ -259,15 +259,17 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
         cast_info = re.sub('\n','', cast_info)
         cast_info = re.sub(' +',' ', cast_info)
         cast_info = cast_info.split(' ')
-
         cast_id = np.int(cast_info[0])
         cast_lat = np.float(cast_info[1]) + np.float(cast_info[2])/60.0
         cast_lon = np.sign(np.float(cast_info[3])) * (np.abs(np.float(cast_info[3])) + np.float(cast_info[4])/60.0)
         cast_time = pd.Timestamp(cast_info[5] + ' ' + cast_info[6])
         cast_sounder = np.int(cast_info[7])
         cast_type = cast_info[8]
-        cast_station = cast_info[11]
-
+        # This is weak, better solution to be found!
+        if len(cast_info) >= 12:
+            cast_station = cast_info[11]
+        else:
+            cast_station = 'n/a'
 
         # Fill cast info
         latitudes[idx] = cast_lat
@@ -289,19 +291,27 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
             print 'Problem with file, no pressure channel found [skip]'
             continue
 
+        # Check if Pbin not empty (in this case likely single surface measurement)
+        #  NOTE: Depths at "0m" will be reassigned at 1m (minimum depth of dataset)
+        if len(Pbin) == 0:
+            print ' -> File with single measurement at ' + np.str(P) + 'm'
+            idx = (np.abs(levels[:]-P)).argmin()
+            Pbin = np.array([levels[idx]])
+            
         # Fill dimension
         times[idx] = nc.date2num(cast_time, units = times.units, calendar = times.calendar)
         if len(Pbin) > len(levels): # update depth if this cast is deeper than present max depth
-            levels[:] = Pbin
+            levels[:] = np.array(Pbin)
 
+            
         # Fill nc file with variables
-        temp[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'temp'))
-        sal[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'sal'))
-        cond[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'cond'))
-        sigt[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'sigt'))
-        fluo[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'flor'))
-        o2[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'oxy'))
-        par[idx,:] = np.transpose(bin_pressure_from_dataframe(df, Pbin, 'par'))
+        temp[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'temp')
+        sal[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'sal')
+        cond[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'cond')
+        sigt[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'sigt')
+        fluo[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'flor')
+        o2[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'oxy')
+        par[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'par')
     # -------------------------------------------------------- #    
     print 'Done!'
     
