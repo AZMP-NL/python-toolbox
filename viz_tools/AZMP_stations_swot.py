@@ -1,37 +1,16 @@
-## from netCDF4 import Dataset, num2date
-## import time, calendar, datetime, numpy
-## from mpl_toolkits.basemap import Basemap
-## import matplotlib.pyplot as plt
-## import urllib, os
-## # data downloaded from the form at
-## # http://coastwatch.pfeg.noaa.gov/erddap/tabledap/apdrcArgoAll.html
-## filename, headers = urllib.urlretrieve('http://coastwatch.pfeg.noaa.gov/erddap/tabledap/apdrcArgoAll.nc?longitude,latitude,time&longitude>=0&longitude<=360&latitude>=-90&latitude<=90&time>=2010-01-01&time<=2010-01-08&distinct()')
-## dset = Dataset(filename)
-## lats = dset.variables['latitude'][:]
-## lons = dset.variables['longitude'][:]
-## time = dset.variables['time']
-## times = time[:]
-## t1 = times.min(); t2 = times.max()
-## date1 = num2date(t1, units=time.units)
-## date2 = num2date(t2, units=time.units)
-## dset.close()
-## os.remove(filename)
-## # draw map with markers for float locations
-## m = Basemap(projection='hammer',lon_0=180)
-## x, y = m(lons,lats)
-## m.drawmapboundary(fill_color='#99ffff')
-## m.fillcontinents(color='#cc9966',lake_color='#99ffff')
-## m.scatter(x,y,3,marker='o',color='k')
-## plt.title('Locations of %s ARGO floats active between %s and %s' %\
-##         (len(lats),date1,date2),fontsize=12)
-## plt.show()
-
 
 import netCDF4
 from mpl_toolkits.basemap import Basemap
 import numpy as  np
 import matplotlib.pyplot as plt
 import openpyxl, pprint
+
+import math
+from osgeo import ogr, osr
+import matplotlib.cm as cmx
+import matplotlib.colors as colors
+from matplotlib.patches import Polygon
+
 
 ## ---- Region parameters ---- ##
 dataFile = '/home/cyrf0006/Data/GEBCO/GRIDONE_1D.nc'
@@ -42,7 +21,7 @@ latLims = [40, 65]
 proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/research/AZMP_surveys/STANDARD_SECTIONS.xlsx'
-fig_name = 'AZMP_lines.png'
+fig_name = 'AZMP_lines_swot.png'
 ephem = 'ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
@@ -174,17 +153,64 @@ m.scatter(x,y,3,marker='o',color='lightcoral')
 plt.text(x[0], y[0], 'SS ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
 
 
+## PLot swot stuff
+
+def createCircleAroundWithRadius(lat, lon, radius):
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    latArray = []
+    lonArray = []
+
+    for brng in range(0,360):
+        lat2, lon2 = getLocation(lat,lon,brng,radius)
+        latArray.append(lat2)
+        lonArray.append(lon2)
+        
+    return lonArray,latArray
+
+
+def getLocation(lat1, lon1, brng, distance):
+    lat1 = lat1 * math.pi/ 180.0
+    lon1 = lon1 * math.pi / 180.0
+    #earth radius
+    R = 6378.1 #Km
+    #R = ~ 3959 MilesR = 3959
+
+    distance = distance/R
+    
+    brng = (brng / 90.0)* math.pi / 2
+
+    lat2 = math.asin(math.sin(lat1) * math.cos(distance) + math.cos(lat1) * math.sin(distance) * math.cos(brng))
+    lon2 = lon1 + math.atan2(math.sin(brng)*math.sin(distance)*math.cos(lat1),math.cos(distance)-math.sin(lat1)*math.sin(lat2))
+    
+    lon2 = 180.0 * lon2/ math.pi
+    lat2 = 180.0 * lat2/ math.pi
+
+    return lat2, lon2
+
+def draw_screen_poly( lats, lons, m):
+    x, y = m( lons, lats )
+    xy = zip(x,y)
+    poly = Polygon( xy, facecolor='green', alpha=0.6)
+    plt.gca().add_patch(poly)
+    
+
 ## # Plot swot path (comment if not wanted)
 for i in range(0,len(swot_segment_lat)):
     x_swot, y_swot = m(swot_segment_lon[i], swot_segment_lat[i])
-    m.plot(x_swot, y_swot, 'k')
+    m.plot(x_swot, y_swot, 'k')   
 
+    # For ellipse around each pt
+    ## for j in range(0,len(swot_segment_lat[i])):
+    ##     X,Y = createCircleAroundWithRadius(swot_segment_lon[i][j], swot_segment_lat[i][j], 60)
+    ##     draw_screen_poly(X, Y, m )
 
-m.plot(988291, 3.89471e6, '.r')
-lonpt, latpt = m(988291, 3.89471e6,inverse=True
-plt.text(xpt+100000,ypt+100000,'(%5.1fW,%3.1fN)' % (lonpt,latpt))
-
-
+crossover_x = [-62.335, -61.11, -59.967, -61.11, -62.335]
+crossover_y = [61.6, 62.897, 61.6, 60.302, 61.6]
+x, y = m(crossover_x, crossover_y)
+xy = zip(x,y)
+poly = Polygon( xy, facecolor='green', alpha=0.4)
+plt.gca().add_patch(poly)
+    
 #### ---- Save Figure ---- ####
 fig.set_size_inches(w=8, h=9)
 fig.set_dpi(200)

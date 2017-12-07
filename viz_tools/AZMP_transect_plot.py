@@ -14,7 +14,7 @@ from matplotlib.collections import PatchCollection
 
 ## ------------------- Parameters to be edited ----------------- ##
 YLIMS = [0, 1000]
-CHL_MAX = 12 
+CHL_MAX = 5
 St27 = [47.550, -52.590]
 
 #filelist = np.genfromtxt('SEGB2017.list', dtype=str)
@@ -28,8 +28,11 @@ St27 = [47.550, -52.590]
 #filelist = np.genfromtxt('TEL176_BB.list', dtype=str)
 #filelist = np.genfromtxt('TEL176_WB.list', dtype=str)
 #filelist = np.genfromtxt('TEL176_SI.list', dtype=str)
-filelist = np.genfromtxt('TEL176_MB.list', dtype=str)
+#filelist = np.genfromtxt('TEL176_MB.list', dtype=str)
 #filelist = np.genfromtxt('TEL176_BI.list', dtype=str)
+filelist = np.genfromtxt('DIS009_SI.list', dtype=str)
+
+
 
 ## ------------------------------------------------------------- ##
 
