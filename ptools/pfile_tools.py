@@ -3,8 +3,8 @@
 References
 ----------
 
-Any reference available?
-http://www...
+Atlantic Zone Monitoring Program @NAFC:
+https://azmp-nl.github.io/
 
 """
 
@@ -79,7 +79,6 @@ def pfile_to_dataframe(filename):
        columns being the variables
 
     """
-
     eoh = pfiles_basics.eoh()
     in_header = True
 
@@ -132,8 +131,326 @@ def bin_pressure_from_dataframe(df, Pbin, var):
 
     return X
 
+def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # pfiles_to_pannel
+    """Given a list of pfiles stored in 'infiles', create a netCDF files with attributes
 
-def pfiles_to_netcdf(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
+    Input params:
+        - infiles: list of files (e.g. '2017pfiles.list')
+          * '$ ls *.p2017 > 2017pfiles.list' would generate the appropriate file list in Linux
+        - outfile: output file (e.g. 'AZMP2017.nc')
+        - zbin: vertical averaging in final file (zbin=1 is default)
+        - zmax: maximum possible depth of the final product (maximum depth may be smaller if zshrink=True, see below)
+        - zshrink: if 'True', vertical dimension 'Z' will  be shrink to the first non-empty value (Default is 'False') 
+          * To open multiple nc files with xarray, Z dim must be the same!
+
+    """
+    
+    # Check if outfile already exist
+    if os.path.exists(nc_outfile):
+
+        print nc_outfile + ' already exists!' 
+
+        py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2
+
+        response_isnt_good = True
+        while response_isnt_good:
+            if py3:
+                response = input(" -> Do you want to remove it? (yes/no?): ")
+            else:
+                response = raw_input(" -> Do you want to remove it? (yes/no?): ")
+
+            if response == 'yes':
+                os.remove(nc_outfile)
+                print ' -> ' + nc_outfile + ' removed!' 
+                response_isnt_good = False
+            elif response == 'no':
+                print ' -> Nothing to be done then (an error will be raised)'
+                break
+            else:
+                print ' -> Please answer "yes" or "no"'
+
+    # Generate the list
+    filelist = np.genfromtxt(infiles, dtype=str)
+    
+    # Original binned depth vector
+    Pbin = np.arange(zbin/2.0, zmax, zbin) #will be shrink after if zshrink=True
+
+    
+    ##### ------- Loop and store in lists ------- #####
+    # Initialize lists
+    cast_info_list = []
+    cast_index = []
+    Tlist = []
+    Slist = []
+    Clist = []
+    SIGlist = []
+    Flist = []
+    O2list = []
+    PHlist = []
+    PARlist = []
+
+    for fname in filelist:
+
+        # check if file's there
+        if os.path.isfile(fname) is False:
+            print ' ->' + fname + ' not found! [skip]'
+            continue
+        
+        # Else, do normal    
+        print fname
+
+        # get header & cast info
+        header = pfile_header(fname)
+        cast_info = header[1]
+        # From J Holden's pfile_IO.py:
+        cast_info = cast_info.replace(',',' ')
+        cast_id = cast_info[0:8]
+        cast_lat = np.float(cast_info[10:12]) + np.float(cast_info[13:18])/60.0
+        cast_lon = np.sign(np.float(cast_info[19:23])) * (np.abs(np.float(cast_info[19:23])) + np.float(cast_info[24:29])/60.0)
+        cast_time = pd.Timestamp(cast_info[29:40] + ' ' + cast_info[40:46])
+        cast_sounder = np.int(cast_info[46:51])
+        cast_instid = cast_info[51:57]
+        cast_instid = cast_instid.replace(' ','')
+        cast_set = cast_info[57:61] # unused
+        cast_set = cast_set.replace(' ','')
+        cast_insttype = cast_info[62]
+        cast_insttype = cast_insttype.replace(' ','')
+        cast_comment = cast_info[64:78]
+        cast_comment = cast_comment.replace(' ','')
+
+        if 'S' in cast_insttype:
+            cast_insttype = "V"
+        elif 'XBT' in cast_insttype:
+            cast_insttype = "F"
+        elif 'CTD' in cast_insttype:
+            cast_insttype = "V" 
+
+        cast_info_list.append([cast_id, cast_lat, cast_lon, cast_sounder, cast_insttype, cast_instid, cast_comment])
+        cast_index.append(cast_time)
+
+        df = pfile_to_dataframe(fname)
+
+       ## ----- Fill wanted variables one by one ----- ##
+        # Pressure
+        if 'pres' in df.columns:
+            P = np.array(df['pres'])
+            Ibtm = np.argmax(P)    
+            digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
+        elif 'depth' in df.columns:
+            P = np.array(df['depth'])
+            Ibtm = np.argmax(P)    
+            digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
+        else:
+            print 'Problem with file, no pressure channel found [skip]'
+            continue
+
+        # Temperature
+        if 'temp' in df.columns:
+            X = np.array(df['temp'])
+            Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            Tlist.append(list(Pbin*np.nan))
+
+        # Salinity
+        if 'sal' in df.columns:
+            X = np.array(df['sal'])
+            Slist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            Slist.append(list(Pbin*np.nan))
+
+        # Conductivity
+        if 'cond' in df.columns:
+            X = np.array(df['cond'])
+            Clist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            Clist.append(list(Pbin*np.nan))
+
+        # Sigma-t
+        if 'sigt' in df.columns:
+            X = np.array(df['sigt'])
+            SIGlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            SIGlist.append(list(Pbin*np.nan))
+
+        # Fluorescence
+        if 'flor' in df.columns:
+            X = np.array(df['flor'])
+            Flist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            Flist.append(list(Pbin*np.nan))
+
+        # Oxygen
+        if 'oxy' in df.columns:
+            X = np.array(df['oxy'])
+            O2list.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            O2list.append(list(Pbin*np.nan))
+
+        # PAR
+        if 'par' in df.columns:
+            X = np.array(df['par'])
+            PARlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            PARlist.append(list(Pbin*np.nan))
+
+        # PH
+        if 'ph' in df.columns:
+            X = np.array(df['ph'])
+            PHlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        else:
+            PHlist.append(list(Pbin*np.nan))
+    #### -------------------------------------------------------- ####
+
+
+    # List to array (for easier manipulation in next step)
+    Tarray = np.array(Tlist)
+    Sarray = np.array(Slist)
+    Carray = np.array(Clist)
+    SIGarray = np.array(SIGlist)
+    Farray = np.array(Flist)
+    O2array = np.array(O2list)
+    PHarray = np.array(PHlist)
+    PARarray = np.array(PARlist)
+
+    # Resize Lists to unused maximum depth encountered (a bit weak the way I do it)
+    if zshrink:
+        idx_nan = np.squeeze(np.where(np.isnan(np.nanmean(Tarray, axis=0))==True))
+        Tarray = Tarray[:,0:idx_nan[0]-1]
+        Sarray = Sarray[:,0:idx_nan[0]-1]
+        Carray = Carray[:,0:idx_nan[0]-1]
+        SIGarray = SIGarray[:,0:idx_nan[0]-1]
+        Farray = Farray[:,0:idx_nan[0]-1]
+        O2array = O2array[:,0:idx_nan[0]-1]
+        PHarray = PHarray[:,0:idx_nan[0]-1]
+        PARarray = PARarray[:,0:idx_nan[0]-1]
+        Pbin = Pbin[0:idx_nan[0]-1]
+
+    # Dataframe content
+    columns = ['cast_id', 'lat', 'lon', 'sounder_depth', 'instrument_type', 'instrument_id', 'cast_comment']
+    df_info = pd.DataFrame(cast_info_list, index=cast_index, columns=columns)
+    df_temp = pd.DataFrame(Tarray, index=cast_index, columns=Pbin)
+    df_sali = pd.DataFrame(Sarray, index=cast_index, columns=Pbin)
+    df_cond = pd.DataFrame(Carray, index=cast_index, columns=Pbin)
+    df_sigt = pd.DataFrame(SIGarray, index=cast_index, columns=Pbin)
+    df_fluo = pd.DataFrame(Farray, index=cast_index, columns=Pbin)
+    df_oxyg = pd.DataFrame(O2array, index=cast_index, columns=Pbin)
+    df_parr = pd.DataFrame(PARarray, index=cast_index, columns=Pbin)
+    df_ph = pd.DataFrame(PHarray, index=cast_index, columns=Pbin)
+
+
+    #### ------ Building netCDF file (inspired from MEOPAR & NCAR examples) ------ #####
+
+    # File name + global attributes
+    nc_out = nc.Dataset(nc_outfile, 'w')
+
+    nc_out.Conventions = 'CF-1.6'
+    nc_out.title = 'AZMP test netCDF file'
+    nc_out.institution = 'Northwest Atlantic Fisheries Centre, Fisheries and Oceans Canada'
+    nc_out.source = 'https://github.com/AZMP-NL/AZMP_python_toolbox'
+    nc_out.references = 'https://azmp-nl.github.io/'
+    nc_out.description = 'A test by Frederic.Cyr@dfo-mpo.gc.ca'
+    nc.history = 'Created ' + tt.ctime(tt.time())
+    ## nc_out.history = """
+    ##     Should extract info like this from header:
+    ##     [2013-10-30 13:18] Created netCDF4 zlib=True dataset.
+    ##     [2013-10-30 15:22] Set depths between 0 and 4m to 4m and those >428m to 428m.
+    ##     [2013-10-31 17:10] Algorithmic smoothing.
+    ## """
+    nc_out.comment = 'Just a trial at the moment, no disctribution!'
+
+    # Create dimensions
+    time = nc_out.createDimension('time', None)
+    level = nc_out.createDimension('level', len(df_temp.columns))
+
+    # Create coordinate variables
+    times = nc_out.createVariable('time', np.float64, ('time',))
+    levels = nc_out.createVariable('level', np.int32, ('level',))
+    # **** NOTE: Maybe consider using ID instead of time for dimension **** #
+
+    # Create 1D variables
+    latitudes = nc_out.createVariable('latitude', np.float32, ('time'), zlib=True)
+    longitudes = nc_out.createVariable('longitude', np.float32, ('time'), zlib=True)
+    cast_IDs = nc_out.createVariable('trip_ID', str, ('time'), zlib=True)
+    comments = nc_out.createVariable('comments', str, ('time'), zlib=True)
+    instrument_types = nc_out.createVariable('instrument_type', str, ('time'), zlib=True)
+    instrument_IDs = nc_out.createVariable('instrument_ID', str, ('time'), zlib=True)
+    sounder_depths = nc_out.createVariable('sounder_depth', np.float32, ('time'), zlib=True)
+
+    # Create 2D variables
+    temp = nc_out.createVariable('temperature', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    sal = nc_out.createVariable('salinity', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    cond = nc_out.createVariable('conductivity', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    sigt = nc_out.createVariable('sigma-t', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    o2 = nc_out.createVariable('oxygen', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    fluo = nc_out.createVariable('fluorescence', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    par = nc_out.createVariable('irradiance', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    ph = nc_out.createVariable('ph', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+
+    # Variable Attributes
+    latitudes.units = 'degree_north'
+    longitudes.units = 'degree_east'
+    times.units = 'hours since 1900-01-01 00:00:00'
+    times.calendar = 'gregorian'
+    levels.units = 'dbar'
+    levels.standard_name = "pressure"
+    #levels.valid_range = np.array((0.0, 5000.0))
+    levels.valid_min = 0
+    temp.units = 'Celsius'
+    temp.long_name = "Water Temperature" # (may be use to label plots)
+    temp.standard_name = "sea_water_temperature"
+    sal.long_name = "Practical Salinity"
+    sal.standard_name = "sea_water_salinity"
+    sal.units = "1"
+    sal.valid_min = 0
+    sigt.standard_name = "sigma_t"
+    sigt.long_name = "Sigma-t"
+    sigt.units = "Kg m-3"
+    o2.long_name = "Dissolved Oxygen Concentration" ;
+    o2.standard_name = "oxygen_concentration" ;
+    o2.units = "mg L-1" ;
+    cond.long_name = "Water Conductivity" ;
+    cond.standard_name = "sea_water_conductivity" ;
+    cond.units = "S m-1" ;
+    fluo.long_name = "Chl-a Fluorescence" ;
+    fluo.standard_name = "concentration_of_chlorophyll_in_sea_water" ;
+    fluo.units = "mg m-3" ;
+    par.long_name = "Irradiance" ;
+    par.standard_name = "irradiance" ;
+    par.units = "umol photons m-2 s-1" ;
+    ph.long_name = "water PH" ;
+    ph.standard_name = "PH" ;
+    ph.units = "unitless" ;
+
+    # Fill structure
+    #print 'temp shape before adding data = ', temp.shape
+    latitudes[:] = np.array(df_info.lat)
+    longitudes[:] = np.array(df_info.lon)
+    cast_IDs[:] = np.array(df_info.cast_id)
+    comments[:] = np.array(df_info.cast_comment)
+    instrument_types[:] = np.array(df_info.instrument_type)
+    instrument_IDs[:] = np.array(df_info.instrument_id)
+    sounder_depths[:] = np.array(df_info.sounder_depth)
+
+    temp[:,:] = df_temp.values
+    sal[:,:] = df_sali.values
+    cond[:,:] = df_cond.values
+    sigt[:,:] = df_sigt.values
+    o2[:,:] = df_oxyg.values
+    fluo[:,:] = df_fluo.values
+    par[:,:] = df_parr.values
+    ph[:,:] = df_ph.values
+
+    # Fill time
+    times[:] = nc.date2num(cast_index, units = times.units, calendar = times.calendar)
+    levels[:] = Pbin
+    #### -------------------------------------------------------- ####
+    print 'Done!'
+
+    nc_out.close()
+    return None
+
+
+def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
     """Given a list of pfiles stored in 'infiles', create a netCDF files with attributes
 
     Input params:
@@ -202,17 +519,18 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
     # Create 1D variables
     latitudes = nc_out.createVariable('latitude', np.float32, ('time'), zlib=True)
     longitudes = nc_out.createVariable('longitude', np.float32, ('time'), zlib=True)
-    cast_IDs = nc_out.createVariable('trip ID', np.float32, ('time'), zlib=True)
-    stations = nc_out.createVariable('station name', str, ('time'), zlib=True)
-    instruments = nc_out.createVariable('instrument', str, ('time'), zlib=True)
-    sounder_depths = nc_out.createVariable('sounder depth', np.float32, ('time'), zlib=True)
+    cast_IDs = nc_out.createVariable('trip_ID', str, ('time'), zlib=True)
+    comments = nc_out.createVariable('comments', str, ('time'), zlib=True)
+    instrument_types = nc_out.createVariable('instrument_type', str, ('time'), zlib=True)
+    instrument_IDs = nc_out.createVariable('instrument_ID', str, ('time'), zlib=True)
+    sounder_depths = nc_out.createVariable('sounder_depth', np.float32, ('time'), zlib=True)
 
     # Create 2D variables
     temp = nc_out.createVariable('temperature', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
     sal = nc_out.createVariable('salinity', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
     cond = nc_out.createVariable('conductivity', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
     sigt = nc_out.createVariable('sigma-t', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
-    o2 = nc_out.createVariable('oxygen concentration', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
+    o2 = nc_out.createVariable('oxygen', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
     fluo = nc_out.createVariable('fluorescence', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
     par = nc_out.createVariable('irradiance', np.float32, ('time', 'level'), zlib=True, fill_value=-9999)
 
@@ -251,8 +569,13 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
 
     for idx, fname in enumerate(filelist):
 
-        print fname
+        # check if file's there
+        if os.path.isfile(fname) is False:
+            print ' ->' + fname + ' not found! [skip]'
+            continue
 
+        # File present, good to go
+        print fname
         # get header & cast info
         header = pfile_header(fname)
         cast_info = header[1]

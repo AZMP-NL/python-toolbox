@@ -11,14 +11,23 @@ Frederic.Cyr@dfo-mpo.gc.ca, October 2017
 
 import pfile_tools as p
 import glob
-from os import path
-
+import os
 
 lists = glob.glob('*.list')
 
 for yearfile in lists:
-    outfile = path.splitext(yearfile)[0] + '.nc'
-    p.pfiles_to_netcdf(yearfile, outfile)
+    outfile = os.path.splitext(yearfile)[0] + '.nc'
+    p.pfiles_to_netcdf(yearfile, outfile, zbin=5, zmax=6000)
     print ' -> ' + outfile + ' done!'
-    
+    expr = 'mv ' + yearfile + ' ./list_done'
+    os.system(expr)
+
+## To generate the lists:
+## import numpy as np
+## for i in np.arange(1912, 2017):
+##     #expr = 'ls ./data2/*.p' + np.str(i) + ' > ' + np.str(i) + '.list'
+##     # next command takes more time but is better for large lists
+##     expr = 'find data2 -type f -name *.p' + np.str(i) + ' > ' + np.str(i) + '.list'
+##     print expr
+##     os.system(expr)
     
