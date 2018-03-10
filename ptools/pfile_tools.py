@@ -205,6 +205,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         # From J Holden's pfile_IO.py:
         cast_info = cast_info.replace(',',' ')
         cast_id = cast_info[0:8]
+        survey_id = cast_info[0:5]
         cast_lat = np.float(cast_info[10:12]) + np.float(cast_info[13:18])/60.0
         cast_lon = np.sign(np.float(cast_info[19:23])) * (np.abs(np.float(cast_info[19:23])) + np.float(cast_info[24:29])/60.0)
         cast_time = pd.Timestamp(cast_info[29:40] + ' ' + cast_info[40:46])
@@ -225,7 +226,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         elif 'CTD' in cast_insttype:
             cast_insttype = "V" 
 
-        cast_info_list.append([cast_id, cast_lat, cast_lon, cast_sounder, cast_insttype, cast_instid, cast_comment])
+        cast_info_list.append([cast_id, cast_lat, cast_lon, cast_sounder, cast_insttype, cast_instid, cast_comment, survey_id])
         cast_index.append(cast_time)
 
         df = pfile_to_dataframe(fname)
@@ -326,7 +327,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         Pbin = Pbin[0:idx_nan[0]-1]
 
     # Dataframe content
-    columns = ['cast_id', 'lat', 'lon', 'sounder_depth', 'instrument_type', 'instrument_id', 'cast_comment']
+    columns = ['cast_id', 'lat', 'lon', 'sounder_depth', 'instrument_type', 'instrument_id', 'cast_comment', 'survey_id']
     df_info = pd.DataFrame(cast_info_list, index=cast_index, columns=columns)
     df_temp = pd.DataFrame(Tarray, index=cast_index, columns=Pbin)
     df_sali = pd.DataFrame(Sarray, index=cast_index, columns=Pbin)
@@ -370,7 +371,8 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     # Create 1D variables
     latitudes = nc_out.createVariable('latitude', np.float32, ('time'), zlib=True)
     longitudes = nc_out.createVariable('longitude', np.float32, ('time'), zlib=True)
-    cast_IDs = nc_out.createVariable('trip_ID', str, ('time'), zlib=True)
+    cast_IDs = nc_out.createVariable('cast_ID', str, ('time'), zlib=True)
+    survey_IDs = nc_out.createVariable('survey_ID', str, ('time'), zlib=True)
     comments = nc_out.createVariable('comments', str, ('time'), zlib=True)
     instrument_types = nc_out.createVariable('instrument_type', str, ('time'), zlib=True)
     instrument_IDs = nc_out.createVariable('instrument_ID', str, ('time'), zlib=True)
@@ -425,6 +427,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     #print 'temp shape before adding data = ', temp.shape
     latitudes[:] = np.array(df_info.lat)
     longitudes[:] = np.array(df_info.lon)
+    survey_IDs[:] = np.array(df_info.survey_id)
     cast_IDs[:] = np.array(df_info.cast_id)
     comments[:] = np.array(df_info.cast_comment)
     instrument_types[:] = np.array(df_info.instrument_type)
@@ -519,7 +522,8 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
     # Create 1D variables
     latitudes = nc_out.createVariable('latitude', np.float32, ('time'), zlib=True)
     longitudes = nc_out.createVariable('longitude', np.float32, ('time'), zlib=True)
-    cast_IDs = nc_out.createVariable('trip_ID', str, ('time'), zlib=True)
+    survey_IDs = nc_out.createVariable('survey_ID', str, ('time'), zlib=True)
+    cast_IDs = nc_out.createVariable('cast_ID', str, ('time'), zlib=True)
     comments = nc_out.createVariable('comments', str, ('time'), zlib=True)
     instrument_types = nc_out.createVariable('instrument_type', str, ('time'), zlib=True)
     instrument_IDs = nc_out.createVariable('instrument_ID', str, ('time'), zlib=True)
@@ -588,7 +592,8 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
         cast_time = pd.Timestamp(cast_info[5] + ' ' + cast_info[6])
         cast_sounder = np.int(cast_info[7])
         cast_type = cast_info[8]
-        # This is weak, better solution to be found!
+        survey_id = np.int(cast_info[9])
+       # This is weak, better solution to be found!
         if len(cast_info) >= 12:
             cast_station = cast_info[11]
         else:
@@ -597,6 +602,7 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
         # Fill cast info
         latitudes[idx] = cast_lat
         longitudes[idx] = cast_lon
+        survey_IDs[idx] = survey_id
         cast_IDs[idx] = cast_id
         stations[idx] = cast_station
         instruments[idx] = cast_type
