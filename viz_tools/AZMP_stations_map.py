@@ -46,6 +46,11 @@ fig_name = 'AZMP_lines.png'
 ephem = 'ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
+# -> for AZMP database anaylis map:
+lon_box = [-55, -50, -50, -55, -55]
+lat_box = [45, 45, 50, 50, 45]
+
+
 ## ---- Bathymetry ---- ####
 v = np.linspace(-4000, 0, 9)
 
@@ -173,16 +178,21 @@ x, y = m(stationLon[index_SS],stationLat[index_SS])
 m.scatter(x,y,3,marker='o',color='lightcoral')
 plt.text(x[0], y[0], 'SS ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
 
+# AZMP database CIL box
+## x, y = m(lon_box,lat_box)
+## m.plot(x,y,color='k')
+
+
 
 ## # Plot swot path (comment if not wanted)
-for i in range(0,len(swot_segment_lat)):
-    x_swot, y_swot = m(swot_segment_lon[i], swot_segment_lat[i])
-    m.plot(x_swot, y_swot, 'k')
+## for i in range(0,len(swot_segment_lat)):
+##     x_swot, y_swot = m(swot_segment_lon[i], swot_segment_lat[i])
+##     m.plot(x_swot, y_swot, 'k')
 
 
-m.plot(988291, 3.89471e6, '.r')
-lonpt, latpt = m(988291, 3.89471e6,inverse=True
-plt.text(xpt+100000,ypt+100000,'(%5.1fW,%3.1fN)' % (lonpt,latpt))
+## m.plot(988291, 3.89471e6, '.r')
+## lonpt, latpt = m(988291, 3.89471e6,inverse=True
+## plt.text(xpt+100000,ypt+100000,'(%5.1fW,%3.1fN)' % (lonpt,latpt))
 
 
 #### ---- Save Figure ---- ####

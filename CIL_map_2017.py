@@ -13,22 +13,17 @@ from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata # here should remove nans or empty profiles
 import netCDF4
 
+# For plots
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 14}
+plt.rc('font', **font)
+
 # This is a dataset
-ds = xr.open_mfdataset('*.nc')
+# in /home/cyrf0006/research/AZMP_database/netCDF_first_set
+ds = xr.open_mfdataset('2017.nc')
 
 
-# Select a depth range
-## ds = ds.sel(level=ds['level']<500)
-## ds = ds.sel(level=ds['level']>10)
-
-## # Selection of a subset region
-#ds = ds.where((ds.longitude>-58) & (ds.longitude<-46), drop=True)
-## #ds = ds.where((ds.latitude>50) & (ds.latitude<55), drop=True)
-#ds = ds.where((ds.latitude>42) & (ds.latitude<56), drop=True)
-
-# Select only one year
-ds = ds.sel(time=ds['time.year']>1984)
-ds = ds.sel(time=ds['time.year']>1999)
 # Select only summer
 ds = ds.sel(time=ds['time.season']=='JJA')
 
@@ -95,11 +90,15 @@ lon_0 = lons.mean()
 lat_0 = lats.mean()
 lon_0 = -50
 lat_0 = 50
-#lonLims = [-58, -46]
-#latLims = [42, 56]
+
 lonLims = [-70, -40]
 latLims = [40, 65]
 proj = 'merc'
+
+
+
+fig = plt.figure()
+
 m = Basemap(projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution='l')
 
 x,y = m(*np.meshgrid(lonz,latz))
@@ -108,7 +107,7 @@ c = m.contour(x, y, np.flipud(-Z), v, colors='darkgrey');
 m.fillcontinents(color='grey');
 
 #v = np.arange(np.floor(np.min(tmax)), np.ceil(np.max(tmax))+1)
-v = 20
+v = np.linspace(-2, 24, 56)
 xi, yi = m(lon, lat)
 lon_casts, lat_casts = m(lons[idx], lats[idx])
 cs = m.contourf(xi,yi,temp_itp, v, cmap=plt.cm.RdBu_r)
@@ -116,7 +115,7 @@ cs = m.contourf(xi,yi,temp_itp, v, cmap=plt.cm.RdBu_r)
 m.fillcontinents(color='grey');
 
 # Add Colorbar
-cbar = m.colorbar(cs, location='bottom')
+cbar = m.colorbar(cs, ticks=np.linspace(0, 22, 12), location='right')
 #cbar.set_label(tmax_units)
 
 # Add casts identification
@@ -125,8 +124,8 @@ m.scatter(x,y,10,marker='o',color='k', alpha=.5)
 #m.plot(x, y, '.k')
 
 # Add Grid Lines
-m.drawparallels(np.arange(latLims[0], latLims[1], 1.), labels=[1,0,0,0], fontsize=10)
-m.drawmeridians(np.arange(lonLims[0], lonLims[1], 1.), labels=[0,0,0,1], fontsize=10)
+m.drawparallels(np.arange(latLims[0], latLims[1], 10.), labels=[1,0,0,0], fontsize=10)
+m.drawmeridians(np.arange(lonLims[0], lonLims[1], 10.), labels=[0,0,0,1], fontsize=10)
 
 # Add Coastlines, States, and Country Boundaries
 m.drawcoastlines()
@@ -134,43 +133,13 @@ m.drawstates()
 m.drawcountries()
 
 # Add Title
-plt.title('Temperature')
-
-plt.show()
-
-
-## BELOW IS WORK IN PROGRESS
-
-
-plt.contourf(df_temp.index, df_temp.columns, df_temp.T, 20)
-
-
-# HERE!!
-
-
-# this is now a dataArray
-da_temp = ds['temperature']
-da_lat = ds['latitude']
-da_lon = ds['longitude']
-
-
-# Averrage profile of the whole timeseries
-A = da_temp.mean(dim='time')
-
-# Selection of only summer data
-summer_temp = temp.sel(time=temp['time.season']=='JJA')
-summer_lat = lat.sel(time=lat['time.season']=='JJA')
-summer_lon = lon.sel(time=lon['time.season']=='JJA')
+plt.title('Temperature (50-150m)', fontweight='bold')
 
 
 
-
-ds = xr.Dataset()
-ds['data1'] = xr.DataArray(np.arange(100), coords={'t1': np.linspace(0, 1, 100)})
-ds['data1b'] = xr.DataArray(np.arange(100, 200), coords={'t1': np.linspace(0, 1, 100)})
-ds['data2'] = xr.DataArray(np.arange(200, 500), coords={'t2': np.linspace(0, 1, 300)})
-ds['data2b'] = xr.DataArray(np.arange(600, 900), coords={'t2': np.linspace(0, 1, 300)})
-ds.where(ds.data1 < 50, drop=True)
+fig.set_size_inches(w=9,h=9)
+fig_name = 'TCIL_2017.png'
+fig.savefig(fig_name)
 
 
 

@@ -22,7 +22,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 
-def water_masses_def():
+def water_masses_def_petrie():
     """ Will load water masses definition in memory (lists)
 
     """
