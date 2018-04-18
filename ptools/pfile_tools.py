@@ -141,7 +141,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         - zbin: vertical averaging in final file (zbin=1 is default)
         - zmax: maximum possible depth of the final product (maximum depth may be smaller if zshrink=True, see below)
         - zshrink: if 'True', vertical dimension 'Z' will  be shrink to the first non-empty value (Default is 'False') 
-          * To open multiple nc files with xarray, Z dim must be the same!
+          *NOTE: To open multiple nc files with xarray, Z dim must be the same!
 
     """
     
@@ -171,6 +171,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
 
     # Generate the list
     filelist = np.genfromtxt(infiles, dtype=str)
+    filelist = np.reshape(filelist, filelist.size) # <--------- check if this doesn't cause error
     
     # Original binned depth vector
     Pbin = np.arange(zbin/2.0, zmax, zbin) #will be shrink after if zshrink=True
@@ -199,15 +200,64 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         # Else, do normal    
         print fname
 
-        # get header & cast info
+        # get header
         header = pfile_header(fname)
+        #check header
+        if 'NAFC_Y2K_HEADER' not in header[0]:
+            error_msg = 'Problem with file: header [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
+            continue 
+        
+        #get cast info and store the info (inspired from J Holden's pfile_IO.py
         cast_info = header[1]
-        # From J Holden's pfile_IO.py:
         cast_info = cast_info.replace(',',' ')
         cast_id = cast_info[0:8]
-        survey_id = cast_info[0:5]
+
+        # Coordinate check
         cast_lat = np.float(cast_info[10:12]) + np.float(cast_info[13:18])/60.0
         cast_lon = np.sign(np.float(cast_info[19:23])) * (np.abs(np.float(cast_info[19:23])) + np.float(cast_info[24:29])/60.0)
+        if ((np.int(cast_lon)==0) & (np.int(cast_lat)==0)):
+            error_msg = 'Problem with file: (lat,lon) = (0,0) looks wrong [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
+            continue
+        
+    
+        ## if '24:00' in cast_info: #correct 24:00 time
+        ##     cast_info = cast_info.replace('24:00', '00:00')
+        ##     expr = 'echo ' + fname + ' : time problem >> .netcdfgen_log.txt'
+        ##     os.system(expr)
+        ## elif '25:' in cast_info: #correct 25:00 time
+        ##     cast_info = cast_info.replace('25:', '23:')
+        ##     expr = 'echo ' + fname + ' : time problem >> .netcdfgen_log.txt'
+        ##     os.system(expr)
+
+        # time check
+        if np.int(cast_info[44:46])>59:
+            tmp = list(cast_info)
+            tmp[44:46]=['0','0']
+            #cast_info = cast_info.replace(cast_info[44:46], '00')
+            cast_info = "".join(tmp)
+            expr = 'echo ' + fname + ' : time problem >> .netcdfgen_log.txt'
+            os.system(expr)
+        elif np.int(cast_info[41:43])>23:
+            tmp = list(cast_info)
+            tmp[41:43]=['0','0']
+            cast_info = "".join(tmp)
+            #cast_info = cast_info.replace(cast_info[41:43], '00')
+            expr = 'echo ' + fname + ' : time problem >> .netcdfgen_log.txt'
+            os.system(expr)
+        elif ((np.int(cast_info[35:37])>12) | (np.int(cast_info[38:40])>31)):
+            error_msg = 'Problem with file: wrong date [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
+            continue
+        
+        # if tests passed, store the rest    
         cast_time = pd.Timestamp(cast_info[29:40] + ' ' + cast_info[40:46])
         cast_sounder = np.int(cast_info[46:51])
         cast_instid = cast_info[51:57]
@@ -225,16 +275,20 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             cast_insttype = "F"
         elif 'CTD' in cast_insttype:
             cast_insttype = "V" 
-
-        cast_info_list.append([cast_id, cast_lat, cast_lon, cast_sounder, cast_insttype, cast_instid, cast_comment, survey_id])
-        cast_index.append(cast_time)
-
+        
+        # To DataFrame (and check if empty)
         df = pfile_to_dataframe(fname)
-
+        if df.empty:
+            error_msg = 'Problem with file: empty [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
+            continue    
+        
        ## ----- Fill wanted variables one by one ----- ##
         # Pressure
         if 'pres' in df.columns:
-            P = np.array(df['pres'])
+            P = np.array(df['pres'])            
             Ibtm = np.argmax(P)    
             digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
         elif 'depth' in df.columns:
@@ -242,9 +296,17 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             Ibtm = np.argmax(P)    
             digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
         else:
-            print 'Problem with file, no pressure channel found [skip]'
+            error_msg = 'Problem with file, no pressure channel found [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
             continue
 
+        # Meta Data
+        cast_info_list.append([cast_id, cast_lat, cast_lon, cast_sounder, cast_insttype, cast_instid, cast_comment])
+        cast_index.append(cast_time)
+
+        
         # Temperature
         if 'temp' in df.columns:
             X = np.array(df['temp'])
@@ -327,7 +389,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         Pbin = Pbin[0:idx_nan[0]-1]
 
     # Dataframe content
-    columns = ['cast_id', 'lat', 'lon', 'sounder_depth', 'instrument_type', 'instrument_id', 'cast_comment', 'survey_id']
+    columns = ['cast_id', 'lat', 'lon', 'sounder_depth', 'instrument_type', 'instrument_id', 'cast_comment']
     df_info = pd.DataFrame(cast_info_list, index=cast_index, columns=columns)
     df_temp = pd.DataFrame(Tarray, index=cast_index, columns=Pbin)
     df_sali = pd.DataFrame(Sarray, index=cast_index, columns=Pbin)
@@ -357,7 +419,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     ##     [2013-10-30 15:22] Set depths between 0 and 4m to 4m and those >428m to 428m.
     ##     [2013-10-31 17:10] Algorithmic smoothing.
     ## """
-    nc_out.comment = 'NetCDF generation is work in progress. Please be careful with the data.'
+    nc_out.comment = 'Just a trial at the moment, no disctribution!'
 
     # Create dimensions
     time = nc_out.createDimension('time', None)
@@ -371,8 +433,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     # Create 1D variables
     latitudes = nc_out.createVariable('latitude', np.float32, ('time'), zlib=True)
     longitudes = nc_out.createVariable('longitude', np.float32, ('time'), zlib=True)
-    cast_IDs = nc_out.createVariable('cast_ID', str, ('time'), zlib=True)
-    survey_IDs = nc_out.createVariable('survey_ID', str, ('time'), zlib=True)
+    cast_IDs = nc_out.createVariable('trip_ID', str, ('time'), zlib=True)
     comments = nc_out.createVariable('comments', str, ('time'), zlib=True)
     instrument_types = nc_out.createVariable('instrument_type', str, ('time'), zlib=True)
     instrument_IDs = nc_out.createVariable('instrument_ID', str, ('time'), zlib=True)
@@ -427,7 +488,6 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     #print 'temp shape before adding data = ', temp.shape
     latitudes[:] = np.array(df_info.lat)
     longitudes[:] = np.array(df_info.lon)
-    survey_IDs[:] = np.array(df_info.survey_id)
     cast_IDs[:] = np.array(df_info.cast_id)
     comments[:] = np.array(df_info.cast_comment)
     instrument_types[:] = np.array(df_info.instrument_type)
@@ -522,8 +582,7 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
     # Create 1D variables
     latitudes = nc_out.createVariable('latitude', np.float32, ('time'), zlib=True)
     longitudes = nc_out.createVariable('longitude', np.float32, ('time'), zlib=True)
-    survey_IDs = nc_out.createVariable('survey_ID', str, ('time'), zlib=True)
-    cast_IDs = nc_out.createVariable('cast_ID', str, ('time'), zlib=True)
+    cast_IDs = nc_out.createVariable('trip_ID', str, ('time'), zlib=True)
     comments = nc_out.createVariable('comments', str, ('time'), zlib=True)
     instrument_types = nc_out.createVariable('instrument_type', str, ('time'), zlib=True)
     instrument_IDs = nc_out.createVariable('instrument_ID', str, ('time'), zlib=True)
@@ -592,8 +651,7 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
         cast_time = pd.Timestamp(cast_info[5] + ' ' + cast_info[6])
         cast_sounder = np.int(cast_info[7])
         cast_type = cast_info[8]
-        survey_id = np.int(cast_info[9])
-       # This is weak, better solution to be found!
+        # This is weak, better solution to be found!
         if len(cast_info) >= 12:
             cast_station = cast_info[11]
         else:
@@ -602,7 +660,6 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
         # Fill cast info
         latitudes[idx] = cast_lat
         longitudes[idx] = cast_lon
-        survey_IDs[idx] = survey_id
         cast_IDs[idx] = cast_id
         stations[idx] = cast_station
         instruments[idx] = cast_type
