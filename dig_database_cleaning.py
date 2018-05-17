@@ -19,6 +19,33 @@ plt.rc('font', **font)
 ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/*.nc')
 
 
+# Problems with LAT>90 or LON<-180:
+# They are all July 2000. Can get file name like that:
+ds_prob = ds.sel(time=ds['latitude']>90)
+ds_prob.trip_ID.values
+ds = ds.sel(time=ds['latitude']<=90)
+
+ds_prob = ds.sel(time=ds['longitude']<-180)
+ds = ds.sel(time=ds['longitude']>=-180)
+
+
+# density map (create another script later to do this)
+lon = np.arange(
+    np.round(ds['longitude'].values.min()),
+    np.round(ds['longitude'].values.max()))
+lat = np.arange(
+    np.round(ds['latitude'].values.min()),
+    np.round(ds['latitude'].values.max()))                  
+
+lon_temp, lat_temp = np.meshgrid(x,y)
+
+    # Meshgrid 1D data (after removing NaNs)
+    idx_nan = np.argwhere(~np.isnan(temp))
+    x = np.arange(np.min(lons[idx_nan]), np.max(lons[idx_nan]), .2)
+    y = np.arange(np.min(lats[idx_nan]), np.max(lats[idx_nan]), .2)  
+    lon_temp, lat_temp = np.meshgrid(x,y)
+
+
 # Select a depth range
 ds = ds.sel(level=ds['level']<500)
 ds = ds.sel(level=ds['level']>10)
@@ -29,7 +56,7 @@ ds = ds.where((ds.longitude>-55) & (ds.longitude<-50), drop=True)
 ds = ds.where((ds.latitude>45) & (ds.latitude<50), drop=True)
 
 # Sort time dimension (this takes time to display!!)
-ds = ds.isel(time=np.argsort(ds.time))
+#ds = ds.isel(time=np.argsort(ds.time))
 
 # Selection of only summer data
 #ds_summer = ds.sel(time=ds['time.season']=='JJA')
