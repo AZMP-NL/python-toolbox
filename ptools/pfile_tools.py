@@ -224,6 +224,18 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
+        elif ((np.int(cast_lat)>90) | (np.int(cast_lat)<-90)):
+            error_msg = 'Problem with file: |lat| > 90 looks wrong [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
+            continue
+        elif ((np.int(cast_lon)>180) | (np.int(cast_lon)<-180)):
+            error_msg = 'Problem with file: |lon| > 180 looks wrong [skip]'
+            print error_msg
+            expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
+            os.system(expr)
+            continue
         
     
         ## if '24:00' in cast_info: #correct 24:00 time
@@ -285,7 +297,11 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             os.system(expr)
             continue    
         
-       ## ----- Fill wanted variables one by one ----- ##
+        ## ----- Fill wanted variables one by one ----- ##
+        # deal with duplicated time (add one sec.)
+        if cast_time in cast_index:
+            cast_time = cast_time + + pd.Timedelta(seconds=1)
+       
         # Pressure
         if 'pres' in df.columns:
             P = np.array(df['pres'])            
@@ -301,8 +317,8 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
-
-        # Meta Data
+            
+        # Meta Data        
         cast_info_list.append([cast_id, cast_lat, cast_lon, cast_sounder, cast_insttype, cast_instid, cast_comment])
         cast_index.append(cast_time)
 
