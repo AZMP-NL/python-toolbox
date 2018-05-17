@@ -419,7 +419,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     ##     [2013-10-30 15:22] Set depths between 0 and 4m to 4m and those >428m to 428m.
     ##     [2013-10-31 17:10] Algorithmic smoothing.
     ## """
-    nc_out.comment = 'Just a trial at the moment, no disctribution!'
+    nc_out.comment = 'Just a trial at the moment, no distribution!'
 
     # Create dimensions
     time = nc_out.createDimension('time', None)
@@ -569,7 +569,7 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
     ##     [2017-10-20 15:22] transfer to pfiles
     ##     [2013-10-22 15:18] creating netCDFNetCDF
     ## """
-    nc_out.comment = 'Just a trial at the moment, no disctribution!'
+    nc_out.comment = 'Just a trial at the moment, no distribution!'
 
     # Create dimensions
     time = nc_out.createDimension('time', None)
