@@ -81,7 +81,9 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
 
     !!! Note: Maybe it would be better to just return the dataframe and do the plot (ylim, colormap,  etc. on a separate script?)
     Maybe the best way would be to keep this function, but make the plot=False by default and always return dataframe
-    - Need to calculate CIL area also (maybe another function using df output.)
+    -> Need to calculate CIL area also (maybe another function using df output.)
+    -> I think survey_name is non-existant in nc files... (rather cast IDs). Need to modify pfile_tools...
+    (actually may bne working now) - edit 2018-05-29
     """
 
     # For plots
@@ -95,11 +97,12 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
     zVec = ds.level.to_masked_array()
 
     # Select Survey and switch to DataFrame
-    ds = ds.sel(time=ds['survey_ID'].values==survey_name)
+    #ds = ds.sel(time=ds['trip_ID'].values==survey_name)
     df = ds.to_dataframe()
 
     ## ----  plot FC-line ---- ##
-    df_section =  df[df['comments'].str.contains(section_name + '-')]
+    df_section =  df[df['trip_ID'].str.contains(survey_name)] # Restrict for survey-name
+    df_section =  df_section[df_section['comments'].str.contains(section_name + '-')] # restrict for section name
     sr_var = df_section[var_name]
     sr_lon = df_section['longitude']
     sr_lat = df_section['latitude']
@@ -134,23 +137,26 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
 
         
     # Do the plot
-    v = np.linspace(-2,12,36)
-    v1 = np.linspace(-2,12,8)
+    v = 20
+    #v1 = 
+    #v = np.linspace(-2,12,36)
+    #v1 = np.linspace(-2,12,8)
     fig, ax = plt.subplots()
 #    c = plt.contourf(distance, df_var.index, df_var, 20, cmap=plt.cm.RdBu_r)
     c = plt.contourf(distance, df_var.index, df_var, v, cmap=plt.cm.RdBu_r)
     plt.contour(distance, df_var.index, df_var, [0,], colors='k')
     ax.set_ylim([0, 400])
-    ax.set_xlim([0, distance.max()])
-    ax.set_xlim([0, 450])
+    #ax.set_xlim([0, distance.max()])
+    ax.set_xlim([0, 300])
     ax.set_ylabel('Depth (m)', fontWeight = 'bold')
     ax.set_xlabel('Distance (km)', fontWeight = 'bold')
     fig_title = 'AZMP_' + survey_name + '_' + section_name + '_' + var_name
     ax.set_title(fig_title)
     ax.invert_yaxis()
-    cb = plt.colorbar(c, ticks=v1)
+    #cb = plt.colorbar(c, ticks=v1)
 #    plt.colorbar(c, cax=cax, ticks=v1)
-    
+    plt.colorbar(c)
+
     Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1)
     ax.add_patch(Bgon)
     for i in range(0,len(distance)):

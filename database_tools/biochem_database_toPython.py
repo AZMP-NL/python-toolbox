@@ -15,7 +15,7 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 ## ----  Load data from Excel sheet ---- ##
-df = pd.read_excel('~/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
+df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
 
 ## ---- Some cleaning ---- ##
 # Set date as index
@@ -176,6 +176,22 @@ plt.colorbar()
 plt.show()
 
 
+## ---- S-NO3 relationship (depth) ---- ##
+zmax = 500
+zmin = 50
+Ztop = Z[(Z>zmin) & (Z<zmax) & (NO3>0) & (S<=33.5)]
+Stop = S[(Z>zmin) & (Z<zmax) & (NO3>0) & (S<=33.5)]
+NO3top = NO3[(Z>zmin) & (Z<zmax) & (NO3>0) & (S<=33.5)]
+
+#Z[(Z>zmin) & (Z<zmax) & (NO3>0)].size / Z[(Z>zmin) & (Z<zmax) & (NO3>0) & (S<=33.5)].size
+
+plt.scatter(Stop, NO3top, c=Ztop, alpha=0.3)
+plt.ylabel('NO3')
+plt.xlabel('S')
+plt.colorbar()
+#plt.ylim([-2,20])
+#plt.xlim([30,37])
+plt.show()
 
 
 

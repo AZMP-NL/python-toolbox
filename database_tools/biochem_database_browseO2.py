@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
-import gsw
+#import gsw
 from seawater import extras as swx
 import matplotlib.dates as mdates
 from scipy.interpolate import griddata
@@ -19,7 +19,7 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 ## ----  Load data from Excel sheet ---- ##
-df = pd.read_excel('~/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
+df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
 
 ## ---- Some cleaning ---- ##
 # Set date as index
