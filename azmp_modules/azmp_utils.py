@@ -99,6 +99,10 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
     Tbot, lon_reg, lat_reg = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Tbot_climato_fall.h5')
+
+    OR
+
+    azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring.h5') 
     
     """
     
@@ -115,7 +119,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
 
         ## ---- Region parameters ---- ##
         #    add_path('/home/cyrf0006/data/GEBCO/')
-        dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc' # Maybe find a better way to handle this file
+        dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
         lonLims = [LON_REG[0], LON_REG[-1]]
         latLims = [LAT_REG[0], LAT_REG[-1]]
         zmin = zlims[0] # do try to compute bottom temp above that depth
@@ -130,8 +134,10 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         # Load data
         dataset = netCDF4.Dataset(dataFile)
         # Extract variables
-        x = dataset.variables['x_range']
-        y = dataset.variables['y_range']
+        #x = dataset.variables['x_range'] 
+        #y = dataset.variables['y_range']
+        x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+        y = [-89-59.75/60, 89+59.75/60]
         spacing = dataset.variables['spacing']
         # Compute Lat/Lon
         nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
@@ -165,11 +171,14 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
         # Select time (save several options here)
         if season == 'summer':
-            ds = ds.sel(time=ds['time.season']=='JJA')
+            #ds = ds.sel(time=ds['time.season']=='JJA')
+            ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
         elif season == 'spring':
-            ds = ds.sel(time=ds['time.season']=='MAM')
+            #ds = ds.sel(time=ds['time.season']=='MAM')
+            ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
         elif season == 'fall':
-            ds = ds.sel(time=ds['time.season']=='SON')
+            #ds = ds.sel(time=ds['time.season']=='SON')
+            ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
         else:
             print('!! no season specified, used them all! !!')
 
