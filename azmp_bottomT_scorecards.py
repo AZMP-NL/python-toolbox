@@ -26,21 +26,23 @@ vals = np.around(std_anom.values,1)
 normal = plt.Normalize(-4, 4)
 cmap = plt.cm.get_cmap('seismic', 9) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
-hcell, wcell = 0.4, 1.
+hcell, wcell = 0.5, 0.5
 hpad, wpad = 0, 0    
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['NAFO divison 2J'],
+                      colLabels=['-- NAFO divison 2J --'],
                       loc='center'
                       )
 
+header.set_fontsize(13)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
                     loc='center', cellColours=cmap(normal(vals)),
-                    bbox=[0, 0, 1.0, 0.40]
+                    #bbox=[0, 0, 1.0, 0.40]
+                    bbox=[0, 0, 1, 0.5]
                     )
 plt.savefig("scorecards_fall_2J.png", dpi=300)
 os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
@@ -66,14 +68,14 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['NAFO divison 3K'],
+                      colLabels=['-- NAFO divison 3K --'],
                       loc='center'
                       )
-
+header.set_fontsize(13)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
                     loc='center', cellColours=cmap(normal(vals)),
-                    bbox=[0, 0, 1.0, 0.40]
+                    bbox=[0, 0, 1.0, 0.50]
                     )
 plt.savefig("scorecards_fall_3K.png", dpi=300)
 os.system('convert -trim scorecards_fall_3K.png scorecards_fall_3K.png')
@@ -91,27 +93,25 @@ std_anom = std_anom.rename({'Tmean': 'Bottom Temperature', 'Tmean_sha100': 'Bott
 vals = np.around(std_anom.values,1)
 normal = plt.Normalize(-4, 4)
 cmap = plt.cm.get_cmap('seismic', 9) 
-nrows, ncols = std_anom.index.size+1, std_anom.columns.size
-hcell, wcell = 0.4, 1.
-hpad, wpad = 0, 0    
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['NAFO divison 3LNO'],
+                      colLabels=['-- NAFO divison 3LNO --'],
                       loc='center'
                       )
 
+header.set_fontsize(13)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
                     loc='center', cellColours=cmap(normal(vals)),
-                    bbox=[0, 0, 1.0, 0.40]
+                    bbox=[0, 0, 1.0, 0.50]
                     )
 plt.savefig("scorecards_fall_3LNO.png", dpi=300)
 os.system('convert -trim scorecards_fall_3LNO.png scorecards_fall_3LNO.png')
 
-os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x3 -geometry +1+1  -background none scorecards.png') 
+os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_fall.png') 
 
 
 
