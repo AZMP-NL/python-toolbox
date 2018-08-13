@@ -1037,7 +1037,7 @@ def polygon_temperature_stats(dict, shape):
     dict = {}
     dict['Tmean'] = Tmean
     dict['Tmean_sha100'] = Tmean100
-    dict['area_colder0'] = area_colder_0deg
-    dict['area_warmer2'] = area_warmer_2deg
+    dict['area_colder0'] = area_colder_0deg/1000
+    dict['area_warmer2'] = area_warmer_2deg/1000
 
     return dict
