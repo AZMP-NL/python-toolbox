@@ -1024,8 +1024,10 @@ def polygon_temperature_stats(dict, shape):
     # mean temperature all polygon
     Tmean = data_vec.mean()
 
-    # mean temperature at depth shallower than 100m
+    # mean temperature at depth shallower than 100m, 200m, 300m
     Tmean100 = data_vec[bathy_vec>=-100].mean()
+    Tmean200 = data_vec[bathy_vec>=-200].mean()
+    Tmean300 = data_vec[bathy_vec>=-300].mean()
     
     # area with temperature < 0
     area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
@@ -1037,6 +1039,8 @@ def polygon_temperature_stats(dict, shape):
     dict = {}
     dict['Tmean'] = Tmean
     dict['Tmean_sha100'] = Tmean100
+    dict['Tmean_sha200'] = Tmean200
+    dict['Tmean_sha300'] = Tmean300
     dict['area_colder0'] = area_colder_0deg/1000
     dict['area_warmer2'] = area_warmer_2deg/1000
 

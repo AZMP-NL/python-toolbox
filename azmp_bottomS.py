@@ -314,6 +314,7 @@ fig.set_size_inches(w=7, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_sal_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -345,6 +346,7 @@ fig.set_size_inches(w=7, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_sal_climato_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 
 #### ---- Plot temp + anom ---- ####
 fig, ax = plt.subplots(nrows=1, ncols=2)
@@ -412,4 +414,5 @@ fig.set_size_inches(w=12, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_sal_subplot_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 

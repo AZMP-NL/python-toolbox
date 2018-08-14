@@ -11,6 +11,26 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 
+
+
+# ------ SECTION ON BOTTOM TEMPERATURE ------ #
+%my_run azmp_bottomT.py # <--- should make a function taking spring/fall and year as input (must run twice now)
+os.system('montage bottom_temp_fall_2017 bottom_temp_climato_fall_2017.png bottom_temp_anomaly_fall_2017.png  -tile 3x1 -geometry +1+1  -background white  bottomT_fall2017.png') 
+
+
+%my_run azmp_bottomS.py # <--- Now climato is 1981-2010 while Eugene uses 2000-2015
+
+%my_run azmp_bottom_stats.py # <--- should make a function taking spring/fall as input (must run twice now)
+%my_run azmp_bottomT_scorecards.py
+
+
+
+
+
+
+
+
+
 #  $ grep -l SEGB 39173/*.cnv > SEGB2017.list
 #filelist = np.genfromtxt('SESPB2017.list', dtype=str)
 #filelist = np.genfromtxt('SWSPB2017.list', dtype=str)

@@ -23,6 +23,7 @@ azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_re
 
 '''
 
+import os
 import netCDF4
 import h5py
 import xarray as xr
@@ -67,7 +68,7 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'fall'
+season = 'spring'
 year = '2017'
 
 if season=='spring':
@@ -284,6 +285,7 @@ fig.set_size_inches(w=7, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_temp_anomaly_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 
 ## ---- Plot Temperature ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -317,6 +319,7 @@ fig.set_size_inches(w=7, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_temp_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -348,6 +351,7 @@ fig.set_size_inches(w=7, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_temp_climato_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 
 #### ---- Plot temp + anom ---- ####
 fig, ax = plt.subplots(nrows=1, ncols=2)
@@ -415,4 +419,5 @@ fig.set_size_inches(w=12, h=8)
 fig.set_dpi(200)
 outfile = 'bottom_temp_subplot_' + season + '_' + year + '.png'
 fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 

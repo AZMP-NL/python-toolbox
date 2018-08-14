@@ -34,17 +34,19 @@ from shapely.geometry.polygon import Polygon
 from shapely.ops import cascaded_union
 
 
-## ---- preambles ---- ##
+## ---- preamble ---- ##
 years = np.arange(1980, 2018)
 lon_0 = -50
 lat_0 = 50
 proj = 'merc'
 plot = False # to plot or not to plot...
-
-## ---- 1. Spring Temperature ---- ##
-climato_file = 'Tbot_climato_spring_0.10.h5'
 season = 'fall'
+
 # load climato
+if season == 'fall':
+    climato_file = 'Tbot_climato_fall_0.10.h5'
+elif season == 'spring':
+    climato_file = 'Tbot_climato_spring_0.10.h5'
 h5f = h5py.File(climato_file, 'r')
 Tbot_climato = h5f['Tbot'][:]
 lon_reg = h5f['lon_reg'][:]
