@@ -13,19 +13,22 @@ from matplotlib.collections import PatchCollection
 
 
 
-# ------ SECTION ON BOTTOM TEMPERATURE ------ #
+## ---------- BOTTOM TEMPERATURE ---------- ##
 %my_run azmp_bottomT.py # <--- should make a function taking spring/fall and year as input (must run twice now)
-os.system('montage bottom_temp_fall_2017 bottom_temp_climato_fall_2017.png bottom_temp_anomaly_fall_2017.png  -tile 3x1 -geometry +1+1  -background white  bottomT_fall2017.png') 
-
+os.system('cp bottomT_fall2017.png bottomT_spring2017.png ~/to_windows/')
 
 %my_run azmp_bottomS.py # <--- Now climato is 1981-2010 while Eugene uses 2000-2015
+os.system('cp bottomS_fall2017.png bottomS_spring2017.png ~/to_windows/')
+
 
 %my_run azmp_bottom_stats.py # <--- should make a function taking spring/fall as input (must run twice now)
 %my_run azmp_bottomT_scorecards.py
+os.system('cp scorecards_botT_spring.png scorecards_botT_fall.png ~/to_windows/')
 
 
 
 
+## ---------------------------------------- ##
 
 
 

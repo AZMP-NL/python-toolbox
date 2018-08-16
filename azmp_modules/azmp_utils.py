@@ -99,7 +99,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     Usage ex:
     import numpy as np
     import azmp_utils as azu
-    dc = .25
+    dc = .10
     lonLims = [-60, -44] # fish_hab region
     latLims = [39, 56]
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
@@ -119,6 +119,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         Tbot = h5f['Tbot'][:]
         lon_reg = h5f['lon_reg'][:]
         lat_reg = h5f['lat_reg'][:]
+        Zitp = h5f['Zitp'][:]
         h5f.close()
 
     else:
@@ -194,18 +195,22 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         ds = ds.sel(level=ds['level']<zmax)
         # Vertical binning (on dataArray; more appropriate here
         da_temp = ds['temperature']
+        lons = np.array(ds.longitude)
+        lats = np.array(ds.latitude)
         bins = np.arange(dz/2.0, ds.level.max(), dz)
         da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
         #To Pandas Dataframe
         df_temp = da_temp.to_pandas()
         df_temp.columns = bins[0:-1] #rename columns with 'bins'
+        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        df_temp = df_temp.dropna(axis=0,how='all')
+        lons = np.delete(lons,idx_empty_rows)
+        lats = np.delete(lats,idx_empty_rows)
         print(' -> Done!')
 
 
         ## --- fill 3D cube --- ##  
         print('Fill regular cube')
-        lons = np.array(ds.longitude)
-        lats = np.array(ds.latitude)
         z = df_temp.columns.values
         V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
 
@@ -303,9 +308,9 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     Usage ex:
     import numpy as np
     import azmp_utils as azu
-    dc = .25
-    lonLims = [-60, -44] # fish_hab region
-    latLims = [39, 56]
+    dc = .10
+    lonLims = [-60, -45] # FC AZMP report region
+    latLims = [42, 56]
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
     Sbot_dict = azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Sbot_climato_fall_0.10.h5')
@@ -323,6 +328,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         Sbot = h5f['Sbot'][:]
         lon_reg = h5f['lon_reg'][:]
         lat_reg = h5f['lat_reg'][:]
+        Zitp = h5f['Zitp'][:]
         h5f.close()
 
     else:
@@ -398,18 +404,23 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         ds = ds.sel(level=ds['level']<zmax)
         # Vertical binning (on dataArray; more appropriate here
         da_sal = ds['salinity']
+        lons = np.array(ds.longitude)
+        lats = np.array(ds.latitude)
         bins = np.arange(dz/2.0, ds.level.max(), dz)
         da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
         #To Pandas Dataframe
         df_sal = da_sal.to_pandas()
         df_sal.columns = bins[0:-1] #rename columns with 'bins'
+        # Remove empty columns
+        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        df_sal = df_sal.dropna(axis=0,how='all')
+        lons = np.delete(lons,idx_empty_rows)
+        lats = np.delete(lats,idx_empty_rows)
         print(' -> Done!')
 
 
         ## --- fill 3D cube --- ##  
         print('Fill regular cube')
-        lons = np.array(ds.longitude)
-        lats = np.array(ds.latitude)
         z = df_sal.columns.values
         V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
 
@@ -570,7 +581,7 @@ def get_bottomT(year_file, season, climato_file):
     df_temp.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns
     idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
-    df_temp.dropna(axis=0,how='all')
+    df_temp = df_temp.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     #df_temp.to_pickle('T_2000-2017.pkl')
@@ -772,7 +783,7 @@ def get_bottomS(year_file, season, climato_file):
     df_sal.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns & drop coordinates (for cast identification on map)
     idx_empty_rows = df_sal.isnull().all(1).nonzero()[0]
-    df_sal.dropna(axis=0,how='all')
+    df_sal = df_sal.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     #df_temp.to_pickle('T_2000-2017.pkl')

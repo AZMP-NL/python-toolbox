@@ -40,7 +40,7 @@ lon_0 = -50
 lat_0 = 50
 proj = 'merc'
 plot = False # to plot or not to plot...
-season = 'fall'
+season = 'spring'
 
 # load climato
 if season == 'fall':

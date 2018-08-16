@@ -58,8 +58,8 @@ lat_0 = 50
 proj = 'merc'
 #decim_scale = 4
 #spring = True
-spring = False
-fig_name = 'map_bottom_temp.png'
+#spring = False
+#fig_name = 'map_bottom_temp.png'
 zmax = 1000 # do try to compute bottom temp below that depth
 dz = 5 # vertical bins
 #dc = .1
@@ -135,7 +135,7 @@ df_temp = da_temp.to_pandas()
 df_temp.columns = bins[0:-1] #rename columns with 'bins'
 # Remove empty columns
 idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
-df_temp.dropna(axis=0,how='all')
+df_temp = df_temp.dropna(axis=0,how='all')
 lons = np.delete(lons,idx_empty_rows)
 lats = np.delete(lats,idx_empty_rows)
 #df_temp.to_pickle('T_2000-2017.pkl')
@@ -237,11 +237,10 @@ elif season == 'fall':
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
             point = Point(lon_reg[i], lat_reg[j])
-            #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-            if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+            if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
                 pass #nothing to do but cannot implement negative statement "if not" above
             else:
-                pass
+                Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
                 #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
 else:
     print('no division mask, all data taken')
@@ -261,19 +260,16 @@ c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
 plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
 if season=='fall':
-    plt.title('Fall Bottom Temperature Anomaly')
+    plt.title('Fall Bottom Temperature ' + year + ' Anomaly')
 elif season=='spring':
-    plt.title('Spring Bottom Temperature Anomaly')
+    plt.title('Spring Bottom Temperature ' + year + ' Anomaly')
 else:
-    plt.title('Bottom Temperature Anomaly')
+    plt.title('Bottom Temperature ' + year + '  Anomaly')
 m.fillcontinents(color='tan');
-m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
+m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-#lon_rec = [-48, -45, -45, -48]
-#lat_rec = [49, 49, 56, 56]
-#draw_screen_poly( lat_rec, lon_rec, m )
-cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
-cb = plt.colorbar(c, cax=cax)
+cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
+cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
@@ -281,8 +277,8 @@ for div in div_toplot:
     m.plot(div_lon, div_lat, 'k', linewidth=2)
     ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
 # Save Figure
-fig.set_size_inches(w=7, h=8)
-fig.set_dpi(200)
+fig.set_size_inches(w=6, h=9)
+fig.set_dpi(300)
 outfile = 'bottom_temp_anomaly_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
@@ -296,18 +292,19 @@ c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
 plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
 if season=='fall':
-    plt.title('Fall Bottom Temperature')
+    plt.title('Fall Bottom Temperature ' + year)
 elif season=='spring':
-    plt.title('Spring Bottom Temperature')
+    plt.title('Spring Bottom Temperature ' + year)
 else:
-    plt.title('Bottom Temperature')
+    plt.title('Bottom Temperature ' + year)
 m.fillcontinents(color='tan');
-m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
+m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
 x, y = m(lons, lats)
 m.scatter(x,y, s=50, marker='.',color='k')
-cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
-cb = plt.colorbar(c, cax=cax)
+cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
+#cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
+cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
@@ -315,7 +312,7 @@ for div in div_toplot:
     m.plot(div_lon, div_lat, 'k', linewidth=2)
     ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
 # Save Figure
-fig.set_size_inches(w=7, h=8)
+fig.set_size_inches(w=6, h=9)
 fig.set_dpi(200)
 outfile = 'bottom_temp_' + season + '_' + year + '.png'
 fig.savefig(outfile)
@@ -338,8 +335,8 @@ else:
 m.fillcontinents(color='tan');
 m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
-cb = plt.colorbar(c, cax=cax)
+cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
+cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
@@ -347,77 +344,12 @@ for div in div_toplot:
     m.plot(div_lon, div_lat, 'k', linewidth=2)
     ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
 # Save Figure
-fig.set_size_inches(w=7, h=8)
-fig.set_dpi(200)
+fig.set_size_inches(w=6, h=9)
+fig.set_dpi(300)
 outfile = 'bottom_temp_climato_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
-#### ---- Plot temp + anom ---- ####
-fig, ax = plt.subplots(nrows=1, ncols=2)
 
-## Subplot 1
-m = Basemap(ax=ax[0], projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(-2, 6, 9)
-xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-
-c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='max')
-cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-m.fillcontinents(color='tan');
-m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-
-cax = plt.axes([0.455,0.51,0.02,0.35])
-cb = plt.colorbar(c, cax=cax)
-#cax = plt.axes([0.13,0.1,0.35,.03])
-#cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='bold')
-#cb.set_ticklabels('bold')
-
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
-for div in div_toplot:
-    div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
-    m.plot(div_lon, div_lat, 'k', linewidth=2)
-    ax[0].text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
-
-
-## Subplot 2
-m = Basemap(ax=ax[1], projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(-3.5, 3.5, 8)
-xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-
-c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
-cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-m.fillcontinents(color='tan');
-m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
-m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-
-cax = plt.axes([0.88,0.51,0.02,0.35])
-[cax.spines[k].set_visible(False) for k in cax.spines]
-cax.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
-cax.set_facecolor([1,1,1,0.7])
-cb = plt.colorbar(c, cax=cax)
-#cax = plt.axes([0.54,0.,0.35,.03])
-#cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='bold')
-#cb.set_ticklabels('bold')
-
-
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
-for div in div_toplot:
-    div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
-    m.plot(div_lon, div_lat, 'k', linewidth=2)
-    ax[1].text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
-
-        
-#### ---- Save Figure ---- ####
-#plt.suptitle('Spring surveys', fontsize=16)
-fig.set_size_inches(w=12, h=8)
-#fig.tight_layout() 
-fig.set_dpi(200)
-outfile = 'bottom_temp_subplot_' + season + '_' + year + '.png'
-fig.savefig(outfile)
-os.system('convert -trim ' + outfile + ' ' + outfile)
-
+# Convert to a subplot
+os.system('montage bottom_temp_climato_' + season + '_' + year + '.png bottom_temp_' + season + '_' + year + '.png bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  bottomT_' + season + year + '.png') 
