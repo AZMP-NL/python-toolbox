@@ -1042,9 +1042,10 @@ def polygon_temperature_stats(dict, shape):
     
     # area with temperature < 0
     area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
-        
+    # area with temperature < 1
+    area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
     # area with temperature > 2
-    area_warmer_2deg = data_vec[data_vec>=0].size*pixel_area
+    area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
     
     # Fill dict for output
     dict = {}
@@ -1052,7 +1053,8 @@ def polygon_temperature_stats(dict, shape):
     dict['Tmean_sha100'] = Tmean100
     dict['Tmean_sha200'] = Tmean200
     dict['Tmean_sha300'] = Tmean300
-    dict['area_colder0'] = area_colder_0deg/1000
-    dict['area_warmer2'] = area_warmer_2deg/1000
+    dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
+    dict['area_colder1'] = area_colder_1deg # <--- now in km2. They are divisded by 1000 in scorecard.
+    dict['area_warmer2'] = area_warmer_2deg
 
     return dict

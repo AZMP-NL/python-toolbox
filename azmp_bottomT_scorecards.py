@@ -17,29 +17,32 @@ def is_number(s):
         float(s)
         return True
     except ValueError:
-        pass
- 
+        pass 
     try:
         unicodedata.numeric(s)
         return True
     except (TypeError, ValueError):
-        pass
- 
+        pass 
     return False
-
 
 #### ------------- For fall ---------------- ####
 # 1.
 infile = 'stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
+# Pass in 2 digit-index:
+new_index = [i[2:4] for i in df.index]
+df = df.set_index(pd.Series(new_index))
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
 std_anom = (df-df.mean(axis=0))/df.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df.mean(axis=0)
 std_anom['SD'] = df.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': 'Bottom Temperature', 'Tmean_sha200': 'Bottom Temperature <200m', 'area_warmer2': r'Thermal Habitat >$2^{\circ}C$', 'area_colder0': r'Thermal Habitat >$0^{\circ}C$'})
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
 # Get text values +  cell color
 vals = np.around(std_anom.values,1)
 vals_color = vals.copy()
@@ -59,7 +62,7 @@ header = ax.table(cellText=[['']],
                       colLabels=['-- NAFO divison 2J --'],
                       loc='center'
                       )
-header.set_fontsize(12)
+header.set_fontsize(13)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
@@ -67,7 +70,7 @@ the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.c
                     )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
-the_table.set_fontsize(9)
+the_table.set_fontsize(12.5)
 table_props = the_table.properties()
 table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
@@ -75,7 +78,7 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif np.float(cell_text) > 1900:
+    elif key[0] == 0: #year's row = no color
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
@@ -88,22 +91,25 @@ os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
 # 2.
 infile = 'stats_3K_fall.pkl'
 df = pd.read_pickle(infile)
+# Pass in 2 digit-index:
+new_index = [i[2:4] for i in df.index]
+df = df.set_index(pd.Series(new_index))
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
 std_anom = (df-df.mean(axis=0))/df.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df.mean(axis=0)
 std_anom['SD'] = df.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha300', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': 'Bottom Temperature', 'Tmean_sha300': 'Bottom Temperature <300m', 'area_warmer2': r'Thermal Habitat >$2^{\circ}C$', 'area_colder0': r'Thermal Habitat >$0^{\circ}C$'})
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha300', 'area_warmer2', 'area_colder1'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha300': r'$\rm T_{bot_{<300m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-#text_color = vals.copy()
-#text_color[:,-2:-1] = 0 # No color to last two columns (mean and STD)
 normal = plt.Normalize(-4, 4)
 cmap = plt.cm.get_cmap('seismic', 9) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
@@ -116,13 +122,13 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-the_table.auto_set_font_size(False)
-header.set_fontsize(12)
+header.set_fontsize(12.5)
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1.0, 0.50]
                     )
-the_table.set_fontsize(9)
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(12.5)
 # change font color to white where needed:
 table_props = the_table.properties()
 table_cells = table_props['child_artists']
@@ -131,7 +137,7 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif np.float(cell_text) > 1900:
+    elif key[0] == 0:
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
@@ -145,14 +151,19 @@ os.system('convert -trim scorecards_fall_3K.png scorecards_fall_3K.png')
 # 3.
 infile = 'stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
+# Pass in 2 digit-index:
+new_index = [i[2:4] for i in df.index]
+df = df.set_index(pd.Series(new_index))
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
 std_anom = (df-df.mean(axis=0))/df.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df.mean(axis=0)
 std_anom['SD'] = df.std(axis=0)
 std_anom = std_anom.reindex(['Tmean', 'Tmean_sha100', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': 'Bottom Temperature', 'Tmean_sha100': 'Bottom Temperature <100m', 'area_warmer2': r'Thermal Habitat >$2^{\circ}C$', 'area_colder0': r'Thermal Habitat >$0^{\circ}C$'})
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha100': r'$\rm T_{bot_{<100m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
 vals_color = vals.copy()
@@ -170,15 +181,15 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 
-header.set_fontsize(12)
-#the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+header.set_fontsize(12.5)
+
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1.0, 0.50]
                     )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
-the_table.set_fontsize(9)
+the_table.set_fontsize(12.5)
 table_props = the_table.properties()
 table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
@@ -186,7 +197,7 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif np.float(cell_text) > 1900:
+    elif key[0] == 0:
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
@@ -199,22 +210,23 @@ os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fal
 
 
 
-
-
-
-
 #### ------------- For Spring ---------------- ####
 # 1.
 infile = 'stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
+# Pass in 2 digit-index:
+new_index = [i[2:4] for i in df.index]
+df = df.set_index(pd.Series(new_index))
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
 std_anom = (df-df.mean(axis=0))/df.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df.mean(axis=0)
 std_anom['SD'] = df.std(axis=0)
 std_anom = std_anom.reindex(['Tmean', 'Tmean_sha100', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': 'Bottom Temperature', 'Tmean_sha100': 'Bottom Temperature <100m', 'area_warmer2': r'Thermal Habitat >$2^{\circ}C$', 'area_colder0': r'Thermal Habitat >$0^{\circ}C$'})
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha100': r'$\rm T_{bot_{<100m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
 vals_color = vals.copy()
@@ -232,7 +244,7 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 
-header.set_fontsize(12)
+header.set_fontsize(12.5)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
@@ -240,7 +252,7 @@ the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.c
                     )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
-the_table.set_fontsize(9)
+the_table.set_fontsize(12.5)
 table_props = the_table.properties()
 table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
@@ -248,7 +260,7 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif np.float(cell_text) > 1900:
+    elif key[0] == 0:
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
@@ -260,22 +272,25 @@ os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
 # 2.
 infile = 'stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
+# Pass in 2 digit-index:
+new_index = [i[2:4] for i in df.index]
+df = df.set_index(pd.Series(new_index))
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
 std_anom = (df-df.mean(axis=0))/df.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df.mean(axis=0)
 std_anom['SD'] = df.std(axis=0)
 std_anom = std_anom.reindex(['Tmean', 'Tmean_sha100', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': 'Bottom Temperature', 'Tmean_sha100': 'Bottom Temperature <100m', 'area_warmer2': r'Thermal Habitat >$2^{\circ}C$', 'area_colder0': r'Thermal Habitat >$0^{\circ}C$'})
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha100': r'$\rm T_{bot_{<100m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-#text_color = vals.copy()
-#text_color[:,-2:-1] = 0 # No color to last two columns (mean and STD)
 normal = plt.Normalize(-4, 4)
 cmap = plt.cm.get_cmap('seismic', 9) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
@@ -287,7 +302,7 @@ header = ax.table(cellText=[['']],
                       colLabels=['-- NAFO divison 3Ps --'],
                       loc='center'
                       )
-header.set_fontsize(12)
+header.set_fontsize(12.5)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
 the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
@@ -295,7 +310,7 @@ the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None,
                     )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
-the_table.set_fontsize(9)
+the_table.set_fontsize(12.5)
 table_props = the_table.properties()
 table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
@@ -303,7 +318,7 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif np.float(cell_text) > 1900:
+    elif key[0] == 0:
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')

@@ -68,7 +68,7 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'spring'
+season = 'fall'
 year = '2017'
 
 if season=='spring':

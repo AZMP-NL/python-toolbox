@@ -40,7 +40,7 @@ lon_0 = -50
 lat_0 = 50
 proj = 'merc'
 plot = False # to plot or not to plot...
-season = 'spring'
+season = 'fall'
 
 # load climato
 if season == 'fall':
@@ -82,7 +82,7 @@ dict_stats_2J = {}
 for year in years:
     print ' ---- ' + np.str(year) + ' ---- '
     year_file = '/home/cyrf0006/data/dev_database/' + np.str(year) + '.nc'
-    Tdict = azu.get_bottomT(year_file, 'fall', climato_file)    
+    Tdict = azu.get_bottomT(year_file, season, climato_file)    
     Tbot = Tdict['Tbot']
     lons = Tdict['lons']
     lats = Tdict['lats']

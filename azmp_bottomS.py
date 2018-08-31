@@ -56,7 +56,7 @@ lat_0 = 50
 proj = 'merc'
 zmax = 1000 # do try to compute bottom temp below that depth
 dz = 5 # vertical bins
-season = 'fall'
+season = 'spring'
 year = '2017'
 
 if season=='spring':
