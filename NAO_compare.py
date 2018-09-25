@@ -573,6 +573,8 @@ fig_name = 'nutrients_AOO.png'
 fig.set_dpi(300)
 fig.savefig(fig_name)
 
+keyboard
+
 ### ---- Salinity ---- ###
 fig = plt.figure(6)
 fig.clf()
