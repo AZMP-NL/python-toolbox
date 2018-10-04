@@ -23,7 +23,7 @@ plt.rc('font', **font)
 
 # This is a dataset
 # in /home/cyrf0006/research/AZMP_database/2017_data
-ds = xr.open_mfdataset('2017_viking.nc')
+ds = xr.open_dataset('2017_viking.nc')
 
 # Some utils:
 # np.unique(ds['instrument_ID'].values)
@@ -48,7 +48,7 @@ df_sig = df_sig.dropna(how='all')
 
 Vsig = np.arange(21,27)
 Vtemp = np.arange(-2, 20, 2)
-Vsal =10
+Vsal = np.arange(29.5, 34, .5)
 
 
 ## ---- plot temperature ---- ##
@@ -99,6 +99,8 @@ fig.set_size_inches(w=12, h=6)
 fig.set_dpi(200)
 outfile = 'Viking2017_sal.png'
 fig.savefig(outfile)
+
+
 
 
 #os.system('convert -trim ' + outfile + ' ' + outfile)

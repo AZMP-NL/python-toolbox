@@ -25,6 +25,8 @@ os.system('cp bottomS_fall2017.png bottomS_spring2017.png ~/to_windows/')
 %my_run azmp_bottomT_scorecards.py
 os.system('cp scorecards_botT_spring.png scorecards_botT_fall.png ~/to_windows/')
 
+%my_run azmp_bottomT_mean_anomaly.py
+os.system('cp mean_anomalies_fall.png mean_anomalies_spring.png ~/to_windows/')
 
 
 

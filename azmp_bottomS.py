@@ -210,6 +210,10 @@ polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
 polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
 polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
 
+# Contour of data to mask
+contour_mask = np.load('100m_contour_labrador.npy')
+polygon_mask = Polygon(contour_mask)
+
 if season == 'spring':
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
@@ -229,6 +233,9 @@ elif season == 'fall':
                 pass #nothing to do but cannot implement negative statement "if not" above
             else:
                 Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+            if polygon_mask.contains(point): # mask data near Labrador in fall
+                Sbot[j,i] = np.nan 
 else:
     print('no division mask, all data taken')
             
@@ -241,7 +248,8 @@ anom = Sbot-Sbot_climato
 ## ---- Plot Anomaly ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(-1, 1, 6)
+#levels = np.linspace(-1, 1, 6)
+levels = np.array([-1, -.8, -.6, -.4, -.2, .2, .4, .6, .8, 1])
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -273,7 +281,8 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 ## ---- Plot Salinity ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(30, 36, 7)
+levels = np.linspace(30, 36, 13)
+#levels = np.linspace(30, 36, 7)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Sbot, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -307,7 +316,8 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(30, 36, 7)
+levels = np.linspace(30, 36, 13)
+#levels = np.linspace(30, 36, 7)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Sbot_climato, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -339,74 +349,4 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 
 # Convert to a subplot
 os.system('montage bottom_sal_climato_' + season + '_' + year + '.png bottom_sal_' + season + '_' + year + '.png bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  bottomS_' + season + year + '.png') 
-
-
-
-## #### ---- Plot temp + anom ---- ####
-## fig, ax = plt.subplots(nrows=1, ncols=2)
-
-## ## Subplot 1
-## m = Basemap(ax=ax[0], projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-## #levels = np.linspace(-2, 6, 9)
-## xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-
-## c = m.contourf(xi, yi, Sbot, levels, cmap=plt.cm.RdBu_r, extend='max')
-## cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-## plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-## m.fillcontinents(color='tan');
-## m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-## m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-
-## cax = plt.axes([0.455,0.51,0.02,0.35])
-## cb = plt.colorbar(c, cax=cax)
-## #cax = plt.axes([0.13,0.1,0.35,.03])
-## #cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-## cb.set_label(r'$\rm S$', fontsize=12, fontweight='bold')
-## #cb.set_ticklabels('bold')
-
-## div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
-## for div in div_toplot:
-##     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
-##     m.plot(div_lon, div_lat, 'k', linewidth=2)
-##     ax[0].text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
-
-
-## ## Subplot 2
-## m = Basemap(ax=ax[1], projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-## levels = np.linspace(-1, 1, 6)
-## xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-
-## c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
-## cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-## plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-## m.fillcontinents(color='tan');
-## m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
-## m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-
-## cax = plt.axes([0.88,0.51,0.02,0.35])
-## [cax.spines[k].set_visible(False) for k in cax.spines]
-## cax.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
-## cax.set_facecolor([1,1,1,0.7])
-## cb = plt.colorbar(c, cax=cax)
-## #cax = plt.axes([0.54,0.,0.35,.03])
-## #cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-## cb.set_label(r'$\rm S$', fontsize=12, fontweight='bold')
-## #cb.set_ticklabels('bold')
-
-
-## div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
-## for div in div_toplot:
-##     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
-##     m.plot(div_lon, div_lat, 'k', linewidth=2)
-##     ax[1].text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
-
-        
-## #### ---- Save Figure ---- ####
-## #plt.suptitle('Spring surveys', fontsize=16)
-## fig.set_size_inches(w=12, h=8)
-## #fig.tight_layout() 
-## fig.set_dpi(200)
-## outfile = 'bottom_sal_subplot_' + season + '_' + year + '.png'
-## fig.savefig(outfile)
-## os.system('convert -trim ' + outfile + ' ' + outfile)
 

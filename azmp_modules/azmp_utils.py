@@ -412,12 +412,28 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         df_sal = da_sal.to_pandas()
         df_sal.columns = bins[0:-1] #rename columns with 'bins'
         # Remove empty columns
-        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        idx_empty_rows = df_sal.isnull().all(1).nonzero()[0]
         df_sal = df_sal.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
-        lats = np.delete(lats,idx_empty_rows)
+        lats = np.delete(lats,idx_empty_rows)        
         print(' -> Done!')
 
+        ## ---- Try to remove outliers ---- ##
+        # METHOD 1
+        ## print('For climato, keep only profile with average salinity in [28,38]')
+        ## df_sal_vert_ave = df_sal.mean(axis=1)
+        ## mu =  df_sal_vert_ave.mean()
+        ## sigma = df_sal_vert_ave.std()
+        ## print mu, sigma
+        ## idx = np.where((df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu+5*sigma))
+        ## idx = np.where((df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu+5*sigma))
+        ## lons = lons[idx]
+        ## lats = lats[idx]
+        ## df_sal = df_sal[(df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu*5*sigma)]
+        # METHOD 2
+        df_sal = df_sal.apply(lambda x: [y if y <= 36.75 else np.nan for y in x])
+        df_sal = df_sal.apply(lambda x: [y if y >= 28 else np.nan for y in x])        
+        print(' -> Done!')        
 
         ## --- fill 3D cube --- ##  
         print('Fill regular cube')
@@ -666,6 +682,10 @@ def get_bottomT(year_file, season, climato_file):
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
 
+    # Contour of data to mask
+    contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+    polygon_mask = Polygon(contour_mask)
+    
     if season == 'spring':
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
@@ -686,6 +706,9 @@ def get_bottomT(year_file, season, climato_file):
                 else:
                     pass
                     #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+                if polygon_mask.contains(point): # mask data near Labrador in fall
+                    Tbot[j,i] = np.nan 
     else:
         print('no division mask, all data taken')
 
@@ -869,6 +892,10 @@ def get_bottomS(year_file, season, climato_file):
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
 
+    # Contour of data to mask
+    contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+    polygon_mask = Polygon(contour_mask)
+    
     if season == 'spring':
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
@@ -889,6 +916,9 @@ def get_bottomS(year_file, season, climato_file):
                 else:
                     pass
                     #Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+                if polygon_mask.contains(point): # mask data near Labrador in fall
+                    Sbot[j,i] = np.nan 
     else:
         print('no division mask, all data taken')
 

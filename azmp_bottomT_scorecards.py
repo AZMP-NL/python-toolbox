@@ -49,8 +49,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-4, 4)
-cmap = plt.cm.get_cmap('seismic', 9) 
+normal = plt.Normalize(-3.5, 3.5)
+cmap = plt.cm.get_cmap('seismic', 7) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 hcell, wcell = 0.5, 0.5
 hpad, wpad = 0, 0    
@@ -82,7 +82,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -1.4) | (np.float(cell_text) >= 1.4) :
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
         cell._text.set_color('white')
 plt.savefig("scorecards_fall_2J.png", dpi=300)
 os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
@@ -110,8 +110,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-normal = plt.Normalize(-4, 4)
-cmap = plt.cm.get_cmap('seismic', 9) 
+normal = plt.Normalize(-3.5, 3.5)
+cmap = plt.cm.get_cmap('seismic', 7) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
@@ -137,11 +137,11 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif key[0] == 0:
-        pass
+    #elif key[0] == 0:# <--- remove when no years
+    #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -1.4) | (np.float(cell_text) >= 1.4) :
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
         cell._text.set_color('white')
 
 plt.savefig("scorecards_fall_3K.png", dpi=300)
@@ -170,8 +170,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-4, 4)
-cmap = plt.cm.get_cmap('seismic', 9) 
+normal = plt.Normalize(-3.5, 3.5)
+cmap = plt.cm.get_cmap('seismic', 7) 
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -197,11 +197,11 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif key[0] == 0:
-        pass
+    #elif key[0] == 0:# <--- remove when no years
+    #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -1.4) | (np.float(cell_text) >= 1.4) :
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
         cell._text.set_color('white')
 plt.savefig("scorecards_fall_3LNO.png", dpi=300)
 os.system('convert -trim scorecards_fall_3LNO.png scorecards_fall_3LNO.png')
@@ -233,8 +233,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-4, 4)
-cmap = plt.cm.get_cmap('seismic', 9) 
+normal = plt.Normalize(-3.5, 3.5)
+cmap = plt.cm.get_cmap('seismic', 7) 
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -264,7 +264,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -1.4) | (np.float(cell_text) >= 1.4) :
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
         cell._text.set_color('white')
 plt.savefig("scorecards_spring_3LNO.png", dpi=300)
 os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
@@ -291,8 +291,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-normal = plt.Normalize(-4, 4)
-cmap = plt.cm.get_cmap('seismic', 9) 
+normal = plt.Normalize(-3.5, 3.5)
+cmap = plt.cm.get_cmap('seismic', 7) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
@@ -318,11 +318,11 @@ for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
     if is_number(cell_text) == False:
         pass
-    elif key[0] == 0:
-        pass
+    #elif key[0] == 0: # <--- remove when no years
+    #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -1.4) | (np.float(cell_text) >= 1.4) :
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
         cell._text.set_color('white')
 
 plt.savefig("scorecards_spring_3Ps.png", dpi=300)

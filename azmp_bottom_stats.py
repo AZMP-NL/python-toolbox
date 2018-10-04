@@ -40,7 +40,7 @@ lon_0 = -50
 lat_0 = 50
 proj = 'merc'
 plot = False # to plot or not to plot...
-season = 'fall'
+season = 'spring'
 
 # load climato
 if season == 'fall':
@@ -166,6 +166,8 @@ df_3Ps = pd.DataFrame.from_dict(dict_stats_3Ps, orient='index')
 df_3LNO = pd.DataFrame.from_dict(dict_stats_3LNO, orient='index')
 df_3K = pd.DataFrame.from_dict(dict_stats_3K, orient='index')
 df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')
+
+keyboard
 
 
 outname = 'stats_3Ps_' + season + '.pkl'

@@ -61,6 +61,7 @@ proj = 'merc'
 #spring = False
 #fig_name = 'map_bottom_temp.png'
 zmax = 1000 # do try to compute bottom temp below that depth
+zmin = 0
 dz = 5 # vertical bins
 #dc = .1
 #lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
@@ -68,7 +69,7 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'fall'
+season = 'spring'
 year = '2017'
 
 if season=='spring':
@@ -123,12 +124,14 @@ else:
 #bins = np.arange(dz/2.0, df_temp.columns.max(), dz)
 #ds = ds.groupby_bins('level', bins).mean(dim='level')
 # Restrict max depth to zmax defined earlier
-ds = ds.sel(level=ds['level']<zmax)
+#ds = ds.sel(level=ds['level']<zmax)
+#ds = ds.sel(level=ds['level']>zmin)
 # Vertical binning (on dataArray; more appropriate here
 da_temp = ds['temperature']
 lons = np.array(ds.longitude)
 lats = np.array(ds.latitude)
-bins = np.arange(dz/2.0, ds.level.max(), dz)
+#bins = np.arange(dz/2.0, ds.level.max(), dz)
+bins = np.arange(dz/2.0, 1000, dz)
 da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
 #To Pandas Dataframe
 df_temp = da_temp.to_pandas()
@@ -223,6 +226,11 @@ polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
 polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
 polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
 
+# Contour of data to mask
+contour_mask = np.load('100m_contour_labrador.npy')
+polygon_mask = Polygon(contour_mask)
+
+
 if season == 'spring':
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
@@ -232,7 +240,8 @@ if season == 'spring':
                 pass #nothing to do but cannot implement negative statement "if not" above
             else:
                 Tbot[j,i] = np.nan
-
+            
+                
 elif season == 'fall':
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
@@ -242,6 +251,9 @@ elif season == 'fall':
             else:
                 Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
                 #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+            if polygon_mask.contains(point): # mask data near Labrador in fall
+                Tbot[j,i] = np.nan 
 else:
     print('no division mask, all data taken')
             
@@ -255,6 +267,7 @@ anom = Tbot-Tbot_climato
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
 levels = np.linspace(-3.5, 3.5, 8)
+#levels = np.linspace(-3.5, 3.5, 16)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -286,7 +299,8 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 ## ---- Plot Temperature ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(-2, 6, 9)
+#levels = np.linspace(-2, 6, 9)
+levels = np.linspace(-2, 6, 17)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -321,7 +335,8 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(-2, 6, 9)
+#levels = np.linspace(-2, 6, 9)
+levels = np.linspace(-2, 6, 17)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Tbot_climato, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
