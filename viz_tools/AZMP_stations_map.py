@@ -34,14 +34,14 @@ import matplotlib.pyplot as plt
 import openpyxl, pprint
 
 ## ---- Region parameters ---- ##
-dataFile = '/home/cyrf0006/Data/GEBCO/GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
 lon_0 = -50
 lat_0 = 50
 lonLims = [-70, -40]
 latLims = [40, 65]
 proj = 'merc'
 decim_scale = 4
-stationFile = '/home/cyrf0006/research/AZMP_surveys/STANDARD_SECTIONS.xlsx'
+stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
 fig_name = 'AZMP_lines.png'
 ephem = 'ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'

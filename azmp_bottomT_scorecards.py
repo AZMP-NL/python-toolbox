@@ -11,6 +11,8 @@ import pandas as pd
 import os
 import unicodedata
 
+clim_year = [1981, 2010]
+
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
     try:
@@ -29,28 +31,35 @@ def is_number(s):
 # 1.
 infile = 'stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
-# Pass in 2 digit-index:
-new_index = [i[2:4] for i in df.index]
-df = df.set_index(pd.Series(new_index))
+year_list = df.index # save former index
+year_list = [i[2:4] for i in year_list] # 2-digit year
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
-std_anom['MEAN'] = df.mean(axis=0)
-std_anom['SD'] = df.std(axis=0)
+std_anom['MEAN'] = df_clim.mean(axis=0)
+std_anom['SD'] = df_clim.std(axis=0)
 std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
 std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 # Get text values +  cell color
+year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+year_list.append(r'sd')   
 vals = np.around(std_anom.values,1)
+vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-3.5, 3.5)
-cmap = plt.cm.get_cmap('seismic', 7) 
+#vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+
+normal = plt.Normalize(-4.49, 4.49)
+cmap = plt.cm.get_cmap('seismic', 9) 
+#cmap = plt.cm.get_cmap('seismic', 15) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 hcell, wcell = 0.5, 0.5
 hpad, wpad = 0, 0    
@@ -64,7 +73,7 @@ header = ax.table(cellText=[['']],
                       )
 header.set_fontsize(13)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
                     )
@@ -91,27 +100,41 @@ os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
 # 2.
 infile = 'stats_3K_fall.pkl'
 df = pd.read_pickle(infile)
-# Pass in 2 digit-index:
-new_index = [i[2:4] for i in df.index]
-df = df.set_index(pd.Series(new_index))
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
-std_anom['MEAN'] = df.mean(axis=0)
-std_anom['SD'] = df.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha300', 'area_warmer2', 'area_colder1'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha300': r'$\rm T_{bot_{<300m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+std_anom['MEAN'] = df_clim.mean(axis=0)
+std_anom['SD'] = df_clim.std(axis=0)
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+## df = pd.read_pickle(infile)
+## # Pass in 2 digit-index:
+## new_index = [i[2:4] for i in df.index]
+## df = df.set_index(pd.Series(new_index))
+## df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+## df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+## df['area_warmer2'] = df['area_warmer2']/1000
+## std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+## std_anom = std_anom.T
+## std_anom['MEAN'] = df.mean(axis=0)
+## std_anom['SD'] = df.std(axis=0)
+## std_anom = std_anom.reindex(['Tmean', 'Tmean_sha300', 'area_warmer2', 'area_colder1'])
+## std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha300': r'$\rm T_{bot_{<300m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+## std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
+vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-normal = plt.Normalize(-3.5, 3.5)
-cmap = plt.cm.get_cmap('seismic', 7) 
+normal = plt.Normalize(-4.49, 4.49)
+cmap = plt.cm.get_cmap('seismic', 9) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
@@ -151,27 +174,27 @@ os.system('convert -trim scorecards_fall_3K.png scorecards_fall_3K.png')
 # 3.
 infile = 'stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
-# Pass in 2 digit-index:
-new_index = [i[2:4] for i in df.index]
-df = df.set_index(pd.Series(new_index))
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
-std_anom['MEAN'] = df.mean(axis=0)
-std_anom['SD'] = df.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha100', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha100': r'$\rm T_{bot_{<100m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+std_anom['MEAN'] = df_clim.mean(axis=0)
+std_anom['SD'] = df_clim.std(axis=0)
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
+vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-3.5, 3.5)
-cmap = plt.cm.get_cmap('seismic', 7) 
+normal = plt.Normalize(-4.49, 4.49)
+cmap = plt.cm.get_cmap('seismic', 9) 
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -214,27 +237,31 @@ os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fal
 # 1.
 infile = 'stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
-# Pass in 2 digit-index:
-new_index = [i[2:4] for i in df.index]
-df = df.set_index(pd.Series(new_index))
+year_list = df.index # save former index
+year_list = [i[2:4] for i in year_list] # 2-digit year
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
-std_anom['MEAN'] = df.mean(axis=0)
-std_anom['SD'] = df.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha100', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha100': r'$\rm T_{bot_{<100m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+std_anom['MEAN'] = df_clim.mean(axis=0)
+std_anom['SD'] = df_clim.std(axis=0)
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
+year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+year_list.append(r'sd')
 vals = np.around(std_anom.values,1)
+vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-3.5, 3.5)
-cmap = plt.cm.get_cmap('seismic', 7) 
+normal = plt.Normalize(-4.49, 4.49)
+cmap = plt.cm.get_cmap('seismic', 9) 
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -246,7 +273,7 @@ header = ax.table(cellText=[['']],
 
 header.set_fontsize(12.5)
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list, 
                     loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1.0, 0.50]
                     )
@@ -272,27 +299,27 @@ os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
 # 2.
 infile = 'stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
-# Pass in 2 digit-index:
-new_index = [i[2:4] for i in df.index]
-df = df.set_index(pd.Series(new_index))
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
-std_anom['MEAN'] = df.mean(axis=0)
-std_anom['SD'] = df.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha100', 'area_warmer2', 'area_colder0'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha100': r'$\rm T_{bot_{<100m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+std_anom['MEAN'] = df_clim.mean(axis=0)
+std_anom['SD'] = df_clim.std(axis=0)
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
+vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-normal = plt.Normalize(-3.5, 3.5)
-cmap = plt.cm.get_cmap('seismic', 7) 
+normal = plt.Normalize(-4.49, 4.49)
+cmap = plt.cm.get_cmap('seismic', 9) 
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)

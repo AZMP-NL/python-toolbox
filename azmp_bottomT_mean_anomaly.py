@@ -17,36 +17,45 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 width = 0.7
 
+clim_year = [1981, 2010]
+
 #### ------------- For fall ---------------- ####
 # 1.
 infile = 'stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom2J = std_anom[['Tmean', 'Tmean_sha200']]
 
 # 2.
 infile = 'stats_3K_fall.pkl'
 df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3K = std_anom[['Tmean', 'Tmean_sha300']]
 
 # 3.
 infile = 'stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3LNO = std_anom[['Tmean', 'Tmean_sha100']]
 
 # 4. plot all merged together
 std_anom_all = pd.concat([std_anom2J, std_anom3K, std_anom3LNO], axis=1)
 df = std_anom_all.mean(axis=1)
+df.index = df.index.year
 
 fig = plt.figure(4)
 fig.clf()
 sign=df>0
-df.plot(kind='bar', color=sign.map({True: 'darkorange', False: 'steelblue'}), width = width)
+df.plot(kind='bar', color=sign.map({True: 'red', False: 'blue'}), width = width)
 plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
 #plt.xlabel('Year')
 plt.title('Mean bottom temperature anomaly for 2J3KLNO - Fall', weight='bold', fontsize=14)
@@ -65,25 +74,32 @@ os.system('convert -trim mean_anomalies_fall.png mean_anomalies_fall.png')
 # 1.
 infile = 'stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3LNO = std_anom[['Tmean', 'Tmean_sha100']]
 
 # 2.
 infile = 'stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-std_anom = (df-df.mean(axis=0))/df.std(axis=0)
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3Ps = std_anom[['Tmean', 'Tmean_sha100']]
 
 # 4. plot all merged together
 std_anom_all = pd.concat([std_anom3LNO, std_anom3Ps], axis=1)
 df = std_anom_all.mean(axis=1)
+df.index = df.index.year
+
 
 fig = plt.figure(5)
 fig.clf()
 sign=df>0
-df.plot(kind='bar', color=sign.map({True: 'darkorange', False: 'steelblue'}), width = width)
+#df.plot(kind='bar', color=sign.map({True: 'darkorange', False: 'steelblue'}), width = width)
+df.plot(kind='bar', color=sign.map({True: 'red', False: 'blue'}), width = width)
 plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
 #plt.xlabel('Year')
 plt.title('Mean bottom temperature anomaly for 3LNOPs - Spring', weight='bold', fontsize=14)

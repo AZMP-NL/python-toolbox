@@ -13,7 +13,7 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 ## ------------------- Parameters to be edited ----------------- ##
-YLIMS = [0, 500]
+YLIMS = [0, 200]
 CHL_MAX = 5
 St27 = [47.550, -52.590]
 
@@ -32,7 +32,9 @@ St27 = [47.550, -52.590]
 #filelist = np.genfromtxt('TEL176_BI.list', dtype=str)
 #filelist = np.genfromtxt('DIS009_SI.list', dtype=str)
 #filelist = np.genfromtxt('FD009_FC.list', dtype=str)
-filelist = np.genfromtxt('FD009_BB.list', dtype=str)
+#filelist = np.genfromtxt('FD009_BB.list', dtype=str)
+filelist = np.genfromtxt('HUD118_SEGB.list', dtype=str)
+#filelist = np.genfromtxt('HUD118_SWSPB.list', dtype=str)
 
 
 
@@ -58,7 +60,9 @@ for fname in filelist:
     LATlist.append(profile.attributes['LATITUDE'])
     LONlist.append(profile.attributes['LONGITUDE'])
 
-    # Must get profile, remove upcast + 5-m bin average
+    vars = profile.keys()
+    
+     # Must get profile, remove upcast + 5-m bin average
     P = np.array(profile['PRES'])
     T = np.array(profile['TEMP'])
     S = np.array(profile['PSAL'])
@@ -66,8 +70,12 @@ for fname in filelist:
     SIG = np.array(profile['sigma_t'])
     F = np.array(profile['flECO-AFL'])
     O2 = np.array(profile['oxigen_ml_L'])
-    PH= np.array(profile['ph'])
-   
+
+    if 'ph' in vars:
+        PH = np.array(profile['ph'])
+    else:
+        PH = np.array(profile['TEMP'])*np.nan
+    
     Ibtm = np.argmax(P)    
     digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
     
@@ -144,7 +152,7 @@ lat_max = max(l[0] for l in coords)
 lat_min = min(l[0] for l in coords)
 lon_max = max(l[1] for l in coords)
 lon_min = min(l[1] for l in coords)
-lat, lon, Z = get_GEBCO.main('/home/cyrf0006/Data/GEBCO/GEBCO_08.nc', [-lat_max, -lat_min, lon_min, lon_max])
+lat, lon, Z = get_GEBCO.main('/home/cyrf0006/data/GEBCO/GEBCO_08.nc', [-lat_max, -lat_min, lon_min, lon_max])
 lat = -lat
 Z = -Z
 X, Y = np.meshgrid(lon, lat)  # grid X,Y

@@ -89,6 +89,97 @@ def get_nafo_divisions():
 
     return dict
 
+
+def build_NLshelf_definition():
+    """ Will generate a dict with NL shelf 1000m limit shape.
+
+    Example to access info:
+    >> dict['lat']
+
+    """
+    ## ---- Get Bathymetry ---- ####
+    dc = .1
+    lonLims = [-60, -45] # FC AZMP report region
+    latLims = [42, 56]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+    # Load data
+    dataset = netCDF4.Dataset(dataFile)
+    x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+    y = [-89-59.75/60, 89+59.75/60]
+    spacing = dataset.variables['spacing']
+    # Compute Lat/Lon
+    nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+    ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+    lon = np.linspace(x[0],x[-1],nx)
+    lat = np.linspace(y[0],y[-1],ny)
+    # interpolate data on regular grid (temperature grid)
+    # Reshape data
+    zz = dataset.variables['z']
+    Z = zz[:].reshape(ny, nx)
+    Z = np.flipud(Z) # <------------ important!!!
+    # Reduce data according to Region params
+    idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+    idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+    Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+    lon = lon[idx_lon[0]]
+    lat = lat[idx_lat[0]]
+    # interpolate data on regular grid (temperature grid)
+    lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
+    lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
+    lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
+    z_vec = np.reshape(Z, Z.size)
+    Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+
+    # Use matplotlib contour to extract 1000m isobath
+    cc = plt.contour(lon_reg, lat_reg, -Zitp, [1000])
+    c1000  = cc.allsegs[0][1]
+    lon_vec = c1000[:,0]
+    lat_vec = c1000[:,1]
+    idx_drop = np.where((lon_vec < -56) & (lat_vec < 46))
+    lon_vec = np.delete(lon_vec, idx_drop)
+    lat_vec = np.delete(lat_vec, idx_drop)
+    # add some points in land to close the loop
+    lon_vec = np.append(lon_vec, lon_vec[-1])
+    lat_vec = np.append(lat_vec, 48)
+    lon_vec = np.append(lon_vec, -57)
+    lat_vec = np.append(lat_vec, 48)
+    lon_vec = np.append(lon_vec, -57)
+    lat_vec = np.append(lat_vec, 48)
+
+    contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+    contour_mask = contour_mask[1:-2, :]
+    lon_vec = np.append(lon_vec, np.flipud(contour_mask[:,0]))
+    lat_vec = np.append(lat_vec, np.flipud(contour_mask[:,1]))
+    lon_vec = np.append(lon_vec, lon_vec[0])
+    lat_vec = np.append(lat_vec, lat_vec[0])
+
+    A = np.stack((lon_vec, lat_vec)).T
+
+    return A
+
+def get_NLshelf(infile):
+    """ If infile exists, it will load a dict with NLshelf. If not, it will create it.
+    usage example"
+    import azmp_utils as azu
+    NLshelf = azu.get_NLshelf('/home/cyrf0006/github/AZMP-NL/data/NLshelf_definition.npy')
+
+    """
+
+    if os.path.isfile(infile):
+        print [infile + ' exist! Reading directly']
+        A = np.load(infile)
+    else:
+        print [infile + ' does not exist! Let''s buil it...']
+        A = build_NLshelf_definition()
+        np.save(infile, A)
+        print ['  -> Done!']
+  
+    return A
+
+
 def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[10, 1000], dz=5, h5_outputfile=[]):
     """ Generate and returns the climatological bottom temperature map.
     This script uses GEBCO dada. User should update the path below.
@@ -1088,3 +1179,126 @@ def polygon_temperature_stats(dict, shape):
     dict['area_warmer2'] = area_warmer_2deg
 
     return dict
+
+
+def masterfile_section_to_multiindex(section, z_vec):
+    """
+    This function reads the master file Excel sheet and pickle a Multi-index DataFrame organized as:
+
+
+    Depth                            0    2    4        6        8        10   \
+    station year variable    season                                             
+    BB01    1999 temperature spring  NaN  NaN  NaN      NaN      NaN      NaN   
+                             summer  NaN  NaN  NaN   9.6315   9.6265  9.59314   
+                             fall    NaN  NaN  NaN  3.23428  3.23473  3.23507   
+                 salinity    spring  NaN  NaN  NaN      NaN      NaN      NaN   
+                             summer  NaN  NaN  NaN  34.1785  34.1793  34.1823   
+                                       [...]                    
+
+
+    ** This script whould be moved in ~/github/AZMP once stable
+    usage ex:
+    import numpy as np
+    import azmp_utils as azu
+    azu.masterfile_section_to_multiindex('BB', np.arange(0,350, 2))
+
+    References
+    ----------
+
+    Atlantic Zone Monitoring Program @NAFC:
+    https://azmp-nl.github.io/
+
+    """
+
+    ## ---- List of variable to export ---- ##
+    varname = pd.Series(['temperature', 'salinity', 'sigmat', 'oxygen', 'PO4', 'SIO', 'NO3'])
+
+    ## ----  Load biochemical data ---- ##
+    df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
+    # Set date as index
+    df = df.set_index('sas_date')
+    # Drop other time-related columns
+    df = df.drop(['Day', 'Month', 'Year'], axis=1)
+    # Keep only targeted section
+    df = df[df.section == section]
+    # rename temperature
+    df = df.rename(columns={'temp':'temperature'})
+
+    sname_unique = pd.Series(df.sname.unique())
+    sname_unique.name='station'
+
+    df_list_station = []
+    for i, stn in enumerate(sname_unique):
+
+        df_sname = df[df.sname==stn]
+        years_unique = df_sname.index.year.unique()
+        years_unique.name='year'
+
+        df_list_year = []
+        for j, year in enumerate(years_unique):
+
+            df_year = df_sname[df_sname.index.year == year]
+
+            # Select only seasons
+            df_spring = df_year[(df_year.index.month>=4) & (df_year.index.month<=6)]
+            df_summer = df_year[(df_year.index.month>=7) & (df_year.index.month<=9)]
+            df_fall = df_year[(df_year.index.month>=10) & (df_year.index.month<=12)]
+
+            df_list_var = []
+            for k, var in enumerate(varname):
+
+                df_season_clean = pd.DataFrame(index=['spring', 'summer', 'fall'], columns=z_vec)
+                df_season_clean.index.name='season'
+                df_season_clean.columns.name='Depth'
+
+                # Spring
+                var_itp = np.full((z_vec.shape), np.nan)
+                series_var = df_spring[var]
+                if series_var.size>1: # <---- Here I end up ignoring some data if only one sample per profile...
+                    series_z = df_spring.depth
+                    idx_good = np.argwhere((~np.isnan(series_var)))            
+                    interp = interp1d(series_z.values, series_var.values)  
+                    idx_interp = np.where((z_vec>=series_z.min()) & (z_vec<=series_z.max()))
+                    var_itp[idx_interp] = interp(z_vec[idx_interp]) # interpolate only where possible (1st to last good idx)
+                    var_itp_series = var_itp
+                    df_season_clean.loc['spring'] = var_itp
+
+                # Summer
+                var_itp = np.full((z_vec.shape), np.nan)
+                series_var = df_summer[var]
+                if series_var.size>1:
+                    series_z = df_summer.depth
+                    idx_good = np.argwhere((~np.isnan(series_var)))            
+                    interp = interp1d(series_z.values, series_var.values)  
+                    idx_interp = np.where((z_vec>=series_z.min()) & (z_vec<=series_z.max()))
+                    var_itp[idx_interp] = interp(z_vec[idx_interp]) # interpolate only where possible (1st to last good idx)
+                    var_itp_series = var_itp
+                    df_season_clean.loc['summer'] = var_itp
+
+                # Fall
+                var_itp = np.full((z_vec.shape), np.nan)
+                series_var = df_fall[var]
+                if series_var.size>1:
+                    series_z = df_fall.depth
+                    idx_good = np.argwhere((~np.isnan(series_var)))            
+                    interp = interp1d(series_z.values, series_var.values)  
+                    idx_interp = np.where((z_vec>=series_z.min()) & (z_vec<=series_z.max()))
+                    var_itp[idx_interp] = interp(z_vec[idx_interp]) # interpolate only where possible (1st to last good idx)
+                    var_itp_series = var_itp
+                    df_season_clean.loc['fall'] = var_itp
+
+
+                df_list_var.append(df_season_clean)
+
+
+            df_list_year.append(pd.concat(df_list_var,keys=varname))
+
+
+        df_list_station.append(pd.concat(df_list_year,keys=years_unique))
+
+
+    section_mindex = pd.concat(df_list_station,keys=sname_unique)  
+
+    section_mindex.to_pickle('bottle_data_multiIndex_' + section +'.pkl')
+
+    return section_mindex
