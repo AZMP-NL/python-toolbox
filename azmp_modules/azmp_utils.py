@@ -1195,23 +1195,37 @@ def masterfile_section_to_multiindex(section, z_vec):
                              summer  NaN  NaN  NaN  34.1785  34.1793  34.1823   
                                        [...]                    
 
+    INPUT:
+    - section = section name (ex: 'BB', 'SI', etc.)
+    - z_vec = binned depth vector (see example)
 
-    ** This script whould be moved in ~/github/AZMP once stable
+    OUTPUT:
+    - in addition of pickling the Multi-index, it returns it for verification 
+                                       
     usage ex:
     import numpy as np
     import azmp_utils as azu
     azu.masterfile_section_to_multiindex('BB', np.arange(0,350, 2))
 
-    References
-    ----------
+    Multi-index manipulation examples:
+    df_BB = pd.read_pickle('bottle_data_multiIndex_BB.pkl')
+    # 1. Single station average vertical profile
+    A = df_BB.xs(('BB01', 'NO3'),level=('station', 'variable'))
+    A.groupby(level=0).apply(lambda x: x.mean()).mean()
 
-    Atlantic Zone Monitoring Program @NAFC:
-    https://azmp-nl.github.io/
+    # 2. Single year section
+    B = df_BB.xs((2016, 'NO3'),level=('year', 'variable'))
+    B.groupby(level=0).apply(lambda x: x.mean())
+
+    # 3. 1999-2016 section climato
+    C = df_BB.xs(('NO3'),level=('variable'))
+    C.groupby(level=0).apply(lambda x: x.mean())
 
     """
 
     ## ---- List of variable to export ---- ##
     varname = pd.Series(['temperature', 'salinity', 'sigmat', 'oxygen', 'PO4', 'SIO', 'NO3'])
+    varname.name='variable'
 
     ## ----  Load biochemical data ---- ##
     df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
