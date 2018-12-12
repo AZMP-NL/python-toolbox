@@ -37,6 +37,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from shapely.ops import cascaded_union
 from area import area # external fns to compute surface area
+from seawater import extras as swx
 
     
 def get_nafo_divisions():
@@ -197,6 +198,14 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
     Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Tbot_climato_fall.h5')
 
+    For Eugene's LabSea:
+    dc = .10
+    lonLims = [-63, -56] # Lab Sea
+    latLims = [54, 59]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, year_lims=[1928, 2017], season='fall', h5_outputfile='Tbot_climato_LabSea_fall_1950-2017.h5')
+
     OR
 
     azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring.h5') 
@@ -210,6 +219,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         Tbot = h5f['Tbot'][:]
         lon_reg = h5f['lon_reg'][:]
         lat_reg = h5f['lat_reg'][:]
+        lon_orig = h5f['lon_orig'][:]
+        lat_orig = h5f['lat_orig'][:]
         Zitp = h5f['Zitp'][:]
         h5f.close()
 
@@ -297,8 +308,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         df_temp = df_temp.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
-        print(' -> Done!')
-
+        print(' -> Done!')        
 
         ## --- fill 3D cube --- ##  
         print('Fill regular cube')
@@ -375,6 +385,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             h5f.create_dataset('Tbot', data=Tbot)
             h5f.create_dataset('lon_reg', data=lon_reg)
             h5f.create_dataset('lat_reg', data=lat_reg)
+            h5f.create_dataset('lon_orig', data=lons)
+            h5f.create_dataset('lat_orig', data=lats)
             h5f.create_dataset('Zitp', data=Zitp)
             h5f.create_dataset('z', data=z)
             h5f.close()
@@ -385,7 +397,9 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     dict['bathy'] = Zitp
     dict['lon_reg'] = lon_reg
     dict['lat_reg'] = lat_reg
-
+    dict['lon_orig'] = lons
+    dict['lat_orig'] = lats
+    
     return dict
 
 
@@ -419,6 +433,8 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         Sbot = h5f['Sbot'][:]
         lon_reg = h5f['lon_reg'][:]
         lat_reg = h5f['lat_reg'][:]
+        lon_orig = h5f['lon_orig'][:]
+        lat_orig = h5f['lat_orig'][:]
         Zitp = h5f['Zitp'][:]
         h5f.close()
 
@@ -598,6 +614,8 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             h5f.create_dataset('Sbot', data=Sbot)
             h5f.create_dataset('lon_reg', data=lon_reg)
             h5f.create_dataset('lat_reg', data=lat_reg)
+            h5f.create_dataset('lon_orig', data=lons)
+            h5f.create_dataset('lat_orig', data=lats)
             h5f.create_dataset('Zitp', data=Zitp)
             h5f.create_dataset('z', data=z)
             h5f.close()
@@ -608,7 +626,9 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     dict['bathy'] = Zitp
     dict['lon_reg'] = lon_reg
     dict['lat_reg'] = lat_reg
-
+    dict['lon_orig'] = lons
+    dict['lat_orig'] = lats
+    
     return dict
     
 
@@ -1224,7 +1244,7 @@ def masterfile_section_to_multiindex(section, z_vec):
     """
 
     ## ---- List of variable to export ---- ##
-    varname = pd.Series(['temperature', 'salinity', 'sigmat', 'oxygen', 'PO4', 'SIO', 'NO3'])
+    varname = pd.Series(['temperature', 'salinity', 'sigmat', 'oxygen', 'PO4', 'SIO', 'NO3', 'chlor', 'fluor', 'satO2_perc', 'NPratio', 'f_pw'])
     varname.name='variable'
 
     ## ----  Load biochemical data ---- ##
@@ -1235,9 +1255,14 @@ def masterfile_section_to_multiindex(section, z_vec):
     df = df.drop(['Day', 'Month', 'Year'], axis=1)
     # Keep only targeted section
     df = df[df.section == section]
+    # Other derived variables
+    df['satO2'] = swx.satO2(df['salinity'], df['temp'])
+    df['satO2_perc'] = df['oxygen']/df['satO2']*100
+    df['NPratio'] = df['NO3']/df['PO4']
+    df['f_pw'] = (df.NO3 - (17.499*df.PO4 - 3.072)) / ((12.368*df.PO4 - 10.549) - (17.499*df.PO4 - 3.072))
     # rename temperature
     df = df.rename(columns={'temp':'temperature'})
-
+    
     sname_unique = pd.Series(df.sname.unique())
     sname_unique.name='station'
 
