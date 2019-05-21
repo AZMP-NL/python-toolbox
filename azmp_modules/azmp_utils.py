@@ -50,6 +50,16 @@ def get_nafo_divisions():
 
     """
 
+    # 2G
+    xlon = [-64.5, -64.5, -59, -52, -61.9]
+    xlat = [60.3, 61, 61, 57.667, 57.667]
+    div2G = {'lat' : xlat, 'lon' : xlon}
+
+    # 2H
+    xlon = [-61.924, -52.010, -47.531, -60.382]
+    xlat = [57.667, 57.667, 55.333, 55.333]
+    div2H = {'lat' : xlat, 'lon' : xlon}
+
     # 2J
     xlon = [-59.778, -47.529, -42, -55.712]
     xlat = [55.33, 55.33, 52.25, 52.25]
@@ -70,6 +80,11 @@ def get_nafo_divisions():
     xlat = [46, 46, 39, 39, 39.927, 46]
     div3N = {'lat' : xlat, 'lon' : xlon}
 
+    # 3M
+    xlon = [-42, -46.5, -46.5, -42, -42]
+    xlat = [49.25, 49.25, 39, 39, 49.25]
+    div3M = {'lat' : xlat, 'lon' : xlon}
+
     # 3O
     xlon = [-54.5, -51, -51, -54.5, -54.5]
     xlat = [46, 46, 39.927, 43.064, 46]
@@ -79,14 +94,24 @@ def get_nafo_divisions():
     xlon = [-57.523, -58.82, -54.5, -54.5, -54.2]
     xlat = [47.631, 46.843, 43.064, 46, 46.815]
     div3Ps = {'lat' : xlat, 'lon' : xlon}
-    
+
+    #4R
+    xlon = [-59.308, -59.571, -60, -60, -57.114]
+    xlat = [47.62, 47.473, 47.883, 49.418, 51.412]
+    div4R = {'lat' : xlat, 'lon' : xlon}
+        
     dict = {}
+    dict['2G'] = div2G
+    dict['2H'] = div2H
     dict['2J'] = div2J
     dict['3K'] = div3K
     dict['3L'] = div3L
     dict['3N'] = div3N
+    dict['3M'] = div3M
     dict['3O'] = div3O
     dict['3Ps'] = div3Ps
+    dict['3O'] = div3O
+    dict['4R'] = div4R
 
     return dict
 
@@ -291,6 +316,13 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         else:
             print('!! no season specified, used them all! !!')
 
+
+        # Remome problematic datasets
+        print('!!Remove MEDBA data!!')
+        print('  ---> I Should be improme because I remove good data!!!!')
+        ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+            
+            
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
@@ -505,6 +537,11 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         else:
             print('!! no season specified, used them all! !!')
 
+        # Remome problematic datasets
+        print('!!Remove MEDBA data!!')
+        print('  ---> I Should be improme because I remove good data!!!!')
+        ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+        
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
@@ -632,7 +669,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     return dict
     
 
-def get_bottomT(year_file, season, climato_file):
+def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     """ Generate and returns bottom temperature data corresponding to a certain climatology map
     (previously generated with get_bottomT_climato)
     Function returns:
@@ -651,7 +688,9 @@ def get_bottomT(year_file, season, climato_file):
     Zitp = h5f['Zitp'][:]
     h5f.close()
     Tbot_dict = azu.get_bottomT(year_file, 'fall', climato_file)
-    
+
+      Dec. 2018: Added a flag for masking or not.
+
     """
     ## ---- Load Climato data ---- ##    
     print('Load ' + climato_file)
@@ -695,6 +734,11 @@ def get_bottomT(year_file, season, climato_file):
     else:
         print('!! no season specified, used them all! !!')
 
+    # Remome problematic datasets
+    print('!!Remove MEDBA data!!')
+    print('  ---> I Should be improme because I remove good data!!!!')
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)        
+        
     # Restrict max depth to zmax defined earlier
     ds = ds.sel(level=ds['level']<zmax)
     # Vertical binning (on dataArray; more appropriate here
@@ -770,7 +814,7 @@ def get_bottomT(year_file, season, climato_file):
             ## if idx_no_good.size:
             ##     temp_vec[idx_no_good] = np.nan
             idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-            if idx_good.size:
+            if idx_good.size>1:
                 idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
             else:
                 continue
@@ -781,47 +825,55 @@ def get_bottomT(year_file, season, climato_file):
                 #print('used data located [30,50]m from bottom')
                 Tbot[j,i] = temp_vec[idx_good[idx_closest]]
 
-    print(' -> Done!')    
+    print(' -> Done!')
 
-    # Mask data outside Nafo div.
-    print('Mask according to NAFO division for ' + season)
-    # Polygons
-    polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
-    polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
-    polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
-    polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
-    polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
-    polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
-
-    # Contour of data to mask
-    contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
-    polygon_mask = Polygon(contour_mask)
-    
-    if season == 'spring':
+    # Mask data on coastal Labrador
+    if lab_mask == True:
+        print('Mask coastal labrador')
+        contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+        polygon_mask = Polygon(contour_mask)
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
-                #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    Tbot[j,i] = np.nan
-
-    elif season == 'fall':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-                #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-                if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    pass
-                    #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
-
                 if polygon_mask.contains(point): # mask data near Labrador in fall
                     Tbot[j,i] = np.nan 
+
+    if nafo_mask == True:
+        # Mask data outside Nafo div.
+        print('Mask according to NAFO division for ' + season)
+        # Polygons
+        polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+        polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
+        polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
+        polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
+        polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
+        polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+
+        if season == 'spring':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
+                    if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Tbot[j,i] = np.nan
+
+        elif season == 'fall':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
+                    if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        pass
+                        #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+        else:
+            print('no division mask, all data taken')
     else:
-        print('no division mask, all data taken')
+            print('no division mask, all data taken')
 
     print(' -> Done!')    
 
@@ -836,7 +888,7 @@ def get_bottomT(year_file, season, climato_file):
     
     return dict
 
-def get_bottomS(year_file, season, climato_file):    
+def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):    
     """ Generate and returns bottom temperature data corresponding to a certain climatology map
     (previously generated with get_bottomS_climato)
     Function returns:
@@ -855,6 +907,8 @@ def get_bottomS(year_file, season, climato_file):
     Zitp = h5f['Zitp'][:]
     h5f.close()
     Sbot_dict = azu.get_bottomS(year_file, 'fall', climato_file)
+
+    Dec. 2018: Added a flag for masking or not.
     
     """
 
@@ -901,6 +955,12 @@ def get_bottomS(year_file, season, climato_file):
         print('!! no season specified, used them all! !!')
 
 
+    # Remome problematic datasets
+    print('!!Remove MEDBA data!!')
+    print('  ---> I Should be improme because I remove good data!!!!')
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+
+    
     # Vertical binning (on dataset; slower here as we don't need it)
     #bins = np.arange(dz/2.0, df_temp.columns.max(), dz)
     #ds = ds.groupby_bins('level', bins).mean(dim='level')
@@ -993,43 +1053,52 @@ def get_bottomS(year_file, season, climato_file):
 
     print(' -> Done!')    
 
-    # Mask data outside Nafo div.
-    print('Mask according to NAFO division for ' + season)
-    # Polygons
-    polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
-    polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
-    polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
-    polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
-    polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
-    polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
-
-    # Contour of data to mask
-    contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
-    polygon_mask = Polygon(contour_mask)
     
-    if season == 'spring':
+    # Mask data on coastal Labrador
+    if lab_mask == True:
+        print('Mask coastal labrador')
+        contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+        polygon_mask = Polygon(contour_mask)
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
-                #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    Sbot[j,i] = np.nan
-
-    elif season == 'fall':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-                #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-                if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    pass
-                    #Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
-
                 if polygon_mask.contains(point): # mask data near Labrador in fall
                     Sbot[j,i] = np.nan 
+            
+    # Mask data outside Nafo div.
+    if nafo_mask == True:
+        print('Mask according to NAFO division for ' + season)
+        # Polygons
+        polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+        polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
+        polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
+        polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
+        polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
+        polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+
+        if season == 'spring':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
+                    if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Sbot[j,i] = np.nan
+
+        elif season == 'fall':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
+                    if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        pass
+                        #Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+        else:
+            print('no division mask, all data taken')
     else:
         print('no division mask, all data taken')
 
@@ -1128,9 +1197,10 @@ def Tbot_to_GIS_ascii(h5file, ascfile):
 
     
 def polygon_temperature_stats(dict, shape):
-    """ Attempt to compute some stats about temperature in nafo sub-division
+    """ to compute some stats about temperature in nafo sub-division
+    (e.g., to build ResDoc Scorecards)
     
-    Usage ex:
+    Usage ex (for ResDocs):
     import azmp_utils as azu
     from shapely.geometry.polygon import Polygon
     from shapely.ops import cascaded_union
@@ -1142,9 +1212,8 @@ def polygon_temperature_stats(dict, shape):
     shape_3LNO = [polygon3L, polygon3N, polygon3O]
     new_shape = cascaded_union(shape_3LNO)
     dict = azu.polygon_temperature_stats(Tdict, new_shape)
-    
-    *** Ask Eugene why the choice of Division for these stats. ***
-    
+
+    But the stats can be computed on any polygon (cf. shrimp's SFA aras)    
     """
 
     # Output from 
@@ -1187,7 +1256,13 @@ def polygon_temperature_stats(dict, shape):
     area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
     # area with temperature > 2
     area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
-    
+    # area with temperature > 2 & < 4 (shrimp habitat)
+    area_shrimp = data_vec[(data_vec>=2) & (data_vec<=4)].size*pixel_area
+    # area with temperature < 2 (crab habitat)
+    area_colder_2deg = data_vec[data_vec<=2].size*pixel_area
+    # % area with temperature < 2 (crab habitat)
+    area_colder_2deg_perc = area_colder_2deg/(data_vec.size*pixel_area)*100.0
+          
     # Fill dict for output
     dict = {}
     dict['Tmean'] = Tmean
@@ -1195,8 +1270,72 @@ def polygon_temperature_stats(dict, shape):
     dict['Tmean_sha200'] = Tmean200
     dict['Tmean_sha300'] = Tmean300
     dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
-    dict['area_colder1'] = area_colder_1deg # <--- now in km2. They are divisded by 1000 in scorecard.
+    dict['area_colder1'] = area_colder_1deg 
     dict['area_warmer2'] = area_warmer_2deg
+    dict['area_shrimp'] = area_shrimp
+    dict['area_colder2'] = area_colder_2deg 
+    dict['area_colder2_perc'] = area_colder_2deg_perc 
+
+    return dict
+
+def polygon_salinity_stats(dict, shape):
+    """ Almost the same as previous, but for salinity
+    This time, it was no designed for ResDoc, but rather to give average salinity over SFA areas.
+    And unlike previous, only the average is given.
+
+    Dec. 2018
+    """
+
+    # Output from 
+    map = dict['Sbot']
+    bathy = dict['bathy']
+    lon_reg = dict['lon_reg']
+    lat_reg = dict['lat_reg']
+
+    # derive mean pixel area
+    obj = {'type':'Polygon','coordinates':[[[lon_reg[0],lat_reg[0]],[lon_reg[0],lat_reg[-1]],[lon_reg[-1],lat_reg[-1]],[lon_reg[-1],lat_reg[0]],[lon_reg[0],lat_reg[0]]]]}
+    pixel_area = area(obj)/1e6/map.size
+    
+    # select data in polygon
+    data_vec = []
+    bathy_vec = []
+    for i, xx in enumerate(lon_reg):
+        for j,yy in enumerate(lat_reg):
+            point = Point(lon_reg[i], lat_reg[j])            
+            if shape.contains(point):
+                data_vec = np.append(data_vec, map[j,i])
+                bathy_vec = np.append(bathy_vec, bathy[j,i])
+            else:                
+                pass
+
+    # remove nans            
+    bathy_vec = bathy_vec[~np.isnan(data_vec)]
+    data_vec = data_vec[~np.isnan(data_vec)]
+    
+    # mean temperature all polygon
+    Smean = data_vec.mean()
+
+    ## # mean temperature at depth shallower than 100m, 200m, 300m
+    ## Tmean100 = data_vec[bathy_vec>=-100].mean()
+    ## Tmean200 = data_vec[bathy_vec>=-200].mean()
+    ## Tmean300 = data_vec[bathy_vec>=-300].mean()
+    
+    ## # area with temperature < 0
+    ## area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
+    ## # area with temperature < 1
+    ## area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
+    ## # area with temperature > 2
+    ## area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
+    
+    # Fill dict for output
+    dict = {}
+    dict['Smean'] = Smean
+    ## dict['Tmean_sha100'] = Tmean100
+    ## dict['Tmean_sha200'] = Tmean200
+    ## dict['Tmean_sha300'] = Tmean300
+    ## dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
+    ## dict['area_colder1'] = area_colder_1deg # <--- now in km2. They are divisded by 1000 in scorecard.
+    ## dict['area_warmer2'] = area_warmer_2deg
 
     return dict
 

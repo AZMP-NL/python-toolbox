@@ -1,6 +1,8 @@
 '''
 Original script that generates a list of file from Dev and copy them on local computer. I decided not to use this script because the files are copied one by one which is super slow. I decided finally to create symbolink links and scp them to my local machine with 'symlink_pfiles_onDev.py'
 
+This method is however very convenient to update existing database with the new year just completed (e.g. just for 2018 pfiles).
+
 Frederic.Cyr@dfo-mpo.gc.ca - April 2018
 
 '''
@@ -12,12 +14,16 @@ host = 'cyrf@nl-bpo-dev.ent.dfo-mpo.ca'
 path = '/data/seabird'
 dest_folder = '/home/cyrf0006/data/dev_database'
 list_files = 'pfiles_and_time.list'
-my_password = 'XXXXXXX'
+my_password = 'vern123!'
 
 # DO NOT CALL NOW
 #get_list = "ssh -q cyrf@nl-bpo-dev.ent.dfo-mpo.ca 'find /data/seabird/* -type f -name *.p[1-2][0-9][0-9][0-9] -exec ls -l {} \;' > pfiles_and_time.list"
 #get_list_command = "ssh -q " + host + " 'find " + path + "/* -type f -name *.p[1-2][0-9][0-9][0-9] -exec ls -l {} \;' > " + list_files
-#os.system(get_list_command)
+
+# For 2018:
+get_list = "ssh -q cyrf@nl-bpo-dev.ent.dfo-mpo.ca 'find /data/seabird/* -type f -name *.p2018 -exec ls -l {} \;' > pfiles_and_time.list"
+get_list_command = "ssh -q " + host + " 'find " + path + "/* -type f -name *.p2018 -exec ls -l {} \;' > " + list_files
+os.system(get_list_command)
 
 d = []
 with open(list_files) as fp:  

@@ -13,7 +13,7 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 ## ------------------- Parameters to be edited ----------------- ##
-YLIMS = [0, 200]
+YLIMS = [0, 500]
 CHL_MAX = 5
 St27 = [47.550, -52.590]
 
@@ -33,8 +33,11 @@ St27 = [47.550, -52.590]
 #filelist = np.genfromtxt('DIS009_SI.list', dtype=str)
 #filelist = np.genfromtxt('FD009_FC.list', dtype=str)
 #filelist = np.genfromtxt('FD009_BB.list', dtype=str)
-filelist = np.genfromtxt('HUD118_SEGB.list', dtype=str)
+#filelist = np.genfromtxt('HUD118_SEGB.list', dtype=str)
 #filelist = np.genfromtxt('HUD118_SWSPB.list', dtype=str)
+#filelist = np.genfromtxt('HUD118_FC.list', dtype=str)
+#filelist = np.genfromtxt('HUD118_BB.list', dtype=str)
+filelist = np.genfromtxt('HUD118_S27.list', dtype=str)
 
 
 
@@ -190,7 +193,6 @@ bathy_y = np.append(bathy, [np.max(bathy), np.max(bathy), bathy[0]])
 bathymetry = zip(bathy_x, bathy_y)
 
 
-        
 ## ---- now plot ---- ##
 fig, axes = plt.subplots(nrows=5, ncols=1)
 

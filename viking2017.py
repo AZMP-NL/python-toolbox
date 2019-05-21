@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 This is a test with xarray, see if I can manipulate a lot of netCDF files.
 Try this script in /home/cyrf0006/research/AZMP_database/2017_data
@@ -16,14 +17,14 @@ import netCDF4
 #matplotlib.interactive(True)
 
 # For plots
-font = {'family' : 'normal',
+font = {'family' : 'DejaVu Sans',
         'weight' : 'bold',
         'size'   : 14}
 plt.rc('font', **font)
 
 # This is a dataset
 # in /home/cyrf0006/research/AZMP_database/2017_data
-ds = xr.open_dataset('2017_viking.nc')
+ds = xr.open_dataset('/home/cyrf0006/data/dev_database/viking_nc/2017_viking.nc')
 
 # Some utils:
 # np.unique(ds['instrument_ID'].values)
@@ -47,8 +48,9 @@ df_sig = df_sig.resample('1D').mean()
 df_sig = df_sig.dropna(how='all')
 
 Vsig = np.arange(21,27)
-Vtemp = np.arange(-2, 20, 2)
-Vsal = np.arange(29.5, 34, .5)
+Vtemp = np.arange(-2, 20, .5)
+Vsal = np.arange(29.5, 34, .25)
+XLIM = [datetime.date(2017, 7, 01), datetime.date(2017, 12, 31)]
 
 
 ## ---- plot temperature ---- ##
@@ -63,6 +65,7 @@ plt.grid('on')
 plt.xlabel('Time', fontsize=15, fontweight='bold')
 plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
 plt.ylim([0, 175])
+plt.xlim([XLIM[0], XLIM[1]])
 plt.gca().invert_yaxis()
 
 cax = fig.add_axes([0.91, .15, 0.01, 0.7])
@@ -74,7 +77,14 @@ fig.set_size_inches(w=12, h=6)
 fig.set_dpi(200)
 outfile = 'Viking2017_temp.png'
 fig.savefig(outfile)
-
+# Save French Figure
+plt.sca(ax)
+plt.xlabel(u'Période', fontsize=15, fontweight='bold')
+plt.ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+fig.set_size_inches(w=12, h=6)
+fig.set_dpi(200)
+outfile = 'Viking2017_temp_FR.png'
+fig.savefig(outfile)
 
 ## ---- plot Salinity ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -88,19 +98,26 @@ plt.grid('on')
 plt.xlabel('Time', fontsize=15, fontweight='bold')
 plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
 plt.ylim([0, 175])
+plt.xlim([XLIM[0], XLIM[1]])
 plt.gca().invert_yaxis()
 
 cax = fig.add_axes([0.91, .15, 0.01, 0.7])
 cb = plt.colorbar(c, cax=cax, orientation='vertical')
-cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+cb.set_label(r'$\rm S$', fontsize=12, fontweight='normal')
 
 # Save Figure
 fig.set_size_inches(w=12, h=6)
 fig.set_dpi(200)
 outfile = 'Viking2017_sal.png'
 fig.savefig(outfile)
-
-
+# Save French Figure
+plt.sca(ax)
+plt.xlabel(u'Période', fontsize=15, fontweight='bold')
+plt.ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+fig.set_size_inches(w=12, h=6)
+fig.set_dpi(200)
+outfile = 'Viking2017_sal_FR.png'
+fig.savefig(outfile)
 
 
 #os.system('convert -trim ' + outfile + ' ' + outfile)

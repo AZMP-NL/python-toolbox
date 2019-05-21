@@ -84,6 +84,13 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
     -> Need to calculate CIL area also (maybe another function using df output.)
     -> I think survey_name is non-existant in nc files... (rather cast IDs). Need to modify pfile_tools...
     (actually may bne working now) - edit 2018-05-29
+
+    NOT FINISHED!
+    ex:
+    import azmp_sections_tools as azs
+    azs.standard_section_plot('/home/cyrf0006/data/dev_database/2018.nc', TEL)
+
+
     """
 
     # For plots
@@ -166,4 +173,50 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
     fig_name = fig_title + '.png'
     fig.set_dpi(300)
     fig.savefig(fig_name)
+    return None
+
+
+def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], nc_outfile='out.nc'):
+    """
+    To extract hydrographic data from a certain section.
+    [Menu to be finished]
+
+    Eventually, I could add conditions on 'year_lims' and 'survey_name' that are not considered right now.
+    
+    Initially created after a request by F. Li on SI data.
+
+    A full usage example:
+    import azmp_sections_tools as azst
+    nc_file = '/home/cyrf0006/data/dev_database/201*.nc'
+    azst.extract_section_casts(nc_file, section_name='SI', nc_outfile='SI.nc')
+    
+    Frederic.Cyr@dfo-mpo.gc.ca
+    December 2018    
+    
+    """
+    # Open netCDF file using xarray
+    ds = xr.open_mfdataset(nc_file)
+
+    # Read unique station names from section file
+    df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+    df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
+    df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
+    df_stn = df_stn.dropna()
+    df_stn = df_stn[df_stn.STATION.str.contains(section_name)]
+    df_stn = df_stn.reset_index(drop=True)
+    stn_list = df_stn.STATION.values
+
+    # loop on stations and append datasets in a list
+    datasets = []
+    for stn in stn_list:
+        ds_section = ds.where(ds.comments == stn, drop=True)  
+        datasets.append(ds_section)
+
+    # concatenate the list of datasets
+    ds_combined = xr.concat(datasets, dim='time')
+
+    # save combined dataset in NetCDF
+    ds_combined.to_netcdf(nc_outfile)
+    
+    
     return None

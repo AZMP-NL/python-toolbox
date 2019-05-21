@@ -29,7 +29,7 @@ plt.rc('font', **font)
 
 ## ----  Load data from Excel sheet ---- ##
 ## NEED TO EDIT BY HAND TO ADD A COMMA AFTER AUTUMN and AUTOMNE (!!! TRY TO AUTOMIZED THIS)
-df = pd.read_csv('/home/cyrf0006/Data/AZMP/AirT/mm8403505.txt', header=2)
+df = pd.read_csv('/home/cyrf0006/data/AZMP/AirT/mm8403505.txt', header=2)
 
 # Drop French columns (Canadian bilinguism even in datafile!)
 df = df.drop(df.index[0]) # Drop French columns

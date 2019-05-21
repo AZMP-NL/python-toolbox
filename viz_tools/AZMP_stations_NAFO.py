@@ -25,26 +25,6 @@ attribute:
 '''
 
 
-## from netCDF4 import Dataset, num2date
-## import time, calendar, datetime, numpy
-## from mpl_toolkits.basemap import Basemap
-## import matplotlib.pyplot as plt
-## import urllib, os
-## # data downloaded from the form at
-## # http://coastwatch.pfeg.noaa.gov/erddap/tabledap/apdrcArgoAll.html
-## filename, headers = urllib.urlretrieve('http://coastwatch.pfeg.noaa.gov/erddap/tabledap/apdrcArgoAll.nc?longitude,latitude,time&longitude>=0&longitude<=360&latitude>=-90&latitude<=90&time>=2010-01-01&time<=2010-01-08&distinct()')
-## dset = Dataset(filename)
-## lats = dset.variables['latitude'][:]
-## lons = dset.variables['longitude'][:]
-## time = dset.variables['time']
-## times = time[:]
-## t1 = times.min(); t2 = times.max()
-## date1 = num2date(t1, units=time.units)
-## date2 = num2date(t2, units=time.units)
-## dset.close()
-## os.remove(filename)
-## # draw map with markers for float locations
-## m = Basemap(projection='hammer',lon_0=180)
 ## x, y = m(lons,lats)
 ## m.drawmapboundary(fill_color='#99ffff')
 ## m.fillcontinents(color='#cc9966',lake_color='#99ffff')
@@ -62,20 +42,21 @@ import openpyxl, pprint
 import shapefile 
 
 ## ---- Region parameters ---- ##
-dataFile = '/home/cyrf0006/Data/GEBCO/GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
 lon_0 = -50
 lat_0 = 50
 lonLims = [-70, -40]
 latLims = [40, 65]
 proj = 'merc'
 decim_scale = 4
-stationFile = '/home/cyrf0006/research/AZMP_surveys/STANDARD_SECTIONS.xlsx'
+stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
 fig_name = 'AZMP_NAFO.png'
 ephem = 'ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
 ## ---- Bathymetry ---- ####
 v = np.linspace(-4000, 0, 9)
+
 
 # Load data
 dataset = netCDF4.Dataset(dataFile)
@@ -136,8 +117,8 @@ index_SS = df.SECTION[df.SECTION=="SMITH SOUND"].index.tolist()
 ## len(list(sf.iterShapes()))
 
 # OR
-myshp = open('/home/cyrf0006/research/AZMP_utils/NAFO_divisions/Divisions/Divisions.shp', 'rb')
-mydbf = open('/home/cyrf0006/research/AZMP_utils/NAFO_divisions/Divisions/Divisions.dbf', 'rb')
+myshp = open('/home/cyrf0006/AZMP/utils/NAFO_divisions/Divisions/Divisions.shp', 'rb')
+mydbf = open('/home/cyrf0006/AZMP/utils/NAFO_divisions/Divisions/Divisions.dbf', 'rb')
 r = shapefile.Reader(shp=myshp, dbf=mydbf)
 records = r.records()
 shapes = r.shapes()
@@ -159,7 +140,7 @@ for l in cb.ax.yaxis.get_ticklabels():
     l.set_weight("bold")
     l.set_fontsize(10)
 cb.set_label('Depth (m)', fontsize=13, fontweight='bold')
-plt.title("AZMP-NL standard lines", fontsize=13, fontweight='bold')
+#plt.title("AZMP-NL standard lines", fontsize=13, fontweight='bold')
 
 # plot stations
 x, y = m(stationLon[index_SEGB],stationLat[index_SEGB])

@@ -11,6 +11,8 @@ font = {'family' : 'normal',
 
 plt.rc('font', **font)
 
+clim_year = [1981, 2010]
+
 ### --- T-S --- ###
 df_sal_season = pd.read_pickle('/home/cyrf0006/AZMP/dig_project/salinity_1948-2017.pkl')
 meanS = df_sal_season.iloc[:,df_sal_season.columns<300].mean(axis=1)
@@ -21,6 +23,16 @@ meanS1[meanS1<20]=np.nan
 meanS2[meanS2<20]=np.nan
 df_all = pd.read_pickle('/home/cyrf0006/AZMP/dig_project/temp_summer_1948-2017.pkl')
 CIL = df_all.min(axis=1)
+df_top = df_all[df_all.columns[(df_all.columns>10) & (df_all.columns<=50)]]
+df_SST = df_top.mean(axis=1)
+df_SST_clim = df_SST[(df_SST.index.year>=clim_year[0]) & (df_SST.index.year<=clim_year[1])]
+SST_anom = (df_SST-df_SST_clim.mean(axis=0))
+SST_std_anom = (df_SST-df_SST_clim.mean(axis=0))/df_SST_clim.std(axis=0)
+
+df_CIL = df_all.min(axis=1)
+df_CIL_clim = df_CIL[(df_CIL.index.year>=clim_year[0]) & (df_CIL.index.year<=clim_year[1])]
+CIL_anom = (df_CIL-df_CIL_clim.mean(axis=0))
+CIL_std_anom = (df_CIL-df_CIL_clim.mean(axis=0))/df_CIL_clim.std(axis=0)
 
 df_temp_surf = pd.read_pickle('/home/cyrf0006/AZMP/dig_project/historical_SST_25m_1948-2017.pkl')
 SST = df_temp_surf.iloc[:,df_temp_surf.columns<10].mean(axis=1)
@@ -28,6 +40,8 @@ SST = df_temp_surf.iloc[:,df_temp_surf.columns<10].mean(axis=1)
 SST_spring = SST[(SST.index.month>=4) & (SST.index.month<=8)]
 SST = SST.resample('AS').mean()
 SST_spring = SST_spring.resample('AS').mean()
+
+
 #HERRE!!!
 ### --- Nutrients --- ###
 
@@ -107,9 +121,9 @@ df_winter.resample('3M').mean()
 df_winter = df_winter.groupby(np.arange(len(df_winter))//3).mean()
 
 # Reset index using years only
-df_winter.index = pd.unique(df.index.year)[1:,]
+df_winter.index = pd.unique(df.index.year)
 df_winter.index = pd.to_datetime(df_winter.index, format='%Y')
-df_winter = df_winter[(df_winter.index.year>1950) & (df_winter.index.year<2018)]
+df_winter = df_winter[(df_winter.index.year>1950) & (df_winter.index.year<2019)]
 
 
 ### --- AOO index --- ###
@@ -164,7 +178,7 @@ df_amo = df_amo.resample('As').mean()
 ## df_amo = df_amo[df_amo>-10] # remove -99.99 data
 
 
-### --- plot --- ### (Physics)
+### --- plot --- ### (Physics)                     <---------------- Anomalies should be computed using clim period
 Sanomaly = (meanS-meanS.mean())/meanS.std()
 Sanomaly1 = (meanS1-meanS1.mean())/meanS1.std()
 Sanomaly2 = (meanS2-meanS2.mean())/meanS2.std()
@@ -207,15 +221,15 @@ fig.savefig(fig_name)
 fig = plt.figure(1)
 fig.clf()
 ax = fig.add_subplot(111)
-plt.plot(CIL.index, CIL_anom.rolling(window=5, center=True).mean(), linewidth=3)
+plt.plot(CIL.index, CIL_anom.rolling(window=5, center=False).mean(), linewidth=3)
 plt.plot(meanS.index, Sanomaly.rolling(window=12, center=True).mean(), 'r', linewidth=3)
-plt.plot(NAO_anom.index, NAO_anom.rolling(window=12, center=True).mean(), '--k', linewidth=5)
+plt.plot(NAO_anom.index, NAO_anom.rolling(window=12, center=False).mean(), '--k', linewidth=5)
 #plt.plot(df_season_surf.index, ratio.rolling(window=3, center=True).mean())
 plt.xlim([pd.to_datetime('1948'), pd.to_datetime('2019')])
 plt.xticks(pd.date_range('1950-01-01', periods=7, freq='10Y'))
 plt.ylim([-2,2])
 plt.grid()
-plt.legend(['CIL','S', r'$\rm NAO_{winter}$'], loc=2)
+plt.legend(['CIL', 'S', r'$\rm NAO_{winter}$'], loc=2)
 plt.xlabel('Year', fontweight='bold')
 plt.ylabel(r'Standardized anom.', fontweight='bold')
 plt.title('multi-index comparison')
@@ -227,6 +241,34 @@ plt.text(pd.to_datetime('2017-01-01'), -1.75, 'milder winter', horizontalalignme
 
 fig.set_size_inches(w=10,h=6)
 fig_name = 'TS-vs-NAO.png'
+fig.set_dpi(300)
+fig.savefig(fig_name)
+
+
+# T vs NAO
+fig = plt.figure(1)
+fig.clf()
+ax = fig.add_subplot(111)
+plt.plot(CIL.index, CIL_anom.rolling(window=5, center=False).mean(), linewidth=3)
+#plt.plot(meanS.index, Sanomaly.rolling(window=12, center=True).mean(), 'r', linewidth=3)
+plt.plot(NAO_anom.index, NAO_anom.rolling(window=12, center=False).mean(), '--k', linewidth=5)
+#plt.plot(df_season_surf.index, ratio.rolling(window=3, center=True).mean())
+plt.xlim([pd.to_datetime('1948'), pd.to_datetime('2019')])
+plt.xticks(pd.date_range('1950-01-01', periods=7, freq='10Y'))
+plt.ylim([-2,2])
+plt.grid()
+plt.legend(['CIL', r'$\rm NAO_{winter}$'], loc=2)
+plt.xlabel('Year', fontweight='bold')
+plt.ylabel(r'Standardized anom.', fontweight='bold')
+plt.title('multi-index comparison')
+
+plt.annotate("", xy=(pd.to_datetime('2017-01-01'), 1.75), xytext=(pd.to_datetime('2017-01-01'), .25), arrowprops=dict(arrowstyle="->"))
+plt.annotate("", xy=(pd.to_datetime('2017-01-01'), -1.75), xytext=(pd.to_datetime('2017-01-01'), -.25), arrowprops=dict(arrowstyle="->", facecolor='black'))
+plt.text(pd.to_datetime('2017-01-01'), 1.75, 'colder winter', horizontalalignment='right', verticalalignment='bottom')
+plt.text(pd.to_datetime('2017-01-01'), -1.75, 'milder winter', horizontalalignment='right', verticalalignment='top')
+
+fig.set_size_inches(w=10,h=6)
+fig_name = 'T-vs-NAO.png'
 fig.set_dpi(300)
 fig.savefig(fig_name)
 
@@ -289,7 +331,7 @@ fig.savefig(fig_name)
 fig = plt.figure(1)
 fig.clf()
 ax = fig.add_subplot(111)
-plt.plot(SST_spring.index, SST_anom_spring.rolling(window=3, center=True).mean(), linewidth=3)
+plt.plot(SST_spring.index, SST_anom_spring.rolling(window=13, center=True).mean(), linewidth=3)
 plt.plot(AMO_anom.index, AMO_anom.rolling(window=5, center=True).mean(), '--k', linewidth=5)
 #plt.plot(df_season_surf.index, ratio.rolling(window=3, center=True).mean())
 plt.xlim([pd.to_datetime('1948'), pd.to_datetime('2019')])
@@ -310,6 +352,34 @@ fig.set_size_inches(w=10,h=6)
 fig_name = 'SST-vs-AMO.png'
 fig.set_dpi(300)
 fig.savefig(fig_name)
+
+
+# SST vs AMO (2)
+fig = plt.figure(1)
+fig.clf()
+ax = fig.add_subplot(111)
+plt.plot(SST_anom.index, SST_anom.rolling(7,center=True).mean(), linewidth=3)
+plt.plot(AMO_anom.index, AMO_anom.rolling(window=5, center=True).mean(), '--k', linewidth=5)
+#plt.plot(df_season_surf.index, ratio.rolling(window=3, center=True).mean())
+plt.xlim([pd.to_datetime('1948'), pd.to_datetime('2019')])
+plt.xticks(pd.date_range('1950-01-01', periods=7, freq='10Y'))
+plt.ylim([-2,2])
+plt.grid()
+plt.legend(['SST', 'AMO'], loc=2)
+plt.xlabel('Year', fontweight='bold')
+plt.ylabel(r'Standardized anom.', fontweight='bold')
+plt.title('multi-index comparison')
+
+plt.annotate("", xy=(pd.to_datetime('2017-01-01'), 1.75), xytext=(pd.to_datetime('2017-01-01'), .25), arrowprops=dict(arrowstyle="->"))
+plt.annotate("", xy=(pd.to_datetime('2017-01-01'), -1.75), xytext=(pd.to_datetime('2017-01-01'), -.25), arrowprops=dict(arrowstyle="->", facecolor='black'))
+plt.text(pd.to_datetime('2017-01-01'), 1.75, 'warmer SST / stronger MOC', horizontalalignment='right', verticalalignment='bottom')
+plt.text(pd.to_datetime('2017-01-01'), -1.75, 'cooler SST / weaker MOC', horizontalalignment='right', verticalalignment='top')
+
+fig.set_size_inches(w=10,h=6)
+fig_name = 'SST-vs-AMO_2.png'
+fig.set_dpi(300)
+fig.savefig(fig_name)
+
 
 # SST vs AOO
 fig = plt.figure(1)
@@ -523,6 +593,30 @@ fig.savefig(fig_name)
 fig = plt.figure(4)
 fig.clf()
 ax = fig.add_subplot(111)
+plt.plot(Sanomaly_nut.index, Sanomaly_nut.rolling(window=12, center=True).mean(), linewidth=3)
+#plt.plot(NO3_deep_anom.index, NO3_deep_anom.rolling(window=3, center=True).mean(), linewidth=3)
+plt.plot(S27_anom.index, S27_anom.rolling(window=3, center=True).mean(), '--k', linewidth=3)
+#plt.plot(O2_deep_anom.index, O2_deep_anom.rolling(window=3, center=True).mean())
+plt.ylim([-1.75,1.75])
+plt.grid()
+plt.xlim([pd.to_datetime('1998'), pd.to_datetime('2017')])
+plt.legend(['S', 'S27 stratif'], loc=3)
+plt.xlabel('Year', fontsize=16, fontweight='bold')
+plt.ylabel(r'Standardized anom.', fontsize=16, fontweight='bold')
+
+plt.annotate("", xy=(pd.to_datetime('2016-01-01'), 1.45), xytext=(pd.to_datetime('2016-01-01'), .25), arrowprops=dict(arrowstyle="->"))
+plt.annotate("", xy=(pd.to_datetime('2016-01-01'), -1.45), xytext=(pd.to_datetime('2016-01-01'), -.25), arrowprops=dict(arrowstyle="->", facecolor='black'))
+plt.text(pd.to_datetime('2016-01-01'), 1.5, 'more stratified', horizontalalignment='right', verticalalignment='bottom')
+plt.text(pd.to_datetime('2016-01-01'), -1.5, 'less stratified', horizontalalignment='right', verticalalignment='top')
+#plt.title('multi-index comparison')
+fig.set_size_inches(w=10,h=6)
+fig_name = 'sal_stratif.png'
+fig.set_dpi(300)
+fig.savefig(fig_name)
+
+fig = plt.figure(4)
+fig.clf()
+ax = fig.add_subplot(111)
 plt.plot(CIL_anom.index, CIL_anom.rolling(window=3, center=True).mean(), linewidth=3)
 plt.plot(Sanomaly_nut.index, Sanomaly_nut.rolling(window=12, center=True).mean(), linewidth=3)
 #plt.plot(Sanomaly.index, Sanomaly.rolling(window=12, center=True).mean())
@@ -553,13 +647,14 @@ ax = fig.add_subplot(111)
 plt.plot(Sanomaly_nut.index, Sanomaly_nut.rolling(window=12, center=True).mean(), linewidth=3)
 #plt.plot(Sanomaly.index, Sanomaly.rolling(window=12, center=True).mean())
 plt.plot(NO3_deep_anom.index, NO3_deep_anom.rolling(window=3, center=True).mean(), linewidth=3)
-plt.plot(SIO_deep_anom.index, SIO_deep_anom.rolling(window=3, center=True).mean(), linewidth=3)
+#plt.plot(SIO_deep_anom.index, SIO_deep_anom.rolling(window=3, center=True).mean(), linewidth=3)
+plt.plot(PO4_deep_anom.index, PO4_deep_anom.rolling(window=3, center=True).mean(), linewidth=3)
 plt.plot(AOO_anom_nut.index, AOO_anom_nut.rolling(window=2, center=True).mean(), '--k', linewidth=3)
 #plt.plot(O2_deep_anom.index, O2_deep_anom.rolling(window=3, center=True).mean())
 plt.ylim([-1.75,1.75])
 plt.grid()
 plt.xlim([pd.to_datetime('1998'), pd.to_datetime('2017')])
-plt.legend(['S','NO3','SiO','AOO'], loc=2)
+plt.legend(['S','NO3','PO4','AOO'], loc=2)
 plt.xlabel('Year', fontsize=16, fontweight='bold')
 plt.ylabel(r'Standardized anom.', fontsize=16, fontweight='bold')
 

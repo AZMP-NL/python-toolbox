@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Bottom temperature maps for AZMP ResDoc
 
@@ -20,6 +21,8 @@ latLims = [42, 56]
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring_0.10.h5') 
+
+* see: /home/cyrf0006/AZMP/state_reports/bottomT
 
 '''
 
@@ -70,13 +73,14 @@ dz = 5 # vertical bins
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
 season = 'spring'
-year = '2017'
+year = '2018'
 
 if season=='spring':
     climato_file = 'Tbot_climato_spring_0.10.h5'
 elif season=='fall':
     climato_file = 'Tbot_climato_fall_0.10.h5'
-
+elif season=='summer':
+    climato_file = 'Tbot_climato_summer_0.10.h5'
 year_file = '/home/cyrf0006/data/dev_database/' + year + '.nc'
 
 
@@ -103,6 +107,13 @@ nafo_div = azu.get_nafo_divisions()
 ## ---- Get CTD data --- ##
 print('Get ' + year_file)
 ds = xr.open_mfdataset(year_file)
+
+# Remome problematic datasets
+#print('!!Remove MEDBA data!!')
+#print('  ---> I Should be improme because I remove good data!!!!')
+#ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+
+
 # Selection of a subset region
 ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
 ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
@@ -219,6 +230,7 @@ print(' -> Done!')
 # Mask data outside Nafo div.
 print('Mask according to NAFO division for ' + season)
 # Polygons
+polygon4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
 polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
 polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
 polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
@@ -254,9 +266,18 @@ elif season == 'fall':
 
             if polygon_mask.contains(point): # mask data near Labrador in fall
                 Tbot[j,i] = np.nan 
+
+elif season == 'summer':
+    for i, xx in enumerate(lon_reg):
+        for j,yy in enumerate(lat_reg):
+            point = Point(lon_reg[i], lat_reg[j])
+            # Just mask labrador
+            if polygon_mask.contains(point): # mask data near Labrador in fall
+                Tbot[j,i] = np.nan 
+
 else:
     print('no division mask, all data taken')
-            
+
 print(' -> Done!')    
 
 # Temperature anomaly:
@@ -284,7 +305,7 @@ m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight=
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -293,6 +314,19 @@ for div in div_toplot:
 fig.set_size_inches(w=6, h=9)
 fig.set_dpi(300)
 outfile = 'bottom_temp_anomaly_' + season + '_' + year + '.png'
+fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
+# Save French Figure
+plt.sca(ax)
+if season=='fall':
+    plt.title(u'Anomalie de température au fond - Automne ' + year )
+elif season=='spring':
+    plt.title(u'Anomalie de température au fond - Printemp ' + year )
+else:
+    plt.title(u'Anomalie de température au fond ' + year )
+fig.set_size_inches(w=6, h=9)
+fig.set_dpi(300)
+outfile = 'bottom_temp_anomaly_' + season + '_' + year + '_FR.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
@@ -320,7 +354,7 @@ cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -331,6 +365,20 @@ fig.set_dpi(200)
 outfile = 'bottom_temp_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
+# Save French Figure
+plt.sca(ax)
+if season=='fall':
+    plt.title(u'Température au fond - Automne ' + year )
+elif season=='spring':
+    plt.title(u'Température au fond - Printemp ' + year )
+else:
+    plt.title(u'Température au fond ' + year )
+fig.set_size_inches(w=6, h=9)
+fig.set_dpi(300)
+outfile = 'bottom_temp_' + season + '_' + year + '_FR.png'
+fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
+
 
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -353,7 +401,7 @@ m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight=
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -364,7 +412,22 @@ fig.set_dpi(300)
 outfile = 'bottom_temp_climato_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
+# Save French Figure
+plt.sca(ax)
+if season=='fall':
+    plt.title(u'Climatologie de température au fond - Automne ' + year )
+elif season=='spring':
+    plt.title(u'Climatologie de température au fond - Printemp ' + year )
+else:
+    plt.title(u'Climatologie de température au fond ' + year )
+fig.set_size_inches(w=6, h=9)
+fig.set_dpi(300)
+outfile = 'bottom_temp_climato_' + season + '_' + year + '_FR.png'
+fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
 
 
 # Convert to a subplot
 os.system('montage bottom_temp_climato_' + season + '_' + year + '.png bottom_temp_' + season + '_' + year + '.png bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  bottomT_' + season + year + '.png') 
+# in French
+os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  bottomT_' + season + year + '_FR.png') 

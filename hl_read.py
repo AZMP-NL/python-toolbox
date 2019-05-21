@@ -14,6 +14,7 @@ import numpy as np
 import datetime
 import pandas as pd
 import os
+import hl_tools as hlt
 
 # Adjust fontsize/weight
 font = {'family' : 'normal',
@@ -22,19 +23,25 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 # Generate the list
-infiles = 'comfortcove.list'
-os.system('ls ~/data/Headlands/Comfort_Cove/*.rpf > ' + infiles)
+#infiles = 'comfortcove.list'
+#os.system('ls ~/data/Headlands/Comfort_Cove/*.rpf > ' + infiles)
+infiles = 'oldbonaventure.list'
+os.system('ls ~/data/Headlands/Old_Bonaventure/*.rpf > ' + infiles)
+infiles = 'arnoldscove.list'
+os.system('ls ~/data/Headlands/ArnoldsCove/*.rpf > ' + infiles)
 filelist = np.genfromtxt(infiles, dtype=str)
 filelist = np.reshape(filelist, filelist.size) 
 
 dfs = []
 for fname in filelist:
-#    print fname
-    df = pd.read_csv(fname, sep='\s+',  parse_dates={'datetime': [0, 1]}, header=15)
-    df = df.set_index('datetime')
-    df.columns = ['temperature']
-    df = df.replace(9999.99, np.NaN)
-    print df.max()
+
+    header = hlt.rpf_header(fname)      
+    df = hlt.rpf_to_dataframe(fname)
+
+    #df['depth'] = 
+
+        
+    print fname, df.max()
     dfs.append(df)
     
 # concatenate all data    
@@ -47,14 +54,14 @@ df_monthly.plot()
 plt.show()
 
 
-df_monthly.to_csv('comfort_cove_thermograph_1989-2017_monthly.csv')
+#df_monthly.to_csv('comfort_cove_thermograph_1989-2017_monthly.csv')
 
 
 # June-July only:
 df_summer = df_monthly[(df_monthly.index.month>=6) & (df_monthly.index.month<=7)]
 df_summer = df_summer.resample('As').mean()
 df_summer.index = df_summer.index.year
-df_summer.to_csv('comfort_cove_thermograph_1989-2017_Jnue-July.csv')
+#df_summer.to_csv('comfort_cove_thermograph_1989-2017_Jnue-July.csv')
 
 
 
@@ -68,12 +75,10 @@ width = .9
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
 plt.ylabel('Standardized Anomaly')
-#plt.xlabel('Year')
 plt.title('Comfort Cove temperature (June-July)')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'Comfort_Cove_anomalies.png'
-#plt.annotate('data source: NCDC/NOAA', xy=(.75, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+fig_name = 'anomalie_toberenamed.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
@@ -102,6 +107,6 @@ plt.ylim([-2,18])
 plt.grid()
 plt.legend(['1989-2018 average', '2018'])
 fig.set_size_inches(w=15,h=9)
-fig_name = 'Comfort_Cove_T.png'
+fig_name = 'annual_cycle_toberenamed.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

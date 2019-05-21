@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 To generate AZMP score cards for bottom temperature
 
@@ -12,6 +13,7 @@ import os
 import unicodedata
 
 clim_year = [1981, 2010]
+years = [1980, 2017]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -31,9 +33,10 @@ def is_number(s):
 # 1.
 infile = 'stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
-year_list = df.index # save former index
-year_list = [i[2:4] for i in year_list] # 2-digit year
 df.index = pd.to_datetime(df.index) # update index to datetime
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+year_list = df.index.year.astype('str')
+year_list = [i[2:4] for i in year_list] # 2-digit year
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
@@ -68,7 +71,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- NAFO divison 2J --'],
+                      colLabels=['-- NAFO division 2J --'],
                       loc='center'
                       )
 header.set_fontsize(13)
@@ -96,11 +99,44 @@ for key, cell in the_table.get_celld().items():
 plt.savefig("scorecards_fall_2J.png", dpi=300)
 os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
 
+# French table
+std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+year_list[-1] = u'ET'
+
+header = ax.table(cellText=[['']],
+                      colLabels=['-- Division 2J de l\'OPANO --'],
+                      loc='center'
+                      )
+header.set_fontsize(13)
+#the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                    loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1, 0.5]
+                    )
+# change font color to white where needed:
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(12.5)
+table_props = the_table.properties()
+table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text()
+    if is_number(cell_text) == False:
+        pass
+    elif key[0] == 0: #year's row = no color
+        pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        cell._text.set_color('white')
+plt.savefig("scorecards_fall_2J_FR.png", dpi=300)
+os.system('convert -trim scorecards_fall_2J_FR.png scorecards_fall_2J_FR.png')
 
 # 2.
 infile = 'stats_3K_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
@@ -112,20 +148,6 @@ std_anom['SD'] = df_clim.std(axis=0)
 std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
 std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-## df = pd.read_pickle(infile)
-## # Pass in 2 digit-index:
-## new_index = [i[2:4] for i in df.index]
-## df = df.set_index(pd.Series(new_index))
-## df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-## df['area_colder1'] = df['area_colder1']/1000 # In 1000km
-## df['area_warmer2'] = df['area_warmer2']/1000
-## std_anom = (df-df.mean(axis=0))/df.std(axis=0)
-## std_anom = std_anom.T
-## std_anom['MEAN'] = df.mean(axis=0)
-## std_anom['SD'] = df.std(axis=0)
-## std_anom = std_anom.reindex(['Tmean', 'Tmean_sha300', 'area_warmer2', 'area_colder1'])
-## std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha300': r'$\rm T_{bot_{<300m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
-## std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
 vals[vals==-0.] = 0.
@@ -141,7 +163,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- NAFO divison 3K --'],
+                      colLabels=['-- NAFO division 3K --'],
                       loc='center'
                       )
 #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
@@ -170,11 +192,43 @@ for key, cell in the_table.get_celld().items():
 plt.savefig("scorecards_fall_3K.png", dpi=300)
 os.system('convert -trim scorecards_fall_3K.png scorecards_fall_3K.png')
 
+# French table
+std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+header = ax.table(cellText=[['']],
+                      colLabels=['-- Division 3K de l\'OPANO --'],
+                      loc='center'
+                      )
+#the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+header.set_fontsize(12.5)
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                    loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1.0, 0.50]
+                    )
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(12.5)
+# change font color to white where needed:
+table_props = the_table.properties()
+table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text()
+    if is_number(cell_text) == False:
+        pass
+    #elif key[0] == 0:# <--- remove when no years
+    #    pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        cell._text.set_color('white')
+
+plt.savefig("scorecards_fall_3K_FR.png", dpi=300)
+os.system('convert -trim scorecards_fall_3K_FR.png scorecards_fall_3K_FR.png')
 
 # 3.
 infile = 'stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
@@ -200,7 +254,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- NAFO divison 3LNO --'],
+                      colLabels=['-- NAFO division 3LNO --'],
                       loc='center'
                       )
 
@@ -229,7 +283,45 @@ for key, cell in the_table.get_celld().items():
 plt.savefig("scorecards_fall_3LNO.png", dpi=300)
 os.system('convert -trim scorecards_fall_3LNO.png scorecards_fall_3LNO.png')
 
+# French table
+std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+header = ax.table(cellText=[['']],
+                      colLabels=['-- Divisions 3LNO de l\'OPANO --'],
+                      loc='center'
+                      )
+
+header.set_fontsize(12.5)
+
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                    loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1.0, 0.50]
+                    )
+# change font color to white where needed:
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(12.5)
+table_props = the_table.properties()
+table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text()
+    if is_number(cell_text) == False:
+        pass
+    #elif key[0] == 0:# <--- remove when no years
+    #    pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        cell._text.set_color('white')
+        
+plt.savefig("scorecards_fall_3LNO_FR.png", dpi=300)
+os.system('convert -trim scorecards_fall_3LNO_FR.png scorecards_fall_3LNO_FR.png')
+
+
+# English
 os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_fall.png') 
+# French
+os.system('montage  scorecards_fall_2J_FR.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_fall_FR.png') 
+
 
 
 
@@ -237,7 +329,9 @@ os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fal
 # 1.
 infile = 'stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
-year_list = df.index # save former index
+df.index = pd.to_datetime(df.index) # update index to datetime
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+year_list = df.index.year.astype('str')
 year_list = [i[2:4] for i in year_list] # 2-digit year
 df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -267,7 +361,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- NAFO divison 3LNO --'],
+                      colLabels=['-- NAFO division 3LNO --'],
                       loc='center'
                       )
 
@@ -296,10 +390,45 @@ for key, cell in the_table.get_celld().items():
 plt.savefig("scorecards_spring_3LNO.png", dpi=300)
 os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
 
+# French table
+std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+year_list[-1] = u'ET'
+
+header = ax.table(cellText=[['']],
+                      colLabels=['-- Divisions 3LNO de l\'OPANO --'],
+                      loc='center'
+                      )
+header.set_fontsize(13)
+#the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                    loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1, 0.5]
+                    )
+# change font color to white where needed:
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(12.5)
+table_props = the_table.properties()
+table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text()
+    if is_number(cell_text) == False:
+        pass
+    elif key[0] == 0: #year's row = no color
+        pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        cell._text.set_color('white')
+plt.savefig("scorecards_spring_3LNO_FR.png", dpi=300)
+os.system('convert -trim scorecards_spring_3LNO_FR.png scorecards_spring_3LNO_FR.png')
+
+
 # 2.
 infile = 'stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df['area_colder1'] = df['area_colder1']/1000 # In 1000km
 df['area_warmer2'] = df['area_warmer2']/1000
@@ -326,7 +455,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- NAFO divison 3Ps --'],
+                      colLabels=['-- NAFO division 3Ps --'],
                       loc='center'
                       )
 header.set_fontsize(12.5)
@@ -355,4 +484,40 @@ for key, cell in the_table.get_celld().items():
 plt.savefig("scorecards_spring_3Ps.png", dpi=300)
 os.system('convert -trim scorecards_spring_3Ps.png scorecards_spring_3Ps.png')
 
-os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring.png') 
+# French table
+std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+header = ax.table(cellText=[['']],
+                      colLabels=['-- Division 3Ps de l\'OPANO --'],
+                      loc='center'
+                      )
+
+header.set_fontsize(12.5)
+
+the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                    loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1.0, 0.50]
+                    )
+# change font color to white where needed:
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(12.5)
+table_props = the_table.properties()
+table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text()
+    if is_number(cell_text) == False:
+        pass
+    #elif key[0] == 0:# <--- remove when no years
+    #    pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        cell._text.set_color('white')
+
+plt.savefig("scorecards_spring_3Ps_FR.png", dpi=300)
+os.system('convert -trim scorecards_spring_3Ps_FR.png scorecards_spring_3Ps_FR.png')
+
+# English montage
+os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring.png')
+# French montage
+os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring_FR.png')

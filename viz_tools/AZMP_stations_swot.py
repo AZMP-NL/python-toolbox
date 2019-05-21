@@ -6,21 +6,20 @@ import matplotlib.pyplot as plt
 import openpyxl, pprint
 
 import math
-from osgeo import ogr, osr
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 from matplotlib.patches import Polygon
 
 
 ## ---- Region parameters ---- ##
-dataFile = '/home/cyrf0006/Data/GEBCO/GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
 lon_0 = -50
 lat_0 = 50
 lonLims = [-70, -40]
 latLims = [40, 65]
 proj = 'merc'
 decim_scale = 4
-stationFile = '/home/cyrf0006/research/AZMP_surveys/STANDARD_SECTIONS.xlsx'
+stationFile = '/home/cyrf0006/github/AZMP-NL/data//STANDARD_SECTIONS.xlsx'
 fig_name = 'AZMP_lines_swot.png'
 ephem = 'ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
@@ -135,22 +134,25 @@ plt.text(x[-1], y[-1], ' MB', horizontalalignment='left', verticalalignment='cen
 x, y = m(stationLon[index_BI],stationLat[index_BI])
 m.scatter(x,y,3,marker='o',color='r')
 plt.text(x[-1], y[-1], ' BI', horizontalalignment='left', verticalalignment='center', fontsize=10, color='r', fontweight='bold')
-x, y = m(stationLon[index_FI],stationLat[index_FI])
-m.scatter(x,y,3,marker='o',color='lightcoral')
-plt.text(x[-1], y[-1], ' FI', horizontalalignment='left', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
-x, y = m(stationLon[index_S27],stationLat[index_S27])
-m.scatter(x,y,3,marker='o',color='lightcoral')
-#m.scatter(x[0],y[0],25,marker='p',color='r')
-plt.text(x[-1], y[-1], ' S27', horizontalalignment='left', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
+## x, y = m(stationLon[index_FI],stationLat[index_FI])
+## m.scatter(x,y,3,marker='o',color='lightcoral')
+## plt.text(x[-1], y[-1], ' FI', horizontalalignment='left', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
+## x, y = m(stationLon[index_S27],stationLat[index_S27])
+## m.scatter(x,y,3,marker='o',color='lightcoral')
+## plt.text(x[-1], y[-1], ' S27', horizontalalignment='left', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
 x, y = m(stationLon[index_SESPB],stationLat[index_SESPB])
 m.scatter(x,y,3,marker='o',color='r')
 plt.text(x[-1], y[-1], 'SESPB ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='r', fontweight='bold')
 x, y = m(stationLon[index_SWSPB],stationLat[index_SWSPB])
 m.scatter(x,y,3,marker='o',color='r')
 plt.text(x[-1], y[-1], 'SWSPB ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='r', fontweight='bold')
-x, y = m(stationLon[index_SS],stationLat[index_SS])
-m.scatter(x,y,3,marker='o',color='lightcoral')
-plt.text(x[0], y[0], 'SS ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
+## x, y = m(stationLon[index_SS],stationLat[index_SS])
+## m.scatter(x,y,3,marker='o',color='lightcoral')
+## plt.text(x[0], y[0], 'SS ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
+
+x, y = m(stationLon[index_S27],stationLat[index_S27])
+m.scatter(x[0],y[0],40,marker='*',color='r')
+plt.text(x[0], y[0], '  Stn-27', horizontalalignment='left', verticalalignment='center', fontsize=10, color='r', fontweight='bold')
 
 
 ## PLot swot stuff

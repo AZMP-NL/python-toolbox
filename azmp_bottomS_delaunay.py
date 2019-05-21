@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 Bottom salinity maps for AZMP ResDoc
 
@@ -43,7 +42,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from matplotlib.patches import Rectangle
 from matplotlib.patches import Polygon as PP
-
+from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
 def draw_screen_poly( lats, lons, m):
     x, y = m( lons, lats )
     xy = zip(x,y)
@@ -57,8 +56,8 @@ lat_0 = 50
 proj = 'merc'
 zmax = 1000 # do try to compute bottom temp below that depth
 dz = 5 # vertical bins
-season = 'spring'
-year = '2018'
+season = 'fall'
+year = '2017'
 
 if season=='spring':
     #climato_file = '2000-2015_Sbot_climato_spring_0.10.h5'
@@ -146,6 +145,29 @@ for i, xx in enumerate(lon_reg):
             V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
         elif np.size(idx_good)>1: # vertical interpolation between pts
             #V[j,i,:] = np.interp((z), np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  <--- this method propagate nans below max depth (extrapolation)
+            tri = Triangulation(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
+            ntri = tri.triangles.shape[0]
+            # Some invalid data are masked out
+            mask_init = np.zeros(ntri, dtype=np.bool)
+            masked_tri = random_gen.randint(0, ntri, int(ntri*init_mask_frac))
+            mask_init[masked_tri] = True
+            tri.set_mask(mask_init)
+            # masking badly shaped triangles at the border of the triangular mesh.
+            mask = TriAnalyzer(tri).get_flat_tri_mask(min_circle_ratio)
+            tri.set_mask(mask)
+
+            # refining the data
+            refiner = UniformTriRefiner(tri)
+            tri_refi, z_test_refi = refiner.refine_field(z_test, subdiv=subdiv)
+    
+            # analytical 'results' for comparison
+            z_expected = experiment_res(tri_refi.x, tri_refi.y)
+
+            # for the demo: loading the 'flat' triangles for plot
+            flat_tri = Triangulation(x_test, y_test)
+            flat_tri.set_mask(~mask)
+
+            
             interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  # <---------- Pay attention here, this is a bit unusual, but seems to work!
             idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
             V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
@@ -165,6 +187,32 @@ for k, zz in enumerate(z):
         LN = np.squeeze(lon_vec[idx_good])
         LT = np.squeeze(lat_vec[idx_good])
         TT = np.squeeze(tmp_vec[idx_good])
+
+        # Delaunay Triangulation
+        tri = Triangulation(LN, LT)
+        ntri = tri.triangles.shape[0]
+        # Some invalid data are masked out
+        mask_init = np.zeros(ntri, dtype=np.bool)
+        ## masked_tri = random_gen.randint(0, ntri, int(ntri*init_mask_frac))
+        ## mask_init[masked_tri] = True
+        ## tri.set_mask(mask_init)
+        # masking badly shaped triangles at the border of the triangular mesh.
+        mask = TriAnalyzer(tri).get_flat_tri_mask(min_circle_ratio)
+        tri.set_mask(mask)
+        #UNFINISHED!!
+            # refining the data
+        refiner = UniformTriRefiner(tri)
+        tri_refi, z_test_refi = refiner.refine_field(TT, subdiv=3)
+    
+            # analytical 'results' for comparison
+            z_expected = experiment_res(tri_refi.x, tri_refi.y)
+
+            # for the demo: loading the 'flat' triangles for plot
+            flat_tri = Triangulation(x_test, y_test)
+            flat_tri.set_mask(~mask)
+
+            
+
         zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
         V[:,:,k] = zi
     else:
@@ -249,8 +297,8 @@ anom = Sbot-Sbot_climato
 ## ---- Plot Anomaly ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-#levels = np.linspace(-1, 1, 6)
-levels = np.array([-1, -.8, -.6, -.4, -.2, .2, .4, .6, .8, 1])
+levels = np.linspace(-1, 1, 6)
+#levels = np.array([-1, -.8, -.6, -.4, -.2, .2, .4, .6, .8, 1])
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -278,25 +326,12 @@ fig.set_dpi(200)
 outfile = 'bottom_sal_anomaly_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
-# Save French Figure
-plt.sca(ax)
-if season=='fall':
-    plt.title(u'Anomalie de salinité au fond - Automne ' + year )
-elif season=='spring':
-    plt.title(u'Anomalie de salinité au fond - Printemp ' + year )
-else:
-    plt.title(u'Anomalie de salinité au fond ' + year )
-fig.set_size_inches(w=6, h=9)
-fig.set_dpi(300)
-outfile = 'bottom_sal_anomaly_' + season + '_' + year + '_FR.png'
-fig.savefig(outfile)
-os.system('convert -trim ' + outfile + ' ' + outfile)
 
 ## ---- Plot Salinity ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(30, 36, 13)
-#levels = np.linspace(30, 36, 7)
+#levels = np.linspace(30, 36, 13)
+levels = np.linspace(30, 36, 7)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Sbot, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -326,25 +361,12 @@ fig.set_dpi(200)
 outfile = 'bottom_sal_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
-# Save French Figure
-plt.sca(ax)
-if season=='fall':
-    plt.title(u'Salinité au fond - Automne ' + year )
-elif season=='spring':
-    plt.title(u'Salinité au fond - Printemp ' + year )
-else:
-    plt.title(u'Salinité au fond ' + year )
-fig.set_size_inches(w=6, h=9)
-fig.set_dpi(300)
-outfile = 'bottom_sal_' + season + '_' + year + '_FR.png'
-fig.savefig(outfile)
-os.system('convert -trim ' + outfile + ' ' + outfile)
 
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(30, 36, 13)
-#levels = np.linspace(30, 36, 7)
+#levels = np.linspace(30, 36, 13)
+levels = np.linspace(30, 36, 7)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Sbot_climato, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -372,23 +394,8 @@ fig.set_dpi(200)
 outfile = 'bottom_sal_climato_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
-# Save French Figure
-plt.sca(ax)
-if season=='fall':
-    plt.title(u'Climatoligie de salinité au fond - Automne ' + year )
-elif season=='spring':
-    plt.title(u'Climatologie de salinité au fond - Printemp ' + year )
-else:
-    plt.title(u'Climatologie de salinité au fond ' + year )
-fig.set_size_inches(w=6, h=9)
-fig.set_dpi(300)
-outfile = 'bottom_sal_climato_' + season + '_' + year + '_FR.png'
-fig.savefig(outfile)
-os.system('convert -trim ' + outfile + ' ' + outfile)
 
 
 # Convert to a subplot
 os.system('montage bottom_sal_climato_' + season + '_' + year + '.png bottom_sal_' + season + '_' + year + '.png bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  bottomS_' + season + year + '.png') 
-# French
-os.system('montage bottom_sal_climato_' + season + '_' + year + '_FR.png bottom_sal_' + season + '_' + year + '_FR.png bottom_sal_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  bottomS_' + season + year + '_FR.png') 
 

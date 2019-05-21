@@ -10,6 +10,7 @@ import azmp_utils as azu
 dc = .1
 lonLims = [-60, -43] # fish_hab region
 latLims = [39, 56]
+lonLims = [-61, -45] # includes 4R
 lonLims = [-60, -45] # FC AZMP report region
 latLims = [42, 56]
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
@@ -35,7 +36,8 @@ from shapely.ops import cascaded_union
 
 
 ## ---- preamble ---- ##
-years = np.arange(1980, 2018)
+#years = np.arange(1950, 2019)
+years = np.arange(1980, 2019)
 lon_0 = -50
 lat_0 = 50
 proj = 'merc'
@@ -47,6 +49,8 @@ if season == 'fall':
     climato_file = 'Tbot_climato_fall_0.10.h5'
 elif season == 'spring':
     climato_file = 'Tbot_climato_spring_0.10.h5'
+elif season == 'summer':
+    climato_file = 'Tbot_climato_summer_0.10.h5'
 h5f = h5py.File(climato_file, 'r')
 Tbot_climato = h5f['Tbot'][:]
 lon_reg = h5f['lon_reg'][:]
@@ -69,16 +73,23 @@ shape = [polygon3L, polygon3N, polygon3O]
 shape_3LNO = cascaded_union(shape)
 shape_3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
 shape_2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+shape_2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
 shape_3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+shape = [shape_2J, shape_2H]
+shape_2HJ = cascaded_union(shape)
+shape_4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
 
 
 dict_stats_3LNO = {}
 dict_stats_3Ps = {}
 dict_stats_3K = {}
 dict_stats_2J = {}
+dict_stats_2HJ = {}
+dict_stats_4R = {}
 
 
 # Loop on years
+df_list = []
 for year in years:
     print ' ---- ' + np.str(year) + ' ---- '
     year_file = '/home/cyrf0006/data/dev_database/' + np.str(year) + '.nc'
@@ -94,7 +105,17 @@ for year in years:
     dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
     dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
     dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
+    dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
+    dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
 
+    # Append bottom temperature for multi-index export
+    df = pd.DataFrame(index=lat_reg, columns=lon_reg)
+    df.index.name='latitude'
+    df.columns.name='longitude'
+    df[:] = Tbot
+    df_list.append(df)
+
+    
     if plot:
         # 1.1 - Plot Anomaly
         fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -116,7 +137,7 @@ for year in years:
         cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
         cb = plt.colorbar(c, cax=cax)
         cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-        div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+        div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
         for div in div_toplot:
             div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
             m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -149,7 +170,7 @@ for year in years:
         cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
         cb = plt.colorbar(c, cax=cax)
         cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-        div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+        div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
         for div in div_toplot:
             div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
             m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -166,8 +187,8 @@ df_3Ps = pd.DataFrame.from_dict(dict_stats_3Ps, orient='index')
 df_3LNO = pd.DataFrame.from_dict(dict_stats_3LNO, orient='index')
 df_3K = pd.DataFrame.from_dict(dict_stats_3K, orient='index')
 df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')
-
-keyboard
+df_2HJ = pd.DataFrame.from_dict(dict_stats_2HJ, orient='index')
+df_4R = pd.DataFrame.from_dict(dict_stats_4R, orient='index')
 
 
 outname = 'stats_3Ps_' + season + '.pkl'
@@ -178,3 +199,22 @@ outname = 'stats_3K_' + season + '.pkl'
 df_3K.to_pickle(outname)
 outname = 'stats_2J_' + season + '.pkl'
 df_2J.to_pickle(outname)
+outname = 'stats_2HJ_' + season + '.pkl'
+df_2HJ.to_pickle(outname)
+outname = 'stats_4R_' + season + '.pkl'
+df_4R.to_pickle(outname)
+
+# Save in multi-index  dataFrame
+year_index = pd.Series(years)
+year_index.name='year'
+df_mindex = pd.concat(df_list,keys=year_index)
+df_mindex.to_pickle('spring_bottom_temperature.pkl')
+
+
+## import feather
+## path = '3LNOPs_spring_bottom_temperature.feather'
+## feather.write_dataframe(df, path)
+
+## C = df_mindex.xs((2018),level=('year'))
+## D = C.groupby(level=0).apply(lambda x: x.mean())
+
