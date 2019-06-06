@@ -11,9 +11,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import unicodedata
+from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1981, 2010]
-years = [1980, 2017]
+years = [1980, 2018]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -60,12 +61,32 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
 
-normal = plt.Normalize(-4.49, 4.49)
-cmap = plt.cm.get_cmap('seismic', 9) 
+# Build the colormap
+vmin = -3.49
+vmax = 3.49
+midpoint = 0
+levels = np.linspace(vmin, vmax, 15)
+midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+normal = plt.Normalize(-3.49, 3.49)
+reds = plt.cm.Reds(np.linspace(0,1, num=7))
+blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+whites = [(1,1,1,1)]*2
+colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+# Common parameters
+#hcell, wcell = 0.5, 0.6
+#hpad, wpad = 0, 0
+
+## normal = plt.Normalize(-4.49, 4.49)
+## cmap = plt.cm.get_cmap('seismic', 9) 
 #cmap = plt.cm.get_cmap('seismic', 15) 
+
 nrows, ncols = std_anom.index.size+1, std_anom.columns.size
 hcell, wcell = 0.5, 0.5
-hpad, wpad = 0, 0    
+hpad, wpad = 1, 1    
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -155,9 +176,9 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-normal = plt.Normalize(-4.49, 4.49)
-cmap = plt.cm.get_cmap('seismic', 9) 
-nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+#normal = plt.Normalize(-4.49, 4.49)
+#cmap = plt.cm.get_cmap('seismic', 9) 
+nrows, ncols = std_anom.index.size, std_anom.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -237,8 +258,8 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df_clim.mean(axis=0)
 std_anom['SD'] = df_clim.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
@@ -247,8 +268,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-4.49, 4.49)
-cmap = plt.cm.get_cmap('seismic', 9) 
+#normal = plt.Normalize(-4.49, 4.49)
+#cmap = plt.cm.get_cmap('seismic', 9) 
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -342,8 +363,8 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df_clim.mean(axis=0)
 std_anom['SD'] = df_clim.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
@@ -354,8 +375,8 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
-normal = plt.Normalize(-4.49, 4.49)
-cmap = plt.cm.get_cmap('seismic', 9) 
+#normal = plt.Normalize(-4.49, 4.49)
+#cmap = plt.cm.get_cmap('seismic', 9) 
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')
@@ -437,8 +458,8 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom = std_anom.T
 std_anom['MEAN'] = df_clim.mean(axis=0)
 std_anom['SD'] = df_clim.std(axis=0)
-std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
+std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
 std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 vals = np.around(std_anom.values,1)
@@ -447,9 +468,9 @@ vals_color = vals.copy()
 vals_color[-1,] = vals_color[-1,]*-1
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0 
-normal = plt.Normalize(-4.49, 4.49)
-cmap = plt.cm.get_cmap('seismic', 9) 
-nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+#normal = plt.Normalize(-4.49, 4.49)
+#cmap = plt.cm.get_cmap('seismic', 9) 
+nrows, ncols = std_anom.index.size, std_anom.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
 ax = fig.add_subplot(111)
 ax.axis('off')

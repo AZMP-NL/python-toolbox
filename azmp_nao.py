@@ -76,16 +76,12 @@ year_unique = pd.unique(df.index.year)[1:,]
 df_winter = df_winter.iloc[np.arange(0, year_unique.size)] # reduce if last month is december (belongs to following year)
 df_winter.index = year_unique
 
-## fig = plt.figure(2)
-## plt.plot(df_winter)
-## plt.plot(df_winter.rolling(window=5, center=True).mean())
-## plt.ylabel('Winter NAO')
-## plt.xlabel('Year')
-## plt.grid()
-## fig.set_size_inches(w=12,h=9)
-## fig_name = 'NAO_winter_1950-2019.png'
-## fig.savefig(fig_name, dpi=300)
-
+# pickle DataFrame for scorecards:
+df.to_pickle('NAO_monthly.pkl')
+df_annual = df.resample('As').mean()
+df_annual.index = df_annual.index.year
+df_annual.to_pickle('NAO_annual.pkl')
+df_winter.to_pickle('NAO_winter.pkl')
 
 ## ## ---- plot winter NAO bar plots ---- ##
 df1 = df_winter[df_winter>0]

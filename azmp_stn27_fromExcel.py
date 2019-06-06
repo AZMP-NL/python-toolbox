@@ -22,25 +22,30 @@ clim_year = [1981, 2010]
 # load from Excel sheets
 s27_sst = '/home/cyrf0006/AZMP/S27/S27_SST.xlsx'
 s27_bot = '/home/cyrf0006/AZMP/S27/S27_botT.xlsx'
+s27_mean = '/home/cyrf0006/AZMP/S27/S27_meanT.xlsx'
 df_sst = pd.read_excel(s27_sst)
 df_bot = pd.read_excel(s27_bot)
+df_mean = pd.read_excel(s27_mean)
 
 # Rename columns
 col_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 df_sst.columns = col_names
 df_bot.columns = col_names
+df_mean.columns = col_names
 
 # Stack months under Years (pretty cool!)
 df_sst = df_sst.stack() 
 df_bot = df_bot.stack() 
+df_mean = df_mean.stack() 
 
 # Transform to a series with values based the 15th of each month (had to convert years to string)
 df_sst.index = pd.to_datetime('15-' + df_sst.index.get_level_values(1) + '-' + df_sst.index.get_level_values(0).values.astype(np.str))
 df_bot.index = pd.to_datetime('15-' + df_bot.index.get_level_values(1) + '-' + df_bot.index.get_level_values(0).values.astype(np.str))
+df_mean.index = pd.to_datetime('15-' + df_mean.index.get_level_values(1) + '-' + df_mean.index.get_level_values(0).values.astype(np.str))
 
 # Concatenate all timeseries
-df_monthly = pd.concat([df_sst, df_bot], axis=1)
-df_monthly.columns = ['surface', 'bottom']
+df_monthly = pd.concat([df_sst, df_bot, df_mean], axis=1)
+df_monthly.columns = ['surface', 'bottom', 'mean']
 
 # Compute annual mean
 df = df_monthly.resample('As').mean()
@@ -50,13 +55,14 @@ df_annual.index = df_annual.index.year # update index
 # Save to csv
 df_monthly.to_csv('S27_temp_monthly.csv', float_format='%.4f')
 df_annual.to_csv('S27_temp_annual.csv', float_format='%.4f')
+df_annual.to_pickle('S27_temp_annual.pkl')
 
 # compute anomalies
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df - df_clim.mean())/df_clim.std()
 std_anom.index = std_anom.index.year
 
-## ----  plot annual timemsereis ---- ##
+## ----  plot annual timemseries ---- ##
 fig = plt.figure(4)
 fig.clf()
 sign=std_anom.surface<0

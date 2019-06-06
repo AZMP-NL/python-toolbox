@@ -105,6 +105,11 @@ std = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=cl
 std_anom_annual = (df_annual - clim)/std
 std_anom_annual.index = std_anom_annual.index.year
 
+# Save for scorecards
+std_anom_annual.to_pickle('airT_std_anom.pkl')
+df.to_pickle('airT_monthly.pkl')
+
+
 ## ---- plot monthly ---- ##
 #std_anom.plot(kind='bar', stacked=True, cmap='YlGn')
 #plt.grid('on')

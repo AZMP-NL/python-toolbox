@@ -39,7 +39,7 @@ for fname in filelist:
     df = hlt.rpf_to_dataframe(fname)
 
     #df['depth'] = 
-
+    
         
     print fname, df.max()
     dfs.append(df)
@@ -47,6 +47,13 @@ for fname in filelist:
 # concatenate all data    
 df_all = pd.concat(dfs, axis=0)
 df_all = df_all.sort_index()
+
+# A check plot:
+# Remove <1980
+df_all = df_all[df_all.index.year>1980]
+df_all.temperature.plot()
+plt.show()
+
 
 # monthly average
 df_monthly = df_all.resample('M').mean()

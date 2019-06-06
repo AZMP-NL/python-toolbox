@@ -18,7 +18,7 @@ import os
 # Adjust fontsize/weight
 font = {'family' : 'normal',
         'weight' : 'bold',
-        'size'   : 18}
+        'size'   : 12}
 plt.rc('font', **font)
 
 ## ----  Read data ---- ##
@@ -65,3 +65,50 @@ fig_name = 'LC_transport.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+
+
+### ---- Anomalies plot ---- ##
+df = pd.read_csv('/home/cyrf0006/AZMP/altimetry/lc_index_1993_2018.txt', header=None, delimiter='\s+')
+df = df.set_index(0)
+df = df.rename(columns={1 : 'NL'})
+df = df.rename(columns={2 : 'SS'})
+df_SS = df.SS
+df_NL = df.NL
+
+
+# plot
+fig = plt.figure(4)
+fig.clf()
+ax = plt.subplot2grid((2, 1), (0, 0))
+df1 = df_NL[df_NL>0]
+df2 = df_NL[df_NL<0]
+width = .8
+p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred')
+p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue')
+plt.xticks(df.index[::1], rotation='vertical')
+plt.ylabel('LC index')
+plt.xlabel('Year')
+plt.title('Labrador and northeast Newfoundland slope')
+plt.ylim([-2,2])
+plt.grid()
+ax.xaxis.label.set_visible(False)
+ax.tick_params(labelbottom='off')
+
+ax2 = plt.subplot2grid((2, 1), (1, 0))
+df3 = df_SS[df_SS>0]
+df4 = df_SS[df_SS<0]
+p1 = plt.bar(df3.index, np.squeeze(df3.values), width, alpha=0.8, color='indianred')
+p2 = plt.bar(df4.index, np.squeeze(df4.values), width, bottom=0, alpha=0.8, color='steelblue')
+plt.xticks(df.index[::1], rotation='vertical')
+plt.title('Scotian slope')
+plt.ylabel('LC index')
+plt.ylim([-2,2])
+plt.grid()
+
+fig.set_size_inches(w=7,h=5)
+fig_name = 'LC_index.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+# Save French Figure

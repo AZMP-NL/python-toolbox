@@ -20,7 +20,7 @@ import azmp_sections_tools as azst
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 SECTION = 'BB'
 SEASON = 'summer'
-YEAR = 1972
+YEAR = 2018
 dlat = 2 # how far from station we search
 dlon = 2
 dz = 1 # vertical bins
@@ -313,7 +313,7 @@ else:
 ##         y0 = y1
 ##     return a
 
-## cil_vol_stn = 0
+## cil_vol_stn = 0`
 ## CIL = c_cil_stn.collections[0]
 ## for path in CIL.get_paths()[:]:
 ##     vs = path.vertices

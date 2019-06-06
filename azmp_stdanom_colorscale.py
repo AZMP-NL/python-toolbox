@@ -33,7 +33,11 @@ data_lims = np.linspace(-3.5, 3.5, 15)
 text = []
 for idx, txt in enumerate(data_lims):
     if idx<data_lims.size-1:
-        text.append(str(txt) + ' to ' + str(data_lims[idx+1]))
+        if txt<0:
+            text.append(str(txt+.1) + ' to ' + str(data_lims[idx+1]))
+        elif txt>=0:
+            text.append(str(txt) + ' to ' + str(data_lims[idx+1]-.1))
+            
 text[0] = '< ' + str(data_lims[1])
 text[-1] = '> ' + str(data_lims[-2])
 
@@ -41,22 +45,36 @@ df = pd.DataFrame([data], columns=text)
 vals = df.values
 
 # Build the colormap
-vmin = -3.5
-vmax = 3.5
+## vmin = -3.5
+## vmax = 3.5
+## midpoint = 0
+## levels = np.linspace(vmin, vmax, 15)
+## midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+## #colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+## normal = plt.Normalize(-3.5, 3.5)
+
+## reds = plt.cm.Reds(np.linspace(0,1, num=7))
+## blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+## whites = [(1,1,1,1)]*1
+## colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+## colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+## cmap, norm = from_levels_and_colors(midp, colors, extend='both')
+## #cmap, norm = from_levels_and_colors(colvals, colors)
+
+# Build the colormap
+vmin = -3.51
+vmax = 3.51
 midpoint = 0
 levels = np.linspace(vmin, vmax, 15)
 midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
 colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
-normal = plt.Normalize(-3.5, 3.5)
-
+normal = plt.Normalize(-3.51, 3.51)
 reds = plt.cm.Reds(np.linspace(0,1, num=7))
 blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
-whites = [(1,1,1,1)]*1
+whites = [(1,1,1,1)]*2
 colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
 colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
-cmap, norm = from_levels_and_colors(midp, colors, extend='both')
-#cmap, norm = from_levels_and_colors(colvals, colors)
-
+cmap, norm = from_levels_and_colors(levels, colors, extend='both')
 
 # build the table
 nrows, ncols = vals.shape

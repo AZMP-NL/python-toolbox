@@ -50,6 +50,12 @@ ds = ds.sel(level=ds['level']>0)
 ds = ds.where((ds.longitude>-53.5) & (ds.longitude<-52.5), drop=True) # original one
 ds = ds.where((ds.latitude>47) & (ds.latitude<48), drop=True)
 
+# Works well to check occupations:
+#da = ds['comments']   
+#df = da.to_pandas()
+#df = df[df.str.contains('27')]
+
+ 
 # Monthly average
 ds = ds.sortby('time')
 ds_season = ds.resample(time="Q").mean('time') 

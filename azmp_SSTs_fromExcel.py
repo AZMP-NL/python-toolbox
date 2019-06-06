@@ -6,7 +6,10 @@ ftp://ftp.dfo-mpo.gc.ca/bometrics/noaa/stats/boxes/
 For oofline use, you can download all data with:
 wget -m ftp://ftp.dfo-mpo.gc.ca/bometrics/noaa/stats/boxes/*.stat
 
-check in : /home/cyrf0006/AZMP/annual_meetings/2019
+check in : /home/cyrf0006/AZMP/state_reports/SSTs
+(formerly in /home/cyrf0006/AZMP/annual_meetings/2019)
+
+
 http://www.bio.gc.ca/science/data-donnees/base/data-donnees/sst-en.php
 Frederic.Cyr@dfo-mpo.gc.ca - February 2019
 
@@ -74,11 +77,17 @@ df_sst = df_all.mean_sst
 df_sst = df_sst.unstack(level=0)
 df_sst = df_sst.replace(-999.00000, np.NaN)
 df_sst = df_sst[df_sst.index.year<=2018]
-df_sst = df_sst.resample('Qs').mean()
+df_sst = df_sst.resample('MS', loffset=pd.Timedelta(14, 'd')).mean() #re-averaged bi-weekly on 15th of the month
 
 df_sst_excel = df_all_excel.unstack(level=0)
 
+# merge 2 monthly timeseries and save for Scorecards
+df_monthly = pd.concat([df_sst, df_sst_excel]) # merge
+df_monthly = df_monthly.resample('MS', loffset=pd.Timedelta(14, 'd')).mean() # re-average
+df_monthly.to_pickle('SSTs_merged_monthly.pkl')
 
+
+# Quick plot to check the merge
 fig = plt.figure(1)
 plt.clf
 plt.plot(df_sst.mean(axis=1), color='k', linewidth=2)
@@ -118,11 +127,10 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 ## ---- Merging two timeseries + anomaly calculation ---- ##
-df = pd.concat([df_sst.mean(axis=1), df_sst_excel.mean(axis=1)], axis=1)    
-df = df.mean(axis=1)
-
-
-
+df_merged = pd.concat([df_sst, df_sst_excel]) # merge
+df_merged = df_merged.resample('As').mean() # re-average
+#df = pd.concat([df_sst.mean(axis=1), df_sst_excel.mean(axis=1)], axis=1)    
+df = df_merged.mean(axis=1)
 
 clim_year = [1981, 2010]
 clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])].mean()
@@ -146,7 +154,7 @@ ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
 plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
-plt.title(u'SSTs', weight='bold', fontsize=14)
+#plt.title(u'SSTs', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2,2])
 fig.set_size_inches(w=15,h=7)
