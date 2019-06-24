@@ -148,7 +148,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     # Check if outfile already exist
     if os.path.exists(nc_outfile):
 
-        print nc_outfile + ' already exists!' 
+        print(nc_outfile + ' already exists!') 
 
         py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2
 
@@ -161,13 +161,13 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
 
             if response == 'yes':
                 os.remove(nc_outfile)
-                print ' -> ' + nc_outfile + ' removed!' 
+                print(' -> ' + nc_outfile + ' removed!')
                 response_isnt_good = False
             elif response == 'no':
-                print ' -> Nothing to be done then (an error will be raised)'
+                print(' -> Nothing to be done then (an error will be raised)')
                 break
             else:
-                print ' -> Please answer "yes" or "no"'
+                print(' -> Please answer "yes" or "no"')
 
     # Generate the list
     filelist = np.genfromtxt(infiles, dtype=str)
@@ -194,18 +194,18 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
 
         # check if file's there
         if os.path.isfile(fname) is False:
-            print ' ->' + fname + ' not found! [skip]'
+            print(' ->' + fname + ' not found! [skip]')
             continue
         
         # Else, do normal    
-        print fname
+        print(fname)
 
         # get header
         header = pfile_header(fname)
         #check header
         if 'NAFC_Y2K_HEADER' not in header[0]:
             error_msg = 'Problem with file: header [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue 
@@ -220,19 +220,19 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         cast_lon = np.sign(np.float(cast_info[19:23])) * (np.abs(np.float(cast_info[19:23])) + np.float(cast_info[24:29])/60.0)
         if ((np.int(cast_lon)==0) & (np.int(cast_lat)==0)):
             error_msg = 'Problem with file: (lat,lon) = (0,0) looks wrong [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
         elif ((np.int(cast_lat)>90) | (np.int(cast_lat)<-90)):
             error_msg = 'Problem with file: |lat| > 90 looks wrong [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
         elif ((np.int(cast_lon)>180) | (np.int(cast_lon)<-180)):
             error_msg = 'Problem with file: |lon| > 180 looks wrong [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
@@ -264,7 +264,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             os.system(expr)
         elif ((np.int(cast_info[35:37])>12) | (np.int(cast_info[38:40])>31)):
             error_msg = 'Problem with file: wrong date [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
@@ -292,7 +292,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         df = pfile_to_dataframe(fname)
         if df.empty:
             error_msg = 'Problem with file: empty [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue    
@@ -313,7 +313,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
         else:
             error_msg = 'Problem with file, no pressure channel found [skip]'
-            print error_msg
+            print(error_msg)
             expr = 'echo ' + fname + ' : ' + error_msg +' >> .netcdfgen_log.txt'
             os.system(expr)
             continue
@@ -523,7 +523,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
     times[:] = nc.date2num(cast_index, units = times.units, calendar = times.calendar)
     levels[:] = Pbin
     #### -------------------------------------------------------- ####
-    print 'Done!'
+    print('Done!')
 
     nc_out.close()
     return None
@@ -542,7 +542,7 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
     # Check if outfile already exist
     if os.path.exists(nc_outfile):
 
-        print nc_outfile + ' already exists!' 
+        print(nc_outfile + ' already exists!')
 
         py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2
 
@@ -555,13 +555,13 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
 
             if response == 'yes':
                 os.remove(nc_outfile)
-                print ' -> ' + nc_outfile + ' removed!' 
+                print(' -> ' + nc_outfile + ' removed!')
                 response_isnt_good = False
             elif response == 'no':
-                print ' -> Nothing to be done then (an error will be raised)'
+                print(' -> Nothing to be done then (an error will be raised)')
                 break
             else:
-                print ' -> Please answer "yes" or "no"'
+                print(' -> Please answer "yes" or "no"')
 
     # Generate the list
     filelist = np.genfromtxt(infiles, dtype=str)
@@ -650,11 +650,11 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
 
         # check if file's there
         if os.path.isfile(fname) is False:
-            print ' ->' + fname + ' not found! [skip]'
+            print(' ->' + fname + ' not found! [skip]')
             continue
 
         # File present, good to go
-        print fname
+        print(fname)
         # get header & cast info
         header = pfile_header(fname)
         cast_info = header[1]
@@ -690,13 +690,13 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
             P = np.array(df['pres'])
             Pbin = np.arange(1, np.max(P), zbin) 
         else:
-            print 'Problem with file, no pressure channel found [skip]'
+            print('Problem with file, no pressure channel found [skip]')
             continue
 
         # Check if Pbin not empty (in this case likely single surface measurement)
         #  NOTE: Depths at "0m" will be reassigned at 1m (minimum depth of dataset)
         if len(Pbin) == 0:
-            print ' -> File with single measurement at ' + np.str(P) + 'm'
+            print(' -> File with single measurement at ' + np.str(P) + 'm')
             idx = (np.abs(levels[:]-P)).argmin()
             Pbin = np.array([levels[idx]])
             
@@ -715,7 +715,7 @@ def pfiles_to_netcdf_unlimitedz(infiles, nc_outfile, zbin=1): # pfiles_to_pannel
         o2[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'oxy')
         par[idx,:] = bin_pressure_from_dataframe(df, Pbin, 'par')
     # -------------------------------------------------------- #    
-    print 'Done!'
+    print('Done!')
     
     nc_out.close()
 

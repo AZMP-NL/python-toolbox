@@ -19,9 +19,9 @@ import cmocean
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 VAR = 'temperature'
-SECTION = 'FC'
+SECTION = 'WB'
 SEASON = 'summer'
-YEAR = 2018
+YEAR = 2016
 
 # derived parameters
 if VAR == 'temperature':
@@ -84,7 +84,7 @@ ax.add_patch(Bgon)
 plt.colorbar(c)
 ax.xaxis.label.set_visible(False)
 ax.tick_params(labelbottom='off')
-ax.set_title(VAR + 'for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR))
+ax.set_title(VAR + ' for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR))
 
 # ax2
 ax2 = plt.subplot2grid((3, 1), (1, 0))
@@ -127,3 +127,4 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 #montage temperature_BB_summer_2018.png salinity_BB_summer_2018.png  -tile 2x1 -geometry +10+10  -background white BB_summer_2018.png 
 #montage temperature_SI_summer_2018.png salinity_SI_summer_2018.png  -tile 2x1 -geometry +10+10  -background white SI_summer_2018.png 
 #montage temperature_FC_summer_2018.png salinity_FC_summer_2018.png  -tile 2x1 -geometry +10+10  -background white FC_summer_2018.png 
+#montage temperature_WB_summer_2018.png salinity_WB_summer_2018.png  -tile 2x1 -geometry +10+10  -background white WB_summer_2018.png 

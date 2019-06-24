@@ -1,25 +1,11 @@
 '''
-
-WORK IN PROGRESS...
-
-
-To generate bottom climato:
+To generate bottom climato for SA4 only:
 
 import numpy as np
 import azmp_utils as azu
 dc = .1
-lonLims = [-60, -43] # fish_hab region
-latLims = [39, 56]
-lonLims = [-61, -45] # includes 4R
-lonLims = [-60, -45] # FC AZMP report region
-latLims = [42, 56]
-lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring_0.10.h5') 
-
 lonLims = [-68, -55] # NAFO 4
 latLims = [38, 48]
-dc = .1
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='summer', h5_outputfile='Tbot_climato_SA4_summer_0.10.h5') 
@@ -53,11 +39,11 @@ season = 'summer'
 
 # load climato
 if season == 'fall':
-    climato_file = 'Tbot_climato_fall_0.10.h5'
+    climato_file = 'Tbot_climato_SA4_fall_0.10.h5'
 elif season == 'spring':
-    climato_file = 'Tbot_climato_spring_0.10.h5'
+    climato_file = 'Tbot_climato_SA4_spring_0.10.h5'
 elif season == 'summer':
-    climato_file = 'Tbot_climato_summer_0.10.h5'
+    climato_file = 'Tbot_climato_SA4_summer_0.10.h5'
 h5f = h5py.File(climato_file, 'r')
 Tbot_climato = h5f['Tbot'][:]
 lon_reg = h5f['lon_reg'][:]
@@ -73,18 +59,6 @@ latLims = [lat_reg[0], lat_reg[-1]]
 
 # NAFO divisions
 nafo_div = azu.get_nafo_divisions()
-polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
-polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
-polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
-shape = [polygon3L, polygon3N, polygon3O]
-shape_3LNO = cascaded_union(shape)
-shape_3M = Polygon(zip(nafo_div['3M']['lon'], nafo_div['3M']['lat']))
-shape_3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
-shape_2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
-shape_2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
-shape_3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
-shape = [shape_2J, shape_2H]
-shape_2HJ = cascaded_union(shape)
 shape_4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
 polygon4Vs = Polygon(zip(nafo_div['4Vs']['lon'], nafo_div['4Vs']['lat']))
 polygon4Vn = Polygon(zip(nafo_div['4Vn']['lon'], nafo_div['4Vn']['lat']))
@@ -93,12 +67,6 @@ polygon4X = Polygon(zip(nafo_div['4X']['lon'], nafo_div['4X']['lat']))
 shape = [polygon4Vs.buffer(0), polygon4Vn.buffer(0), polygon4W.buffer(0), polygon4X.buffer(0)]
 shape_4VWX = cascaded_union(shape)
 
-dict_stats_3LNO = {}
-dict_stats_3M = {}
-dict_stats_3Ps = {}
-dict_stats_3K = {}
-dict_stats_2J = {}
-dict_stats_2HJ = {}
 dict_stats_4R = {}
 dict_stats_4VWX = {}
 
@@ -116,12 +84,6 @@ for year in years:
 
     
     # NAFO division stats    
-    dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
-    dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
-    dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
-    dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
-    dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
-    dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
     dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
     dict_stats_4VWX[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
 
@@ -154,7 +116,7 @@ for year in years:
         cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
         cb = plt.colorbar(c, cax=cax)
         cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-        div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R', '4Vn', '4Vs', '4W', '4X']
+        div_toplot = ['4R', '4Vn', '4Vs', '4W', '4X']
         for div in div_toplot:
             div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
             m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -162,9 +124,11 @@ for year in years:
         # Save Figure
         fig.set_size_inches(w=7, h=8)
         fig.set_dpi(200)
-        outfile = 'bottom_temp_anomaly_' + season + '_' + np.str(year) + '.png'
+        outfile = 'bottom_temp_anomaly_SA4_' + season + '_' + np.str(year) + '.png'
         fig.savefig(outfile)
-
+        plt.close()
+        fig.close()
+        
         # 1.2 - Plot Temperature
         fig, ax = plt.subplots(nrows=1, ncols=1)
         m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
@@ -187,7 +151,7 @@ for year in years:
         cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
         cb = plt.colorbar(c, cax=cax)
         cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-        div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R', '4Vn', '4Vs', '4W', '4X']
+        div_toplot = ['4R', '4Vn', '4Vs', '4W', '4X']
         for div in div_toplot:
             div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
             m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -195,49 +159,13 @@ for year in years:
         # Save Figure
         fig.set_size_inches(w=7, h=8)
         fig.set_dpi(200)
-        outfile = 'bottom_temp_' + season + '_' + np.str(year) + '.png'
+        outfile = 'bottom_temp_SA4_' + season + '_' + np.str(year) + '.png'
         fig.savefig(outfile)
 
-
-    
-df_3Ps = pd.DataFrame.from_dict(dict_stats_3Ps, orient='index')
-df_3LNO = pd.DataFrame.from_dict(dict_stats_3LNO, orient='index')
-df_3M = pd.DataFrame.from_dict(dict_stats_3M, orient='index')
-df_3K = pd.DataFrame.from_dict(dict_stats_3K, orient='index')
-df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')
-df_2HJ = pd.DataFrame.from_dict(dict_stats_2HJ, orient='index')
 df_4R = pd.DataFrame.from_dict(dict_stats_4R, orient='index')
 df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
-
-
-outname = 'stats_3Ps_' + season + '.pkl'
-df_3Ps.to_pickle(outname)
-outname = 'stats_3LNO_' + season + '.pkl'
-df_3LNO.to_pickle(outname)
-outname = 'stats_3M_' + season + '.pkl'
-df_3M.to_pickle(outname)
-outname = 'stats_3K_' + season + '.pkl'
-df_3K.to_pickle(outname)
-outname = 'stats_2J_' + season + '.pkl'
-df_2J.to_pickle(outname)
-outname = 'stats_2HJ_' + season + '.pkl'
-df_2HJ.to_pickle(outname)
 outname = 'stats_4R_' + season + '.pkl'
 df_4R.to_pickle(outname)
 outname = 'stats_4VWX_' + season + '.pkl'
 df_4VWX.to_pickle(outname)
-
-# Save in multi-index  dataFrame
-year_index = pd.Series(years)
-year_index.name='year'
-df_mindex = pd.concat(df_list,keys=year_index)
-df_mindex.to_pickle(season + '_bottom_temperature.pkl')
-
-
-## import feather
-## path = '3LNOPs_spring_bottom_temperature.feather'
-## feather.write_dataframe(df, path)
-
-## C = df_mindex.xs((2018),level=('year'))
-## D = C.groupby(level=0).apply(lambda x: x.mean())
 

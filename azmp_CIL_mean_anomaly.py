@@ -115,7 +115,7 @@ p2 = plt.bar(df4.index, np.squeeze(df4.values), width, bottom=0, alpha=0.8, colo
 plt.xticks(std_core.index[::10])
 plt.ylabel('Standardized Anomaly')
 #plt.xlabel('Year')
-plt.title('CIL volume')
+plt.title('CIL area')
 plt.ylim([-3,3])
 plt.grid()
 #plt.xlim(years)

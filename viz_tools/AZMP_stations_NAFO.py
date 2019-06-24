@@ -51,8 +51,6 @@ proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
 fig_name = 'AZMP_NAFO.png'
-ephem = 'ephem_calval.txt'
-swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
 ## ---- Bathymetry ---- ####
 v = np.linspace(-4000, 0, 9)

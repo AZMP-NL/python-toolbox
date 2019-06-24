@@ -43,13 +43,16 @@ def is_number(s):
 #### ------------- NAO & AO ---------------- ####
 nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
 ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AO_annual.pkl')
+amo = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AMO_annual.pkl')
 # restrict years
 nao_winter = nao_winter[(nao_winter.index>=years[0]) & (nao_winter.index<=years[1])]
 ao = ao[(ao.index>=years[0]) & (ao.index<=years[1])]
+amo = amo[(amo.index>=years[0]) & (amo.index<=years[1])]
 # Rename columns
 nao_winter = nao_winter.rename(columns={'Value': r'  $\rm NAO_{winter }$'})
-ao = ao.rename(columns={'Value': '   AO'})
-df_indices = pd.concat([nao_winter, ao], axis=1)
+ao = ao.rename(columns={'Value': '    AO'})
+amo.name='   AMO' 
+df_indices = pd.concat([nao_winter, ao, amo], axis=1)
 df_ind_clim = df_indices[(df_indices.index>=clim_year[0]-1) & (df_indices.index<=clim_year[1])]
 df_ind_anom = (df_indices - df_ind_clim.mean()) / df_ind_clim.std()
 df_indices = df_ind_anom
@@ -122,6 +125,9 @@ vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
+# Reverse AMO values (colormap already reverse for AO and NAO)
+vals_color[2,:] = vals_color[2,:]*-1
+
 
 nrows, ncols = my_df.index.size+1, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -187,6 +193,7 @@ for key, cell in the_table.get_celld().items():
         cell._text.set_color('white')
 plt.savefig("scorecards_nao_FR.png", dpi=300)
 os.system('convert -trim scorecards_nao_FR.png scorecards_nao_FR.png')
+
 
 
 # 2. Winter AirT

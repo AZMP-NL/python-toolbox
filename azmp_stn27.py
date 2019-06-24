@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 '''
-This is a script used to extract long-term data from Station 27
+Station 27 analysis for CSAS/NAFO ResDocs
 
-Tried this:
+
+Now I extract info on station based on small lat/lon box. Before I tried this:
 'stn27' # 494
 'S27' # 2
 's27' # 0
@@ -19,6 +21,8 @@ Tried this:
 'STA27' # 2
 'Sta27' # 0
 'sta27' # 3
+
+Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 
 '''
 
@@ -43,10 +47,10 @@ ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/*.nc')
 ds = ds.sel(level=ds['level']<200)
 ds = ds.sel(level=ds['level']>0)
 
-# Select nominal stn27 data
+# 1 - Select nominal stn27 data
 #ds = ds.where((ds.comments=='stn27') | (ds.comments=='S27') | (ds.comments=='S27-01') | (ds.comments=='STN27') | (ds.comments=='STN-27') | (ds.comments=='stn-27') | (ds.comments=='station-27') | (ds.comments=='Station-27') | (ds.comments=='STATION-27') | (ds.comments=='stat27') | (ds.comments=='Stat27') | (ds.comments=='STAT27') | (ds.comments=='STA27') | (ds.comments=='sta27'), drop=True)
 
-# Select stn27 data according to lat-lon in a box [47.55,-52.59]
+# 2 - Select stn27 data according to lat-lon in a box [47.55,-52.59]
 ds = ds.where((ds.longitude>-53.5) & (ds.longitude<-52.5), drop=True) # original one
 ds = ds.where((ds.latitude>47) & (ds.latitude<48), drop=True)
 

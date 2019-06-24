@@ -35,6 +35,7 @@ std_nl = 1.4
 df.NL = df.NL*std_nl + ave_nl
 df.SS = df.SS*std_ss + ave_ss
 
+XLIMS = [1992, 2019]
 
 ## ---- plot ---- ##
 fig = plt.figure(1)
@@ -66,7 +67,6 @@ fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
-
 ### ---- Anomalies plot ---- ##
 df = pd.read_csv('/home/cyrf0006/AZMP/altimetry/lc_index_1993_2018.txt', header=None, delimiter='\s+')
 df = df.set_index(0)
@@ -85,11 +85,14 @@ df2 = df_NL[df_NL<0]
 width = .8
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred')
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue')
-plt.xticks(df.index[::1], rotation='vertical')
+plt.fill_between([1990, 2020], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+#plt.xticks(df.index[::1], rotation='vertical')
 plt.ylabel('LC index')
 plt.xlabel('Year')
-plt.title('Labrador and northeast Newfoundland slope')
+plt.title('NL slope')
+plt.xlim(XLIMS)
 plt.ylim([-2,2])
+plt.text(XLIMS[0], -1.6,  r'$\,\rm \overline{x} = $' + str(ave_nl) + r' $\pm$ ' +  str(std_nl) + ' Sv')
 plt.grid()
 ax.xaxis.label.set_visible(False)
 ax.tick_params(labelbottom='off')
@@ -99,10 +102,13 @@ df3 = df_SS[df_SS>0]
 df4 = df_SS[df_SS<0]
 p1 = plt.bar(df3.index, np.squeeze(df3.values), width, alpha=0.8, color='indianred')
 p2 = plt.bar(df4.index, np.squeeze(df4.values), width, bottom=0, alpha=0.8, color='steelblue')
-plt.xticks(df.index[::1], rotation='vertical')
-plt.title('Scotian slope')
+plt.fill_between([1990, 2020], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+#plt.xticks(df.index[::1], rotation='vertical')
+plt.title('SS slope')
 plt.ylabel('LC index')
+plt.xlim(XLIMS)
 plt.ylim([-2,2])
+plt.text(XLIMS[0], 1.5,  r'$\,\rm \overline{x} = $' + str(ave_ss) + r' $\pm$ ' +  str(std_ss) + ' Sv')
 plt.grid()
 
 fig.set_size_inches(w=7,h=5)

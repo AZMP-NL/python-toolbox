@@ -79,10 +79,33 @@ df_3M_summer = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3
 df_3M_summer.index = pd.to_datetime(df_3M_summer.index) # update index to datetime
 df_3M_summer.index = df_3M_summer.index.year
 df_3M_summer = df_3M_summer.Tmean
+# 4VWX - Summer 
+df_4VWX_summer = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_4VWX_summer.pkl')
+df_4VWX_summer.index = pd.to_datetime(df_4VWX_summer.index) # update index to datetime
+df_4VWX_summer.index = df_4VWX_summer.index.year
+df_4VWX_summer = df_4VWX_summer.Tmean
 
-# 6. S27
+
+# 6. Fixed stations
+# S27
 df_s27 = pd.read_pickle('/home/cyrf0006/AZMP/S27/S27_temp_annual.pkl')
 df_s27_mean = df_s27['mean']
+# HFX-2 0-50m
+df_hfx2_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/HFX2_Integrated_0-50m.csv', index_col='Year')
+df_hfx2_surf.drop('-----', inplace=True)
+df_hfx2_surf = df_hfx2_surf.iloc[:,0]
+df_hfx2_surf.index = np.array(df_hfx2_surf.index, dtype=int) 
+df_hfx2_surf = pd.to_numeric(df_hfx2_surf, errors='coerce').astype('Float64')
+
+# HFX-2 150m
+df_hfx2_150 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/HFX2_150m_Temperature.csv', header=2, index_col='Year')
+df_hfx2_150 = df_hfx2_150.iloc[:,2]
+# Prince-5 0-50m
+df_p5_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_Annual_Series_0-50m.csv', header=1, index_col='Year')
+df_p5_surf = df_p5_surf.iloc[:,0]
+# Prince-5 0-90m
+df_p5_90 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_Integrated_0-90m.csv', header=0, index_col='Year')
+df_p5_90 = df_p5_90.iloc[:,1]
 
 # 7. Section average Temeprature (should eventually add salinity in these dataFrame, see azmp_CIL_stats.py)
 df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/df_SI_meanT_summer.pkl')
@@ -93,11 +116,21 @@ df_FC_cap = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/df_
 
 # 8. Greenland Fylla and Cape Desolation
 df_FB4 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Fylla_0-50_Annual.csv', header=15, index_col='Year')
-df_CD3 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_2000_Annual.csv', header=14, index_col='Year')
+df_CD3_2000 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_2000_Annual.csv', header=14, index_col='Year')
+df_CD3_200 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_75-200_Annual.csv', header=15, index_col='Year')
 # Keep only temeprature
 df_FB4 = df_FB4.iloc[:,0]
-df_CD3 = df_CD3.iloc[:,0]
+df_CD3_2000 = df_CD3_2000.iloc[:,0]
+df_CD3_200 = df_CD3_200.iloc[:,0]
 
+# 9. Scotian shelf and GoM timeseries (from IROC)
+df_emeral = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Scotian_Emerald_Annual.csv', header=0, index_col='Year') # tweaked file
+df_misaine = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Scotian_Misaine_Annual.csv', header=0, index_col='Year') # tweaked file
+df_egom =  pd.read_csv('/home/cyrf0006/data/IROC_timeseries/USA_EGOM_Annual.csv', header=19, index_col='Year')
+df_nec = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/USA_NEC_Annual.csv', header=19, index_col='Year')
+# Keep only temperature
+df_egom = df_egom.iloc[:,0]
+df_nec = df_nec.iloc[:,0]
 
 
 #### ---- STACFIS - 3LNO ---- ####
@@ -156,7 +189,7 @@ os.system('convert -trim composite_3M.png composite_3M.png')
 
 #### ---- STACFIS - SA1 ---- ####
 df_comp_SA1 = pd.concat([df_sst.Central_Labrador_Sea, df_sst.Greenland_Shelf,
-                         df_FB4, df_CD3
+                         df_FB4, df_CD3_200, df_CD3_2000
                           ], axis=1)
 
 df_SA1_clim = df_comp_SA1[(df_comp_SA1.index>=clim_year[0]) & (df_comp_SA1.index<=clim_year[1])]
@@ -178,22 +211,41 @@ fig.savefig(fig_name, dpi=200)
 os.system('convert -trim composite_SA1.png composite_SA1.png')
 
 
-
 #### ---- STACFIS - SA234 ---- ####
 # ** HEre I ignored SSTs, because not available for NS region prior to 1997
 #                          df_sst.Hudson_Strait, df_sst.Hamilton_Bank, df_sst['St.Anthony_Basin'], df_sst.Orphan_Knoll 
 #                          df_sst.Avalon_Channel, df_sst.Hybernia, df_sst.Flemish_Pass, df_sst.Flemish_Cap, ...
 
-df_comp_3LNO = pd.concat([df_s27_mean,
-                          df_3LNO_spring, df_3LNO_fall, df_3M_summer,
+## df_comp_SA234 = pd.concat([df_s27_mean, df_p5_surf, df_hfx2_surf, df_hfx2_150,
+##                           df_3LNO_spring, df_3LNO_fall, df_3M_summer, df_4VWX_summer,
+##                           df_SI, df_BB, df_FC_shelf,
+##                           df_CIL_SI.vol_itp, df_CIL_BB.vol_itp, df_CIL_FC.vol_itp,
+##                           df_egom, df_nec
+##                           ], axis=1)
+
+df_comp_SA234 = pd.concat([df_s27_mean, df_p5_90, df_hfx2_surf, df_hfx2_150,
+                          df_3LNO_spring, df_3LNO_fall, df_3M_summer, df_4VWX_summer,
                           df_SI, df_BB, df_FC_shelf,
-                          df_CIL_SI, df_CIL_BB, df_CIL_FC
+                          df_CIL_SI.vol_itp, df_CIL_BB.vol_itp, df_CIL_FC.vol_itp,
+                          df_egom, df_nec
                           ], axis=1)
 
-df_3LNO_clim = df_comp_3LNO[(df_comp_3LNO.index>=clim_year[0]) & (df_comp_3LNO.index<=clim_year[1])]
-std_anom_3LNO = (df_comp_3LNO-df_3LNO_clim.mean(axis=0))/df_3LNO_clim.std(axis=0)
-composite_3LNO = std_anom_3LNO.mean(axis=1)
-composite_3LNO.to_csv('composite_3LNO.csv', float_format='%.2f')
+df_SA234_clim = df_comp_SA234[(df_comp_SA234.index>=clim_year[0]) & (df_comp_SA234.index<=clim_year[1])]
+std_anom_SA234 = (df_comp_SA234-df_SA234_clim.mean(axis=0))/df_SA234_clim.std(axis=0)
+composite_SA234 = std_anom_SA234.mean(axis=1)
+composite_SA234.to_csv('composite_SA234.csv', float_format='%.2f')
 
+# Plot
+fig, ax = plt.subplots(nrows=1, ncols=1)
+sign=composite_SA234>0
+composite_SA234.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
+plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
+plt.title('Composite anomaly SA234', weight='bold', fontsize=14)
+plt.grid()
+plt.ylim([-2.5,2.5])
+fig.set_size_inches(w=15,h=7)
+fig_name = 'composite_SA234.png'
+fig.savefig(fig_name, dpi=200)
+os.system('convert -trim composite_SA234.png composite_SA234.png')
 
 
