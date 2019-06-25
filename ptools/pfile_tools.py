@@ -35,7 +35,7 @@ def pfile_variables(filename):
 
     # read line by line until finding eoh
     tmp = []
-    with open(filename, 'r') as td:
+    with open(filename, 'r', encoding="utf8", errors='ignore') as td:
         for line in td:
         
             if re.match(eoh, line): # end-of-header            
@@ -64,7 +64,7 @@ def pfile_header(filename):
 
     # Read header
     header = []
-    with open(filename, 'r') as td:
+    with open(filename, 'r', encoding="utf8", errors='ignore') as td:
         for line in td:
         
             if re.match(eoh, line): # end-of-header            
@@ -85,7 +85,7 @@ def pfile_to_dataframe(filename):
     # Read header
     header = []
     data = []
-    with open(filename, 'r') as td:
+    with open(filename, 'r', encoding="utf8", errors='ignore') as td:
         for line in td:
         
             if re.match(eoh, line): # end-of-header            
