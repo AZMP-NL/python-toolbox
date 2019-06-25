@@ -107,10 +107,25 @@ def pfile_to_dataframe(filename):
     columns = re.sub('\n','', columns)
     columns = columns.strip()
     columns = re.sub(' +',' ', columns)
+    columns = columns.split(' ')
 
-    # to dataFrame       
-    df = pd.DataFrame(data, columns=columns.split(' '), dtype=float)
-
+    # to dataFrame
+    
+    if np.size(data) == 0: # empty files
+        error_msg = 'Empty file [continue]'
+        print(error_msg)
+        expr = 'echo ' + filename + ' : ' + error_msg +' >> emptyfile_problems.txt'
+        os.system(expr)
+        df = pd.DataFrame([])
+    elif np.shape(data)[1] == np.size(columns): # same shape
+        df = pd.DataFrame(data, columns=columns, dtype=float)
+    elif (np.shape(data)[1]==9) & (np.size(columns)==10): # very likely ph problem
+        columns = columns[0:-1]
+        df = pd.DataFrame(data, columns=columns, dtype=float)
+        error_msg = 'Missing pH columns [continue]'
+        print(error_msg)
+        expr = 'echo ' + filename + ' : ' + error_msg +' >> ph_problems.txt'
+        os.system(expr)
     return df
 
 def bin_pressure_from_dataframe(df, Pbin, var):

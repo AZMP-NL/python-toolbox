@@ -10,7 +10,7 @@ Frederic.Cyr@dfo-mpo.gc.ca, October 2017
 # (this might caus problems when list too long...)
 
 import pfile_tools as p
-import glob2
+import glob
 import os
 
 lists = glob.glob('*.list')
@@ -19,7 +19,7 @@ os.system('echo " --------- New run ------ " >> .netcdfgen_log.txt')
 
 for yearfile in lists:
     outfile = os.path.splitext(yearfile)[0] + '.nc'
-    p.pfiles_to_netcdf(yearfile, outfile, zbin=5, zmax=2000)
+    p.pfiles_to_netcdf(yearfile, outfile, zbin=1, zmax=2000)
     expr_print = ' -> ' + outfile + ' done!'
     print(expr_print)
     expr = 'mv ' + yearfile + ' ./list_done'
