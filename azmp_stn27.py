@@ -1,26 +1,12 @@
 # -*- coding: utf-8 -*-
 '''
-Station 27 analysis for CSAS/NAFO ResDocs
+Station 27 analysis for CSAS/NAFO ResDocs. This scripts compute:
 
+- vertically average T-S
+- CIL T, coreT and thickness
+- 
 
-Now I extract info on station based on small lat/lon box. Before I tried this:
-'stn27' # 494
-'S27' # 2
-'s27' # 0
-'S27-01' # 20
-'s27-01' # 0
-'STN27' # 528
-'STN-27' # 102
-'stn-27' # 1
-'station27' # 140
-'Station27' # 71
-'STATION27' # 207
-'Stat27' # 1
-'stat27' # 1
-'STAT27' # 4
-'STA27' # 2
-'Sta27' # 0
-'sta27' # 3
+** see azmp_stn27_explore.py for more options and ways to explore the dataset
 
 Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 
@@ -33,37 +19,135 @@ import xarray as xr
 import datetime
 import os
 
-#import water_masses as wm
-
 font = {'family' : 'normal',
         'weight' : 'bold',
         'size'   : 14}
 plt.rc('font', **font)
 
+## ---- Some custom parameters ---- ##
+s27 = [47.55,-52.59]
+dc = .1
+year_clim = [1981, 2010]
+current_year = 2018
+variable = 'temperature'
+use_viking = True
+XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
+if variable == 'temperature':
+    V = np.arange(-2, 20, .5)
+elif variable == 'salinity':
+    V = np.arange(29.5, 34, .25)
 
+
+## ---- Open data and select ---- ##
 ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/*.nc')
 
+# Remome GTS datasets
+ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
+ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
+
 # Select a depth range
-ds = ds.sel(level=ds['level']<200)
+ds = ds.sel(level=ds['level']<180)
 ds = ds.sel(level=ds['level']>0)
 
-# 1 - Select nominal stn27 data
-#ds = ds.where((ds.comments=='stn27') | (ds.comments=='S27') | (ds.comments=='S27-01') | (ds.comments=='STN27') | (ds.comments=='STN-27') | (ds.comments=='stn-27') | (ds.comments=='station-27') | (ds.comments=='Station-27') | (ds.comments=='STATION-27') | (ds.comments=='stat27') | (ds.comments=='Stat27') | (ds.comments=='STAT27') | (ds.comments=='STA27') | (ds.comments=='sta27'), drop=True)
-
-# 2 - Select stn27 data according to lat-lon in a box [47.55,-52.59]
-ds = ds.where((ds.longitude>-53.5) & (ds.longitude<-52.5), drop=True) # original one
-ds = ds.where((ds.latitude>47) & (ds.latitude<48), drop=True)
-
-# Works well to check occupations:
-#da = ds['comments']   
-#df = da.to_pandas()
-#df = df[df.str.contains('27')]
-
- 
-# Monthly average
+# Select stn27 data according to lat-lon in a box [47.55,-52.59]
+ds = ds.where((ds.longitude>s27[1]-dc/2) & (ds.longitude<s27[1]+dc/2), drop=True) # original one
+ds = ds.where((ds.latitude>s27[0]-dc/2) & (ds.latitude<s27[0]+dc/2), drop=True)
 ds = ds.sortby('time')
-ds_season = ds.resample(time="Q").mean('time') 
-ds_monthly = ds.resample(time="M").mean('time') 
+
+da = ds[variable]
+df = da.to_pandas()
+
+## ---- Open Viking data and concatenate ---- ##
+if use_viking:
+    # open dataset
+    ds_vik = xr.open_mfdataset('/home/cyrf0006/data/dev_database/viking_nc/*_viking.nc')
+    # Select a depth range
+    ds_vik = ds_vik.sel(level=ds_vik['level']<180)
+    ds_vik = ds_vik.sel(level=ds_vik['level']>0)
+    # get variable
+    da_vik = ds_vik[variable]
+    df_vik = da_vik.to_pandas()
+    df_vik = df_vik.dropna(how='all')
+    # concatenate (better if they sahre same vertical resolution)
+    df = pd.concat([df, df_vik]) 
+
+
+## ---- 1. Climatologies ---- ##
+
+# Monthly average (15th of the month)
+df_monthly = df.resample('MS', loffset=pd.Timedelta(14, 'd')).mean()
+# Select years for climato
+df_clim_period = df_monthly[(df_monthly.index.year>=year_clim[0]) & (df_monthly.index.year<=year_clim[1])]
+# Monthly clim
+monthly_clim = df_clim_period.groupby(df_clim_period.index.month).mean()
+# set index (year 1900)
+monthly_clim.index = pd.to_datetime(monthly_clim.index.values, format='%m')
+monthly_clim.to_pickle('s27_' + variable + '_monthly_clim.pkl')
+
+# Weekly average (previous version of climatology)
+#df_weekly = df.resample('W').mean()
+# Monthly clim
+#weekly_clim_raw = df_weekly.groupby(df_weekly.index.week).mean()
+# set index (year 1900)
+#weekly_clim.index = pd.to_datetime(weekly_clim.index.values, format='%W')
+
+# Weekly clim (upsample monthly clim to weekly)
+weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear') 
+weekly_clim.to_pickle('s27_' + variable + '_weekly_clim.pkl')
+
+# Update climatology index to current year
+weekly_clim.index = pd.to_datetime('2018-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
+weekly_clim = weekly_clim.dropna(how='all', axis=1)
+
+# plot
+fig, ax = plt.subplots(nrows=1, ncols=1)
+c = plt.contourf(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, V, extend='both', cmap=plt.cm.RdBu_r)
+#cc = plt.contour(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, V, colors='k')
+#plt.plot(weekly_clim.index, np.repeat(0, df_temp.index.size), '|k', markersize=20)    
+cax = fig.add_axes([0.91, .15, 0.01, 0.7])
+cb = plt.colorbar(c, cax=cax, orientation='vertical')
+if variable == 'temperature':
+    ccc = plt.contour(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, [0,], colors='k', linewidths=3)
+    cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+elif variables== 'salinity':
+    cb.set_label(r'S', fontsize=12, fontweight='normal')
+plt.ylim([0, 175])
+plt.xlim([XLIM[0], XLIM[1]])
+#plt.clabel(cc, inline=1, fontsize=10, colors='k', fmt='%1.1f')
+plt.grid('on')
+plt.xlabel('Time', fontsize=15, fontweight='bold')
+plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
+plt.ylim([0, 175])
+plt.gca().invert_yaxis()
+# Save Figure
+fig.set_size_inches(w=12, h=6)
+fig.set_dpi(200)
+outfile = 's27_' + variable + '_clim.png'
+fig.savefig(outfile)
+os.system('convert -trim ' + outfile + ' ' + outfile)
+
+
+
+## ---- 2. Year average and anomaly ---- ##
+df_year = df[df.index.year==current_year]
+df_weekly = df_year.resample('W').mean().interpolate(method='linear') 
+df_weekly.dropna(how='all')
+
+
+anom = df_weekly - weekly_clim
+
+
+
+
+
+# HERE!!!
+
+
+
+
+
+keyboard
+
 
 da = ds['time']
 df = da.to_pandas()
@@ -78,11 +162,11 @@ plt.show()
 
 
 # To Pandas Dataframe
-#da_temp = ds_monthly['temperature']
-da_temp = ds_season['temperature']
+#a_temp = ds_monthly['temperature']
+#a_temp = ds_season['temperature']
 df_temp = da_temp.to_pandas()
-da_sal = ds_season['salinity']
-#da_sal = ds_monthly['salinity']
+#da_sal = ds_season['salinity']
+da_sal = ds_monthly['salinity']
 df_sal = da_sal.to_pandas()
 
 
