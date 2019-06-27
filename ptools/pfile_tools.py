@@ -117,6 +117,12 @@ def pfile_to_dataframe(filename):
         expr = 'echo ' + filename + ' : ' + error_msg +' >> emptyfile_problems.txt'
         os.system(expr)
         df = pd.DataFrame([])
+    elif np.ndim(data) < 2: # In some files, there is no line skip (all data in one line)
+        error_msg = 'Wrong datafile dimension [continue]'
+        print(error_msg)
+        expr = 'echo ' + filename + ' : ' + error_msg +' >> emptyfile_problems.txt'
+        os.system(expr)
+        df = pd.DataFrame([])
     elif np.shape(data)[1] == np.size(columns): # same shape
         df = pd.DataFrame(data, columns=columns, dtype=float)
     elif (np.shape(data)[1]==9) & (np.size(columns)==10): # very likely ph problem
