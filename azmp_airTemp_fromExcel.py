@@ -31,8 +31,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
-import gsw
-from seawater import extras as swx
 import matplotlib.dates as mdates
 from scipy.interpolate import griddata
 import os

@@ -19,14 +19,15 @@ import cmocean
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 VAR = 'temperature'
-SECTION = 'WB'
-SEASON = 'summer'
-YEAR = 2016
+SECTION = 'SEGB'
+SEASON = 'spring'
+YEAR = 2018
 
 # derived parameters
 if VAR == 'temperature':
     v = np.arange(-2,11,1)
-    v_anom = np.linspace(-3.5, 3.5, 8)
+    v_anom = np.linspace(-3.5, 3.5, 15)
+    v_anom = np.delete(v_anom, np.where(v_anom==0)) 
     CMAP = cmocean.cm.thermal
 elif VAR == 'salinity':
     v = np.arange(29,36,.5)

@@ -21,7 +21,7 @@ proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/github/AZMP-NL/data//STANDARD_SECTIONS.xlsx'
 fig_name = 'AZMP_lines_swot.png'
-ephem = 'ephem_calval.txt'
+ephem = '/home/cyrf0006/AZMP/utils/ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
 ## ---- Bathymetry ---- ####
@@ -55,7 +55,7 @@ Z = Z[::decim_scale, ::decim_scale]
 import pandas as pd
 df = pd.read_excel(stationFile)
 #print the column names
-print df.columns
+#print(df.columns)
 #get the values for a given column
 sections = df['SECTION'].values
 stations = df['STATION'].values
@@ -189,33 +189,76 @@ def getLocation(lat1, lon1, brng, distance):
 
     return lat2, lon2
 
-def draw_screen_poly( lats, lons, m):
-    x, y = m( lons, lats )
-    xy = zip(x,y)
-    poly = Polygon( xy, facecolor='green', alpha=0.6)
-    plt.gca().add_patch(poly)
+## def draw_screen_poly( lats, lons, m):
+##     x, y = m( lons, lats )
+##     xy = zip(x,y)
+##     poly = Polygon(xy, facecolor='green', alpha=0.6)
+##     plt.gca().add_patch(poly)
     
 
 ## # Plot swot path (comment if not wanted)
 for i in range(0,len(swot_segment_lat)):
     x_swot, y_swot = m(swot_segment_lon[i], swot_segment_lat[i])
-    m.plot(x_swot, y_swot, 'k')   
+    m.plot(x_swot, y_swot, color='green', alpha=.4, linewidth=20)   
 
     # For ellipse around each pt
     ## for j in range(0,len(swot_segment_lat[i])):
     ##     X,Y = createCircleAroundWithRadius(swot_segment_lon[i][j], swot_segment_lat[i][j], 60)
     ##     draw_screen_poly(X, Y, m )
 
-crossover_x = [-62.335, -61.11, -59.967, -61.11, -62.335]
-crossover_y = [61.6, 62.897, 61.6, 60.302, 61.6]
-x, y = m(crossover_x, crossover_y)
-xy = zip(x,y)
-poly = Polygon( xy, facecolor='green', alpha=0.4)
-plt.gca().add_patch(poly)
+# Crossover plot    
+## crossover_x = [-62.335, -61.11, -59.967, -61.11, -62.335]
+## crossover_y = [61.6, 62.897, 61.6, 60.302, 61.6]
+## x, y = m(crossover_x, crossover_y)
+#xy = zip(x,y)
+## xy = np.array(list(zip(x,y)))
+## poly = Polygon(xy, facecolor='green', alpha=0.4)
+## plt.gca().add_patch(poly)
+
+# Draw zoomed box
+box_x = [-56, -48, -48, -56, -56]
+box_y = [52, 52, 43, 43, 52]
+x, y = m(box_x, box_y)
+m.plot(x, y, color='black', alpha=.9, linewidth=2)   
+
+## Fancy arrows (To highlight GS and LC)
+x_text, y_text = m(-1,1)
+x_gs, y_gs = m(-50, 41)
+plt.annotate(' ',
+            xy=(x_gs, y_gs), xycoords='data',
+            xytext=(x_text, y_text), textcoords='offset points',
+            size=20,
+            # bbox=dict(boxstyle="round", fc="0.8"),
+            arrowprops=dict(arrowstyle="fancy",
+                            #fc="0.6", ec="none",
+                            facecolor='orange',
+                            connectionstyle="angle3,angleA=1,angleB=-180"))
+
+
+
+
+
+
+
+
+## x_text, y_text = m(-65,40)
+## x_lc, y_lc = m(-48, 50)
+## plt.annotate(' ',
+##             xy=(x_lc, y_lc), xycoords='data',
+##             xytext=(x_text, y_text), textcoords='offset points',
+##             size=20,
+##             # bbox=dict(boxstyle="round", fc="0.8"),
+##             arrowprops=dict(arrowstyle="fancy",
+##                             #fc="0.6", ec="none",
+##                             facecolor='cornflowerblue',
+##                             connectionstyle="angle3,angleA=0,angleB=12"))
+## x, y = m(-60, 38)
+## plt.text(x, y, 'GS', horizontalalignment='right', verticalalignment='center', fontsize=10, color='orange', fontweight='bold')
+## x, y = m(-53, 57)
+## plt.text(x, y, 'LC', horizontalalignment='right', verticalalignment='center', fontsize=10, color='black', fontweight='bold')
     
 #### ---- Save Figure ---- ####
 fig.set_size_inches(w=8, h=9)
-fig.set_dpi(200)
-fig.savefig(fig_name)
+fig.savefig(fig_name, dpi=200)
 #plt.show()
 

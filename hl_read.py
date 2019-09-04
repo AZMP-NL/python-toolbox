@@ -28,7 +28,7 @@ plt.rc('font', **font)
 infiles = 'oldbonaventure.list'
 os.system('ls ~/data/Headlands/Old_Bonaventure/*.rpf > ' + infiles)
 infiles = 'arnoldscove.list'
-os.system('ls ~/data/Headlands/ArnoldsCove/*.rpf > ' + infiles)
+os.system('ls ~/data/Headlands_Trimmed/Arnolds_Cove/*.rpf > ' + infiles)
 filelist = np.genfromtxt(infiles, dtype=str)
 filelist = np.reshape(filelist, filelist.size) 
 
@@ -41,7 +41,7 @@ for fname in filelist:
     #df['depth'] = 
     
         
-    print fname, df.max()
+    print(fname, df.max())
     dfs.append(df)
     
 # concatenate all data    
@@ -51,9 +51,12 @@ df_all = df_all.sort_index()
 # A check plot:
 # Remove <1980
 df_all = df_all[df_all.index.year>1980]
-df_all.temperature.plot()
+# hourly average
+df_hourly = df_all.resample('H').mean()
+df_hourly.temperature.plot()
 plt.show()
-
+# Save csv:
+#df_hourly.to_csv('arnold_cove_hourly_1989-2018.csv')
 
 # monthly average
 df_monthly = df_all.resample('M').mean()

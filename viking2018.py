@@ -49,6 +49,11 @@ df_sig = df_sig.unstack()
 df_sig = df_sig.resample('1D').mean()
 df_sig = df_sig.dropna(how='all')
 
+df_fluo = ds['fluorescence'].to_dataframe()
+df_fluo = df_fluo.unstack()
+df_fluo = df_fluo.resample('1D').mean()
+df_fluo = df_fluo.dropna(how='all')
+
 Vsig = np.arange(21,27)
 Vtemp = np.arange(-2, 20, .5)
 Vsal = np.arange(29.5, 34, .25)

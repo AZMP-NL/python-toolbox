@@ -18,7 +18,6 @@ Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import gsw
 import os
 import seaborn as sns
  

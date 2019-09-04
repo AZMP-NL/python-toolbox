@@ -72,7 +72,8 @@ def section_bathymetry(section_name):
     
     bathy_x_close = np.append(bathy_x, np.array([bathy_x[-1], bathy_x[0], bathy_x[0]]))
     bathy_y_close = np.append(bathy_y ,np.array([bathy_y.max(), bathy_y.max(), bathy_y[0]]))
-    bathymetry = zip(bathy_x_close, bathy_y_close)
+    bathymetry = list(zip(bathy_x_close, bathy_y_close))
+    #bathymetry = np.array(list(zip(bathy_x_close, bathy_y_close)))
     return bathymetry
 
 
@@ -248,7 +249,8 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
 
         #2.  From interpolated field (closest to station)
         station = df_stn[df_stn.STATION==stn]
-        idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(zip(station.LAT,station.LON))), axis=1))
+        #idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(zip(station.LAT,station.LON))), axis=1))
+        idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(list(zip(station.LAT,station.LON)))), axis=1))
         Tprofile = VV[idx_opti,:]
         # remove data below bottom
         bottom_depth = -ZZ[idx_opti]

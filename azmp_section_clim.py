@@ -22,8 +22,8 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'WB'
-SEASON = 'summer'
+SECTION = 'SEGB'
+SEASON = 'fall'
 CLIM_YEAR = [1981, 2010]
 dlat = 2 # how far from station we search
 dlon = 2
@@ -303,9 +303,9 @@ for idx, YEAR in enumerate(years):
         plt.title(str(YEAR))
         fig_name = 'temp_section' + SECTION + '_' + SEASON + '_' + '_' + str(YEAR) + '_1.png'
         fig.savefig(fig_name, dpi=150)
-        #plt.close()
         #plt.clf()
-        fig.clf()
+        plt.close('all')
+        #fig.clf()
         # CIL area
         cil_vol_stn = 0
         CIL = c_cil_stn.collections[0]
@@ -330,7 +330,8 @@ for idx, YEAR in enumerate(years):
         fig.savefig(fig_name, dpi=150)
         #plt.close()
         #plt.clf()
-        fig.clf()
+        #fig.clf()
+        plt.close('all')
         # CIL area
         cil_vol_itp = 0
         CIL = c_cil_itp.collections[0]

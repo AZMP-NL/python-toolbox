@@ -18,25 +18,49 @@ import pandas as pd
 import xarray as xr
 import datetime
 import os
+import matplotlib.dates as mdates
+from matplotlib.ticker import NullFormatter
+from matplotlib.dates import MonthLocator, DateFormatter
+import cmocean
 
-font = {'family' : 'normal',
-        'weight' : 'bold',
-        'size'   : 14}
-plt.rc('font', **font)
+## font = {'family' : 'normal',
+##         'weight' : 'bold',
+##         'size'   : 14}
+## plt.rc('font', **font)
 
 ## ---- Some custom parameters ---- ##
 s27 = [47.55,-52.59]
 dc = .1
 year_clim = [1981, 2010]
 current_year = 2018
-variable = 'temperature'
+variable = 'sigma-t'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
-if variable == 'temperature':
-    V = np.arange(-2, 20, .5)
-elif variable == 'salinity':
-    V = np.arange(29.5, 34, .25)
 
+# Derived parameter
+if variable == 'temperature':
+    V = np.arange(-1, 16, 1)
+    #Vanom = np.linspace(-5.5, 5.5, 12)
+    #Vanom = np.array([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
+    Vanom = np.linspace(-5.5, 5.5, 23)
+    Vanom_ticks = np.array([-5, -3, -1, 1, 3, 5])
+    Vanom = np.delete(Vanom, np.where(Vanom==0))
+    CMAP = cmocean.tools.lighten(cmocean.cm.thermal, .9)
+    #CMAP = cmocean.cm.thermal
+elif variable == 'salinity':
+    V = np.arange(30, 33.5, .25)
+    Vanom = np.linspace(-1, 1, 21) 
+    Vanom = np.delete(Vanom, np.where(Vanom==0))
+    Vanom_ticks = np.linspace(-1, 1, 11) 
+    CMAP = cmocean.cm.haline
+else:
+    V = 20
+    Vanom = 20
+    Vanom_ticks = np.linspace(-1, 1, 11) 
+    CMAP = cmocean.cm.thermal
+
+## months = mdates.MonthLocator()  # every month
+## month_fmt = mdates.DateFormatter('%b')
 
 ## ---- Open data and select ---- ##
 ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/*.nc')
@@ -55,7 +79,7 @@ ds = ds.where((ds.latitude>s27[0]-dc/2) & (ds.latitude<s27[0]+dc/2), drop=True)
 ds = ds.sortby('time')
 
 da = ds[variable]
-df = da.to_pandas()
+df_hydro = da.to_pandas()
 
 ## ---- Open Viking data and concatenate ---- ##
 if use_viking:
@@ -69,20 +93,23 @@ if use_viking:
     df_vik = da_vik.to_pandas()
     df_vik = df_vik.dropna(how='all')
     # concatenate (better if they sahre same vertical resolution)
-    df = pd.concat([df, df_vik]) 
-
-
+    df = pd.concat([df_hydro, df_vik]) 
+    #df = df.interpolate(axis=1, method='linear', limit_area='inside') # doesnt seems to work as expected
+    df = df.interpolate(axis=1).where(df.bfill(axis=1).notnull()) # here interpolate and leave NaNs.
+else:
+    df = df_hydro.copy()
+    
 ## ---- 1. Climatologies ---- ##
-
-# Monthly average (15th of the month)
+# Monthly average (15th of the month) +  pickle for further analysis
 df_monthly = df.resample('MS', loffset=pd.Timedelta(14, 'd')).mean()
+df_monthly.to_pickle('S27_' + variable + '_monthly.pkl')
 # Select years for climato
 df_clim_period = df_monthly[(df_monthly.index.year>=year_clim[0]) & (df_monthly.index.year<=year_clim[1])]
 # Monthly clim
 monthly_clim = df_clim_period.groupby(df_clim_period.index.month).mean()
 # set index (year 1900)
 monthly_clim.index = pd.to_datetime(monthly_clim.index.values, format='%m')
-monthly_clim.to_pickle('s27_' + variable + '_monthly_clim.pkl')
+monthly_clim.to_pickle('S27_' + variable + '_monthly_clim.pkl')
 
 # Weekly average (previous version of climatology)
 #df_weekly = df.resample('W').mean()
@@ -93,263 +120,175 @@ monthly_clim.to_pickle('s27_' + variable + '_monthly_clim.pkl')
 
 # Weekly clim (upsample monthly clim to weekly)
 weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear') 
-weekly_clim.to_pickle('s27_' + variable + '_weekly_clim.pkl')
+weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
 weekly_clim.index = pd.to_datetime('2018-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
-weekly_clim = weekly_clim.dropna(how='all', axis=1)
+#weekly_clim.dropna(how='all', axis=1, inplace=True)
 
 # plot
 fig, ax = plt.subplots(nrows=1, ncols=1)
-c = plt.contourf(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, V, extend='both', cmap=plt.cm.RdBu_r)
+c = plt.contourf(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, V, extend='both', cmap=CMAP)
 #cc = plt.contour(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, V, colors='k')
 #plt.plot(weekly_clim.index, np.repeat(0, df_temp.index.size), '|k', markersize=20)    
-cax = fig.add_axes([0.91, .15, 0.01, 0.7])
-cb = plt.colorbar(c, cax=cax, orientation='vertical')
-if variable == 'temperature':
-    ccc = plt.contour(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, [0,], colors='k', linewidths=3)
-    cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-elif variables== 'salinity':
-    cb.set_label(r'S', fontsize=12, fontweight='normal')
 plt.ylim([0, 175])
 plt.xlim([XLIM[0], XLIM[1]])
 #plt.clabel(cc, inline=1, fontsize=10, colors='k', fmt='%1.1f')
-plt.grid('on')
-plt.xlabel('Time', fontsize=15, fontweight='bold')
+#plt.grid('on')
+#plt.xlabel('Time', fontsize=15, fontweight='bold')
 plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
 plt.ylim([0, 175])
-plt.gca().invert_yaxis()
+plt.title('Climatology')
+ax.invert_yaxis()
+# format date ticks
+ax.xaxis.set_major_locator(MonthLocator())
+ax.xaxis.set_minor_locator(MonthLocator(bymonthday=15))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.xaxis.set_minor_formatter(NullFormatter())
+# format the ticks
+#ax.xaxis.set_major_locator(months)
+#ax.xaxis.set_major_formatter(month_fmt)
+cax = fig.add_axes([0.91, .15, 0.01, 0.7])
+cb = plt.colorbar(c, cax=cax, orientation='vertical')
+if variable == 'temperature':
+    ccc = ax.contour(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, [0,], colors='k', linewidths=3)
+    cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+elif variable == 'salinity':
+    cb.set_label(r'S', fontsize=12, fontweight='normal')
+ax.xaxis.label.set_visible(False)
 # Save Figure
 fig.set_size_inches(w=12, h=6)
-fig.set_dpi(200)
-outfile = 's27_' + variable + '_clim.png'
-fig.savefig(outfile)
-os.system('convert -trim ' + outfile + ' ' + outfile)
+outfile_clim = 's27_' + variable + '_clim.png'
+fig.savefig(outfile_clim, dpi=200)
+os.system('convert -trim ' + outfile_clim + ' ' + outfile_clim)
 
+# Save French Figure
+ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+fig.set_size_inches(w=12, h=6)
+outfile_climFR = 's27_' + variable + '_clim_FR.png'
+fig.savefig(outfile_climFR, dpi=200)
+os.system('convert -trim ' + outfile_climFR + ' ' + outfile_climFR)
 
 
 ## ---- 2. Year average and anomaly ---- ##
 df_year = df[df.index.year==current_year]
 df_weekly = df_year.resample('W').mean().interpolate(method='linear') 
-df_weekly.dropna(how='all')
-
-
+#df_weekly.dropna(how='all', axis=1, inplace=True)
 anom = df_weekly - weekly_clim
 
+# plot current year
+fig, ax = plt.subplots(nrows=1, ncols=1)
+c = plt.contourf(df_weekly.index, df_weekly.columns, df_weekly.values.T, V, extend='both', cmap=CMAP)
+plt.plot(df_year.index, np.repeat(0, df_year.index.size), '|k', markersize=20)    
+plt.ylim([0, 175])
+plt.xlim([XLIM[0], XLIM[1]])
+#plt.clabel(cc, inline=1, fontsize=10, colors='k', fmt='%1.1f')
+#plt.grid('on')
+#plt.xlabel('Time', fontsize=15, fontweight='bold')
+plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
+plt.title(str(current_year) + ' observations')
+plt.ylim([0, 175])
+ax.invert_yaxis()
+# format date ticks
+ax.xaxis.set_major_locator(MonthLocator())
+ax.xaxis.set_minor_locator(MonthLocator(bymonthday=15))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.xaxis.set_minor_formatter(NullFormatter())
+cax = fig.add_axes([0.91, .15, 0.01, 0.7])
+cb = plt.colorbar(c, cax=cax, orientation='vertical')
+if variable == 'temperature':
+    ccc = ax.contour(df_weekly.index, df_weekly.columns, df_weekly.values.T, [0,], colors='k', linewidths=3)
+    cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+elif variable == 'salinity':
+    cb.set_label(r'S', fontsize=12, fontweight='normal')
+ax.xaxis.label.set_visible(False)
+# Save Figure
+fig.set_size_inches(w=12, h=6)
+outfile_year = 's27_' + variable + '_' + str(current_year) + '.png'
+fig.savefig(outfile_year, dpi=200)
+os.system('convert -trim ' + outfile_year + ' ' + outfile_year)
 
+# Save French Figure
+ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+fig.set_size_inches(w=12, h=6)
+outfile_yearFR = 's27_' + variable + '_' + str(current_year) + '_FR.png'
+fig.savefig(outfile_yearFR, dpi=200)
+os.system('convert -trim ' + outfile_yearFR + ' ' + outfile_yearFR)
 
+# plot anomaly
+fig, ax = plt.subplots(nrows=1, ncols=1)
+c = plt.contourf(anom.index, anom.columns, anom.values.T, Vanom, extend='both', cmap=cmocean.cm.balance)
+plt.ylim([0, 175])
+plt.xlim([XLIM[0], XLIM[1]])
+plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
+plt.title(str(current_year) + ' anomaly')
+plt.ylim([0, 175])
+ax.invert_yaxis()
+# format date ticks
+ax.xaxis.set_major_locator(MonthLocator())
+ax.xaxis.set_minor_locator(MonthLocator(bymonthday=15))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.xaxis.set_minor_formatter(DateFormatter('%b'))
+cax = fig.add_axes([0.91, .15, 0.01, 0.7])
+cb = plt.colorbar(c, cax=cax, ticks=Vanom_ticks, orientation='vertical')
+if variable == 'temperature':
+    cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+elif variable == 'salinity':
+    cb.set_label(r'S', fontsize=12, fontweight='normal')
+# Save Figure
+fig.set_size_inches(w=12, h=6)
+outfile_anom = 's27_' + variable + '_anom_' + str(current_year) + '.png'
+fig.savefig(outfile_anom, dpi=200)
+os.system('convert -trim ' + outfile_anom + ' ' + outfile_anom)
 
+# Save French Figure
+ax.xaxis.set_minor_formatter(DateFormatter('%m'))
+ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+fig.set_size_inches(w=12, h=6)
+outfile_anomFR = 's27_' + variable + '_anom_' + str(current_year) + '_FR.png'
+fig.savefig(outfile_anomFR, dpi=200)
+os.system('convert -trim ' + outfile_anomFR + ' ' + outfile_anomFR)
 
-# HERE!!!
+# Convert to a subplot
+os.system('montage ' + outfile_clim + ' ' +  outfile_year + ' ' + outfile_anom  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '.png') 
+os.system('montage ' + outfile_climFR + ' ' +  outfile_yearFR + ' ' + outfile_anomFR  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '_FR.png') 
 
+## ---- Station occupation plot ---- ##
+da_occu = ds['time']
+df_occu = da_occu.to_pandas()
+df_occu = df_occu[df_occu.index.year>=1945]
 
-
-
-
-keyboard
-
-
-da = ds['time']
-df = da.to_pandas()
-df = df[df.index.year>=1999]
-plt.plot(df.index.year, df.index.weekofyear, '.k')
+# plot 1 - weekly occupations only
+fig, ax = plt.subplots(nrows=1, ncols=1)
+plt.clf()
+plt.plot(df_occu.index.year, df_occu.index.weekofyear, '.k')
 plt.ylabel('Week of year')
-#plt.ylabel('Month')
-plt.xlabel('Year')
 plt.xlabel('Station 27 occupation')
-plt.show()
+# Save Figure
+fig.set_size_inches(w=12, h=6)
+outfile_occu = 's27_occupation.png'
+fig.savefig(outfile_occu, dpi=200)
+os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
 
-
-
-# To Pandas Dataframe
-#a_temp = ds_monthly['temperature']
-#a_temp = ds_season['temperature']
-df_temp = da_temp.to_pandas()
-#da_sal = ds_season['salinity']
-da_sal = ds_monthly['salinity']
-df_sal = da_sal.to_pandas()
-
-
-
-
-#here
-fig = plt.figure(3)
-plt.clf()
-v = np.arange(-2,10)
-plt.contourf(df_temp.index, df_temp.columns, df_temp.T, v, cmap=plt.cm.RdBu_r, extend='both')  
-plt.gca().invert_yaxis()
-plt.ylabel('Depth (m)', fontsize=14, fontweight='bold')
-cb = plt.colorbar()
-plt.title(r'$\rm T(^{\circ}C)$', fontsize=14, fontweight='bold')
-plt.show()
-
-
-
-keyboard
-
-## # Pickle data
-## df_temp.to_pickle('historical_temp_1948-2017.pkl') # 
-## df_sal.to_pickle('historical_sal_1948-2017.pkl') # 
-## print(' -> Done!')
-
-
-# Compute climatology
-df_temp_may = df_temp.loc[df_temp.index.month==5]
-df_temp_june = df_temp.loc[df_temp.index.month==6]
-df_temp_july = df_temp.loc[df_temp.index.month==7]
-df_concat = pd.concat((df_temp_may, df_temp_june, df_temp_july))
-df_all = df_concat.resample('As').mean()
-#df_all.to_pickle('temp_summer_1948-2017.pkl') # 
-
-
-
-## --- CIL core --- ## 
-fig = plt.figure(1)
-plt.clf()
-plt.plot(df_temp_may.index, df_temp_may.min(axis=1), '.')
-plt.plot(df_temp_june.index, df_temp_june.min(axis=1), '.')
-plt.plot(df_temp_july.index, df_temp_july.min(axis=1), '.')
-plt.plot(df_all.index, df_all.min(axis=1).rolling(5,center=True).mean(), 'k-', linewidth=3)
-
-plt.legend(['May', 'June', 'July', '5y moving ave'], fontsize=15)
-plt.ylabel(r'$T_{min}$ in monthly mean profile ($^{\circ}$C)', fontsize=15, fontweight='bold')
-plt.xlabel('Year', fontsize=15, fontweight='bold')
-plt.title('CIL core temperature', fontsize=15, fontweight='bold')
-plt.xlim([pd.Timestamp('1948-01-01'), pd.Timestamp('2017-01-01')])
-plt.ylim([-2, 1])
-plt.xticks(pd.date_range('1950-01-01', periods=7, freq='10Y'))
-plt.grid('on')
-
-
-fig.set_size_inches(w=9,h=6)
-fig_name = 'CIL_core_1948-2018.png'
-fig.set_dpi(300)
-fig.savefig(fig_name)
-
-
-
-keyboard
-
-## --- No. of cast per year --- ##
-years = np.arange(1912, 2019)
-time_series = ds.time.to_pandas()
-month05 = time_series.loc[time_series.index.month==5]
-month06 = time_series.loc[time_series.index.month==6]
-month07 = time_series.loc[time_series.index.month==7]
-year_count_05 = np.zeros(years.shape)
-year_count_06 = np.zeros(years.shape)
-year_count_07 = np.zeros(years.shape)
-year_count = np.zeros(years.shape)
-
-for idx, year in enumerate(years):
-    year_count_05[idx] = np.size(np.where(month05.index.year==year))
-    year_count_06[idx] = np.size(np.where(month06.index.year==year))
-    year_count_07[idx] = np.size(np.where(month07.index.year==year))
-    year_count[idx] = np.size(np.where(time_series.index.year==year))
-
-fig = plt.figure(2)
-plt.clf()
-plt.bar(years, year_count, align='center')
-plt.ylabel('Number of stations', fontsize=14, fontweight='bold')
-plt.xlabel('Year', fontsize=14, fontweight='bold')
-plt.annotate('1992;\nground fish\nmoratorium', xy=(1991, 2000), xytext=(1940, 2000),
-            arrowprops=dict(facecolor='black', width=1, shrink=0.05), fontsize=14
-            )
-plt.annotate('1999;\nAZMP', xy=(1999, 750), xytext=(1999, 1800),
-            arrowprops=dict(facecolor='black', width=1, shrink=0.05), fontsize=14
-            )
-
-fig.set_size_inches(w=9,h=6)
-fig_name = 'no_profile_histo.png'
-fig.set_dpi(300)
-fig.savefig(fig_name)
-
-
-# T-S seasonal timeseries
-df_temp_season = df_temp.resample('3M').mean()
-df_sal_season = df_sal.resample('3M').mean()
-df_sal_year = df_sal.resample('A').mean()
-
-T = np.array(df_temp_season)
-TT = np.reshape(T, T.size)
-S = np.array(df_sal_season)
-
-Tbin = np.arange(-2,10)
-Slist = []
-for idx in np.arange(0, T.shape[0]):
-    TVec = T[idx,:]
-    SVec = T[idx,:]  
-    digitized = np.digitize(TVec, Tbin) #<- this is awesome! 
-    Slist.append([SVec[digitized == i].mean() for i in range(0, len(Tbin))])
-
-
-plt.figure(2)
-plt.clf()
-#plt.contourf(df_temp.index, Tbin, np.array(Slist).T, 20)  
-plt.pcolormesh(df_temp_season.index, Tbin, np.array(Slist).T, vmin=-2, vmax=10)  
-
-## Tcontour-seasonal
-fig = plt.figure(3)
-plt.clf()
-v = np.arange(-2,10)
-plt.contourf(df_temp_season.index, df_temp_season.columns, df_temp_season.T, v, cmap=plt.cm.RdBu_r)  
-plt.xlim([pd.Timestamp('1948-01-01'), pd.Timestamp('2017-01-01')])
-plt.xticks(pd.date_range('1950-01-01', periods=7, freq='10Y'))
-plt.gca().invert_yaxis()
-plt.ylabel('Depth (m)', fontsize=14, fontweight='bold')
-plt.xlabel('years', fontsize=14, fontweight='bold')
-cb = plt.colorbar()
-plt.title(r'$\rm T(^{\circ}C)$', fontsize=14, fontweight='bold')
-fig.set_size_inches(w=12,h=9)
-fig_name = 'Tcontours_1950-2016.png'
-fig.savefig(fig_name)
-
-
-## Scontour-seasonal
-fig = plt.figure(4)
-plt.clf()
-v = np.linspace(30, 35, 20)
-plt.contourf(df_sal_season.index, df_sal_season.columns, df_sal_season.T, v, cmap=plt.cm.RdBu_r)  
-plt.xlim([pd.Timestamp('1950-01-01'), pd.Timestamp('2017-12-01')])
-plt.gca().invert_yaxis()
-plt.ylabel('Depth (m)', fontsize=14, fontweight='bold')
-plt.xlabel('years', fontsize=14, fontweight='bold')
-cb = plt.colorbar()
-plt.title(r'$\rm S$', fontsize=14, fontweight='bold')
-fig.set_size_inches(w=12,h=9)
-fig_name = 'Scontours_1950-2016.png'
-fig.savefig(fig_name)
-
-
-
-## Salinity timeseries
-fig = plt.figure(5)
-plt.clf()
-plt.plot(df_sal_season.index, df_sal_season.iloc[:,df_sal_season.columns<200].mean(axis=1), '-')
-#plt.plot(df_sal_year.index, df_sal_year.iloc[:,df_sal_year.columns<200].mean(axis=1), '-r')
-A = df_sal_season.iloc[:,df_sal_season.columns<200].mean(axis=1)
-#A = df_sal_season.iloc[:,(df_sal_season.columns>75) & (df_sal_season.columns<150)].mean(axis=1)
-plt.plot(df_sal_season.index, A.rolling(20, center=True).mean(), 'r')
-df_sal_season.to_pickle('salinity_1948-2017.pkl')
-
-## plt.plot(df_sal_season.index, df_sal_season.iloc[:,((df_sal_season.columns>150)&(df_sal_season.columns<300))].mean(axis=1), '-')
-## #plt.plot(df_sal_year.index, df_sal_year.iloc[:,((df_sal_season.columns>200)&(df_sal_season.columns<300))].mean(axis=1), '-r')
-## B =  df_sal_season.iloc[:,((df_sal_season.columns>150)&(df_sal_season.columns<300))].mean(axis=1)
-## plt.plot(df_sal_season.index, B.rolling(24).mean(), 'r')
-
-
-plt.ylabel(r'$\rm <S>_{0-200m}$', fontsize=15, fontweight='bold')
-plt.xlabel('Year', fontsize=15, fontweight='bold')
-#plt.title(r'$<S>_{0-300m}$', fontsize=15, fontweight='bold')
-plt.xlim([pd.Timestamp('1948-01-01'), pd.Timestamp('2017-01-01')])
-plt.xticks(pd.date_range('1950-01-01', periods=7, freq='10Y'))
-plt.ylim([31.75, 33.50])
-plt.grid('on')
-
-fig.set_size_inches(w=9,h=6)
-fig_name = 'sal_0-200m_1948-2017.png'
-fig.set_dpi(300)
-fig.savefig(fig_name)
-
-
+# plot 2 - weekly occupations + no of week per year
+W = df_occu.resample('w').count()
+W = W[W>0]  
+W = W.resample('Y').count()
+fig = plt.figure()
+# ax1
+ax1 = plt.subplot2grid((2, 1), (0, 0))
+plt.bar(W.index.year, W.values)
+ax1.xaxis.label.set_visible(False)
+ax1.tick_params(labelbottom='off')
+ax1.set_ylabel('No. of weekly occupations')
+plt.title('Station 27 occupation')
+# ax2
+ax2 = plt.subplot2grid((2, 1), (1, 0))
+plt.plot(df_occu.index.year, df_occu.index.weekofyear, '.k')
+ax2.set_ylabel('week of year')
+# Save Figure
+fig.set_size_inches(w=6, h=7)
+outfile_occu = 's27_occupation_stats.png'
+fig.savefig(outfile_occu, dpi=200)
+os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
 
