@@ -4,7 +4,7 @@ Station 27 analysis for CSAS/NAFO ResDocs. This scripts compute:
 
 - vertically average T-S
 - CIL T, coreT and thickness
-- 
+- monthlt average T in csv
 
 ** see azmp_stn27_explore.py for more options and ways to explore the dataset
 
@@ -32,8 +32,8 @@ import cmocean
 s27 = [47.55,-52.59]
 dc = .1
 year_clim = [1981, 2010]
-current_year = 2018
-variable = 'sigma-t'
+current_year = 2017
+variable = 'temperature'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
@@ -126,6 +126,7 @@ weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 weekly_clim.index = pd.to_datetime('2018-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
 #weekly_clim.dropna(how='all', axis=1, inplace=True)
 
+
 # plot
 fig, ax = plt.subplots(nrows=1, ncols=1)
 c = plt.contourf(weekly_clim.index, weekly_clim.columns, weekly_clim.values.T, V, extend='both', cmap=CMAP)
@@ -172,9 +173,14 @@ os.system('convert -trim ' + outfile_climFR + ' ' + outfile_climFR)
 
 ## ---- 2. Year average and anomaly ---- ##
 df_year = df[df.index.year==current_year]
+df_monthly = df_year.resample('MS').mean().interpolate(method='linear') 
 df_weekly = df_year.resample('W').mean().interpolate(method='linear') 
 #df_weekly.dropna(how='all', axis=1, inplace=True)
 anom = df_weekly - weekly_clim
+
+# Save current year monthly average
+csv_file = 'monthly_' + variable +  '_' + str(current_year) + '.csv'
+df_monthly.T.to_csv(csv_file, float_format='%.4f')
 
 # plot current year
 fig, ax = plt.subplots(nrows=1, ncols=1)

@@ -45,6 +45,10 @@ df = df.drop(columns = 'TOT SEASON')
 df_annual = df.sum(axis=1)
 df_annual.to_pickle('bergs_annual.pkl')
 df_annual_clim = df_annual[(df_annual.index>=clim_year[0]) & (df_annual.index<=clim_year[1])]
+df_annual_anom = df_annual - df_annual_clim.mean()
+df_annual_std_anom = df_annual_anom/df_annual_clim.std()
+
+
 
 # Monthly mean
 df_monthly = df[df.index==current_year]

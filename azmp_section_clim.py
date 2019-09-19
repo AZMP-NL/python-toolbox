@@ -22,12 +22,13 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'SEGB'
-SEASON = 'fall'
+SECTION = 'FC'
+SEASON = 'summer'
 CLIM_YEAR = [1981, 2010]
 dlat = 2 # how far from station we search
 dlon = 2
-dz = 1 # vertical bins
+z1 = 2
+dz = 5 # vertical bins
 dc = .2 # grid resolution
 
 # CIL surface (Note that there is a bias because )
@@ -136,7 +137,7 @@ for idx, YEAR in enumerate(years):
     da_sal = ds['salinity']
     lons = np.array(ds.longitude)
     lats = np.array(ds.latitude)
-    bins = np.arange(dz/2.0, 500, dz)
+    bins = np.arange(z1, 1000, dz)
     da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
     da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
 
@@ -181,7 +182,10 @@ for idx, YEAR in enumerate(years):
             LN = np.squeeze(lon_vec[idx_good])
             LT = np.squeeze(lat_vec[idx_good])
             TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+            if (np.unique(LT).size == 1) | (np.unique(LN).size == 1): # May happend for sampling along 47N section (cannot grid single latitude)
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='nearest')
+            else:
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
             V_temp[:,:,k] = zi
         else:
             continue
@@ -231,7 +235,10 @@ for idx, YEAR in enumerate(years):
             LN = np.squeeze(lon_vec[idx_good])
             LT = np.squeeze(lat_vec[idx_good])
             TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+            if (np.unique(LT).size == 1) | (np.unique(LN).size == 1): # May happend for sampling along 47N section (cannot grid single latitude)
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='nearest')
+            else:
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
             V_sal[:,:,k] = zi
         else:
             continue
@@ -281,8 +288,12 @@ for idx, YEAR in enumerate(years):
     da = ds_section['salinity']
     df_section_stn_S = da.to_pandas()
     df_section_stn_S.index = ds_section.comments.values
-    
 
+    # drop indices with only NaNs (option #2)
+    df_section_itp = df_section_itp.dropna(axis=0, how='all')
+    df_section_itp_S = df_section_itp_S.dropna(axis=0, how='all')
+
+    
     ## CIL Calculation
     # Compute distance vector for option #1 - exact station
     distance_stn = np.full((df_section_stn.index.shape), np.nan)
@@ -292,7 +303,7 @@ for idx, YEAR in enumerate(years):
     distance_itp = np.full((df_section_itp.index.shape), np.nan)
     for i, stn in enumerate(df_section_itp.index):
         distance_itp[i] = azst.haversine(df_stn.LON[0], df_stn.LAT[0], df_stn[df_stn.STATION==df_section_itp.index[i]].LON, df_stn[df_stn.STATION==df_section_itp.index[i]].LAT)
-    if df_section_stn.index.size > 0:
+    if df_section_stn.index.size > 1:
         fig, ax = plt.subplots()
         c = plt.contourf(distance_stn, df_section_stn.columns, df_section_stn.T)
         c_cil_stn = plt.contour(distance_stn, df_section_stn.columns, df_section_stn.T, [0,], colors='k', linewidths=2)
@@ -317,7 +328,7 @@ for idx, YEAR in enumerate(years):
         cil_core_stn_clim[idx] = np.nanmin(df_section_stn.values)
         # HERE I SOULD ADD CORE DEPTH!!
         
-    if df_section_itp.index.size > 0:
+    if df_section_itp.index.size > 1:
         fig, ax = plt.subplots()
         c = plt.contourf(distance_itp, df_section_itp.columns, df_section_itp.T)
         c_cil_itp = plt.contour(distance_itp, df_section_itp.columns, df_section_itp.T, [0,], colors='k', linewidths=2)
