@@ -24,8 +24,9 @@ import numpy as np
 #import time as tt
 import xarray as xr
 import netCDF4
-#import os
+import os
 #from sys import version_info
+import cmocean
 from math import radians, cos, sin, asin, sqrt
 from math import radians, cos, sin, asin, sqrt
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
@@ -77,7 +78,7 @@ def section_bathymetry(section_name):
     return bathymetry
 
 
-def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=1):
+def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=5, zmin=2):
     """
     To get a transect plot of a certain variable along a certain section and for a defined year and season.
 
@@ -115,37 +116,44 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
     ## --------- Get Bathymetry -------- ####
-    print('Get bathy...')
-    dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    # Load data
-    dataset = netCDF4.Dataset(dataFile)
-    x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
-    y = [-89-59.75/60, 89+59.75/60]
-    spacing = dataset.variables['spacing']
-    # Compute Lat/Lon
-    nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-    ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-    lon = np.linspace(x[0],x[-1],nx)
-    lat = np.linspace(y[0],y[-1],ny)
-    # interpolate data on regular grid 
-    # Reshape data
-    zz = dataset.variables['z']
-    Z = zz[:].reshape(ny, nx)
-    Z = np.flipud(Z) # <------------ important!!!
-    # Reduce data according to Region params
-    idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-    idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-    Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-    lon = lon[idx_lon[0]]
-    lat = lat[idx_lat[0]]
-    # interpolate data on regular grid 
-    lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-    lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-    lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-    z_vec = np.reshape(Z, Z.size)
-    Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
-    print(' -> Done!')
+    bathy_file = './' + section_name + '_bathy.npy'
+    if os.path.isfile(bathy_file):
+            print('Load saved bathymetry!')
+            Zitp = np.load(bathy_file)
+
+    else:
+            print('Get bathy...')
+            dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+            lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+            # Load data
+            dataset = netCDF4.Dataset(dataFile)
+            x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+            y = [-89-59.75/60, 89+59.75/60]
+            spacing = dataset.variables['spacing']
+            # Compute Lat/Lon
+            nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+            ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+            lon = np.linspace(x[0],x[-1],nx)
+            lat = np.linspace(y[0],y[-1],ny)
+            # interpolate data on regular grid 
+            # Reshape data
+            zz = dataset.variables['z']
+            Z = zz[:].reshape(ny, nx)
+            Z = np.flipud(Z) # <------------ important!!!
+            # Reduce data according to Region params
+            idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+            idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+            Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+            lon = lon[idx_lon[0]]
+            lat = lat[idx_lat[0]]
+            # interpolate data on regular grid 
+            lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
+            lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
+            lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
+            z_vec = np.reshape(Z, Z.size)
+            Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+            np.save(bathy_file, Zitp)
+            print(' -> Done!')
 
 
     ## -------- Get CTD data -------- ##
@@ -177,7 +185,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     da = ds[var_name]
     lons = np.array(ds.longitude)
     lats = np.array(ds.latitude)
-    bins = np.arange(dz/2.0, 500, dz)
+    bins = np.arange(zmin, 500, dz)
     da = da.groupby_bins('level', bins).mean(dim='level')
     #To Pandas Dataframe
     df = da.to_pandas()
@@ -223,7 +231,10 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
             LN = np.squeeze(lon_vec[idx_good])
             LT = np.squeeze(lat_vec[idx_good])
             TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+            if (np.unique(LT).size == 1) | (np.unique(LN).size == 1): # May happend for sampling along 47N section (cannot grid single latitude)
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='nearest')
+            else:
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
             V[:,:,k] = zi
         else:
             continue
@@ -262,7 +273,8 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
    
     # convert option #1 to dataframe    
     ds_section = xr.concat(section_only, dim='time')
-    da = ds_section['temperature']
+
+    da = ds_section[var_name]
     df_section_stn = da.to_pandas()
     df_section_stn.index = ds_section.comments.values
     df_section_stn.index.name = 'station'    
@@ -282,9 +294,9 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
                                     df_stn[df_stn.STATION==df_section_itp.index[i]].LAT)
 
     # Add a second index with distance
-    df_section_stn['distance'] = distance_stn  
+    df_section_stn['distance'] = np.round(distance_stn, 1)
     df_section_stn.set_index('distance', append=True, inplace=True)
-    df_section_itp['distance'] = distance_itp  
+    df_section_itp['distance'] = np.round(distance_itp, 1)
     df_section_itp.set_index('distance', append=True, inplace=True)
     
     return df_section_stn, df_section_itp
@@ -435,3 +447,139 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
     
     return None
 
+def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=False):
+    """
+    Contour plot on standard AZMP-NL sections for a certain year (specified with nc_file), season (specified as survey), section and variable.
+    This is a function version of script "azmp_section_report_plot.py" used for ResDocs figures.
+
+    Pickled climatologies are generated by azmp_section_clim.py
+
+    See usage example in azmp_genReport.py
+
+    Frederic.Cyr@dfo-mpo.gc.ca
+    August 2019
+
+    """
+    
+    if VAR == 'temperature':
+        v = np.arange(-2,11,1)
+        v_anom = np.linspace(-3.5, 3.5, 15)
+        v_anom = np.delete(v_anom, np.where(v_anom==0)) 
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'salinity':
+        v = np.arange(29,36,.5)
+        v_anom = np.linspace(-1.5, 1.5, 16)
+        CMAP = cmocean.cm.haline
+    else:
+        v = 10
+        v_anom = 10
+
+    SECTION_BATHY = SECTION
+
+
+    # CIL surface (Note that there is a bias because )
+    def area(vs):
+        a = 0
+        x0,y0 = vs[0]
+        for [x1,y1] in vs[1:]:
+            dx = x1-x0
+            dy = y1-y0
+            a += 0.5*(y0*dx - x0*dy)
+            x0 = x1
+            y0 = y1
+        return a
+
+
+    ## ---- Get this year's section ---- ## 
+    df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR)
+    # Use itp or station-based definition
+    if STATION_BASED:
+        df_section = df_section_stn
+    else:
+        df_section = df_section_itp
+
+    # In case df_section only contains NaNs..
+    df_section.dropna(axis=0,how='all')  
+    if df_section.size == 0:
+        print(' !!! Empty section [return None] !!!')
+        return None    
+    ## ---- Get climatology ---- ## 
+    clim_name = 'df_' + VAR + '_' + SECTION + '_' + SEASON + '_clim.pkl' 
+    df_clim = pd.read_pickle(clim_name)
+    # Update index to add distance (in addition to existing station name)    
+    df_clim.index = df_section_itp.loc[df_clim.index].index
+    
+    ## ---- Retrieve bathymetry using function ---- ##
+    bathymetry = section_bathymetry(SECTION_BATHY)
+
+    ## ---  ---- ## 
+    df_anom =  df_section - df_clim
+    df_anom = df_anom.reset_index(level=0, drop=True)
+    ## ---- plot Figure ---- ##
+    XLIM = df_section_itp.index[-1][1]
+    fig = plt.figure()
+    # ax1
+    ax = plt.subplot2grid((3, 1), (0, 0))
+    if len(df_section.index) > 1:
+        c = plt.contourf(df_section.index.droplevel(0), df_section.columns, df_section.T, v, cmap=CMAP, extend='max')
+        plt.colorbar(c)
+        if VAR == 'temperature':
+            c_cil_itp = plt.contour(df_section.index.droplevel(0), df_section.columns, df_section.T, [0,], colors='k', linewidths=2)
+    ax.set_ylim([0, ZMAX])
+    ax.set_xlim([0,  XLIM])
+    ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+    ax.invert_yaxis()
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    ax.add_patch(Bgon)
+    ax.xaxis.label.set_visible(False)
+    ax.tick_params(labelbottom='off')
+    ax.set_title(VAR + ' for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR))
+
+    # ax2
+    ax2 = plt.subplot2grid((3, 1), (1, 0))
+    c = plt.contourf(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, v, cmap=CMAP, extend='max')
+    plt.colorbar(c)
+    if VAR == 'temperature':
+        c_cil_itp = plt.contour(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, [0,], colors='k', linewidths=2)
+    ax2.set_ylim([0, ZMAX])
+    ax2.set_xlim([0,  XLIM])
+    ax2.set_ylabel('Depth (m)', fontWeight = 'bold')
+    ax2.invert_yaxis()
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    ax2.add_patch(Bgon)
+    ax2.xaxis.label.set_visible(False)
+    ax2.tick_params(labelbottom='off')
+    ax2.set_title('1981-2010 climatology')
+
+    # ax3
+    ax3 = plt.subplot2grid((3, 1), (2, 0))
+    if len(df_section.index) > 1:
+        c = plt.contourf(df_anom.index, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
+        plt.colorbar(c)
+    ax3.set_ylim([0, ZMAX])
+    ax3.set_xlim([0,  XLIM])
+    ax3.set_ylabel('Depth (m)', fontWeight = 'bold')
+    ax3.set_xlabel('Distance (km)', fontWeight = 'bold')
+    ax3.invert_yaxis()
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    ax3.add_patch(Bgon)
+    ax3.set_title(r'Anomaly')
+
+    fig.set_size_inches(w=8,h=12)
+    fig_name = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '.png' 
+    fig.savefig(fig_name, dpi=200)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+    # Export data in csv.    
+    ## stn_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_stn.csv' 
+    ## itp_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_itp.csv' 
+    ## df_section_stn.T.to_csv(stn_file, float_format='%.3f') 
+    ## df_section_itp.T.to_csv(itp_file, float_format='%.3f') 
+
+    # Pickle data 
+    stn_pickle = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_stn.pkl' 
+    itp_pickle = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_itp.pkl' 
+    df_section_stn.to_pickle(stn_pickle) 
+    df_section_itp.to_pickle(itp_pickle)
+
+    
