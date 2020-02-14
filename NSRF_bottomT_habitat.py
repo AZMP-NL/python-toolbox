@@ -54,9 +54,9 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2018'
+year = '2019'
 climato_file = 'Tbot_climato_NSRF_summer_2006-2018.h5'
-year_file = '/home/cyrf0006/data/dev_database/' + year + '.nc'
+year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
 
 ## ---- Load Climato data ---- ##    
@@ -136,7 +136,7 @@ for i, xx in enumerate(lon_reg):
         idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
         if np.size(idx_good)==1:
             V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
-        elif np.size(idx_good)>1: # vertical interpolation between pts
+        elif np.size(idx_good)>3: # vertical interpolation between pts
             #V[j,i,:] = np.interp((z), np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  <--- this method propagate nans below max depth (extrapolation)
             interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  # <---------- Pay attention here, this is a bit unusual, but seems to work!
             idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
@@ -154,7 +154,7 @@ for k, zz in enumerate(z):
     #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
     # griddata (after removing nans)
     idx_good = np.argwhere(~np.isnan(tmp_vec))
-    if idx_good.size: # will ignore depth where no data exist
+    if idx_good.size>4: # will ignore depth where no data exist
         LN = np.squeeze(lon_vec[idx_good])
         LT = np.squeeze(lat_vec[idx_good])
         TT = np.squeeze(tmp_vec[idx_good])

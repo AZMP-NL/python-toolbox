@@ -60,7 +60,7 @@ df.index = df.index.year
 fig = plt.figure(4)
 fig.clf()
 sign=df>0
-df.plot(kind='bar', color=sign.map({True: 'red', False: 'blue'}), width = width)
+df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
 plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
 #plt.xlabel('Year')
 plt.title(r'2-4$\rm ^{\circ}C$ Habitat anomaly for 2J3KLNO - Fall', weight='bold', fontsize=14)
@@ -106,7 +106,7 @@ fig = plt.figure(5)
 fig.clf()
 sign=df>0
 #df.plot(kind='bar', color=sign.map({True: 'darkorange', False: 'steelblue'}), width = width)
-df.plot(kind='bar', color=sign.map({True: 'red', False: 'blue'}), width = width)
+df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
 plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
 #plt.xlabel('Year')
 plt.title(r'2-4$\rm ^{\circ}C$ Habitat anomaly for 3LNOPs - Spring', weight='bold', fontsize=14)

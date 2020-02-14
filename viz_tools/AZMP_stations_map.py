@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 import openpyxl, pprint
 
 ## ---- Region parameters ---- ##
-dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data_orwell/GEBCO_orwell/GRIDONE_1D.nc'
 lon_0 = -50
 lat_0 = 50
 lonLims = [-70, -40]
@@ -42,7 +42,7 @@ latLims = [40, 65]
 proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
-fig_name = 'AZMP_lines.png'
+fig_name = 'AZMP_sections.png'
 ephem = 'ephem_calval.txt'
 swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 
@@ -82,7 +82,7 @@ Z = Z[::decim_scale, ::decim_scale]
 import pandas as pd
 df = pd.read_excel(stationFile)
 #print the column names
-print df.columns
+print(df.columns)
 #get the values for a given column
 sections = df['SECTION'].values
 stations = df['STATION'].values
@@ -137,7 +137,7 @@ for l in cb.ax.yaxis.get_ticklabels():
     l.set_weight("bold")
     l.set_fontsize(10)
 cb.set_label('Depth (m)', fontsize=13, fontweight='bold')
-plt.title("AZMP-NL standard lines", fontsize=13, fontweight='bold')
+plt.title("AZMP-NL Standard Sections", fontsize=13, fontweight='bold')
 
 # plot stations
 x, y = m(stationLon[index_SEGB],stationLat[index_SEGB])
@@ -166,7 +166,7 @@ m.scatter(x,y,3,marker='o',color='lightcoral')
 plt.text(x[-1], y[-1], ' FI', horizontalalignment='left', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
 x, y = m(stationLon[index_S27],stationLat[index_S27])
 m.scatter(x,y,3,marker='o',color='lightcoral')
-#m.scatter(x[0],y[0],25,marker='p',color='r')
+m.scatter(x[0],y[0],25,marker='p',color='r')
 plt.text(x[-1], y[-1], ' S27', horizontalalignment='left', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
 x, y = m(stationLon[index_SESPB],stationLat[index_SESPB])
 m.scatter(x,y,3,marker='o',color='r')
@@ -178,21 +178,6 @@ x, y = m(stationLon[index_SS],stationLat[index_SS])
 m.scatter(x,y,3,marker='o',color='lightcoral')
 plt.text(x[0], y[0], 'SS ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='lightcoral', fontweight='bold')
 
-# AZMP database CIL box
-## x, y = m(lon_box,lat_box)
-## m.plot(x,y,color='k')
-
-
-
-## # Plot swot path (comment if not wanted)
-## for i in range(0,len(swot_segment_lat)):
-##     x_swot, y_swot = m(swot_segment_lon[i], swot_segment_lat[i])
-##     m.plot(x_swot, y_swot, 'k')
-
-
-## m.plot(988291, 3.89471e6, '.r')
-## lonpt, latpt = m(988291, 3.89471e6,inverse=True
-## plt.text(xpt+100000,ypt+100000,'(%5.1fW,%3.1fN)' % (lonpt,latpt))
 
 
 #### ---- Save Figure ---- ####

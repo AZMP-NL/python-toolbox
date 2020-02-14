@@ -46,16 +46,16 @@ from shapely.geometry.polygon import Polygon
 from matplotlib.patches import Rectangle
 from matplotlib.patches import Polygon as PP
 
-def draw_screen_poly( lats, lons, m):
-    x, y = m( lons, lats )
-    xy = zip(x,y)
-    poly = PP( xy, facecolor=[.8, .8, .8])
-    plt.gca().add_patch(poly)
+## def draw_screen_poly( lats, lons, m):
+##     x, y = m( lons, lats )
+##     xy = zip(x,y)
+##     poly = PP( xy, facecolor=[.8, .8, .8])
+##     plt.gca().add_patch(poly)
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
-lon_0 = -50
-lat_0 = 50
+#dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
+#lon_0 = -50
+#lat_0 = 50
 #lonLims = [-60, -44] # FishHab region
 #latLims = [39, 56]
 proj = 'merc'

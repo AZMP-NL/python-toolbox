@@ -22,7 +22,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'FC'
+SECTION = 'BB'
 SEASON = 'summer'
 CLIM_YEAR = [1981, 2010]
 dlat = 2 # how far from station we search
@@ -108,7 +108,7 @@ df_stn_sal = []
 df_itp_sal = []
 for idx, YEAR in enumerate(years):
     ## -------- Get CTD data -------- ##
-    year_file = '/home/cyrf0006/data/dev_database/' + str(YEAR) + '.nc'
+    year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(YEAR) + '.nc'
     print('Get ' + year_file)
     ds = xr.open_mfdataset(year_file)
 

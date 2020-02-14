@@ -72,8 +72,8 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'summer'
-year = '2018'
+season = 'fall'
+year = '2019'
 
 if season=='spring':
     climato_file = 'Tbot_climato_spring_0.10.h5'
@@ -81,7 +81,7 @@ elif season=='fall':
     climato_file = 'Tbot_climato_fall_0.10.h5'
 elif season=='summer':
     climato_file = 'Tbot_climato_summer_0.10.h5'
-year_file = '/home/cyrf0006/data/dev_database/' + year + '.nc'
+year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
 
 ## ---- Load Climato data ---- ##    
@@ -119,7 +119,7 @@ elif season == 'spring':
     ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
 elif season == 'fall':
     #ds = ds.sel(time=ds['time.season']=='SON')
-    ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
+    ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
 else:
     print('!! no season specified, used them all! !!')
     
@@ -293,7 +293,7 @@ else:
 m.fillcontinents(color='tan');
 m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
+cax = fig.add_axes([0.16, 0.055, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
@@ -328,7 +328,7 @@ m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight=
 m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
 x, y = m(lons, lats)
 m.scatter(x,y, s=50, marker='.',color='k')
-cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
+cax = fig.add_axes([0.16, 0.055, 0.7, 0.025])
 #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
@@ -362,7 +362,7 @@ else:
 m.fillcontinents(color='tan');
 m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
+cax = fig.add_axes([0.16, 0.055, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']

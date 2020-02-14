@@ -20,6 +20,10 @@ df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_
 df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
 df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
 
+#df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/df_CIL_SI_summer.pkl')
+#df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/df_CIL_BB_summer.pkl')
+#df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/df_CIL_FC_summer.pkl')
+
 df_years = df_SI[(df_SI.index>=years[0]) & (df_SI.index<=years[1])]
 df_clim = df_SI[(df_SI.index>=clim_year[0]) & (df_SI.index<=clim_year[1])]
 std_anom_SI = (df_years - df_clim.mean()) / df_clim.std()
@@ -35,103 +39,90 @@ std_anom_FC = (df_years - df_clim.mean()) / df_clim.std()
 # average quatities
 std_core = pd.concat([std_anom_SI.core_itp, std_anom_BB.core_itp, std_anom_FC.core_itp], axis=1).mean(axis=1)
 std_vol = pd.concat([std_anom_SI.vol_itp, std_anom_BB.vol_itp, std_anom_FC.vol_itp], axis=1).mean(axis=1)
-
-std_core.index = pd.to_datetime(std_core.index, format='%Y')
-std_vol.index = pd.to_datetime(std_vol.index, format='%Y')
-
-
-#### ------------- plot ---------------- ####
-## fig, ax = plt.subplots(nrows=2, ncols=1)
-## sign=df>0
-## df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
-## plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
-## #plt.xlabel('Year')
-## plt.title('Mean bottom temperature anomaly for 2J3KLNO - Fall', weight='bold', fontsize=14)
-## plt.grid()
-## plt.ylim([-2.5,2.5])
-## #plt.gca().set_xlim([pd.to_datetime('1979-01-01'), pd.to_datetime('2018-01-01')]) 
-## fig.set_size_inches(w=15,h=7)
+#std_core.index = pd.to_datetime(std_core.index, format='%Y')
+#std_vol.index = pd.to_datetime(std_vol.index, format='%Y')
 
 
-
-## ## ## ---- plot Figur ---- ##
-## width = .5
-## fig = plt.figure()
-## # ax1
-## ax = plt.subplot2grid((2, 1), (0, 0))
-## sign=std_core>0
-## std_core.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
-## #plt.xticks(np.arange(1950, 2020, step=5))
-## plt.xticks(std_core.index[::5])
-## plt.ylabel('Standardized Anomaly')
-## plt.title('CIL core temperature')
-## plt.grid()
-## plt.ylim([-2.5,2.5])
-## ax.xaxis.label.set_visible(False)
-## ax.tick_params(labelbottom='off')
+# Save for climate index
+cil_section_index = pd.concat([std_core, std_vol], axis=1, keys=['core','volume'])
+cil_section_index.to_pickle('section_cil_index.pkl')
 
 
-## # ax2
-## ax2 = plt.subplot2grid((2, 1), (1, 0))
-## sign=std_vol>0
-## std_vol.plot(kind='bar', color=sign.map({True: 'steelblue', False: 'indianred'}), width = width)
-## plt.ylabel('Standardized Anomaly')
-## plt.title('CIL volume')
-## plt.grid()
-## plt.ylim([-2.5,2.5])
-## plt.xticks(np.arange(1950, 2020, step=5))
-
-## fig_name = 'mean_CIL_anomalies.png'
-## fig.savefig(fig_name, dpi=200)
-
-## os.system('convert -trim mean_CIL_anomalies.png mean_CIL_anomalies.png')
-
-## keyboard
-
-## TEST 2 
+## ---- plot index ---- ##
+width=.7
 fig = plt.figure(4)
 fig.clf()
 ax = plt.subplot2grid((2, 1), (0, 0))
-df1 = std_core[std_core>0]
-df2 = std_core[std_core<0]
-width = 300
-p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred')
-p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue')
-plt.xticks(std_core.index[::10])
-plt.ylabel('Standardized Anomaly')
-plt.xlabel('Year')
-plt.title('CIL core temperature')
-plt.ylim([-3.5,3.5])
+sign=std_core>0
+std_core.plot(kind='bar', color=sign.map({False: 'steelblue', True: 'indianred'}), width = width, zorder=10)
+n = 5 # xtick every n years
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
+plt.xlabel(' ')
 plt.grid()
-ax.xaxis.label.set_visible(False)
-ax.tick_params(labelbottom='off')
-#plt.xlim(years)
+plt.ylim([-2.5,2.5])
+plt.title('CIL core - Sections SI, BB & FC', weight='bold', fontsize=14)
+ax.tick_params(labelbottom=False)
 
 ax2 = plt.subplot2grid((2, 1), (1, 0))
-df3 = std_vol[std_vol>0]
-df4 = std_vol[std_vol<0]
-p1 = plt.bar(df3.index, np.squeeze(df3.values), width, alpha=0.8, color='steelblue')
-p2 = plt.bar(df4.index, np.squeeze(df4.values), width, bottom=0, alpha=0.8, color='indianred')
-plt.xticks(std_core.index[::10])
-plt.ylabel('Standardized Anomaly')
-#plt.xlabel('Year')
-plt.title('CIL area')
-plt.ylim([-3,3])
+sign=std_vol>0
+std_vol.plot(kind='bar', color=sign.map({True: 'steelblue', False: 'indianred'}), width = width, zorder=10)
+n = 5 # xtick every n years
+ticks = ax2.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax2.xaxis.get_ticklabels()]
+ax2.xaxis.set_ticks(ticks[::n])
+ax2.xaxis.set_ticklabels(ticklabels[::n])
+plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
+plt.xlabel(' ')
 plt.grid()
-#plt.xlim(years)
+plt.ylim([-2.5,2.5])
+plt.title('CIL area - Sections SI, BB & FC', weight='bold', fontsize=14)
+ax2.tick_params(axis='x', rotation=0)
 
-#fig.set_size_inches(w=15,h=9)
-fig_name = 'mean_CIL_anomalies.png'
-fig.savefig(fig_name, dpi=300)
-os.system('convert -trim ' + fig_name + ' ' + fig_name)
-
-keyboard
-
-# Save French Figure
-plt.sca(ax)
-plt.ylabel(u'Anomalie normalisée', weight='bold', fontsize=14)
-plt.title(u'Température de fond moyenne pour 2J3KLNO - Automne', weight='bold', fontsize=14)
-#fig.set_size_inches(w=15,h=7)
-fig_name = 'mean_anomalies_fall_FR.png'
+fig_name = 'section_CIL_anomaly.png'
+fig.set_size_inches(w=15,h=7)
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+## ---- Figure in French ---- ##
+fig = plt.figure(4)
+fig.clf()
+ax = plt.subplot2grid((2, 1), (0, 0))
+sign=std_core>0
+std_core.plot(kind='bar', color=sign.map({False: 'steelblue', True: 'indianred'}), width = width, zorder=10)
+n = 5 # xtick every n years
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.ylabel('Anomalie normalisée', weight='bold', fontsize=14)
+plt.xlabel(' ')
+plt.grid()
+plt.ylim([-2.5,2.5])
+plt.title('Coeur de la CIF - Sections SI, BB & FC', weight='bold', fontsize=14)
+ax.tick_params(labelbottom=False)
+
+ax2 = plt.subplot2grid((2, 1), (1, 0))
+sign=std_vol>0
+std_vol.plot(kind='bar', color=sign.map({True: 'steelblue', False: 'indianred'}), width = width, zorder=10)
+n = 5 # xtick every n years
+ticks = ax2.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax2.xaxis.get_ticklabels()]
+ax2.xaxis.set_ticks(ticks[::n])
+ax2.xaxis.set_ticklabels(ticklabels[::n])
+plt.ylabel('Anomalie normalisée', weight='bold', fontsize=14)
+plt.xlabel(' ')
+plt.grid()
+plt.ylim([-2.5,2.5])
+plt.title('Aire de la CIF - Sections SI, BB & FC', weight='bold', fontsize=14)
+ax2.tick_params(axis='x', rotation=0)
+
+fig_name = 'section_CIL_anomaly_FR.png'
+fig.set_size_inches(w=15,h=7)
+fig.savefig(fig_name, dpi=200)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+

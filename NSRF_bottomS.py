@@ -54,9 +54,9 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2016'
+year = '2019'
 climato_file = 'Sbot_climato_NSRF_summer_2006-2018.h5'
-year_file = '/home/cyrf0006/data/dev_database/' + year + '.nc'
+year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
 
 ## ---- Load Climato data ---- ##    
@@ -132,11 +132,10 @@ for i, xx in enumerate(lon_reg):
     for j, yy in enumerate(lat_reg):    
         idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
         tmp = np.array(df_sal.iloc[idx].mean(axis=0))
-        idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
+        idx_good = np.argwhere(~np.isnan(tmp))
         if np.size(idx_good)==1:
             V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
         elif np.size(idx_good)>1: # vertical interpolation between pts
-            #V[j,i,:] = np.interp((z), np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  <--- this method propagate nans below max depth (extrapolation)
             interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  # <---------- Pay attention here, this is a bit unusual, but seems to work!
             idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
             V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
@@ -153,7 +152,7 @@ for k, zz in enumerate(z):
     #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
     # griddata (after removing nans)
     idx_good = np.argwhere(~np.isnan(tmp_vec))
-    if idx_good.size: # will ignore depth where no data exist
+    if idx_good.size>4: # will ignore depth where no data exist
         LN = np.squeeze(lon_vec[idx_good])
         LT = np.squeeze(lat_vec[idx_good])
         TT = np.squeeze(tmp_vec[idx_good])
@@ -242,8 +241,7 @@ anom = Sbot-Sbot_climato
 ## ---- Plot Anomaly ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-levels = np.linspace(-3.5, 3.5, 8)
-#levels = np.linspace(-3.5, 3.5, 16)
+levels = np.array([-1, -.8, -.6, -.4, -.2, .2, .4, .6, .8, 1])
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -257,11 +255,9 @@ else:
 m.fillcontinents(color='tan');
 m.drawparallels(np.arange(58, 68, 2), labels=[1,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians(np.arange(-66, -54, 2), labels=[0,0,0,1], fontsize=12, fontweight='normal');
-#m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
-#m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+cb.set_label(r'S', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
@@ -278,7 +274,7 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
 #levels = np.linspace(-2, 6, 9)
-levels = np.linspace(-2, 6, 17)
+levels = np.linspace(30, 36, 13)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Sbot, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -292,14 +288,11 @@ else:
 m.fillcontinents(color='tan');
 m.drawparallels(np.arange(58, 68, 2), labels=[1,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians(np.arange(-66, -54, 2), labels=[0,0,0,1], fontsize=12, fontweight='normal');
-#m.drawparallels([40, 45, 50, 55, 60], labels=[0,0,0,0], fontsize=12, fontweight='normal');
-#m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
 x, y = m(lons, lats)
 m.scatter(x,y, s=50, marker='.',color='k')
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
-#cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+cb.set_label(r'S', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
@@ -315,8 +308,7 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 ## ---- Plot Climato ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
 m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-#levels = np.linspace(-2, 6, 9)
-levels = np.linspace(-2, 6, 17)
+levels = np.linspace(30, 36, 13)
 xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
 c = m.contourf(xi, yi, Sbot_climato, levels, cmap=plt.cm.RdBu_r, extend='both')
 cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -332,7 +324,7 @@ m.drawparallels(np.arange(58, 68, 2), labels=[1,0,0,0], fontsize=12, fontweight=
 m.drawmeridians(np.arange(-66, -54, 2), labels=[0,0,0,1], fontsize=12, fontweight='normal');
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+cb.set_label(r'S', fontsize=12, fontweight='normal')
 div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
@@ -347,4 +339,4 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 
 
 # Convert to a subplot
-os.system('montage NSRF_bottom_sal_climato_' + season + '_' + year + '.png NSRF_bottom_sal_' + season + '_' + year + '.png NSRF_bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  NSRF_bottomT_' + season + year + '.png') 
+os.system('montage NSRF_bottom_sal_climato_' + season + '_' + year + '.png NSRF_bottom_sal_' + season + '_' + year + '.png NSRF_bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  NSRF_bottomS_' + season + year + '.png') 

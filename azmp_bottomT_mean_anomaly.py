@@ -19,7 +19,7 @@ plt.rc('font', **font)
 width = 0.7
 
 clim_year = [1981, 2010]
-years = [1980, 2018]
+years = [1980, 2021]
 
 #### ------------- For fall ---------------- ####
 # 1.
@@ -54,15 +54,24 @@ std_anom_all = pd.concat([std_anom2J, std_anom3K, std_anom3LNO], axis=1)
 df = std_anom_all.mean(axis=1)
 df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df.index = df.index.year
+# Save for climate index
+df.to_pickle('bottomT_index_fall.pkl')
 
 fig, ax = plt.subplots(nrows=1, ncols=1)
+n = 5 # xtick every n years
 sign=df>0
-df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
-plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
+ax = df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.ylabel('Normalized Anomaly', weight='bold', fontsize=14)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 #plt.xlabel('Year')
 plt.title('Mean bottom temperature anomaly for 2J3KLNO - Fall', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2.5,2.5])
+ax.yaxis.set_ticks(np.arange(-2.5, 3, .5))
 #plt.gca().set_xlim([pd.to_datetime('1979-01-01'), pd.to_datetime('2018-01-01')]) 
 fig.set_size_inches(w=15,h=7)
 fig_name = 'mean_anomalies_fall.png'
@@ -103,17 +112,24 @@ std_anom_all = pd.concat([std_anom3LNO, std_anom3Ps], axis=1)
 df = std_anom_all.mean(axis=1)
 df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df.index = df.index.year
+df.to_pickle('bottomT_index_spring.pkl')
 
 
 fig, ax = plt.subplots(nrows=1, ncols=1)
+n = 5 # xtick every n years
 sign=df>0
-#df.plot(kind='bar', color=sign.map({True: 'darkorange', False: 'steelblue'}), width = width)
-df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width)
-plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
+ax = df.plot(kind='bar', color=sign.map({True: 'indianred', False: 'steelblue'}), width = width, zorder=10)
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.ylabel('Normalized Anomaly', weight='bold', fontsize=14)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 #plt.xlabel('Year')
 plt.title('Mean bottom temperature anomaly for 3LNOPs - Spring', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2.5,2.5])
+ax.yaxis.set_ticks(np.arange(-2.5, 3, .5))
 #plt.gca().set_xlim([pd.to_datetime('1979-01-01'), pd.to_datetime('2018-01-01')]) 
 fig.set_size_inches(w=15,h=7)
 fig_name = 'mean_anomalies_spring.png'

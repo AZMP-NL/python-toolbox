@@ -47,7 +47,7 @@ df_annual.to_pickle('bergs_annual.pkl')
 df_annual_clim = df_annual[(df_annual.index>=clim_year[0]) & (df_annual.index<=clim_year[1])]
 df_annual_anom = df_annual - df_annual_clim.mean()
 df_annual_std_anom = df_annual_anom/df_annual_clim.std()
-
+df_annual_std_anom.to_pickle('bergs_std_anom.pkl')
 
 
 # Monthly mean
@@ -82,6 +82,14 @@ fig_name = 'bergs_monthly.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+# Save French Figure
+french_months = ['oct', 'nov', 'déc', 'jan', 'fev', 'mar', 'avr', 'mai', 'juin', 'juil', 'aou', 'sep']
+ax.set_ylabel('Nombre d\'icebergs')
+ax.set_xticklabels(french_months, rotation='horizontal')
+fig_name = 'bergs_monthly_FR.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
 
 ## ---- plot annual ---- ##
 width = 0.75  # the width of the bars
@@ -103,5 +111,12 @@ ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+d
 fig.set_size_inches(w=6,h=3)
 fig_name = 'bergs_annual.png'
 #plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+# Save French Figure
+french_months = ['oct', 'nov', 'déc', 'jan', 'fev', 'mar', 'avr', 'mai', 'juin', 'juil', 'aou', 'sep']
+ax.set_ylabel('Nombre d\'icebergs')
+fig_name = 'bergs_annual_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

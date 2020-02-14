@@ -332,6 +332,10 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             P = np.array(df['depth'])
             Ibtm = np.argmax(P)    
             digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
+        elif 'pres-db' in df.columns:
+            P = np.array(df['pres-db'])
+            Ibtm = np.argmax(P)    
+            digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
         else:
             error_msg = 'Problem with file, no pressure channel found [skip]'
             print(error_msg)
@@ -348,12 +352,18 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         if 'temp' in df.columns:
             X = np.array(df['temp'])
             Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'temp90-C' in df.columns:
+            X = np.array(df['temp90-C'])
+            Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Tlist.append(list(Pbin*np.nan))
 
         # Salinity
         if 'sal' in df.columns:
             X = np.array(df['sal'])
+            Slist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'sal-PSU' in df.columns:
+            X = np.array(df['sal-PSU'])
             Slist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Slist.append(list(Pbin*np.nan))
@@ -362,12 +372,18 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         if 'cond' in df.columns:
             X = np.array(df['cond'])
             Clist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'cond90-S/m' in df.columns:
+            X = np.array(df['cond90-S/m'])
+            Clist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Clist.append(list(Pbin*np.nan))
 
         # Sigma-t
         if 'sigt' in df.columns:
             X = np.array(df['sigt'])
+            SIGlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'sigma-t' in df.columns:
+            X = np.array(df['sigma-t'])
             SIGlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             SIGlist.append(list(Pbin*np.nan))
@@ -376,12 +392,18 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         if 'flor' in df.columns:
             X = np.array(df['flor'])
             Flist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        if 'flor-ug/l' in df.columns:
+            X = np.array(df['flor-ug/l'])
+            Flist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Flist.append(list(Pbin*np.nan))
 
         # Oxygen
         if 'oxy' in df.columns:
             X = np.array(df['oxy'])
+            O2list.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        if 'oxy-umol/l' in df.columns:
+            X = np.array(df['oxy-umol/l'])
             O2list.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             O2list.append(list(Pbin*np.nan))

@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import xarray as xr
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
 from shapely.geometry import Point
@@ -47,6 +47,7 @@ def get_nafo_divisions():
     Out[14]: [55.33, 55.33, 52.25, 52.25]
 
     ** Needs to be expanded with other divisions **
+    (see map_extract_nafo.py for help getting polygons)
 
     """
 
@@ -100,6 +101,16 @@ def get_nafo_divisions():
     xlat = [47.62, 47.473, 47.883, 49.418, 51.412]
     div4R = {'lat' : xlat, 'lon' : xlon}
 
+    #4S
+    xlon = [-60, -64.667, -67.304, -67.304, -57.130, -60]
+    xlat = [47.835, 49.417, 49.417, 51.4, 51.4, 49.416]
+    div4S = {'lat' : xlat, 'lon' : xlon}
+
+    #4T
+    xlon = [-60, -64.667, -67.304, -65.409, -61.384, -60.413]
+    xlat = [47.835, 49.416, 49.416, 47.075, 45.583, 47.039]
+    div4T = {'lat' : xlat, 'lon' : xlon}
+
     #4Vn
     xlon = [-60.41, -60., -57.45, -60.]
     xlat = [47.05, 47.83, 45.67, 45.67]
@@ -119,6 +130,12 @@ def get_nafo_divisions():
     xlon = [-63.5, -63.33, -63.33, -59, -59, -60, -60]
     xlat = [44.48, 44.33, 39, 39, 44.17, 44.17, 45.67]
     div4X = {'lat' : xlat, 'lon' : xlon}
+
+    #5Y
+    xlon = [-71, -66.903, -66.903, -67.407, -67.744, -67.303, -70, -70, -71]
+    xlat = [45.059, 45.059, 43.833, 43.833, 42.887, 42.334, 42.334, 41.7, 41.7]
+    div5Y = {'lat' : xlat, 'lon' : xlon}
+    
            
     dict = {}
     dict['2G'] = div2G
@@ -132,10 +149,13 @@ def get_nafo_divisions():
     dict['3Ps'] = div3Ps
     dict['3O'] = div3O
     dict['4R'] = div4R
+    dict['4S'] = div4R
+    dict['4T'] = div4T
     dict['4Vn'] = div4Vn
     dict['4Vs'] = div4Vs
     dict['4W'] = div4W
     dict['4X'] = div4X
+    dict['5Y'] = div5Y
 
     return dict
 
@@ -260,10 +280,14 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring.h5') 
     
     """
-    
+
+    # Because the code is trying to divide by zero
+    # (https://stackoverflow.com/questions/14861891/runtimewarning-invalid-value-encountered-in-divide)
+    np.seterr(divide='ignore', invalid='ignore')
+
     ## ---- Check if H5 file exists ---- ##        
     if os.path.isfile(h5_outputfile):
-        print [h5_outputfile + ' exist! Reading directly']
+        print(h5_outputfile + ' exist! Reading directly')
         h5f = h5py.File(h5_outputfile,'r')
         Tbot = h5f['Tbot'][:]
         lon_reg = h5f['lon_reg'][:]
@@ -319,6 +343,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
         z_vec = np.reshape(Z, Z.size)
         Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+        del zz, dataset
         print(' -> Done!')
 
         ## ---- Get CTD data --- ##
@@ -336,10 +361,9 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
         elif season == 'fall':
             #ds = ds.sel(time=ds['time.season']=='SON')
-            ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
+            ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
         else:
             print('!! no season specified, used them all! !!')
-
 
         # Remome problematic datasets
         print('!!Remove MEDBA data!!')
@@ -396,7 +420,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
             # griddata (after removing nans)
             idx_good = np.argwhere(~np.isnan(tmp_vec))
-            if idx_good.size>3: # will ignore depth where no data exist
+            if idx_good.size>10: # will ignore depth where no data exist
                 LN = np.squeeze(lon_vec[idx_good])
                 LT = np.squeeze(lat_vec[idx_good])
                 TT = np.squeeze(tmp_vec[idx_good])
@@ -557,7 +581,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
         elif season == 'fall':
             #ds = ds.sel(time=ds['time.season']=='SON')
-            ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
+            ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
         else:
             print('!! no season specified, used them all! !!')
 
@@ -811,7 +835,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
         tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
         # griddata (after removing nans)
         idx_good = np.argwhere(~np.isnan(tmp_vec))
-        if idx_good.size>3: # will ignore depth where no data exist
+        if idx_good.size>5: # will ignore depth where no data exist
             LN = np.squeeze(lon_vec[idx_good])
             LT = np.squeeze(lat_vec[idx_good])
             TT = np.squeeze(tmp_vec[idx_good])

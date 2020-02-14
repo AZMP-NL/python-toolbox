@@ -20,23 +20,25 @@ plt.rc('font', **font)
 url = 'https://www.esrl.noaa.gov/psd/data/correlation/amon.us.data'
 amo_file = '/home/cyrf0006/data/AZMP/indices/amon.us.data'
 if os.path.exists(amo_file):
-
     py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
     response_isnt_good = True
     while response_isnt_good:
         if py3:
-            response = input('Do you what to update'  + amo_file + '? [y/n]')
+            response = input('Do you what to update '  + amo_file + '? [y/n]')
         else:
-            response = raw_input('Do you what to update'  + amo_file + '? [y/n]')
+            response = raw_input('Do you what to update '  + amo_file + '? [y/n]')
         
         if response == 'y':
-            import urllib2
-            open('/home/cyrf0006/data/AZMP/indices/amon.us.data', 'wb').write(urllib2.urlopen(url).read())
+            import urllib3
+            http = urllib3.PoolManager()
+            r = http.request('GET', url)
+            open('/home/cyrf0006/data/AZMP/indices/data.csv', 'wb').write(r.data)
             response_isnt_good = False
         elif response == 'n':
             response_isnt_good = False
         else:
             print(' -> Please answer "y" or "n"')
+
             
 # Reload using pandas
 col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]

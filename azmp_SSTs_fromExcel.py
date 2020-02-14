@@ -39,7 +39,7 @@ prefix_excel = '/home/cyrf0006/data/SSTs/'
 df_box = pd.read_excel('/home/cyrf0006/github/AZMP-NL/utils/SST_boxes.xslx')
 
 ## ---- Loop on NL regions and store in a dataFrame ---- ##
-col_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+col_names = ['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 dfs = []
 df_labels = []
 dfs_excel = []
@@ -61,6 +61,8 @@ for box in df_box[df_box.region=='NL'].box_name.values:
     # From Eugene Excel
     df_excel = pd.read_excel(prefix_excel + 'SST_' + box +'.xlsx')
     df_excel.columns = col_names
+    df_excel = df_excel.set_index('Year', drop=True)
+
     df_excel = df_excel.stack() 
     df_excel.index = pd.to_datetime('15-' + df_excel.index.get_level_values(1) + '-' + df_excel.index.get_level_values(0).values.astype(np.str))
     dfs_excel.append(df_excel)
@@ -153,15 +155,27 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
-#plt.title(u'SSTs', weight='bold', fontsize=14)
+plt.ylabel('Mean Normalized Anomaly', weight='bold', fontsize=14)
+plt.title(u'NL SST Index', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2,2])
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 fig.set_size_inches(w=15,h=7)
-fig_name = 'SST_anomalies.png'
-fig.savefig(fig_name, dpi=300)
+fig_name = 'SST_index.png'
+fig.savefig(fig_name, dpi=200)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
-# save in csv
-std_anom.to_csv('SST_anom.csv', float_format='%.4f')
+# Save French Figure
+plt.sca(ax)
+plt.ylabel(u'Anomalie normalisée', weight='bold', fontsize=14)
+plt.title(u'Indice de température de surface - T-N-L', weight='bold', fontsize=14)
+#fig.set_size_inches(w=15,h=7)
+fig_name = 'SST_index_FR.png'
+fig.savefig(fig_name, dpi=200)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+
+
+# save in csv & pkl
+std_anom.to_csv('SST_anom.csv', float_format='%.4f')
+std_anom.to_pickle('SST_anom.pkl')

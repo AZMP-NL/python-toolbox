@@ -12,5 +12,5 @@ f = open(list_ascii, 'r')
 for path in f:
     file = path.strip().split('/')[-1]
     command = 'ln -s ' + path.rstrip('\n') + ' ' + dest_folder + file
-    print command
+    print(command)
     os.system(command)

@@ -22,6 +22,17 @@ and update the Excel files.
 
 Eventually, I could find a way to update directly from server (see azmp_airTemp.py).
 
+I took NUUK temperature here:
+https://www.dmi.dk/publikationer/
+https://www.dmi.dk/vejrarkiv/
+using file 4250_2014_2018.csv
+( this one ends in 2013: https://crudata.uea.ac.uk/cru/data/greenland/nuuk.dat)
+
+I generated historical data from here (see azmp_dmi_nuukAirT.py):
+JOURNAL OF GEOPHYSICAL RESEARCH, VOL. 111, D11105, doi:10.1029/2005JD006810, 2006
+https://www.dmi.dk/fileadmin/user_upload/Rapporter/TR/2018/DMIRep18-05.zip
+https://www.dmi.dk/publikationer/
+
 Frederic.Cyr@dfo-mpo.gc.ca - February 2019
 
 '''
@@ -42,7 +53,7 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 clim_year = [1981, 2010]
-current_year = 2018
+current_year = 2019
 
 ## ----  Prepare the data ---- ##
 # load from Excel sheets
@@ -53,12 +64,19 @@ df_NK = pd.read_excel('/home/cyrf0006/research/PeopleStuff/ColbourneStuff/AZMP_A
 df_SJ = pd.read_excel('/home/cyrf0006/research/PeopleStuff/ColbourneStuff/AZMP_AIR_TEMP_COMPOSITE_STJOHNS.xlsx', header=0)
 
 # Rename columns
-col_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+col_names = ['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 df_BB.columns = col_names
 df_CA.columns = col_names
 df_IQ.columns = col_names
 df_NK.columns = col_names
 df_SJ.columns = col_names
+# Set index Year
+df_BB = df_BB.set_index('Year', drop=True)
+df_CA = df_CA.set_index('Year', drop=True)
+df_IQ = df_IQ.set_index('Year', drop=True)
+df_NK = df_NK.set_index('Year', drop=True)
+df_SJ = df_SJ.set_index('Year', drop=True)
+
 
 # Stack months under Years (pretty cool!)
 df_BB = df_BB.stack() 
@@ -74,8 +92,11 @@ df_IQ.index = pd.to_datetime('15-' + df_IQ.index.get_level_values(1) + '-' + df_
 df_NK.index = pd.to_datetime('15-' + df_NK.index.get_level_values(1) + '-' + df_NK.index.get_level_values(0).values.astype(np.str))
 df_SJ.index = pd.to_datetime('15-' + df_SJ.index.get_level_values(1) + '-' + df_SJ.index.get_level_values(0).values.astype(np.str))
 
+# NEW FROM 2019 (replace Excel from DMI data):
+df_NUUK = pd.read_pickle('Nuuk_air_temp.pkl')  
+
 # Concatenate all timeseries
-df = pd.concat([df_SJ, df_BB, df_CA, df_IQ, df_NK], axis=1)
+df = pd.concat([df_SJ, df_BB, df_CA, df_IQ, df_NUUK], axis=1)
 df.columns = ['StJohns', 'Bonavista', 'Cartwright','Iqaluit', 'Nuuk']
 
 
@@ -117,13 +138,24 @@ ax = anom.plot(kind='bar', stacked=True, cmap='YlGn')
 plt.grid('on')
 ax.set_ylabel(r'[$^{\circ}$C]')
 ax.set_title(np.str(current_year) + ' Air temperature anomalies')
+#ax.legend(loc='upper center')
+plt.ylim([-6, 14])
+
 
 fig = ax.get_figure()
 fig.set_size_inches(w=9,h=6)
-fig_name = 'air_temp_2018.png'
-#plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+fig_name = 'air_temp_2019.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+# Save French Figure
+french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+ax.set_title(' Anomalies des températures de l\'air - ' + np.str(current_year))
+ax.set_xticklabels(french_months, rotation='horizontal')
+fig_name = 'air_temp_2019_FR.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
 
 ## ---- plot annual ---- ##
 n = 5 # xtick every n years
@@ -142,11 +174,18 @@ fig_name = 'air_temp_anom.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+# Save in French
+ax.set_ylabel(r'Anomalie normalisée')
+ax.set_title('Anomalies des températures de l\'air')
+fig_name = 'air_temp_anom_FR.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
 
 keyboard
 
 ## ---- Tried to overlay NAO, but did not work. I give up for now. ---- ##
-df_winter = pd.read_pickle('winterNAO_1951-2018.pkl')
+df_winter = pd.read_pickle('winterNAO_1951-2019.pkl')
 df_roll = df_winter.rolling(window=5, center=True).mean()
 df_roll = df_roll.rename(columns={"Value": "Winter NAO"})
 df = pd.concat([std_anom_annual, df_roll])
@@ -182,7 +221,6 @@ fig_name = 'air_temp_anom_NAO.png'
 #plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
-
 
 ## Test only with summer data
 df_summer = df[(df.index.month >= 6) & (df.index.month<=9)]

@@ -24,12 +24,29 @@ lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='summer', h5_outputfile='Tbot_climato_SA4_summer_0.10.h5') 
 
+FOR COSEWIC (see /home/cyrf0006/AZMP/state_reports/bottomT/COSEWIC)
+
+lonLims = [-71, -55] # NAFO 4-5
+latLims = [42, 48]
+dc = .1
+lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='summer', h5_outputfile='Tbot_climato_SA45_summer_0.10.h5') 
+
+lonLims = [-64, -50] # NAFO 2GH (and even cut...)
+latLims = [55, 61]
+dc = .1
+lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='summer', h5_outputfile='Tbot_climato_2GH_summer_0.10.h5') 
+
+
 '''
 
 ## mport netCDF4
 import h5py
 ## import xarray as xr
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 import numpy as  np
 import matplotlib.pyplot as plt
 ## import openpyxl, pprint
@@ -45,11 +62,11 @@ from shapely.ops import cascaded_union
 ## ---- preamble ---- ##
 #years = np.arange(1950, 2019)
 years = np.arange(1980, 2019)
-lon_0 = -50
-lat_0 = 50
 proj = 'merc'
 plot = False # to plot or not to plot...
 season = 'summer'
+SPECIAL = 'COSEWIC_north'
+
 
 # load climato
 if season == 'fall':
@@ -57,7 +74,12 @@ if season == 'fall':
 elif season == 'spring':
     climato_file = 'Tbot_climato_spring_0.10.h5'
 elif season == 'summer':
-    climato_file = 'Tbot_climato_summer_0.10.h5'
+    if SPECIAL=='COSEWIC_north':
+        climato_file = 'Tbot_climato_2GH_summer_0.10.h5'
+    elif SPECIAL=='COSEWIC_south':
+        climato_file = 'Tbot_climato_SA45_summer_0.10.h5'
+    else:
+        climato_file = 'Tbot_climato_summer_0.10.h5'
 h5f = h5py.File(climato_file, 'r')
 Tbot_climato = h5f['Tbot'][:]
 lon_reg = h5f['lon_reg'][:]
@@ -80,33 +102,55 @@ shape = [polygon3L, polygon3N, polygon3O]
 shape_3LNO = cascaded_union(shape)
 shape_3M = Polygon(zip(nafo_div['3M']['lon'], nafo_div['3M']['lat']))
 shape_3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
-shape_2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+shape_2G = Polygon(zip(nafo_div['2G']['lon'], nafo_div['2G']['lat']))
 shape_2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
+shape_2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
 shape_3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+shape_3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
+shape_3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
 shape = [shape_2J, shape_2H]
 shape_2HJ = cascaded_union(shape)
+shape = [shape_2G, shape_2H]
+shape_2GH = cascaded_union(shape)
 shape_4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
+shape_4S = Polygon(zip(nafo_div['4S']['lon'], nafo_div['4S']['lat']))
+shape_4T = Polygon(zip(nafo_div['4T']['lon'], nafo_div['4T']['lat']))
+shape = [shape_4R, shape_4S]
+shape_4RS = cascaded_union(shape)
+shape = [shape_4R, shape_4S, shape_4T]
+shape_4RST = cascaded_union(shape)
 polygon4Vs = Polygon(zip(nafo_div['4Vs']['lon'], nafo_div['4Vs']['lat']))
 polygon4Vn = Polygon(zip(nafo_div['4Vn']['lon'], nafo_div['4Vn']['lat']))
 polygon4W = Polygon(zip(nafo_div['4W']['lon'], nafo_div['4W']['lat']))
 polygon4X = Polygon(zip(nafo_div['4X']['lon'], nafo_div['4X']['lat']))
 shape = [polygon4Vs.buffer(0), polygon4Vn.buffer(0), polygon4W.buffer(0), polygon4X.buffer(0)]
 shape_4VWX = cascaded_union(shape)
+shape_5Y = Polygon(zip(nafo_div['5Y']['lon'], nafo_div['5Y']['lat']))
+
 
 dict_stats_3LNO = {}
 dict_stats_3M = {}
 dict_stats_3Ps = {}
 dict_stats_3K = {}
+dict_stats_3L = {}
+dict_stats_3O = {}
 dict_stats_2J = {}
 dict_stats_2HJ = {}
+dict_stats_2GH = {}
 dict_stats_4R = {}
+dict_stats_4S = {}
+dict_stats_4RS = {}
+dict_stats_4RT = {}
+dict_stats_4RST = {}
+dict_stats_4T = {}
 dict_stats_4VWX = {}
+dict_stats_5Y = {}
 
 
 # Loop on years
 df_list = []
 for year in years:
-    print ' ---- ' + np.str(year) + ' ---- '
+    print(' ---- ' + np.str(year) + ' ---- ')
     year_file = '/home/cyrf0006/data/dev_database/' + np.str(year) + '.nc'
     Tdict = azu.get_bottomT(year_file, season, climato_file)    
     Tbot = Tdict['Tbot']
@@ -116,14 +160,22 @@ for year in years:
 
     
     # NAFO division stats    
-    dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
-    dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
-    dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
-    dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
-    dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
-    dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
-    dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
-    dict_stats_4VWX[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
+    dict_stats_2GH[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2GH)
+    ## dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
+    ## dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
+    ## dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
+    ## dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
+    ## dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
+    ## dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
+    ## dict_stats_3L[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3L)
+    ## dict_stats_3O[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3O)
+    ## dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
+    ## dict_stats_4S[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4S)
+    ## dict_stats_4RS[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RS)
+    ## dict_stats_4RST[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RST)
+    ## dict_stats_4T[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4T)
+    ## dict_stats_4VWX[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
+    ## dict_stats_5Y[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_5Y)
 
     # Append bottom temperature for multi-index export
     df = pd.DataFrame(index=lat_reg, columns=lon_reg)
@@ -200,15 +252,22 @@ for year in years:
 
 
     
+df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')
+df_2HJ = pd.DataFrame.from_dict(dict_stats_2HJ, orient='index')
+df_2GH = pd.DataFrame.from_dict(dict_stats_2GH, orient='index')
 df_3Ps = pd.DataFrame.from_dict(dict_stats_3Ps, orient='index')
 df_3LNO = pd.DataFrame.from_dict(dict_stats_3LNO, orient='index')
 df_3M = pd.DataFrame.from_dict(dict_stats_3M, orient='index')
 df_3K = pd.DataFrame.from_dict(dict_stats_3K, orient='index')
-df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')
-df_2HJ = pd.DataFrame.from_dict(dict_stats_2HJ, orient='index')
+df_3L = pd.DataFrame.from_dict(dict_stats_3L, orient='index')
+df_3O = pd.DataFrame.from_dict(dict_stats_3O, orient='index')
 df_4R = pd.DataFrame.from_dict(dict_stats_4R, orient='index')
+df_4S = pd.DataFrame.from_dict(dict_stats_4S, orient='index')
+df_4RS = pd.DataFrame.from_dict(dict_stats_4RS, orient='index')
+df_4RST = pd.DataFrame.from_dict(dict_stats_4RST, orient='index')
+df_4T = pd.DataFrame.from_dict(dict_stats_4T, orient='index')
 df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
-
+df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
 
 outname = 'stats_3Ps_' + season + '.pkl'
 df_3Ps.to_pickle(outname)
@@ -218,14 +277,30 @@ outname = 'stats_3M_' + season + '.pkl'
 df_3M.to_pickle(outname)
 outname = 'stats_3K_' + season + '.pkl'
 df_3K.to_pickle(outname)
+outname = 'stats_3L_' + season + '.pkl'
+df_3L.to_pickle(outname)
+outname = 'stats_3O_' + season + '.pkl'
+df_3O.to_pickle(outname)
 outname = 'stats_2J_' + season + '.pkl'
 df_2J.to_pickle(outname)
 outname = 'stats_2HJ_' + season + '.pkl'
 df_2HJ.to_pickle(outname)
+outname = 'stats_2GH_' + season + '.pkl'
+df_2GH.to_pickle(outname)
 outname = 'stats_4R_' + season + '.pkl'
 df_4R.to_pickle(outname)
+outname = 'stats_4S_' + season + '.pkl'
+df_4S.to_pickle(outname)
+outname = 'stats_4RS_' + season + '.pkl'
+df_4RS.to_pickle(outname)
+outname = 'stats_4RST_' + season + '.pkl'
+df_4RST.to_pickle(outname)
+outname = 'stats_4T_' + season + '.pkl'
+df_4T.to_pickle(outname)
 outname = 'stats_4VWX_' + season + '.pkl'
 df_4VWX.to_pickle(outname)
+outname = 'stats_5Y_' + season + '.pkl'
+df_5Y.to_pickle(outname)
 
 # Save in multi-index  dataFrame
 year_index = pd.Series(years)

@@ -9,7 +9,7 @@ lonLims = [-66, -56] # Lab Sea
 latLims = [57, 67]
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, year_lims=[2006, 2018], season='summer', h5_outputfile='Tbot_climato_NSRF_summer_2006-2018.h5')
+Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF_5m/2*.nc', lon_reg, lat_reg, year_lims=[2006, 2019], season='summer', h5_outputfile='Tbot_climato_NSRF_summer_2006-2019.h5')
 
 * see: /home/cyrf0006/AZMP/state_reports/bottomT
 
@@ -19,6 +19,7 @@ import os
 import netCDF4
 import h5py
 import xarray as xr
+os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 from mpl_toolkits.basemap import Basemap
 import numpy as  np
 import matplotlib.pyplot as plt
@@ -54,9 +55,9 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2006'
+year = '2019'
 climato_file = 'Tbot_climato_NSRF_summer_2006-2018.h5'
-year_file = '/home/cyrf0006/data/dev_database/' + year + '.nc'
+year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
 
 ## ---- Load Climato data ---- ##    
@@ -154,7 +155,7 @@ for k, zz in enumerate(z):
     #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
     # griddata (after removing nans)
     idx_good = np.argwhere(~np.isnan(tmp_vec))
-    if idx_good.size: # will ignore depth where no data exist
+    if idx_good.size>3: # will ignore depth where no data exist
         LN = np.squeeze(lon_vec[idx_good])
         LT = np.squeeze(lat_vec[idx_good])
         TT = np.squeeze(tmp_vec[idx_good])

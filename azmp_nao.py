@@ -20,23 +20,24 @@ plt.rc('font', **font)
 url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv'
 nao_file = '/home/cyrf0006/data/AZMP/indices/data.csv'
 if os.path.exists(nao_file):
-
     py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
     response_isnt_good = True
     while response_isnt_good:
         if py3:
-            response = input("Do you want to remove it? (yes/no?): ")
+            response = input('Do you what to update '  + nao_file + '? [y/n]')
         else:
-            response = raw_input('Do you what to update'  + nao_file + '? [y/n]')
+            response = raw_input('Do you what to update '  + nao_file + '? [y/n]')
         
         if response == 'y':
-            import urllib2
-            open('/home/cyrf0006/data/AZMP/indices/data.csv', 'wb').write(urllib2.urlopen(url).read())
+            import urllib3
+            http = urllib3.PoolManager()
+            r = http.request('GET', url)
+            open('/home/cyrf0006/data/AZMP/indices/data.csv', 'wb').write(r.data)
             response_isnt_good = False
         elif response == 'n':
             response_isnt_good = False
         else:
-            print ' -> Please answer "yes" or "no"'
+            print(' -> Please answer "y" or "n"')
             
 # Reload using pandas
 df = pd.read_csv(nao_file, header=1)
@@ -62,19 +63,25 @@ df.index = pd.to_datetime(df.index, format='%Y%m')
 ## ----  plot Winter NAO ---- ####
 # Select only DJF
 df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
+df_summer = df[(df.index.month>=6) & (df.index.month<=9)]
 
 # Start Dec-1950
 df_winter = df_winter[df_winter.index>pd.to_datetime('1950-10-01')]
+df_summer = df_summer[df_summer.index>pd.to_datetime('1950-01-01')]
 #df_winter.resample('3M').mean()
 
 
 # Average 3 consecutive values (DJF average); We loose index.
 df_winter = df_winter.groupby(np.arange(len(df_winter))//3).mean()
+df_summer = df_summer.groupby(np.arange(len(df_summer))//3).mean()
 
 # Reset index using years only
 year_unique = pd.unique(df.index.year)[1:,]
 df_winter = df_winter.iloc[np.arange(0, year_unique.size)] # reduce if last month is december (belongs to following year)
 df_winter.index = year_unique
+
+df_summer = df_summer.iloc[np.arange(0, year_unique.size)] 
+df_summer.index = year_unique
 
 # pickle DataFrame for scorecards:
 df.to_pickle('NAO_monthly.pkl')
@@ -82,23 +89,50 @@ df_annual = df.resample('As').mean()
 df_annual.index = df_annual.index.year
 df_annual.to_pickle('NAO_annual.pkl')
 df_winter.to_pickle('NAO_winter.pkl')
+df_summer.to_pickle('NAO_summer.pkl')
 
 ## ## ---- plot winter NAO bar plots ---- ##
+#df_winter[df_winter.index==2019]=np.nan 
 df1 = df_winter[df_winter>0]
 df2 = df_winter[df_winter<0]
 
-## fig = plt.figure(3)
-## plt.plot(df_winter, 'k')
-## plt.fill_between(df1.index, np.squeeze(df1.values), color='b')
-## plt.fill_between(df2.index, np.squeeze(df2.values), color='r')
-## plt.ylabel('Winter NAO')
-## plt.xlabel('Year')
-## plt.grid()
-## fig.set_size_inches(w=12,h=9)
-## fig_name = 'NAO_winter_bar_1950-2019.png'
-## fig.savefig(fig_name, dpi=300)
 
 ## ---- plot winter NAO bar plots #2 ---- ##
+fig = plt.figure(4)
+fig.clf()
+width = .9
+p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
+p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
+p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.5, color='white')
+plt.ylabel('NAO index')
+plt.title('Winter NAO average (DJF)')
+plt.grid()
+fig.set_size_inches(w=15,h=9)
+fig_name = 'NAO_winter_1950-2020.png'
+plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+# French Figure
+fig = plt.figure(4)
+fig.clf()
+width = .9
+p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
+p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
+#p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.3, color='black')
+plt.ylabel('indice ONA')
+plt.title('Oscillation Nord-Atlantique hivernale (DJF)')
+plt.grid()
+fig.set_size_inches(w=15,h=9)
+fig_name = 'NAO_winter_1950-2020_FR.png'
+plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+## ## ---- plot summer NAO bar plots ---- ##
+df1 = df_summer[df_summer>0]
+df2 = df_summer[df_summer<0]
 fig = plt.figure(4)
 fig.clf()
 width = .9
@@ -107,10 +141,10 @@ p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, colo
 p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.3, color='black')
 plt.ylabel('NAO index')
 #plt.xlabel('Year')
-plt.title('Winter NAO average (DJF)')
+plt.title('Summer NAO average (JJAS)')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'NAO_winter_bar2_1950-2019.png'
+fig_name = 'NAO_summer_bar2_1950-2020.png'
 #plt.annotate('data source: NCDC/NOAA', xy=(.75, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)

@@ -32,14 +32,14 @@ import cmocean
 s27 = [47.55,-52.59]
 dc = .1
 year_clim = [1981, 2010]
-current_year = 2017
+current_year = 2019
 variable = 'temperature'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
 # Derived parameter
 if variable == 'temperature':
-    V = np.arange(-1, 16, 1)
+    V = np.arange(-1, 14, 1)
     #Vanom = np.linspace(-5.5, 5.5, 12)
     #Vanom = np.array([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
     Vanom = np.linspace(-5.5, 5.5, 23)
@@ -63,7 +63,7 @@ else:
 ## month_fmt = mdates.DateFormatter('%b')
 
 ## ---- Open data and select ---- ##
-ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/*.nc')
+ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/netCDF_5m_2000m/*.nc')
 
 # Remome GTS datasets
 ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
@@ -123,7 +123,7 @@ weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear')
 weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
-weekly_clim.index = pd.to_datetime('2018-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
+weekly_clim.index = pd.to_datetime('2019-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
 #weekly_clim.dropna(how='all', axis=1, inplace=True)
 
 
@@ -256,8 +256,8 @@ fig.savefig(outfile_anomFR, dpi=200)
 os.system('convert -trim ' + outfile_anomFR + ' ' + outfile_anomFR)
 
 # Convert to a subplot
-os.system('montage ' + outfile_clim + ' ' +  outfile_year + ' ' + outfile_anom  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '.png') 
-os.system('montage ' + outfile_climFR + ' ' +  outfile_yearFR + ' ' + outfile_anomFR  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '_FR.png') 
+os.system('montage ' + outfile_year + ' ' +  outfile_clim + ' ' + outfile_anom  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '.png') 
+os.system('montage ' + outfile_yearFR + ' ' +  outfile_climFR + ' ' + outfile_anomFR  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '_FR.png') 
 
 ## ---- Station occupation plot ---- ##
 da_occu = ds['time']
@@ -267,7 +267,7 @@ df_occu = df_occu[df_occu.index.year>=1945]
 # plot 1 - weekly occupations only
 fig, ax = plt.subplots(nrows=1, ncols=1)
 plt.clf()
-plt.plot(df_occu.index.year, df_occu.index.weekofyear, '.k')
+plt.plot(df_occu.index.year.values, df_occu.index.weekofyear.values, '.k')
 plt.ylabel('Week of year')
 plt.xlabel('Station 27 occupation')
 # Save Figure
@@ -290,7 +290,7 @@ ax1.set_ylabel('No. of weekly occupations')
 plt.title('Station 27 occupation')
 # ax2
 ax2 = plt.subplot2grid((2, 1), (1, 0))
-plt.plot(df_occu.index.year, df_occu.index.weekofyear, '.k')
+plt.plot(df_occu.index.year.values, df_occu.index.weekofyear.values, '.k')
 ax2.set_ylabel('week of year')
 # Save Figure
 fig.set_size_inches(w=6, h=7)

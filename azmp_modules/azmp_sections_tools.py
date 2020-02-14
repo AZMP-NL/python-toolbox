@@ -57,7 +57,7 @@ def section_bathymetry(section_name):
               - add optional 'path' input. Default can wget from AZMP git repo...
     """
 
-    standard_sections = ["3PS", "FC", "SEGB", "SWSP", "BB", "FI", "S27", "SESP", "WB", "BI", "MB", "SA", "SI"]
+    standard_sections = ["3PS", "FC", "SEGB", "SWSPB", "BB", "FI", "S27", "SESPB", "WB", "BI", "MB", "SA", "SI"]
     bathy_files = ["3psline.txt", "fcline.txt", "segbline.txt", "swspbline.txt", "bbline.txt", \
                    "filine.txt", "s27line.txt", "sespbline.txt", "wbline.txt", "biline.txt", \
                    "mbline.txt", "saline.txt", "siline.txt"]
@@ -157,7 +157,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
 
 
     ## -------- Get CTD data -------- ##
-    year_file = '/home/cyrf0006/data/dev_database/' + str(year) + '.nc'
+    year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(year) + '.nc'
     print('Get ' + year_file)
     ds = xr.open_mfdataset(year_file)
 
@@ -359,7 +359,7 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
         distance = np.abs(distance-distance.max())
         
     # retrieve bathymetry using function
-    bathymetry = section_bathymetry(section_name)
+    #!bathymetry = section_bathymetry(section_name)
 
     # Check maximum depth (for cast positioning on figure)
     bathy = np.array(bathymetry) # list to array
@@ -466,14 +466,22 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         v_anom = np.linspace(-3.5, 3.5, 15)
         v_anom = np.delete(v_anom, np.where(v_anom==0)) 
         CMAP = cmocean.cm.thermal
+        if SECTION == 'HL':
+            v = np.arange(2,15,1)
+            v_anom = np.linspace(-5.5, 5.5, 23)
+            v_anom = np.delete(v_anom, np.where(v_anom==0)) 
     elif VAR == 'salinity':
         v = np.arange(29,36,.5)
         v_anom = np.linspace(-1.5, 1.5, 16)
-        CMAP = cmocean.cm.haline
+        CMAP = cmocean.cm.haline    
+        if SECTION == 'HL':
+            v = np.arange(30,37,.5)
+            v_anom = np.linspace(-1.5, 1.5, 16)   
     else:
         v = 10
         v_anom = 10
-
+        
+        
     SECTION_BATHY = SECTION
 
 
@@ -489,9 +497,11 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
             y0 = y1
         return a
 
-
     ## ---- Get this year's section ---- ## 
     df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR)
+    if df_section_itp.dropna().size == 0: # empty return
+        return
+        
     # Use itp or station-based definition
     if STATION_BASED:
         df_section = df_section_stn
@@ -515,6 +525,8 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     ## ---  ---- ## 
     df_anom =  df_section - df_clim
     df_anom = df_anom.reset_index(level=0, drop=True)
+     # drop empty columns (NAKE SURE I AM NOT INTRODUCING ERRROS)
+    df_anom.dropna(how='all', inplace=True)
     ## ---- plot Figure ---- ##
     XLIM = df_section_itp.index[-1][1]
     fig = plt.figure()
@@ -553,6 +565,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
 
     # ax3
     ax3 = plt.subplot2grid((3, 1), (2, 0))
+    df_anom.shape
     if len(df_section.index) > 1:
         c = plt.contourf(df_anom.index, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
         plt.colorbar(c)
@@ -570,11 +583,27 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     fig.savefig(fig_name, dpi=200)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+    # Save in French
+    if (VAR == 'temperature') & (SEASON == 'summer'):
+            ax.set_title('Température à la section ' + SECTION + ' - été ' + str(YEAR))
+    elif (VAR == 'salinity') & (SEASON == 'summer'):
+            ax.set_title('Salinité à la section ' + SECTION + ' - été ' + str(YEAR))    
+
+    ax.set_ylabel('Profondeur (m)', fontWeight = 'bold')    
+    ax2.set_ylabel('Profondeur (m)', fontWeight = 'bold')
+    ax3.set_ylabel('Profondeur (m)', fontWeight = 'bold')
+    
+    ax2.set_title(r'Climatologie 1981-2010')
+    ax3.set_title(r'Anomalie')
+    fig_name = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_FR.png' 
+    fig.savefig(fig_name, dpi=200)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)    
+
     # Export data in csv.    
-    ## stn_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_stn.csv' 
-    ## itp_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_itp.csv' 
-    ## df_section_stn.T.to_csv(stn_file, float_format='%.3f') 
-    ## df_section_itp.T.to_csv(itp_file, float_format='%.3f') 
+    stn_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_stn.csv' 
+    itp_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_itp.csv' 
+    df_section_stn.T.to_csv(stn_file, float_format='%.3f') 
+    df_section_itp.T.to_csv(itp_file, float_format='%.3f') 
 
     # Pickle data 
     stn_pickle = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_stn.pkl' 
@@ -582,4 +611,200 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     df_section_stn.to_pickle(stn_pickle) 
     df_section_itp.to_pickle(itp_pickle)
 
+
+def btl_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400):
+    """
+    Contour plot of water sample (bottle) data on standard AZMP-NL sections for a certain year, season, section and variable.
+    This is a function version of script "azmp_blt_section.py" used for ResDocs figures.
+
+    This function uses pickled objects generated by azmp_utils.masterfile_section_to_multiindex.py
+
+    See usage example in azmp_process_btl_plots.py
+
+    Frederic.Cyr@dfo-mpo.gc.ca
+    Sept. 2019
+
+    """
     
+    # derived parameters
+    if VAR == 'temperature':
+        v = np.arange(-2,11,1)
+        v_anom = np.linspace(-3.5, 3.5, 15)
+        v_anom = np.delete(v_anom, np.where(v_anom==0)) 
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'salinity':
+        v = np.arange(29,36,.5)
+        v_anom = np.linspace(-1.5, 1.5, 16)
+        CMAP = cmocean.cm.haline
+    elif VAR == 'oxygen':
+        v = np.arange(5.5,8.5,.2)
+        v_anom = np.linspace(-1, 1, 11)
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'satO2_perc':
+        v = np.arange(70, 100, 2)
+        v_anom = np.linspace(-10, 10, 11)
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'PO4':
+        v = np.arange(0, 2, .1)
+        v_anom = np.linspace(-1, 1, 11)
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'NO3':
+        v = np.arange(0, 16, 1)
+        v_anom = np.linspace(-5, 5, 11)
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'SIO':
+        v = np.arange(0, 20, 1)
+        v_anom = np.linspace(-5, 5, 11)
+        CMAP = cmocean.cm.thermal
+    else:
+        v = 10
+        v_anom = 10
+        CMAP = cmocean.cm.thermal
+
+    SECTION_BATHY = SECTION
+    v_sig = [25, 26, 27, 27.5]
+
+    ## ---- Retrieve bottle data ---- ##
+    SECTION_FILE = 'bottle_data_multiIndex_' + SECTION + '.pkl'
+    df = pd.read_pickle(SECTION_FILE)
+
+    if YEAR in df.index.get_level_values(1).unique():
+
+        ## ---- Compute climatology ---- ##
+        df_clim = df.xs((VAR, SEASON),level=('variable', 'season'))
+        df_clim = df_clim.groupby(level=0).apply(lambda x: x.mean())
+        # Compute also sigma-t
+        df_sigt_clim = df.xs(('sigmat', SEASON),level=('variable', 'season'))
+        df_sigt_clim = df_sigt_clim.groupby(level=0).apply(lambda x: x.mean())
+
+        ## ---- Compute current year & anomaly ---- ##
+        df_year = df.xs((YEAR, VAR, SEASON),level=('year', 'variable', 'season'))
+        df_year = df_year.groupby(level=0).apply(lambda x: x.mean())
+        df_sigt_year = df.xs((YEAR, 'sigmat', SEASON),level=('year', 'variable', 'season'))
+        df_sigt_year = df_sigt_year.groupby(level=0).apply(lambda x: x.mean())
+
+        df_anom = df_year-df_clim
+
+        # Drop NaNs
+        df_year = df_year.dropna(axis=0,how='all')
+        df_sigt_year = df_sigt_year.dropna(axis=0,how='all')
+        df_clim = df_clim.dropna(axis=0,how='all')
+        df_sigt_clim = df_sigt_clim.dropna(axis=0,how='all')
+        df_anom = df_anom.dropna(axis=0,how='all')
+
+        if df_year.size == 0:
+            print(' !!! Empty section [return None] !!!')
+            return None   
+        
+
+        ## ---- Load station lat/lon ---- ##
+        df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+        df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
+        df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
+        df_stn = df_stn.dropna()
+        df_stn = df_stn[df_stn.STATION.str.contains(SECTION)]
+        df_stn = df_stn.reset_index(drop=True)
+        # remove hyphen in stn names (normally should keep it everywhere, but simpler here)
+        df_stn['STATION'] = df_stn.STATION.str.replace('-', '')
+
+        ## ---- Compute distance vector ---- ##
+        distance = np.full((df_clim.index.shape), np.nan)
+        lat0 = df_stn[df_stn.index==0]['LAT']
+        lon0 = df_stn[df_stn.index==0]['LON']
+        for i, stn in enumerate(df_clim.index):
+            lat_stn = df_stn[df_stn.STATION==stn]['LAT']
+            lon_stn = df_stn[df_stn.STATION==stn]['LON']      
+            distance[i] = haversine(lon0, lat0, lon_stn, lat_stn)
+        XLIM =distance.max()
+        # Distance for current year
+        distance_year = np.full((df_year.index.shape), np.nan)
+        for i, stn in enumerate(df_year.index):
+            lat_stn = df_stn[df_stn.STATION==stn]['LAT']
+            lon_stn = df_stn[df_stn.STATION==stn]['LON']      
+            distance_year[i] = haversine(lon0, lat0, lon_stn, lat_stn)
+        # Distance for sigt (rare but sometimes not same as other)
+        distance_sigt = np.full((df_sigt_year.index.shape), np.nan)
+        for i, stn in enumerate(df_sigt_year.index):
+            lat_stn = df_stn[df_stn.STATION==stn]['LAT']
+            lon_stn = df_stn[df_stn.STATION==stn]['LON']      
+            distance_sigt[i] = haversine(lon0, lat0, lon_stn, lat_stn)
+
+    
+
+        ## ---- Retrieve bathymetry using function ---- ##
+        bathymetry = section_bathymetry(SECTION_BATHY)
+
+        ## ---- plot Figure ---- ##
+        #XLIM = df_section_itp.index[-1][1]
+        fig = plt.figure()
+        # ax1
+        ax = plt.subplot2grid((3, 1), (0, 0))
+        c = plt.contourf(distance_year, df_year.columns, df_year.T, v, cmap=CMAP, extend='both')
+        c_sig1 = plt.contour(distance_sigt, df_sigt_year.columns, df_sigt_year.T, v_sig, colors='gray', linewidths=1)
+        for i in distance_year:
+            plt.plot([i, i], [0, ZMAX], '--k', alpha=.5)
+        ax.set_ylim([0, ZMAX])
+        ax.set_xlim([0, XLIM])
+        plt.clabel(c_sig1, inline=1, fontsize=10, colors='gray', fmt='%1.1f')
+        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.invert_yaxis()
+        Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
+        ax.add_patch(Bgon)
+        plt.colorbar(c)
+        ax.xaxis.label.set_visible(False)
+        ax.tick_params(labelbottom='off')
+        ax.set_title(VAR + ' for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR))
+
+        # ax2
+        ax2 = plt.subplot2grid((3, 1), (1, 0))
+        c = plt.contourf(distance, df_clim.columns, df_clim.T, v, cmap=CMAP, extend='both')
+        c_sig2 = plt.contour(distance, df_sigt_clim.columns, df_sigt_clim.T, v_sig, colors='gray', linewidths=1)
+        for i in distance:
+            plt.plot([i, i], [0, ZMAX], '--k', alpha=.5)
+        ax2.set_ylim([0, ZMAX])
+        ax2.set_xlim([0,  XLIM])
+        plt.clabel(c_sig2, inline=1, fontsize=10, colors='gray', fmt='%1.1f')
+        ax2.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax2.invert_yaxis()
+        Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
+        ax2.add_patch(Bgon)
+        plt.colorbar(c)
+        ax2.xaxis.label.set_visible(False)
+        ax2.tick_params(labelbottom='off')
+        ax2.set_title('1999-' + str(df.index.get_level_values(1).max()) + ' climatology')
+
+        # ax3
+        ax3 = plt.subplot2grid((3, 1), (2, 0))
+        c = plt.contourf(distance_year, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
+        ax3.set_ylim([0, ZMAX])
+        ax3.set_xlim([0,  XLIM])
+        ax3.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax3.set_xlabel('Distance (km)', fontWeight = 'bold')
+        ax3.invert_yaxis()
+        Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
+        ax3.add_patch(Bgon)
+        plt.colorbar(c)
+        ax3.set_title(r'Anomaly')
+
+        fig.set_size_inches(w=8,h=12)
+        fig_name = 'btl_' + VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '.png' 
+        fig.savefig(fig_name, dpi=200)
+        os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+        ## ---- Export data in csv ---- ##
+        # add new index   
+        df_year['distance'] = distance_year
+        df_year.set_index('distance', append=True, inplace=True)
+        df_clim['distance'] = distance
+        df_clim.set_index('distance', append=True, inplace=True)
+        # Save in csv
+        csv_file = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_btl.csv' 
+        df_year.T.to_csv(csv_file, float_format='%.3f') 
+        csv_clim = VAR + '_' + SECTION + '_' + SEASON + '_btl_clim.csv' 
+        df_clim.T.to_csv(csv_clim, float_format='%.3f')
+            
+        # Pickle data 
+        #df_pickle = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '.pkl' 
+        #df_year.to_pickle(df_pickle) 
+
+        

@@ -23,7 +23,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1981, 2010]
-years = [1980, 2018]
+years = [1980, 2019]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -63,13 +63,15 @@ df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_monthly.pkl'
 # restrict years (years[0]-1 for winter...)
 df = df[(df.index.year>=years[0]-1) & (df.index.year<=years[1])]
 
-# 1. Annual mean
+# 1. Annual mean !!! Verify if better to do average of monthly anomalies for next year (see azmp_stn27_scorecards for MLD and Stratif)
 df_annual = df.resample('As').mean()
 df_annual = df_annual[df_annual.index.year>=years[0]]
 clim_annual = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].mean()
 std_annual = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].std()
 std_anom_annual = (df_annual - clim_annual)/std_annual
 std_anom_annual.index = std_anom_annual.index.year
+
+
 
 # 2. Winter only (see azmp_nao.py for explanations)
 df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
@@ -115,7 +117,7 @@ hpad, wpad = 0, 0
 #my_df = nao_winter.T
 my_df = df_indices.T
 my_df['MEAN'] = df_ind_clim.mean()
-my_df['SD'] =  df_ind_clim.std()
+my_df['SD'] =   df_ind_clim.std()
 #my_df = my_df.rename({'Value': r'  $\rm NAO_{winter }$'})
 my_df.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
@@ -128,6 +130,9 @@ vals_color[:,-2] = 0
 # Reverse AMO values (colormap already reverse for AO and NAO)
 vals_color[2,:] = vals_color[2,:]*-1
 
+# Change for text
+vals[:,-1] = [np.nan, np.nan, np.nan]
+vals[:,-2] =   [np.nan, np.nan, np.nan]
 
 nrows, ncols = my_df.index.size+1, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -159,11 +164,17 @@ for key, cell in the_table.get_celld().items():
          cell._text.set_color('darkslategray')
     elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
         cell._text.set_color('white')
+
+    if str(cell_text)=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
 plt.savefig("scorecards_nao.png", dpi=300)
 os.system('convert -trim scorecards_nao.png scorecards_nao.png')
 
 # French table
 my_df = my_df.rename({r'  $\rm NAO_{winter }$' : r'   $\rm ONA_{hiver}$'})
+my_df = my_df.rename({r'    AO' : r'    OA'})
+my_df = my_df.rename({r'   AMO' : r'   OMA'})
 year_list[-1] = u'ET'
 
 header = ax.table(cellText=[['']],
@@ -191,6 +202,11 @@ for key, cell in the_table.get_celld().items():
          cell._text.set_color('darkslategray')
     elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
         cell._text.set_color('white')
+
+    if str(cell_text)=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+
 plt.savefig("scorecards_nao_FR.png", dpi=300)
 os.system('convert -trim scorecards_nao_FR.png scorecards_nao_FR.png')
 

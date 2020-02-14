@@ -1,5 +1,8 @@
 """A script to loop on pfile lists and generate multiple (yearly) netCDF files
 
+
+I need to make it a function!
+
 ----------
 Frederic.Cyr@dfo-mpo.gc.ca, October 2017
 
@@ -19,15 +22,15 @@ os.system('echo " --------- New run ------ " >> .netcdfgen_log.txt')
 
 for yearfile in lists:
     outfile = os.path.splitext(yearfile)[0] + '.nc'
-    p.pfiles_to_netcdf(yearfile, outfile, zbin=1, zmax=2000)
+    p.pfiles_to_netcdf(yearfile, outfile, zbin=1, zmax=1500)
     expr_print = ' -> ' + outfile + ' done!'
     print(expr_print)
     expr = 'mv ' + yearfile + ' ./list_done'
     os.system(expr)
 
-## To generate the lists (in /home/cyrf0006/data_orwell/netcdf_gen):
+## #To generate the lists (in /home/cyrf0006/data_orwell/netcdf_gen):
 ## import numpy as np
-## for i in np.arange(1912, 2018):
+## for i in np.arange(1912, 2020):
 ##     #expr = 'ls ./data2/*.p' + np.str(i) + ' > ' + np.str(i) + '.list'
 ##     # next command takes more time but is better for large lists
 ##     expr = 'find ../symlinks_pfiles/ -type f -name *.p' + np.str(i) + ' > ' + np.str(i) + '.list'

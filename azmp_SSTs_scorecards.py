@@ -50,6 +50,25 @@ this_year = df_month[(df_month.index.year==years[1])]
 this_year.index = this_year.index.month
 this_year.index.name = 'month'
 monthly_std_anom = (this_year - monthly_clim) / monthly_std
+# Reorder columns
+cols = [
+    'Greenland_Shelf',
+    'North_Central_Labrador_Sea',
+    'Hudson_Strait',
+    'Central_Labrador_Sea',
+    'Bravo',
+    'Hamilton_Bank',
+    'St.Anthony_Basin',
+    'Northeast_Nfld_Shelf',
+    'Orphan_Knoll',
+    'Avalon_Channel',
+    'Hybernia',
+    'Flemish_Pass', 
+    'Flemish_Cap',
+    'Green-St._Pierre_Bank'
+    ]
+monthly_std_anom = monthly_std_anom[cols]
+
 # Rename columns
 monthly_std_anom_FR = monthly_std_anom.copy()
 monthly_std_anom.rename(columns={
@@ -64,9 +83,9 @@ monthly_std_anom.rename(columns={
     'Hudson_Strait': 'Hudson Strait (HS)',
     'Hybernia' : 'Hibernia (HIB)',
     'North_Central_Labrador_Sea':'NC Lab. Sea (NCLS)',
-    'Northeast_Nfld_Shelf':'NE NF shelf (NENS)',
+    'Northeast_Nfld_Shelf':'NE NF shelf (NENL)',
     'Orphan_Knoll':'Orphan Knoll (OK)',
-    'St.Anthony_Basin':'St. Antony B. (SAB)'
+    'St.Anthony_Basin':'St. Anthony B. (SAB)'
     }, inplace=True)
 
 monthly_std_anom_FR.rename(columns={
@@ -81,9 +100,9 @@ monthly_std_anom_FR.rename(columns={
     'Hudson_Strait': 'Detroit Hudson (HS)',
     'Hybernia' : 'Hibernia (HIB)',
     'North_Central_Labrador_Sea':'Mer Lab. Nord Cent. (NCLS)',
-    'Northeast_Nfld_Shelf':'Plateau T-N NE (NENS)',
+    'Northeast_Nfld_Shelf':'Plateau T-N NE (NENL)',
     'Orphan_Knoll':'Orphan Knoll (OK)',
-    'St.Anthony_Basin':'Basin St. Antony (SAB)'
+    'St.Anthony_Basin':'Basin St. Anthony (SAB)'
     }, inplace=True)
                                       
 
@@ -162,7 +181,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- Anomalie de temperature de surface mensuelle en 2018 --'],
+                      colLabels=['-- Anomalies de température de surface mensuelle en 2018 --'],
                       loc='center'
                       )
 header.set_fontsize(13)
@@ -202,6 +221,8 @@ os.system('convert -trim scorecards_sst_monthly_FR.png scorecards_sst_monthly_FR
 ## Yearly anomalies
 yearly_std_anom = (df_year - df_clim_year.mean()) / df_clim_year.std()
 yearly_std_anom.index = yearly_std_anom.index.year
+# Reorder columns
+yearly_std_anom = yearly_std_anom[cols]
 yearly_std_anom_FR = yearly_std_anom.copy()
 
 my_df = yearly_std_anom.T
@@ -219,9 +240,9 @@ my_df.rename(index={
     'Hudson_Strait': 'Hudson Strait (HS)',
     'Hybernia' : 'Hibernia (HIB)',
     'North_Central_Labrador_Sea':'NC Lab. Sea (NCLS)',
-    'Northeast_Nfld_Shelf':'NE NF shelf (NENS)',
+    'Northeast_Nfld_Shelf':'NE NF shelf (NENL)',
     'Orphan_Knoll':'Orphan Knoll (OK)',
-    'St.Anthony_Basin':'St. Antony B. (SAB)'
+    'St.Anthony_Basin':'St. Anthony B. (SAB)'
     }, inplace=True)
 
 my_df.rename(columns={
@@ -295,9 +316,9 @@ my_df.rename(index={
     'Hudson_Strait': 'Detroit Hudson (HS)',
     'Hybernia' : 'Hibernia (HIB)',
     'North_Central_Labrador_Sea':'Mer Lab. Nord Cent. (NCLS)',
-    'Northeast_Nfld_Shelf':'Plateau T-N NE (NENS)',
+    'Northeast_Nfld_Shelf':'Plateau T-N NE (NENL)',
     'Orphan_Knoll':'Orphan Knoll (OK)',
-    'St.Anthony_Basin':'Basin St. Antony (SAB)'
+    'St.Anthony_Basin':'Basin St. Anthony (SAB)'
     }, inplace=True)
 
 year_list = yearly_std_anom.index.astype('str')
@@ -306,7 +327,7 @@ year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
 year_list.append(r'ET')
 
 header = ax.table(cellText=[['']],
-                      colLabels=['-- Anomalies de tempeerature de surface --'],
+                      colLabels=['-- Anomalies de température de surface --'],
                       loc='center'
                       )
 header.set_fontsize(13)

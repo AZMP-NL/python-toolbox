@@ -9,7 +9,6 @@ import pandas as pd
 import xarray as xr
 import datetime
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata # here should remove nans or empty profiles
 import netCDF4
 import os
@@ -26,7 +25,7 @@ plt.rc('font', **font)
 
 # This is a dataset
 # in /home/cyrf0006/research/AZMP_database/2017_data
-ds = xr.open_dataset('/home/cyrf0006/data/dev_database/viking_nc/2018_viking.nc')
+ds = xr.open_dataset('/home/cyrf0006/data/dev_database/viking_nc/2019_viking.nc')
 
 # Some utils:
 # np.unique(ds['instrument_ID'].values)
@@ -57,7 +56,7 @@ df_fluo = df_fluo.dropna(how='all')
 Vsig = np.arange(21,27)
 Vtemp = np.arange(-2, 20, .5)
 Vsal = np.arange(29.5, 34, .25)
-XLIM = [datetime.date(2018, 7, 1), datetime.date(2018, 12, 31)]
+XLIM = [datetime.date(2019, 6, 1), datetime.date(2019, 11, 1)]
 
 
 ## ---- plot temperature ---- ##
@@ -80,12 +79,12 @@ cb = plt.colorbar(c, cax=cax, orientation='vertical')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
 
 # Save Figure
-outfile = 'Viking2018_temp.png'
+outfile = 'Viking2019_temp.png'
 fig.savefig(outfile, dpi=200)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
 # Save Figure in French
-outfile = 'Viking2018_temp_FR.png'
+outfile = 'Viking2019_temp_FR.png'
 plt.ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
 fig.savefig(outfile, dpi=200)
 os.system('convert -trim ' + outfile + ' ' + outfile)
@@ -113,19 +112,18 @@ cb.set_label(r'$\rm S$', fontsize=12, fontweight='normal')
 # Save Figure
 fig.set_size_inches(w=12, h=6)
 fig.set_dpi(200)
-outfile = 'Viking2018_sal.png'
+outfile = 'Viking2019_sal.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
 # Save Figure in French
-outfile = 'Viking2018_sal_FR.png'
+outfile = 'Viking2019_sal_FR.png'
 plt.ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
 fig.savefig(outfile, dpi=200)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
 ## ----  plot both as suubplots ---- ##
 
-XLIM = [datetime.date(2018, 7, 1), datetime.date(2018, 12, 1)]
 fig = plt.figure()
 # ax1
 ax = plt.subplot2grid((2, 1), (0, 0))
@@ -163,7 +161,7 @@ cb.set_label(r'$\rm S$', fontsize=12, fontweight='normal')
 
 # Save Figure
 fig.set_size_inches(w=12, h=12)
-outfile = 'Viking2018.png'
+outfile = 'Viking2019.png'
 fig.savefig(outfile, dpi=200)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
@@ -171,7 +169,7 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 fig.set_size_inches(w=12, h=12)
 ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
 ax2.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
-outfile = 'Viking2018_FR.png'
+outfile = 'Viking2019_FR.png'
 fig.savefig(outfile, dpi=200)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
