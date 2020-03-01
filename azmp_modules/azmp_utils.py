@@ -278,6 +278,16 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     OR
 
     azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring.h5') 
+
+    To include 2H:
+    import numpy as np
+    import azmp_utils as azu
+    dc = .10
+    lonLims = [-60, -45] # Lab Sea
+    latLims = [42, 58]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='sp[ring', h5_outputfile='Tbot_climato2HJ3KLNOPs_sp[ring_0.10.h5')
     
     """
 
@@ -657,7 +667,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
             # griddata (after removing nans)
             idx_good = np.argwhere(~np.isnan(tmp_vec))
-            if idx_good.size>3: # will ignore depth where no data exist
+            if idx_good.size>10: # will ignore depth where no data exist
                 LN = np.squeeze(lon_vec[idx_good])
                 LT = np.squeeze(lat_vec[idx_good])
                 TT = np.squeeze(tmp_vec[idx_good])

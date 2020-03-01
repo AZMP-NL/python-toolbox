@@ -59,7 +59,7 @@ df_all = pd.concat(dfs, keys=df_labels, axis=0)
 df_sst = df_all.mean_sst 
 df_sst = df_sst.unstack(level=0)
 df_sst = df_sst.replace(-999.00000, np.NaN)
-df_sst = df_sst[df_sst.index.year<=2018]
+df_sst = df_sst[df_sst.index.year<=2019]
 df_sst = df_sst.resample('Qs').mean()
 
 
@@ -79,7 +79,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 df_sst = df_all.mean_sst
 df_sst = df_sst.unstack(level=0)
 df_sst = df_sst.replace(-999.00000, np.NaN)
-df_sst = df_sst[(df_sst.index.year>=1998) & (df_sst.index.year<=2018)]
+df_sst = df_sst[(df_sst.index.year>=1998) & (df_sst.index.year<=2019)]
 df_sst = df_sst.resample('As').mean()
 
 fig = plt.figure(2)

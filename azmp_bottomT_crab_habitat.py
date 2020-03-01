@@ -21,14 +21,14 @@ clim_year = [1981, 2010]
 
 #### ------------- For fall ---------------- ####
 # 1.
-infile = 'stats_2J_fall.pkl'
+infile = 'stats_2HJ_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df = df['area_colder2']
 df = df/1000
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
-std_anom2J = std_anom
+std_anom2HJ = std_anom
 
 # 2.
 infile = 'stats_3K_fall.pkl'
@@ -53,7 +53,7 @@ std_anom3LNO = std_anom
 
 
 # 4. plot all merged together
-std_anom_all = pd.concat([std_anom2J, std_anom3K, std_anom3LNO], axis=1)
+std_anom_all = pd.concat([std_anom2HJ, std_anom3K, std_anom3LNO], axis=1)
 df = std_anom_all.mean(axis=1)
 df.index = df.index.year
 
@@ -68,9 +68,10 @@ ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
 plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
 #plt.xlabel('Year')
-plt.title(r'$\rm <2^{\circ}C$ Habitat anomaly for 2J3KLNO - Fall', weight='bold', fontsize=14)
+plt.title(r'$\rm <2^{\circ}C$ Habitat anomaly for 2HJ3KLNO - Fall', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2.5,2.5])
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 fig.set_size_inches(w=15,h=7)
 fig_name = 'crab_habitat_anomalies_fall.png'
 fig.savefig(fig_name, dpi=300)
@@ -119,6 +120,7 @@ plt.ylabel('Mean Standardized Anomaly', weight='bold', fontsize=14)
 #plt.xlabel('Year')
 plt.title(r'$\rm <2^{\circ}C$ Habitat anomaly for 3LNOPs - Spring', weight='bold', fontsize=14)
 plt.grid()
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylim([-2.5,2.5])
 #plt.gca().set_xlim([pd.to_datetime('1979-01-01'), pd.to_datetime('2018-01-01')]) 
 fig.set_size_inches(w=15,h=7)

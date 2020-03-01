@@ -36,6 +36,14 @@ os.system('cp air_temp_2019.png air_temp_2019_FR.png air_temp_anom.png air_temp_
 os.system('cp scorecards_air.png scorecards_air_FR.png ../2019/')
 
 # 3. SSTs
+# wget -m ftp://ftp.dfo-mpo.gc.ca/bometrics/noaa/stats/boxes/*.stat 
+# (in /home/cyrf0006/data/BIO_remote/bometrics/noaa/stats/boxes)
+%my_run azmp_SSTs.py # to update bometrics data
+%my_run azmp_SSTs_fromExcel.py # To merge with Eugene's historical Excel data
+os.system('cp SST_index.png ../2019/')
+%my_run azmp_SSTs_scorecards.py # to generate monthly anom, scorecards, etc.
+os.system('cp scorecards_sst_yearly.png scorecards_sst_monthly.png ../2019/')
+
 
 # 4. Station 27
 
@@ -95,6 +103,8 @@ for section in sections:
 %my_run NSRF_bottomS.py 
 %my_run NSRF_bottomT_habitat.py 
 %my_run azmp_bottomT_shrimp_habitat.py 
+#azrt.bottom_stats(years=np.arange(1980, 2020), season='summer') # for crab 4R
+azrt.bottom_temperature(season='summer', year='2019') # for crab 4R
 
 ## ----------- VIKING BUOY ---------------- ##
 %my_run viking2017.py # <--- should make a function taking spring/fall and year as input (must run twice now)

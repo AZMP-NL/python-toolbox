@@ -96,9 +96,10 @@ df_SJ.index = pd.to_datetime('15-' + df_SJ.index.get_level_values(1) + '-' + df_
 df_NUUK = pd.read_pickle('Nuuk_air_temp.pkl')  
 
 # Concatenate all timeseries
-df = pd.concat([df_SJ, df_BB, df_CA, df_IQ, df_NUUK], axis=1)
-df.columns = ['StJohns', 'Bonavista', 'Cartwright','Iqaluit', 'Nuuk']
-
+#df = pd.concat([df_SJ, df_BB, df_CA, df_IQ, df_NUUK], axis=1)
+#df.columns = ['StJohns', 'Bonavista', 'Cartwright','Iqaluit', 'Nuuk']
+df = pd.concat([df_NUUK, df_IQ, df_CA, df_BB, df_SJ], axis=1)
+df.columns = ['Nuuk', 'Iqaluit', 'Cartwright', 'Bonavista', 'StJohns']
 
 ## ---- Monthly anomalies for current year ---- ##
 df_clim_period = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]

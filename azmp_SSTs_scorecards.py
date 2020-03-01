@@ -18,7 +18,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1981, 2010]
-years = [1980, 2018]
+years = [1980, 2019]
 
 
 def is_number(s):
@@ -36,7 +36,7 @@ def is_number(s):
     return False
 
 #### ---- Load the data and compute anomalies ---- ####
-df_month = pd.read_pickle('/home/cyrf0006/AZMP/annual_meetings/2019/SSTs_merged_monthly.pkl')
+df_month = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SSTs_merged_monthly.pkl')
 df_year = df_month.resample('As').mean()
 df_clim_month = df_month[(df_month.index.year>=clim_year[0]) & (df_month.index.year<=clim_year[1])]
 df_clim_year = df_clim_month.resample('As').mean()
@@ -140,7 +140,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- 2018 Monthly Sea Surface Temperature anomalies --'],
+                      colLabels=['-- 2019 Monthly Sea Surface Temperature anomalies --'],
                       loc='center'
                       )
 header.set_fontsize(13)
@@ -181,7 +181,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- Anomalies de température de surface mensuelle en 2018 --'],
+                      colLabels=['-- Anomalies de température de surface mensuelle en 2019 --'],
                       loc='center'
                       )
 header.set_fontsize(13)

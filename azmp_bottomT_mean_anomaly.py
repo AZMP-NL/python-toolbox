@@ -22,9 +22,26 @@ clim_year = [1981, 2010]
 years = [1980, 2021]
 
 #### ------------- For fall ---------------- ####
+# 0.
+infile = 'stats_2H_fall.pkl'
+df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
+# Flag bad years (no or weak sampling):
+bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
+for i in bad_years:
+    df[df.index==i]=np.nan
+df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+std_anom2H = std_anom[['Tmean', 'Tmean_sha200']]
+
 # 1.
 infile = 'stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
+# Flag bad years (no or weak sampling):
+bad_years = np.array([1995])
+for i in bad_years:
+    df[df.index==i]=np.nan
 df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
@@ -50,7 +67,8 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3LNO = std_anom[['Tmean', 'Tmean_sha100']]
 
 # 4. plot all merged together
-std_anom_all = pd.concat([std_anom2J, std_anom3K, std_anom3LNO], axis=1)
+#std_anom_all = pd.concat([std_anom2J, std_anom3K, std_anom3LNO], axis=1)
+std_anom_all = pd.concat([std_anom2H, std_anom2J, std_anom3K, std_anom3LNO], axis=1)
 df = std_anom_all.mean(axis=1)
 df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df.index = df.index.year
@@ -68,7 +86,7 @@ ax.xaxis.set_ticklabels(ticklabels[::n])
 plt.ylabel('Normalized Anomaly', weight='bold', fontsize=14)
 plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 #plt.xlabel('Year')
-plt.title('Mean bottom temperature anomaly for 2J3KLNO - Fall', weight='bold', fontsize=14)
+plt.title('Mean bottom temperature anomaly for 2HJ3KLNO - Fall', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2.5,2.5])
 ax.yaxis.set_ticks(np.arange(-2.5, 3, .5))
@@ -81,7 +99,7 @@ os.system('convert -trim mean_anomalies_fall.png mean_anomalies_fall.png')
 # Save French Figure
 plt.sca(ax)
 plt.ylabel(u'Anomalie normalisée', weight='bold', fontsize=14)
-plt.title(u'Température de fond moyenne pour 2J3KLNO - Automne', weight='bold', fontsize=14)
+plt.title(u'Température de fond moyenne pour 2HJ3KLNO - Automne', weight='bold', fontsize=14)
 #fig.set_size_inches(w=15,h=7)
 fig_name = 'mean_anomalies_fall_FR.png'
 fig.savefig(fig_name, dpi=200)
@@ -102,6 +120,10 @@ std_anom3LNO = std_anom[['Tmean', 'Tmean_sha100']]
 infile = 'stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
+# Flag bad years (no or weak sampling):
+bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
+for i in bad_years:
+    df[df.index.year==i]=np.nan
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
@@ -139,8 +161,30 @@ os.system('convert -trim mean_anomalies_spring.png mean_anomalies_spring.png')
 # Save French Figure
 plt.sca(ax)
 plt.ylabel(u'Anomalie normalisée', weight='bold', fontsize=14)
-plt.title(u'Température de fond moyenne pour 2J3KLNO - Printemps', weight='bold', fontsize=14)
+plt.title(u'Température de fond moyenne pour 2HJ3KLNO - Printemps', weight='bold', fontsize=14)
 #fig.set_size_inches(w=15,h=7)
 fig_name = 'mean_anomalies_spring_FR.png'
+fig.savefig(fig_name, dpi=200)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+#### ------------- Merge spring and bottom ---------------- ####
+bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring.pkl')
+bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall.pkl')
+bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
+
+fig = plt.figure()
+plt.plot(bottomT_spring)
+plt.plot(bottomT_fall)
+plt.plot(bottomT_fall.rolling(window=3, center=True).mean(), 'k', linewidth=2.5)
+plt.grid()
+plt.ylabel('Normalized anomaly')
+plt.legend(['Spring', 'Fall', '3Y running mean'])
+plt.title('Bottom Temperature')
+ticks = plt.gca().xaxis.get_ticklocs()
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.xlim([1980, 2020])
+fig_name = 'bottom_temp_anomaly.png'
+fig.set_size_inches(w=12,h=7)
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

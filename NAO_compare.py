@@ -64,7 +64,7 @@ btm_PO4 = df_season_btm['PO4']
 
 
 ## All stations
-df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
+df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/datasets/water_samples/AZMP_Nutrients_1999_2016_Good_Flags_Only.xlsx')
 # Set date as index
 df = df.set_index('sas_date')
 # Drop other time-related columns
@@ -103,27 +103,31 @@ df_s27_strat = df_s27['Strat']
 
 ### --- NAO index --- ###
 # Load data
-nao_file = '/home/cyrf0006/data/AZMP/indices/data.csv'
-df = pd.read_csv(nao_file, header=1)
+## nao_file = '/home/cyrf0006/data/AZMP/indices/dat.csv'
+## df = pd.read_csv(nao_file, header=1)
 
-# Set index
-df = df.set_index('Date')
-df.index = pd.to_datetime(df.index, format='%Y%m')
+## # Set index
+## df = df.set_index('Date')
+## df.index = pd.to_datetime(df.index, format='%Y%m')
 
-# Select only DJF
-df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
+## # Select only DJF
+## df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
 
-# Start Dec-1950
-df_winter = df_winter[df_winter.index>pd.to_datetime('1950-10-01')]
-df_winter.resample('3M').mean()
+## # Start Dec-1950
+## df_winter = df_winter[df_winter.index>pd.to_datetime('1950-10-01')]
+## df_winter.resample('3M').mean()
 
-# Average 3 consecutive values (DJF average); We loose index.
-df_winter = df_winter.groupby(np.arange(len(df_winter))//3).mean()
+## # Average 3 consecutive values (DJF average); We loose index.
+## df_winter = df_winter.groupby(np.arange(len(df_winter))//3).mean()
 
-# Reset index using years only
-df_winter.index = pd.unique(df.index.year)
-df_winter.index = pd.to_datetime(df_winter.index, format='%Y')
-df_winter = df_winter[(df_winter.index.year>1950) & (df_winter.index.year<2019)]
+## # Reset index using years only
+## df_winter.index = pd.unique(df.index.year)
+## df_winter.index = pd.to_datetime(df_winter.index, format='%Y')
+## df_winter = df_winter[(df_winter.index.year>1950) & (df_winter.index.year<2020)]
+
+## Just read pickle object
+df_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
+
 
 
 ### --- AOO index --- ###

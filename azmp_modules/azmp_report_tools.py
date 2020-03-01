@@ -87,9 +87,11 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     latLims = [39, 56]
     lonLims = [-60, -45] # FC AZMP report region
     latLims = [42, 56]
+    lonLims = [-63, -45] # include 2H in above
+    latLims = [42, 58]
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF_1m_clim/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Tbot_climato_fall_0.10.h5') 
+    azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Tbot_climato_fall_0.10.h5') 
 
     * see: /home/cyrf0006/AZMP/state_reports/bottomT
 
@@ -137,8 +139,8 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     # Remome problematic datasets
     print('!!Remove MEDBA data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
@@ -248,6 +250,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+    polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
 
     # Contour of data to mask
     contour_mask = np.load('100m_contour_labrador.npy')
@@ -258,7 +261,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
                 #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
                     pass #nothing to do but cannot implement negative statement "if not" above
                 else:
                     Tbot[j,i] = np.nan
@@ -267,7 +270,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
-                if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
+                if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
                     pass #nothing to do but cannot implement negative statement "if not" above
                 else:
                     Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
@@ -291,6 +294,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
 
     # Temperature anomaly:
     anom = Tbot-Tbot_climato
+    div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 
     ## ---- Plot Anomaly ---- ##
     fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -313,7 +317,6 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-    div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
     for div in div_toplot:
         div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
         m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -362,7 +365,6 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-    div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
     for div in div_toplot:
         div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
         m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -409,7 +411,6 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-    div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
     for div in div_toplot:
         div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
         m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -440,7 +441,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     # in French
     os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  bottomT_' + season + year + '_FR.png') 
     # Move to year folder
-    os.system('mv bottomT_' + season + year + '.png bottomT_' + season + year + '_FR.png ../' + year)
+    os.system('cp bottomT_' + season + year + '.png bottomT_' + season + year + '_FR.png ../' + year)
 
 
 #### bottom_salinity
@@ -596,12 +597,14 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     # Mask data outside Nafo div.
     print('Mask according to NAFO division for ' + season)
     # Polygons
+    polygon4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
     polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
     polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
     polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
     polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+    polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
 
     # Contour of data to mask
     contour_mask = np.load('100m_contour_labrador.npy')
@@ -611,7 +614,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
-                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
                     pass #nothing to do but cannot implement negative statement "if not" above
                 else:
                     Sbot[j,i] = np.nan
@@ -620,7 +623,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
-                if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
+                if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
                     pass #nothing to do but cannot implement negative statement "if not" above
                 else:
                     Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
@@ -634,6 +637,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
 
     # Salinity anomaly:
     anom = Sbot-Sbot_climato
+    div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 
     ## ---- Plot Anomaly ---- ##
     fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -656,7 +660,6 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm S$', fontsize=12, fontweight='normal')
-    div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
     for div in div_toplot:
         div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
         m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -703,7 +706,6 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm S$', fontsize=12, fontweight='normal')
-    div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
     for div in div_toplot:
         div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
         m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -749,7 +751,6 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm S$', fontsize=12, fontweight='normal')
-    div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
     for div in div_toplot:
         div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
         m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -779,7 +780,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     # French
     os.system('montage bottom_sal_climato_' + season + '_' + year + '_FR.png bottom_sal_' + season + '_' + year + '_FR.png bottom_sal_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  bottomS_' + season + year + '_FR.png') 
     # Move to year folder
-    os.system('mv bottomS_' + season + year + '.png bottomS_' + season + year + '_FR.png ../' + year)
+    os.system('cp bottomS_' + season + year + '.png bottomS_' + season + year + '_FR.png ../' + year)
 
 
 #### bottom_stats
@@ -864,6 +865,8 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
     dict_stats_3K = {}
     dict_stats_3L = {}
     dict_stats_3O = {}
+    dict_stats_2G = {}
+    dict_stats_2H = {}
     dict_stats_2J = {}
     dict_stats_2HJ = {}
     dict_stats_2GH = {}
@@ -890,6 +893,8 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
 
         # NAFO division stats    
         dict_stats_2GH[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2GH)
+        dict_stats_2G[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2G)
+        dict_stats_2H[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2H)
         dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
         dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
         dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
@@ -915,6 +920,8 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
 
 
         if plot:
+            div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R', '4Vn', '4Vs', '4W', '4X']
+    
             # 1.1 - Plot Anomaly
             fig, ax = plt.subplots(nrows=1, ncols=1)
             m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
@@ -935,7 +942,6 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
             cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
             cb = plt.colorbar(c, cax=cax)
             cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R', '4Vn', '4Vs', '4W', '4X']
             for div in div_toplot:
                 div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
                 m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -968,7 +974,6 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
             cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
             cb = plt.colorbar(c, cax=cax)
             cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R', '4Vn', '4Vs', '4W', '4X']
             for div in div_toplot:
                 div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
                 m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -978,7 +983,10 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
             fig.set_dpi(200)
             outfile = 'bottom_temp_' + season + '_' + np.str(year) + '.png'
             fig.savefig(outfile)
+            plt.close('all')
 
+    df_2G = pd.DataFrame.from_dict(dict_stats_2G, orient='index')
+    df_2H = pd.DataFrame.from_dict(dict_stats_2H, orient='index')
     df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')
     df_2HJ = pd.DataFrame.from_dict(dict_stats_2HJ, orient='index')
     df_2GH = pd.DataFrame.from_dict(dict_stats_2GH, orient='index')
@@ -1008,6 +1016,10 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
     df_3L.to_pickle(outname)
     outname = 'stats_3O_' + season + '.pkl'
     df_3O.to_pickle(outname)
+    outname = 'stats_2G_' + season + '.pkl'
+    df_2G.to_pickle(outname)
+    outname = 'stats_2H_' + season + '.pkl'
+    df_2H.to_pickle(outname)
     outname = 'stats_2J_' + season + '.pkl'
     df_2J.to_pickle(outname)
     outname = 'stats_2HJ_' + season + '.pkl'
@@ -1051,11 +1063,15 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     '''
 
     #### ------------- For fall ---------------- ####
-    # 1.
-    infile = 'stats_2J_fall.pkl'
+    # 0.
+    infile = 'stats_2H_fall.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
     year_list = df.index.year.astype('str')
     year_list = [i[2:4] for i in year_list] # 2-digit year
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -1069,7 +1085,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
     std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-
+    
     # Get text values +  cell color
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
     year_list.append(r'sd')   
@@ -1112,7 +1128,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     ax.axis('off')
     #do the table
     header = ax.table(cellText=[['']],
-                          colLabels=['-- NAFO division 2J --'],
+                          colLabels=['-- NAFO division 2H --'],
                           loc='center'
                           )
     header.set_fontsize(13)
@@ -1137,15 +1153,19 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
-    plt.savefig("scorecards_fall_2J.png", dpi=300)
-    os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fall_2H.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2H.png scorecards_fall_2H.png')
 
     # French table
     std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
     year_list[-1] = u'ET'
 
     header = ax.table(cellText=[['']],
-                          colLabels=['-- Division 2J de l\'OPANO --'],
+                          colLabels=['-- Division 2H de l\'OPANO --'],
                           loc='center'
                           )
     header.set_fontsize(13)
@@ -1170,14 +1190,126 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fall_2H_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2H_FR.png scorecards_fall_2H_FR.png')
+
+ # 1.
+    infile = 'stats_2J_fall.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([1995])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0 
+    #normal = plt.Normalize(-4.49, 4.49)
+    #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 2J --'],
+                          loc='center'
+                          )
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fall_2J.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 2J de l\'OPANO --'],
+                          loc='center'
+                          )
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
     plt.savefig("scorecards_fall_2J_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_2J_FR.png scorecards_fall_2J_FR.png')
 
+
+    
     # 2.
     infile = 'stats_3K_fall.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    ## bad_years = np.array([2003])
+    ## for i in bad_years:
+    ##     df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
     df['area_colder1'] = df['area_colder1']/1000 # In 1000km
     df['area_warmer2'] = df['area_warmer2']/1000
@@ -1229,6 +1361,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
 
     plt.savefig("scorecards_fall_3K.png", dpi=300)
     os.system('convert -trim scorecards_fall_3K.png scorecards_fall_3K.png')
@@ -1261,6 +1396,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
 
     plt.savefig("scorecards_fall_3K_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_3K_FR.png scorecards_fall_3K_FR.png')
@@ -1321,6 +1459,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
     plt.savefig("scorecards_fall_3LNO.png", dpi=300)
     os.system('convert -trim scorecards_fall_3LNO.png scorecards_fall_3LNO.png')
 
@@ -1353,15 +1495,18 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
 
     plt.savefig("scorecards_fall_3LNO_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_3LNO_FR.png scorecards_fall_3LNO_FR.png')
 
-
+    plt.close('all')
     # English
-    os.system('montage  scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_fall.png') 
+    os.system('montage  scorecards_fall_2H.png scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall.png') 
     # French
-    os.system('montage  scorecards_fall_2J_FR.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_fall_FR.png') 
+    os.system('montage  scorecards_fall_2H_FR.png scorecards_fall_2J.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall_FR.png') 
 
 
 
@@ -1428,6 +1573,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
     plt.savefig("scorecards_spring_3LNO.png", dpi=300)
     os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
 
@@ -1461,6 +1610,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
     plt.savefig("scorecards_spring_3LNO_FR.png", dpi=300)
     os.system('convert -trim scorecards_spring_3LNO_FR.png scorecards_spring_3LNO_FR.png')
 
@@ -1470,6 +1623,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
     df['area_colder1'] = df['area_colder1']/1000 # In 1000km
     df['area_warmer2'] = df['area_warmer2']/1000
@@ -1521,7 +1678,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
-
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+            
     plt.savefig("scorecards_spring_3Ps.png", dpi=300)
     os.system('convert -trim scorecards_spring_3Ps.png scorecards_spring_3Ps.png')
 
@@ -1554,10 +1714,14 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
              cell._text.set_color('darkslategray')
         elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
             cell._text.set_color('white')
-
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+            
     plt.savefig("scorecards_spring_3Ps_FR.png", dpi=300)
     os.system('convert -trim scorecards_spring_3Ps_FR.png scorecards_spring_3Ps_FR.png')
 
+    plt.close('all')
     # English montage
     os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring.png')
     # French montage

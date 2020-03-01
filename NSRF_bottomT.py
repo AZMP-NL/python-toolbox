@@ -55,8 +55,8 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2019'
-climato_file = 'Tbot_climato_NSRF_summer_2006-2018.h5'
+year = '2013'
+climato_file = 'Tbot_climato_NSRFx_summer_2006-2018.h5'
 year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
 
@@ -351,3 +351,4 @@ os.system('convert -trim ' + outfile + ' ' + outfile)
 
 # Convert to a subplot
 os.system('montage NSRF_bottom_temp_climato_' + season + '_' + year + '.png NSRF_bottom_temp_' + season + '_' + year + '.png NSRF_bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  NSRF_bottomT_' + season + year + '.png') 
+os.system('rm NSRF_bottom_temp_climato_' + season + '_' + year + '.png NSRF_bottom_temp_' + season + '_' + year + '.png NSRF_bottom_temp_anomaly_' + season + '_' + year + '.png')

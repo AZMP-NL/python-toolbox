@@ -18,6 +18,8 @@ lonLims = [-60, -43] # fish_hab region
 latLims = [39, 56]
 lonLims = [-60, -45] # FC AZMP report region
 latLims = [42, 56]
+lonLims = [-64, -45] # 2HJ3KLNOPs
+latLims = [42, 58]
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato_spring_0.10.h5') 
@@ -72,8 +74,8 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'spring'
-year = '2018'
+season = 'summer'
+year = '2019'
 
 if season=='spring':
     climato_file = 'Tbot_climato_spring_0.10.h5'

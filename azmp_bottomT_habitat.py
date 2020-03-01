@@ -72,7 +72,7 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'fall'
+season = 'spring'
 year = '2019'
 
 if season=='spring':
@@ -223,13 +223,14 @@ print(' -> Done!')
 # Mask data outside Nafo div.
 print('Mask according to NAFO division for ' + season)
 # Polygons
-polygon3K = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
+polygon4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
 polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
 polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
 polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
 polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
 polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
 polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
 
 # Contour of data to mask
 contour_mask = np.load('100m_contour_labrador.npy')
@@ -241,7 +242,7 @@ if season == 'spring':
         for j,yy in enumerate(lat_reg):
             point = Point(lon_reg[i], lat_reg[j])
             #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-            if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+            if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
                 pass #nothing to do but cannot implement negative statement "if not" above
             else:
                 Tbot[j,i] = np.nan            
@@ -250,7 +251,7 @@ elif season == 'fall':
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
             point = Point(lon_reg[i], lat_reg[j])
-            if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
+            if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
                 pass #nothing to do but cannot implement negative statement "if not" above
             else:
                 Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
@@ -273,6 +274,7 @@ print(' -> Done!')
 
 # Temperature anomaly:
 anom = Tbot-Tbot_climato
+div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 
 
 ## ---- Plot Anomaly ---- ##
@@ -296,7 +298,6 @@ m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight=
 cax = fig.add_axes([0.16, 0.055, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -332,7 +333,6 @@ cax = fig.add_axes([0.16, 0.055, 0.7, 0.025])
 #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
@@ -365,7 +365,6 @@ m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight=
 cax = fig.add_axes([0.16, 0.055, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 for div in div_toplot:
     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
