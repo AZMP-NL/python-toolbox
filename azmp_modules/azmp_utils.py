@@ -91,6 +91,11 @@ def get_nafo_divisions():
     xlat = [46, 46, 39.927, 43.064, 46]
     div3O = {'lat' : xlat, 'lon' : xlon}
 
+    #3Pn
+    xlon = [-57.523, -59.308, -59.569, -58.817]
+    xlat = [47.631, 47.620, 47.477, 46.843]
+    div3Pn = {'lat' : xlat, 'lon' : xlon}
+    
     #3Ps
     xlon = [-57.523, -58.82, -54.5, -54.5, -54.2]
     xlat = [47.631, 46.843, 43.064, 46, 46.815]
@@ -135,8 +140,17 @@ def get_nafo_divisions():
     xlon = [-71, -66.903, -66.903, -67.407, -67.744, -67.303, -70, -70, -71]
     xlat = [45.059, 45.059, 43.833, 43.833, 42.887, 42.334, 42.334, 41.7, 41.7]
     div5Y = {'lat' : xlat, 'lon' : xlon}
+
+    #5Ze
+    xlon = [-70, -70, -66, -65.667, -65.667, -70, -70]
+    xlat = [41.967, 42.333, 42.333, 42.0, 39.0, 39.0, 41.667]
+    div5Ze = {'lat' : xlat, 'lon' : xlon}   
     
-           
+    #5Zw
+    xlon = [-71.667, -71.667, -70, -70]
+    xlat = [41.346, 39, 39, 41.667]
+    div5Zw = {'lat' : xlat, 'lon' : xlon}
+               
     dict = {}
     dict['2G'] = div2G
     dict['2H'] = div2H
@@ -147,6 +161,7 @@ def get_nafo_divisions():
     dict['3M'] = div3M
     dict['3O'] = div3O
     dict['3Ps'] = div3Ps
+    dict['3Pn'] = div3Pn
     dict['3O'] = div3O
     dict['4R'] = div4R
     dict['4S'] = div4R
@@ -156,6 +171,8 @@ def get_nafo_divisions():
     dict['4W'] = div4W
     dict['4X'] = div4X
     dict['5Y'] = div5Y
+    dict['5Ze'] = div5Ze
+    dict['5Zw'] = div5Zw
 
     return dict
 
