@@ -33,7 +33,7 @@ s27 = [47.55,-52.59]
 dc = .1
 year_clim = [1981, 2010]
 current_year = 2019
-variable = 'salinity'
+variable = 'temperature'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
@@ -174,8 +174,8 @@ os.system('convert -trim ' + outfile_climFR + ' ' + outfile_climFR)
 ## ---- 2. Year average and anomaly ---- ##
 df_year = df[df.index.year==current_year]
 df_monthly = df_year.resample('MS').mean().interpolate(method='linear') 
-df_weekly = df_year.resample('W').mean().interpolate(method='linear') 
-#df_weekly.dropna(how='all', axis=1, inplace=True)
+df_weekly = df_year.resample('W-MON').mean().interpolate(method='linear') # both weekly interpolated to Monday (so time index fits!)
+weekly_clim = weekly_clim.resample('W-MON').mean().interpolate(method='linear') 
 anom = df_weekly - weekly_clim
 
 # Save current year monthly average
@@ -258,6 +258,9 @@ os.system('convert -trim ' + outfile_anomFR + ' ' + outfile_anomFR)
 # Convert to a subplot
 os.system('montage ' + outfile_year + ' ' +  outfile_clim + ' ' + outfile_anom  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '.png') 
 os.system('montage ' + outfile_yearFR + ' ' +  outfile_climFR + ' ' + outfile_anomFR  + ' -tile 1x3 -geometry +10+10  -background white  s27_' + variable + '_subplot_' + str(current_year) + '_FR.png') 
+# remove individual plots
+os.system('rm ' + outfile_year + ' ' +  outfile_clim + ' ' + outfile_anom)
+os.system('rm ' + outfile_yearFR + ' ' +  outfile_climFR + ' ' + outfile_anomFR)
 
 ## ---- Station occupation plot ---- ##
 da_occu = ds['time']

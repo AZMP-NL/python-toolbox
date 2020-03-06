@@ -21,7 +21,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 year_clim = [1981, 2010]
-years = [1980, 2018]
+years = [1980, 2019]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -58,25 +58,106 @@ S_150_btm = df_sal[df_sal.columns[(df_sal.columns>=150)]].mean(axis=1)
 # Merge and compute anomalies 
 df_T = pd.concat([T_0_btm, T_0_50, T_150_btm], axis=1, keys=['Temp 0-176m', 'Temp 0-50m', 'Temp 150-176m'])
 df_S = pd.concat([S_0_btm, S_0_50, S_150_btm], axis=1, keys=['Sal 0-176m', 'Sal 0-50m', r'Sal 150-176m ${~}$'])
-df_T = df_T.resample('As').mean() # ** there is a slight different if annual averages are made before
-df_S = df_S.resample('As').mean() # ** there is a slight different if annual averages are made before
 # Save csv (for Guoqi)
 df_T.to_csv('stn27_monthly_T.csv', float_format='%.3f')
 df_S.to_csv('stn27_monthly_S.csv', float_format='%.3f')
-# clim
+# **New from 2020 - annual anomaly is mean of monthly anomalies**
+# Temperature anomalies
+df_T_stack = df_T.groupby([(df_T.index.year),(df_T.index.month)]).mean()
+df_T_stack_ave = df_T_stack['Temp 0-176m']
+df_T_stack_surf = df_T_stack['Temp 0-50m']
+df_T_stack_bot = df_T_stack['Temp 150-176m']
+df_T_unstack_ave = df_T_stack_ave.unstack()
+df_T_unstack_surf = df_T_stack_surf.unstack()
+df_T_unstack_bot = df_T_stack_bot.unstack()
 T_clim_period = df_T[(df_T.index.year>=year_clim[0]) & (df_T.index.year<=year_clim[1])]
+T_monthly_stack = T_clim_period.groupby([(T_clim_period.index.year),(T_clim_period.index.month)]).mean()
+T_monthly_clim = T_monthly_stack.mean(level=1)
+T_monthly_std = T_monthly_stack.std(level=1)
+Tave_monthly_anom = df_T_unstack_ave - T_monthly_clim['Temp 0-176m']
+Tsurf_monthly_anom = df_T_unstack_surf - T_monthly_clim['Temp 0-50m']
+Tbot_monthly_anom = df_T_unstack_bot - T_monthly_clim['Temp 150-176m']
+Tave_monthly_stdanom = Tave_monthly_anom / T_monthly_std['Temp 0-176m']
+Tsurf_monthly_stdanom = Tsurf_monthly_anom / T_monthly_std['Temp 0-50m']
+Tbot_monthly_stdanom = Tbot_monthly_anom / T_monthly_std['Temp 150-176m']
+Tave_anom = Tave_monthly_anom.mean(axis=1) 
+Tsurf_anom = Tsurf_monthly_anom.mean(axis=1) 
+Tbot_anom = Tbot_monthly_anom.mean(axis=1) 
+Tave_anom.index = pd.to_datetime(Tave_anom.index, format='%Y')
+Tsurf_anom.index = pd.to_datetime(Tsurf_anom.index, format='%Y')
+Tbot_anom.index = pd.to_datetime(Tbot_anom.index, format='%Y')
+Tave_anom_std = Tave_monthly_stdanom.mean(axis=1) 
+Tsurf_anom_std = Tsurf_monthly_stdanom.mean(axis=1) 
+Tbot_anom_std = Tbot_monthly_stdanom.mean(axis=1) 
+Tave_anom_std.index = pd.to_datetime(Tave_anom_std.index, format='%Y')
+Tsurf_anom_std.index = pd.to_datetime(Tsurf_anom_std.index, format='%Y')
+Tbot_anom_std.index = pd.to_datetime(Tbot_anom_std.index, format='%Y')
+# Salinity anomalies
+df_S_stack = df_S.groupby([(df_S.index.year),(df_S.index.month)]).mean()
+df_S_stack_ave = df_S_stack['Sal 0-176m']
+df_S_stack_surf = df_S_stack['Sal 0-50m']
+df_S_stack_bot = df_S_stack['Sal 150-176m ${~}$']
+df_S_unstack_ave = df_S_stack_ave.unstack()
+df_S_unstack_surf = df_S_stack_surf.unstack()
+df_S_unstack_bot = df_S_stack_bot.unstack()
 S_clim_period = df_S[(df_S.index.year>=year_clim[0]) & (df_S.index.year<=year_clim[1])]
-# Anomaly
-T_anom = (df_T - T_clim_period.mean())
-T_anom_std = T_anom / T_clim_period.std()
-S_anom = (df_S - S_clim_period.mean())
-S_anom_std = S_anom / S_clim_period.std()
+S_monthly_stack = S_clim_period.groupby([(S_clim_period.index.year),(S_clim_period.index.month)]).mean()
+S_monthly_clim = S_monthly_stack.mean(level=1)
+S_monthly_std = S_monthly_stack.std(level=1)
+Save_monthly_anom = df_S_unstack_ave - S_monthly_clim['Sal 0-176m']
+Ssurf_monthly_anom = df_S_unstack_surf - S_monthly_clim['Sal 0-50m']
+Sbot_monthly_anom = df_S_unstack_bot - S_monthly_clim['Sal 150-176m ${~}$']
+Save_monthly_stdanom = Save_monthly_anom / S_monthly_std['Sal 0-176m']
+Ssurf_monthly_stdanom = Ssurf_monthly_anom / S_monthly_std['Sal 0-50m']
+Sbot_monthly_stdanom = Sbot_monthly_anom / S_monthly_std['Sal 150-176m ${~}$']
+Save_anom = Save_monthly_anom.mean(axis=1) 
+Ssurf_anom = Ssurf_monthly_anom.mean(axis=1) 
+Sbot_anom = Sbot_monthly_anom.mean(axis=1) 
+Save_anom.index = pd.to_datetime(Save_anom.index, format='%Y')
+Ssurf_anom.index = pd.to_datetime(Ssurf_anom.index, format='%Y')
+Sbot_anom.index = pd.to_datetime(Sbot_anom.index, format='%Y')
+Save_anom_std = Save_monthly_stdanom.mean(axis=1) 
+Ssurf_anom_std = Ssurf_monthly_stdanom.mean(axis=1) 
+Sbot_anom_std = Sbot_monthly_stdanom.mean(axis=1) 
+Save_anom_std.index = pd.to_datetime(Save_anom_std.index, format='%Y')
+Ssurf_anom_std.index = pd.to_datetime(Ssurf_anom_std.index, format='%Y')
+Sbot_anom_std.index = pd.to_datetime(Sbot_anom_std.index, format='%Y')
+# merge anomalies
+T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
+T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
+T_anom = T_anom[T_anom.index.year>=1947]
+T_anom_std = T_anom_std[T_anom_std.index.year>=1947]
+S_anom = pd.concat([Save_anom,Ssurf_anom,Tbot_anom], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
+S_anom_std = pd.concat([Save_anom_std,Ssurf_anom_std,Tbot_anom_std], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
+S_anom = S_anom[S_anom.index.year>=1947]
+S_anom_std = S_anom_std[S_anom_std.index.year>=1947]
 # Save pkl for climate indices (whole timeseries)
-T_anom_std.to_pickle('s27_temp_stn_anom.pkl')
-S_anom_std.to_pickle('s27_sal_stn_anom.pkl')
-# Reduce series (for scorecards)
+T_anom_std.to_pickle('s27_temp_std_anom.pkl')
+S_anom_std.to_pickle('s27_sal_std_anom.pkl')
+# keep only relevant window
 T_anom_std = T_anom_std[T_anom_std.index.year>=years[0]]
 S_anom_std = S_anom_std[S_anom_std.index.year>=years[0]]
+# annual clims (for inclusion)
+T_clim_period_annual = T_clim_period.resample('As').mean()    
+S_clim_period_annual = S_clim_period.resample('As').mean()    
+
+# old way
+old_df_T = df_T.resample('As').mean() # ** there is a slight different if annual averages are made before
+old_df_S = df_S.resample('As').mean() # ** there is a slight different if annual averages are made before
+# clim
+old_T_clim_period = old_df_T[(old_df_T.index.year>=year_clim[0]) & (old_df_T.index.year<=year_clim[1])]
+old_S_clim_period = old_df_S[(old_df_S.index.year>=year_clim[0]) & (old_df_S.index.year<=year_clim[1])]
+# Anomaly
+old_T_anom = (old_df_T - old_T_clim_period.mean())
+old_T_anom_std = old_T_anom / old_T_clim_period.std()
+old_S_anom = (old_df_S - old_S_clim_period.mean())
+old_S_anom_std = old_S_anom / old_S_clim_period.std()
+# Save pkl for climate indices (whole timeseries)
+#old_T_anom_std.to_pickle('s27_temp_stn_anom.pkl')
+#old_S_anom_std.to_pickle('s27_sal_stn_anom.pkl')
+# Reduce series (for scorecards)
+old_T_anom_std = old_T_anom_std[old_T_anom_std.index.year>=years[0]]
+old_S_anom_std = old_S_anom_std[old_S_anom_std.index.year>=years[0]]
 
 #### ------------- CIL ---------------- ####
 # Load pickled data
@@ -223,8 +304,8 @@ hpad, wpad = .8, 0
 
 ### 1. Temperature
 my_df = T_anom_std.T
-my_df['MEAN'] = T_clim_period.mean()
-my_df['SD'] =  T_clim_period.std()
+my_df['MEAN'] = T_clim_period_annual.mean()
+my_df['SD'] =  T_clim_period_annual.std()
 #my_df.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 # Get text values +  cell color
@@ -310,8 +391,8 @@ os.system('convert -trim scorecards_s27_T_FR.png scorecards_s27_T_FR.png')
 
 ### 2. Salinity
 my_df = S_anom_std.T
-my_df['MEAN'] = S_clim_period.mean()
-my_df['SD'] =  S_clim_period.std()
+my_df['MEAN'] = S_clim_period_annual.mean()
+my_df['SD'] =  S_clim_period_annual.std()
 #my_df.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
 
 # Get text values +  cell color

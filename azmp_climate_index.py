@@ -27,6 +27,7 @@ width = 0.7
 nao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
 nao = nao*-1
 nao = nao.rename(columns={'Value':'NAO'})
+nao = nao[nao.index<2020]
 
 # 2. Air temp
 air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_std_anom.pkl')
@@ -47,9 +48,9 @@ bergs = bergs*-1
 sst = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SST_anom.pkl')
 
 # 6. Stn27 (0-176m, 0-50m, 150-176m)
-s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_temp_stn_anom.pkl')
+s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_temp_std_anom.pkl')
 s27_temp.index = s27_temp.index.year
-s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_sal_stn_anom.pkl')
+s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_sal_std_anom.pkl')
 s27_sal.index = s27_sal.index.year
 # average 3 series above (assume fresh = cold)
 s27_temp = s27_temp.mean(axis=1)
@@ -63,7 +64,7 @@ s27_cil = (s27_cil-s27_cil_clim.mean(axis=0))/s27_cil_clim.std(axis=0)
 s27_cil = s27_cil[['CIL temp', 'CIL core T']].mean(axis=1)
 
 # 7. Section CIL (only area)
-section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/section_cil_index.pkl')
+section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/CIL/section_cil_index.pkl')
 section_cil = section_cil.volume*-1
 
 # 8. bottomT

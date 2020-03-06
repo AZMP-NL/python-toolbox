@@ -122,6 +122,7 @@ df_annual = df.resample('As').mean()
 df_annual = df_annual[df_annual.index.year>=1950]
 clim = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].mean()
 std = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].std()
+anom_annual = (df_annual - clim)
 std_anom_annual = (df_annual - clim)/std
 std_anom_annual.index = std_anom_annual.index.year
 

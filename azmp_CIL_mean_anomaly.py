@@ -13,7 +13,7 @@ import os
 
 
 clim_year = [1981, 2010]
-years = [1950, 2018]
+years = [1950, 2020]
 
 #### ---- Load the data and compute anomalies ---- ####
 df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl')

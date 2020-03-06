@@ -1,12 +1,8 @@
 '''
 CIL area
 
-This script is still in progress...
+** This script must be run into ~/AZMP/state_reports/sections_plots **
 
- Example how to read MIndex:
-    df_itp_mindex = pd.read_pickle('df_itp_mindex.pkl')
-    C = df_itp_mindex.xs(('year'),level=(0))
-    C.groupby(level=0).apply(lambda x: x.mean())
 
 '''
 import os
@@ -22,9 +18,9 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'FC'
+SECTION = 'SI'
 SEASON = 'summer'
-CLIM_YEAR = [1950, 2018]
+CLIM_YEAR = [1950, 2019]
 dlat = 2 # how far from station we search
 dlon = 2
 dz = 1 # vertical bins
@@ -106,7 +102,7 @@ section_meanT_cap = np.full(years.shape, np.nan)
 df_itp_temp = []
 for idx, YEAR in enumerate(years):
     ## -------- Get CTD data -------- ##
-    year_file = '/home/cyrf0006/data/dev_database/' + str(YEAR) + '.nc'
+    year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(YEAR) + '.nc'
     print('Get ' + year_file)
     ds = xr.open_mfdataset(year_file)
 

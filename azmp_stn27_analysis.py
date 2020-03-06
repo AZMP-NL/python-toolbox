@@ -92,8 +92,15 @@ ts_monthly_clim = ts_monthly_stack.mean(level=1)
 ts_monthly_std = ts_monthly_stack.std(level=1)
 monthly_anom = ts_unstack - ts_monthly_clim 
 monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
-anom_std = monthly_stdanom.mean(axis=1) # for yearly anom, need to multiply by monthly climatology
+anom_std = monthly_stdanom.mean(axis=1)
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
+anom = monthly_anom.mean(axis=1) 
+anom.index = pd.to_datetime(anom.index, format='%Y')
+# Annual mean is given by annual anomaly + monthly clim
+annual_mean = anom + ts_monthly_clim.mean()
+
+# For Iroc:
+iroc_stn27_T = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['T', 'Tanom', 'Tanom_std'])
 
 # Plot anomaly
 df1 = anom_std[anom_std>0]
@@ -107,7 +114,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average temperature (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-3, 3])
+plt.ylim([-2.5, 2.5])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -140,7 +147,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average temperature (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-3, 3])
+plt.ylim([-2.5, 2.5])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -160,8 +167,18 @@ ts_monthly_clim = ts_monthly_stack.mean(level=1)
 ts_monthly_std = ts_monthly_stack.std(level=1)
 monthly_anom = ts_unstack - ts_monthly_clim 
 monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
-anom_std = monthly_stdanom.mean(axis=1) # for yearly anom, need to multiply by monthly climatology
+anom_std = monthly_stdanom.mean(axis=1) 
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
+anom = monthly_anom.mean(axis=1) 
+anom.index = pd.to_datetime(anom.index, format='%Y')
+# Annual mean is given by annual anomaly + monthly clim
+annual_mean = anom + ts_monthly_clim.mean()
+
+# For Iroc:
+iroc_stn27_S = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['S', 'Sanom', 'Sanom_std'])
+iroc_stn27 = pd.concat([iroc_stn27_T, iroc_stn27_S], axis=1)
+iroc_stn27.index = iroc_stn27.index.year
+iroc_stn27.to_csv('iroc_stn27.csv', sep=',', float_format='%0.3f')
 
 # Plot anomaly
 df1 = anom_std[anom_std>0]
@@ -175,7 +192,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average salinity (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2.5, 2.5])
+plt.ylim([-2, 2])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -208,7 +225,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average salinity (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2.5, 2.5])
+plt.ylim([-2, 2])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -400,9 +417,9 @@ par2.spines["right"].set_position(("axes", 1.1))
 make_patch_spines_invisible(par2)
 # Second, show the right spine.
 par2.spines["right"].set_visible(True)
-p1, = host.plot(cil_core.index.year, cil_core.rolling(5).mean().values, "steelblue", label="CIL core temperature", zorder=10)
-p2, = par1.plot(cil_coredepth.index.year, cil_coredepth.rolling(5).mean().values, "darkorange", label="CIL core depth", zorder=10)
-p3, = par2.plot(cil_thickness.index.year, cil_thickness.rolling(5).mean().values, "indianred", label="CIL thickness", zorder=10)
+p1, = host.plot(cil_core.index.year.values, cil_core.rolling(5).mean().values, color="steelblue", label="CIL core temperature", zorder=10)
+p2, = par1.plot(cil_coredepth.index.year.values, cil_coredepth.rolling(5).mean().values, "darkorange", label="CIL core depth", zorder=10)
+p3, = par2.plot(cil_thickness.index.year.values, cil_thickness.rolling(5).mean().values, "indianred", label="CIL thickness", zorder=10)
 #host.set_xlim(-2, 1)
 host.set_ylim(-2, 1)
 par1.set_ylim(90, 150)
@@ -434,15 +451,34 @@ rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==50)))]
 strat_monthly = (rho_50m-rho_5m)/45
 strat_monthly.to_pickle('S27_stratif_monthly.pkl')
     
-# A) Barplot
-strat = strat_monthly.resample('As').mean()
-strat_clim = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
-clim_mean = strat_clim.mean()
-clim_std = strat_clim.std()
+# New monthly anom
+#stack months
+strat = strat_monthly
+strat_stack = strat.groupby([(strat.index.year),(strat.index.month)]).mean()
+strat_unstack = strat_stack.unstack()
+# compute clim
+strat_clim_period = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
+strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
+strat_monthly_clim = strat_monthly_stack.mean(level=1)
+strat_monthly_std = strat_monthly_stack.std(level=1)
+monthly_anom = strat_unstack - strat_monthly_clim 
+monthly_stdanom = (strat_unstack - strat_monthly_clim) /  strat_monthly_std
+anom_std = monthly_stdanom.mean(axis=1) 
+anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
+anom = monthly_anom.mean(axis=1)*1000 
+anom.index = pd.to_datetime(anom.index, format='%Y')
+
+# old version:
+old_strat = strat_monthly.resample('As').mean()
+old_strat_clim = old_strat[(old_strat.index.year>=year_clim[0]) & (old_strat.index.year<=year_clim[1])]
+clim_mean = old_strat_clim.mean()
+clim_std = old_strat_clim.std()
 # Anomaly
-anom = (strat - clim_mean)*1000
-anom_std = anom / (clim_std*1000)    
-# Plot anomaly
+old_anom = (old_strat - clim_mean)*1000
+old_anom_std = old_anom / (clim_std*1000)   
+
+
+# A) Barplot
 df1 = anom_std[anom_std>0]
 df2 = anom_std[anom_std<0]
 fig = plt.figure(1)
@@ -528,16 +564,33 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 ## ---- 4. MLD ---- ##
-# A) Barplot
 mld_monthly = MLD
-mld = mld_monthly.resample('As').mean()
-mld_clim = mld[(mld.index.year>=year_clim[0]) & (mld.index.year<=year_clim[1])]
-clim_mean = mld_clim.mean()
-clim_std = mld_clim.std()
+#stack months
+mld = mld_monthly
+mld_stack = mld.groupby([(mld.index.year),(mld.index.month)]).mean()
+mld_unstack = mld_stack.unstack()
+# compute clim
+mld_clim_period = mld[(mld.index.year>=year_clim[0]) & (mld.index.year<=year_clim[1])]
+mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_clim_period.index.month)]).mean()
+mld_monthly_clim = mld_monthly_stack.mean(level=1)
+mld_monthly_std = mld_monthly_stack.std(level=1)
+monthly_anom = mld_unstack - mld_monthly_clim 
+monthly_stdanom = (mld_unstack - mld_monthly_clim) /  mld_monthly_std
+anom_std = monthly_stdanom.mean(axis=1) 
+anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
+anom = monthly_anom.mean(axis=1)
+anom.index = pd.to_datetime(anom.index, format='%Y')
+
+# old version:
+old_mld = mld_monthly.resample('As').mean()
+old_mld_clim = old_mld[(old_mld.index.year>=year_clim[0]) & (old_mld.index.year<=year_clim[1])]
+clim_mean = old_mld_clim.mean()
+clim_std = old_mld_clim.std()
 # Anomaly
-anom = (mld - clim_mean)
-anom_std = anom / clim_std    
-# Plot anomaly
+old_anom = (old_mld - clim_mean)
+old_anom_std = old_anom / clim_std    
+
+# A) Barplot
 df1 = anom_std[anom_std>0]
 df2 = anom_std[anom_std<0]
 fig = plt.figure(1)

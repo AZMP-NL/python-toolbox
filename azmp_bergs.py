@@ -28,11 +28,11 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 clim_year = [1981, 2010]
-current_year = 2018
+current_year = 2019
 
 ## ----  Prepare the data ---- ##
 # load from Excel sheets
-df = pd.read_excel('/home/cyrf0006/data/AZMP/ColbourneStuff/NL_ICE_BERG_NUMBERS_DATA_1900_2017.xlsx', header=5, index_col='YEAR') 
+df = pd.read_excel('/home/cyrf0006/data/AZMP/ColbourneStuff/NL_ICE_BERG_NUMBERS_DATA_1900_2019.xlsx', header=5, index_col='YEAR') 
 df = df.drop(columns = 'TOT SEASON')
 
 # Stack months under Years (pretty cool!)
@@ -74,7 +74,7 @@ ax.set_xticks(ind)
 ax.set_xticklabels(df_monthly_clim.index)
 ax.legend()
 ax.yaxis.grid() # horizontal lines
-plt.ylim([0, 330])
+plt.ylim([0, 800])
 
 fig.set_size_inches(w=6,h=3)
 fig_name = 'bergs_monthly.png'

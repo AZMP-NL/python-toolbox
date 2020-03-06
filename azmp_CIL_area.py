@@ -8,6 +8,7 @@ This script is still in progress...
 import os
 import netCDF4
 import xarray as xr
+os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,7 +21,7 @@ import azmp_sections_tools as azst
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 SECTION = 'BB'
 SEASON = 'summer'
-YEAR = 2018
+YEAR = 2019
 dlat = 2 # how far from station we search
 dlon = 2
 dz = 1 # vertical bins
@@ -88,7 +89,7 @@ print(' -> Done!')
 
 
 ## -------- Get CTD data -------- ##
-year_file = '/home/cyrf0006/data/dev_database/' + str(YEAR) + '.nc'
+year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(YEAR) + '.nc'
 print('Get ' + year_file)
 ds = xr.open_mfdataset(year_file)
 
@@ -209,7 +210,7 @@ for stn in stn_list:
 
     #2.  From interpolated field (closest to station)
     station = df_stn[df_stn.STATION==stn]
-    idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(zip(station.LAT,station.LON))), axis=1))
+    idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(list(zip(station.LAT,station.LON)))), axis=1))
     Tprofile = VV[idx_opti,:]
     # remove data below bottom
     bottom_depth = -ZZ[idx_opti]
@@ -325,4 +326,4 @@ else:
 ##     vs = path.vertices
 ##     cil_vol_itp = cil_vol_itp + np.abs(area(vs))/1000
 
-print cil_vol_stn, cil_vol_itp
+print(cil_vol_stn, cil_vol_itp)

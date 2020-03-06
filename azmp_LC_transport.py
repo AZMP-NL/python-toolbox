@@ -22,7 +22,7 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 ## ----  Read data ---- ##
-df = pd.read_csv('/home/cyrf0006/AZMP/altimetry/lc_index_1993_2018.txt', header=None, delimiter='\s+')
+df = pd.read_csv('/home/cyrf0006/AZMP/altimetry/lc_index_1993_2019.txt', header=None, delimiter='\s+')
 df = df.set_index(0)
 df = df.rename(columns={1 : 'NL'})
 df = df.rename(columns={2 : 'SS'})
@@ -38,7 +38,7 @@ df.SS = df.SS*std_ss + ave_ss
 
 df.to_csv('LC_transport.csv', float_format='%.2f')
 
-XLIMS = [1992, 2019]
+XLIMS = [1990, 2020]
 
 ## ---- plot ---- ##
 fig = plt.figure(1)
@@ -46,7 +46,7 @@ plt.clf()
 
 # AX1 - LC
 ax1 = plt.subplot2grid((2, 1), (0, 0), rowspan=1, colspan=1)
-plt.plot(df.index, df.NL)
+plt.plot(df.index.values, df.NL.values)
 plt.fill_between(df.index, np.repeat(df.NL.mean(),df.index.size)-df.NL.std()/2,np.repeat(df.NL.mean(),df.index.size)+df.NL.std()/2 , facecolor='steelblue', interpolate=True , alpha=.3)
 plt.legend(['NL', r'$\rm \overline{x}\pm\,0.5 sd$'])
 plt.xlim([df.index.min(), df.index.max()])
@@ -56,7 +56,7 @@ ax1.set_ylabel('Transport (Sv)', fontsize=14, fontweight='bold')
 
 # AX2 - current year
 ax2 = plt.subplot2grid((2, 1), (1, 0), rowspan=1, colspan=1)
-plt.plot(df.index, df.SS)
+plt.plot(df.index.values, df.SS.values)
 plt.fill_between(df.index, np.repeat(df.SS.mean(),df.index.size)-df.SS.std()/2,np.repeat(df.SS.mean(),df.index.size)+df.SS.std()/2 , facecolor='steelblue', interpolate=True , alpha=.3)
 plt.legend(['SS', r'$\rm \overline{x}\pm\,0.5 sd$'])
 plt.xlim([df.index.min(), df.index.max()])
@@ -71,7 +71,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 ### ---- Anomalies plot ---- ##
-df = pd.read_csv('/home/cyrf0006/AZMP/altimetry/lc_index_1993_2018.txt', header=None, delimiter='\s+')
+df = pd.read_csv('/home/cyrf0006/AZMP/altimetry/lc_index_1993_2019.txt', header=None, delimiter='\s+')
 df = df.set_index(0)
 df = df.rename(columns={1 : 'NL'})
 df = df.rename(columns={2 : 'SS'})
