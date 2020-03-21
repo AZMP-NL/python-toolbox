@@ -173,7 +173,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
 
     # Select time (save several options here)
     if season == 'summer':
-        ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
+        ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
     elif season == 'spring':
         ds = ds.sel(time=((ds['time.month']>=3)) & ((ds['time.month']<=5)))
     elif season == 'fall':
@@ -460,7 +460,6 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     August 2019
 
     """
-    
     if VAR == 'temperature':
         v = np.arange(-2,11,1)
         v_anom = np.linspace(-3.5, 3.5, 15)
@@ -499,9 +498,9 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
 
     ## ---- Get this year's section ---- ## 
     df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR)
-    if df_section_itp.dropna().size == 0: # empty return
+    if df_section_itp.dropna(how='all', axis=0).size == 0: # empty return
         return
-        
+
     # Use itp or station-based definition
     if STATION_BASED:
         df_section = df_section_stn

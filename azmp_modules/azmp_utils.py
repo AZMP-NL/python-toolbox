@@ -69,12 +69,12 @@ def get_nafo_divisions():
     # 3K (no land)
     xlon = [-55.425, -55.425, -42, -42, -53.466]
     xlat = [51.583, 52.25, 52.25, 49.25, 49.25]
-    div3Kn = {'lat' : xlat, 'lon' : xlon}
+    div3K = {'lat' : xlat, 'lon' : xlon}
 
-    # 3K (point on land to close the box)
+    # 3K-xtended (point on land to close the box)
     xlon = [-55.425, -55.425, -42, -42, -53.466, -57.5]
     xlat = [51.583, 52.25, 52.25, 49.25, 49.25, 49.25]
-    div3K = {'lat' : xlat, 'lon' : xlon}
+    div3Kx = {'lat' : xlat, 'lon' : xlon}
 
     # 3L
     xlon = [-53.466, -46.5, -46.5, -54.5, -54.2]
@@ -161,6 +161,7 @@ def get_nafo_divisions():
     dict['2H'] = div2H
     dict['2J'] = div2J
     dict['3K'] = div3K
+    dict['3Kx'] = div3Kx
     dict['3L'] = div3L
     dict['3N'] = div3N
     dict['3M'] = div3M

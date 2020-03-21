@@ -46,7 +46,6 @@ os.system('cp scorecards_sst_yearly.png scorecards_sst_monthly.png ../2019/')
 
 
 # 4. Station 27
-
 %my_run viking2019.py  
 os.system('cp Viking2019.png Viking2019_FR.png ../2019')
 
@@ -76,7 +75,7 @@ os.system('cp mean_anomalies_fall_FR.png mean_anomalies_spring_FR.png ../2019')
 
 # Sections plots
 year = 2019
-sections = ['SI', 'BB']
+sections = ['FC']
 seasons = ['summer']
 variables = ['temperature', 'salinity']
 for section in sections:

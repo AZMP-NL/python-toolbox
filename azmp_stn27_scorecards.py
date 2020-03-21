@@ -49,6 +49,7 @@ df_sal = pd.read_pickle('S27_salinity_monthly.pkl')
 #df_temp = df_temp.resample('As').mean() # *
 T_0_btm = df_temp.mean(axis=1)
 T_0_50 = df_temp[df_temp.columns[(df_temp.columns<=50)]].mean(axis=1)
+T_0_20 = df_temp[df_temp.columns[(df_temp.columns<=20)]].mean(axis=1)
 T_150_btm = df_temp[df_temp.columns[(df_temp.columns>=150)]].mean(axis=1)
 # Salinity
 #df_sal = df_sal.resample('As').mean() # *
@@ -58,8 +59,12 @@ S_150_btm = df_sal[df_sal.columns[(df_sal.columns>=150)]].mean(axis=1)
 # Merge and compute anomalies 
 df_T = pd.concat([T_0_btm, T_0_50, T_150_btm], axis=1, keys=['Temp 0-176m', 'Temp 0-50m', 'Temp 150-176m'])
 df_S = pd.concat([S_0_btm, S_0_50, S_150_btm], axis=1, keys=['Sal 0-176m', 'Sal 0-50m', r'Sal 150-176m ${~}$'])
+df_T_nico = pd.concat([T_0_btm, T_0_20, T_150_btm], axis=1, keys=['Temp 0-176m', 'Temp 0-20m', 'Temp 150-176m'])
+
 # Save csv (for Guoqi)
 df_T.to_csv('stn27_monthly_T.csv', float_format='%.3f')
+df_T_nico.to_csv('stn27_monthly_T_nico.csv', float_format='%.3f')
+df_T_nico.resample('As').mean().to_csv('stn27_annual_T_nico.csv', float_format='%.3f')
 df_S.to_csv('stn27_monthly_S.csv', float_format='%.3f')
 # **New from 2020 - annual anomaly is mean of monthly anomalies**
 # Temperature anomalies

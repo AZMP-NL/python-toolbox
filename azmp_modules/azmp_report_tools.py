@@ -139,8 +139,8 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     # Remome problematic datasets
     print('!!Remove MEDBA data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
-    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
@@ -148,7 +148,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     # Select time (save several options here)
     if season == 'summer':
         #ds = ds.sel(time=ds['time.season']=='JJA')
-        ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
+        ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
     elif season == 'spring':
         #ds = ds.sel(time=ds['time.season']=='MAM')
         ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
@@ -244,7 +244,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     print('Mask according to NAFO division for ' + season)
     # Polygons
     polygon4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
-    polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+    polygon3K = Polygon(zip(nafo_div['3Kx']['lon'], nafo_div['3Kx']['lat']))
     polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
     polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
     polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
@@ -503,7 +503,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
     # Select time (save several options here)
     if season == 'summer':
-        ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
+        ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
     elif season == 'spring':
         ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
     elif season == 'fall':
@@ -598,7 +598,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
     print('Mask according to NAFO division for ' + season)
     # Polygons
     polygon4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
-    polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+    polygon3K = Polygon(zip(nafo_div['3Kx']['lon'], nafo_div['3Kx']['lat']))
     polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
     polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
     polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
