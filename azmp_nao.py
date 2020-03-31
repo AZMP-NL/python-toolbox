@@ -62,23 +62,27 @@ df.index = pd.to_datetime(df.index, format='%Y%m')
 
 ## ----  plot Winter NAO ---- ####
 # Select only DJF
-df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
+df_winter_djf = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
+df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2) | (df.index.month==3)]
 df_summer = df[(df.index.month>=6) & (df.index.month<=9)]
 
 # Start Dec-1950
+df_winter_djf = df_winter_djf[df_winter_djf.index>pd.to_datetime('1950-10-01')]
 df_winter = df_winter[df_winter.index>pd.to_datetime('1950-10-01')]
 df_summer = df_summer[df_summer.index>pd.to_datetime('1950-01-01')]
-#df_winter.resample('3M').mean()
 
 
 # Average 3 consecutive values (DJF average); We loose index.
-df_winter = df_winter.groupby(np.arange(len(df_winter))//3).mean()
+df_winter_djf = df_winter_djf.groupby(np.arange(len(df_winter_djf))//3).mean()
+df_winter = df_winter.groupby(np.arange(len(df_winter))//4).mean()
 df_summer = df_summer.groupby(np.arange(len(df_summer))//3).mean()
 
 # Reset index using years only
 year_unique = pd.unique(df.index.year)[1:,]
 df_winter = df_winter.iloc[np.arange(0, year_unique.size)] # reduce if last month is december (belongs to following year)
+df_winter_djf = df_winter_djf.iloc[np.arange(0, year_unique.size)] 
 df_winter.index = year_unique
+df_winter_djf.index = year_unique
 
 df_summer = df_summer.iloc[np.arange(0, year_unique.size)] 
 df_summer.index = year_unique
@@ -90,6 +94,9 @@ df_annual.index = df_annual.index.year
 df_annual.to_pickle('NAO_annual.pkl')
 df_winter.to_pickle('NAO_winter.pkl')
 df_summer.to_pickle('NAO_summer.pkl')
+
+# Remove 2020 for 2019 ResDoc
+df_winter.loc[2020]=np.nan
 
 ## ## ---- plot winter NAO bar plots ---- ##
 #df_winter[df_winter.index==2019]=np.nan 
@@ -103,12 +110,12 @@ fig.clf()
 width = .9
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
-p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.5, color='white')
+#p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.5, color='white')
 plt.ylabel('NAO index')
-plt.title('Winter NAO average (DJF)')
+plt.title('Winter NAO average (DJFM)')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'NAO_winter_1950-2020.png'
+fig_name = 'NAO_winter_1950-2019.png'
 plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -119,12 +126,12 @@ fig.clf()
 width = .9
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
-#p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.3, color='black')
+#p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.5, color='white')
 plt.ylabel('indice ONA')
-plt.title('Oscillation Nord-Atlantique hivernale (DJF)')
+plt.title('Oscillation Nord-Atlantique hivernale (DJFM)')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'NAO_winter_1950-2020_FR.png'
+fig_name = 'NAO_winter_1950-2019_FR.png'
 plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

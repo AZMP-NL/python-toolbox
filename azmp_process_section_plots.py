@@ -42,8 +42,8 @@ import os
             
 # SI since 1950
 years = np.arange(1999,2020)
-sections = ['FC']
-seasons = ['spring', 'fall']
+sections = ['SI', 'BB', 'FC', 'SEGB']
+seasons = ['spring', 'summer', 'fall']
 variables = ['temperature', 'salinity']
 
 for year in years:
@@ -51,7 +51,7 @@ for year in years:
         for season in seasons:
             for var in variables:     
                 print(str(year), section, season, var)
-                azst.seasonal_section_plot(VAR=var, SECTION=section, SEASON=season, YEAR=year, ZMAX=1500, STATION_BASED=True) 
+                azst.seasonal_section_plot(VAR=var, SECTION=section, SEASON=season, YEAR=year, ZMAX=2800, STATION_BASED=True) 
                 plt.close('all')
 
             command = 'montage temperature_' + section + '_' + season + '_' + str(year) + '.png salinity_' + section + '_' + season + '_' + str(year) + '.png  -tile 2x1 -geometry +10+10  -background white ' + section + '_station_' + season + '_' + str(year) + '.png'                 

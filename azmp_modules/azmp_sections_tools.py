@@ -476,13 +476,16 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         if SECTION == 'HL':
             v = np.arange(30,37,.5)
             v_anom = np.linspace(-1.5, 1.5, 16)   
+    elif VAR == 'sigma-t':
+        v = np.arange(24,28.4,.2)
+        v_anom = np.linspace(-1.5, 1.5, 16)
+        CMAP = cmocean.cm.haline
     else:
         v = 10
-        v_anom = 10
-        
+        v_anom = 10        
         
     SECTION_BATHY = SECTION
-
+    
 
     # CIL surface (Note that there is a bias because )
     def area(vs):
@@ -531,7 +534,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     fig = plt.figure()
     # ax1
     ax = plt.subplot2grid((3, 1), (0, 0))
-    if len(df_section.index) > 1:
+    if len(df_section.index) > 1 & len(df_section.columns>1):
         c = plt.contourf(df_section.index.droplevel(0), df_section.columns, df_section.T, v, cmap=CMAP, extend='max')
         plt.colorbar(c)
         if VAR == 'temperature':
@@ -565,7 +568,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     # ax3
     ax3 = plt.subplot2grid((3, 1), (2, 0))
     df_anom.shape
-    if len(df_section.index) > 1:
+    if len(df_section.index) > 1 & len(df_section.columns>1):
         c = plt.contourf(df_anom.index, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
         plt.colorbar(c)
     ax3.set_ylim([0, ZMAX])

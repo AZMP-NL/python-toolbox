@@ -54,8 +54,8 @@ ao = ao.rename(columns={'Value': '    AO'})
 amo.name='   AMO' 
 df_indices = pd.concat([nao_winter, ao, amo], axis=1)
 df_ind_clim = df_indices[(df_indices.index>=clim_year[0]-1) & (df_indices.index<=clim_year[1])]
-df_ind_anom = (df_indices - df_ind_clim.mean()) / df_ind_clim.std()
-df_indices = df_ind_anom
+#df_ind_anom = (df_indices - df_ind_clim.mean()) / df_ind_clim.std()
+#df_indices = df_ind_anom
 
 
 #### ------------- Air Temperature ---------------- ####

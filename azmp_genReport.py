@@ -139,3 +139,15 @@ for year in years:
             os.system('rm temperature*.png salinity*.png')
 
             
+## ----------- DENSITY SECTION PLOT ---------------- ##
+years = np.arange(1999, 2020)
+sections = ['BB']
+seasons = ['summer']
+variables = ['sigma-t']
+
+for year in years:
+    for section in sections:
+        for season in seasons:
+            for var in variables:
+                azst.seasonal_section_plot(VAR=var, SECTION=section, SEASON=season, YEAR=year, ZMAX=2000, STATION_BASED=True) 
+                plt.close('all')

@@ -157,7 +157,7 @@ last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
     if is_number(cell_text) == False:
-        cell._text.set_font_properties('bold') # Not really bold, but smaller thus fits better.
+        cell._text.set_font_properties('normal') # Not really bold, but smaller thus fits better.
     elif key[0] == 0: #year's row = no color
         pass
     ## elif key[1] in last_columns:
@@ -198,7 +198,7 @@ last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
     if is_number(cell_text) == False:
-        cell._text.set_font_properties('bold') # Not really bold, but smaller thus fits better.
+        cell._text.set_font_properties('normal') # Not really bold, but smaller thus fits better.
     elif key[0] == 0: #year's row = no color
         pass
     ## elif key[1] in last_columns:

@@ -1,7 +1,7 @@
 '''
 CIL area
 
-** This script must be run into ~/AZMP/state_reports/sections_plots **
+** This script must be run into ~/AZMP/state_reports/sections_plots/CIL **
 
 
 '''
@@ -18,13 +18,18 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'WB'
+SECTION = 'SI'
 SEASON = 'summer'
 CLIM_YEAR = [1950, 2019]
 dlat = 2 # how far from station we search
 dlon = 2
 dz = 1 # vertical bins
 dc = .2 # grid resolution
+
+# Years to flag
+flag_BB_summer = [1982]
+flag_WB_summer = [1953, 1956, 1959, 1982, 2019]
+flag_SI_summer = [1989]
 
 # CIL surface (Note that there is a bias because )
 def area(vs):
@@ -104,7 +109,7 @@ for idx, YEAR in enumerate(years):
     ## -------- Get CTD data -------- ##
     year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(YEAR) + '.nc'
     print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    ds = xr.open_dataset(year_file)
 
     # Remame problematic datasets
     print('!!Remove MEDBA & MEDTE data!!')
@@ -137,7 +142,7 @@ for idx, YEAR in enumerate(years):
     print('Process temperature')
     df = da_temp.to_pandas()
     df.columns = bins[0:-1] #rename columns with 'bins'
-    # Remove empty columns.
+    # Remove empty rows.
     idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
@@ -214,7 +219,8 @@ for idx, YEAR in enumerate(years):
 
     # Option 2 only
     #if df_section_itp.index.size > 0:
-    if df_section_itp.dropna(how='all').size > 0:
+    #if df_section_itp.dropna(how='all').size > 0:
+    if df_section_itp.dropna(axis=1, how='all').shape[1] > 1: # e.g., WB 1982, only surface obs are available
         fig, ax = plt.subplots()
         c = plt.contourf(distance_itp, df_section_itp.columns, df_section_itp.T)
         c_cil_itp = plt.contour(distance_itp, df_section_itp.columns, df_section_itp.T, [0,], colors='k', linewidths=2)
@@ -246,10 +252,18 @@ for idx, YEAR in enumerate(years):
             section_meanT_shelf[idx] = df_section_itp.iloc[0:20,:].mean().mean() # FC-01 to FC-20
             section_meanT_cap[idx] = df_section_itp.iloc[14:,:].mean().mean() # FC-15 to FC-38
 
-# Save CIL timseries
+# Merge CIL timeseries
 df_CIL= pd.DataFrame([cil_vol_itp_clim, cil_core_itp_clim, cil_coredepth_itp_clim]).T
 df_CIL.index = years_series
 df_CIL.columns = ['vol_itp', 'core_itp', 'core_depth_itp']
+# Manually flag some years (check section plots for justification) 
+if (SECTION=='SI') & (SEASON=='summer'):
+    df_CIL.loc[flag_SI_summer]=np.nan
+if (SECTION=='BB') & (SEASON=='summer'):
+    df_CIL.loc[flag_BB_summer]=np.nan
+if (SECTION=='WB') & (SEASON=='summer'):
+    df_CIL.loc[flag_WB_summer]=np.nan
+# Save CIL timeseries
 picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
 df_CIL.to_pickle(picklename)
 # Save section average temp

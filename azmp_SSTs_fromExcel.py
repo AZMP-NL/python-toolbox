@@ -73,6 +73,8 @@ for box in df_box[df_box.region=='NL'].box_name.values:
 df_all = pd.concat(dfs, keys=df_labels, axis=0)    
 df_all_excel = pd.concat(dfs_excel, keys=df_labels, axis=0)    
 
+# Remove data where coverage is less than 15%
+df_all = df_all[df_all['%coverage']>=15]
 
 ## ---- Just mean SST now ---- ##
 df_sst = df_all.mean_sst 

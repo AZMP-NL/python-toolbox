@@ -287,6 +287,7 @@ fig.clf()
 width = 200
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
+plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - CIL mean temperature')
 plt.ylim([-5, 5])
@@ -320,6 +321,7 @@ fig.clf()
 width = 200
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
+plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - CIL core temperature')
 plt.ylim([-5, 5])
@@ -353,6 +355,7 @@ fig.clf()
 width = 200
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
+plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - CIL core depth')
 plt.ylim([-4, 4])
@@ -386,6 +389,7 @@ fig.clf()
 width = 200
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
+plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - CIL thickness')
 #plt.xlim(XLIM)
@@ -529,6 +533,10 @@ strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),
 strat_monthly_clim = strat_monthly_stack.mean(level=1)
 strat_monthly_std = strat_monthly_stack.std(level=1)
 strat_current_year = strat_monthly[strat_monthly.index.year==current_year]
+# Flag March 2019 (1st measurement on the 30th)
+if current_year==2019:
+    strat_current_year[2]=np.nan
+
 year_index = strat_current_year.index # backup index
 strat_current_year.index=strat_monthly_std.index # reset index
 monthly_anom = strat_current_year - strat_monthly_clim
@@ -641,6 +649,10 @@ mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_c
 mld_monthly_clim = mld_monthly_stack.mean(level=1)
 mld_monthly_std = mld_monthly_stack.std(level=1)
 mld_current_year = mld_monthly[mld_monthly.index.year==current_year]
+# Flag March 2019 (1st measurement on the 30th)
+if current_year==2019:
+    mld_current_year[2]=np.nan
+
 year_index = mld_current_year.index # backup index
 mld_current_year.index=mld_monthly_std.index # reset index
 monthly_anom = mld_current_year - mld_monthly_clim

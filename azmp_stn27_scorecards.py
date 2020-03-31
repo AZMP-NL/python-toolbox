@@ -178,6 +178,8 @@ CIL_anom_std = CIL_anom / CIL_clim_period.std()
 #### ------------- MLD ---------------- ####
 # Load pickled data
 df_MLD = pd.read_pickle('S27_MLD_monthly.pkl')
+# flag some data:
+df_MLD[df_MLD.index=='2019-03-15']=np.nan
 df_MLD = df_MLD[df_MLD.index.year>=years[0]]
 MLD_clim_period = df_MLD[(df_MLD.index.year>=year_clim[0]) & (df_MLD.index.year<=year_clim[1])]
 # Monthly clim
@@ -229,6 +231,8 @@ MLD_anom_std = pd.concat([MLD_winter_anom, MLD_spring_anom, MLD_summer_anom, MLD
 #### ------------- Stratification ---------------- ####
 # Load pickled data
 df_strat = pd.read_pickle('S27_stratif_monthly.pkl')
+# flag some data:
+df_strat[df_strat.index=='2019-03-15']=np.nan
 df_strat = df_strat[df_strat.index.year>=years[0]]
 strat_clim_period = df_strat[(df_strat.index.year>=year_clim[0]) & (df_strat.index.year<=year_clim[1])]
 # Monthly clim
