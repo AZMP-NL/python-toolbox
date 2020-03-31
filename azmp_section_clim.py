@@ -114,7 +114,7 @@ for idx, YEAR in enumerate(years):
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
 
-    # Remame problematic datasets
+    # Remove problematic datasets
     print('!!Remove MEDBA & MEDTE data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
