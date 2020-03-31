@@ -112,7 +112,7 @@ for idx, YEAR in enumerate(years):
     ## -------- Get CTD data -------- ##
     year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(YEAR) + '.nc'
     print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    ds = xr.open_dataset(year_file)
 
     # Remame problematic datasets
     print('!!Remove MEDBA & MEDTE data!!')
