@@ -3,6 +3,10 @@
 Created on Mon Feb 18 09:34:09 2019
 add some comments
 @author: gibbo
+
+Edited by Frederic.Cyr@dfo-mpo.gc.ca
+April 2020
+
 """
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -31,7 +35,8 @@ import cc_variable_list as vl
 
   
 #### Load Carbonate data into a Pandas DataFrame ######
-df = pd.read_excel('C:\Users\gibbo\Documents\data\AZMP_OA\AZMP_OA_CO2stats.xlsx')
+#df = pd.read_excel('C:\Users\gibbo\Documents\data\AZMP_OA\AZMP_OA_CO2stats.xlsx')
+df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_OA_CO2stats.xlsx')
 pd.set_option('display.max_rows', 500)
 
 df = df.set_index('timestamp', drop=False)
@@ -43,10 +48,12 @@ df = df.set_index('timestamp', drop=False)
     
 ############################set data parameters here#######################
 my_region=''
-my_year='2015'
+my_year='2018'
 my_season='fall'
 my_depth='bottom'
 my_variable='Omega_A'
+
+
 
 print (my_year+' '+my_season+' '+my_depth+' '+my_variable)
 
@@ -78,7 +85,7 @@ elif my_season == 'fall':
     dfss = dfss[(dfss.index.month>=9) & (dfss.index.month<=12)]
     df = pd.concat([dfng, dfss], axis=0)
 else:        
-    print 'All seasons selected'
+    print('All seasons selected')
 
 
 if df[my_variable].isna().values.all():# or df.size == 0:
@@ -101,8 +108,9 @@ if my_depth == 'range':
 
 
 ############create bathymetry################
-os.environ["CARTOPY_USER_BACKGROUNDS"] = "C:\ProgramData\Anaconda2\Lib\site-packages\cartopy\BG"
-dataFile = 'C:\Users\gibbo\Documents\data\GRIDONE_1D.nc'
+#os.environ["CARTOPY_USER_BACKGROUNDS"] = "C:\ProgramData\Anaconda2\Lib\site-packages\cartopy\BG"
+#dataFile = 'C:\Users\gibbo\Documents\data\GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc'
 ###map boundaries###
 lonLims = [-72, -41.5]  
 latLims = [40.5, 58.4]
@@ -116,9 +124,8 @@ lat_data = lat_data[~np.isnan(data)]
 data = data[~np.isnan(data)]
 
 print('Load and grid bathymetry')
-##Load data
+# h5 file
 h5_outputfile = 'cc_bathymetry.h5'
-
 if os.path.isfile(h5_outputfile):
      print [h5_outputfile + ' exists! Reading directly']
      h5f = h5py.File(h5_outputfile,'r')
@@ -127,38 +134,39 @@ if os.path.isfile(h5_outputfile):
      Z = h5f['Z'][:]
      h5f.close()
 
-#else:
-dataset = netCDF4.Dataset(dataFile)
-# Extract variables
-x = dataset.variables['x_range']
-y = dataset.variables['y_range']
-spacing = dataset.variables['spacing']
-# Compute Lat/Lon
-nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-lon = np.linspace(x[0],x[-1],nx)
-lat = np.linspace(y[0],y[-1],ny)
-## interpolate data on regular grid (temperature grid)
-## Reshape data
-zz = dataset.variables['z']
-Z = zz[:].reshape(ny, nx)
-Z = np.flipud(Z) # <------------ important!!!
-# Reduce data according to Region params
-idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-lon = lon[idx_lon[0]]
-lat = lat[idx_lat[0]]
-print(' -> Done!')
+else:
+    # Extract variables
+    dataset = netCDF4.Dataset(dataFile)
+    x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+    y = [-89-59.75/60, 89+59.75/60]
+    spacing = dataset.variables['spacing']
 
- # Save data for later use
-if np.size(h5_outputfile):
-       h5f = h5py.File(h5_outputfile, 'w')
-       h5f.create_dataset('lon', data=lon)
-       h5f.create_dataset('lat', data=lat)
-       h5f.create_dataset('Z', data=Z)
-       h5f.close()
+    # Compute Lat/Lon
+    nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+    ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+    lon = np.linspace(x[0],x[-1],nx)
+    lat = np.linspace(y[0],y[-1],ny)
+    ## interpolate data on regular grid (temperature grid)
+    ## Reshape data
+    zz = dataset.variables['z']
+    Z = zz[:].reshape(ny, nx)
+    Z = np.flipud(Z) # <------------ important!!!
+    # Reduce data according to Region params
+    idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+    idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+    Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+    lon = lon[idx_lon[0]]
+    lat = lat[idx_lat[0]]
 
+    # Save data for later use
+    h5f = h5py.File(h5_outputfile, 'w')
+    h5f.create_dataset('lon', data=lon)
+    h5f.create_dataset('lat', data=lat)
+    h5f.create_dataset('Z', data=Z)
+    h5f.close()
+    print(' -> Done!')
+
+    
 #############draw map with bathymetry########################################################
 fig = plt.figure(figsize=(7,5))
 ax = fig.add_subplot(111, projection=ccrs.Mercator())
@@ -195,6 +203,5 @@ cb.ax.tick_params(labelsize=8)
 cb.set_label(axis_label, fontsize=12, fontweight='normal')
 
 
-#fig.savefig('C:\Users\gibbo\Documents\AZMP_OA_'+my_year+'_'+my_season+'_'+my_variable+'_'+my_depth+'.png', 
-#            format='png', dpi=500, bbox_inches='tight')
+fig.savefig('AZMP_OA_'+my_year+'_'+my_season+'_'+my_variable+'_'+my_depth+'.png', format='png', dpi=300, bbox_inches='tight')
 #fig.savefig('C:\Users\gibbo\Documents\carbonates\other\maps\AZMP_empty.svg', format='svg', dpi=1000, bbox_inches='tight')
