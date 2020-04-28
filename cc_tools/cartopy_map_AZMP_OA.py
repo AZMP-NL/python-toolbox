@@ -37,8 +37,7 @@ import cc_variable_list as vl
 #### Load Carbonate data into a Pandas DataFrame ######
 #df = pd.read_excel('C:\Users\gibbo\Documents\data\AZMP_OA\AZMP_OA_CO2stats.xlsx')
 df = pd.read_excel('/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_OA_CO2stats.xlsx')
-pd.set_option('display.max_rows', 500)
-
+#pd.set_option('display.max_rows', 500)
 df = df.set_index('timestamp', drop=False)
 
 #####################to remove unwanted sections or stations##################

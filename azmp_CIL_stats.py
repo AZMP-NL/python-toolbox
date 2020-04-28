@@ -18,7 +18,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'SI'
+SECTION = 'BB'
 SEASON = 'summer'
 CLIM_YEAR = [1950, 2019]
 dlat = 2 # how far from station we search
@@ -89,6 +89,7 @@ lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
 lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
 z_vec = np.reshape(Z, Z.size)
 Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+del zz, Z
 print(' -> Done!')
 
 
@@ -137,7 +138,8 @@ for idx, YEAR in enumerate(years):
     lats = np.array(ds.latitude)
     bins = np.arange(dz/2.0, 500, dz)
     da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
-
+    del ds
+    
     # 1. Temperature to Pandas Dataframe
     print('Process temperature')
     df = da_temp.to_pandas()

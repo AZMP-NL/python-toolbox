@@ -8,7 +8,7 @@ lonLims = [-68, -55] # NAFO 4
 latLims = [38, 48]
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='summer', h5_outputfile='Tbot_climato_SA4_summer_0.10.h5') 
+azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='summer', h5_outputfile='Tbot_climato_SA4_summer_0.10.h5') 
 
 '''
 

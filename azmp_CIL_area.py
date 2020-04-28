@@ -19,7 +19,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'WB'
+SECTION = 'BB'
 SEASON = 'summer'
 YEAR = 2019
 dlat = 2 # how far from station we search

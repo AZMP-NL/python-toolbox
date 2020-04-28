@@ -71,7 +71,7 @@ def add_path(PATH):
 
     sys.path.append(PATH)  # or .insert(0, YOUR_PATH) may give higher priority
     
-def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_path='/home/cyrf0006/data/dev_database/netCDF/'):
+def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file=''):
 
     
     '''
@@ -99,16 +99,20 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     >> import azmp_report_tools as azrt
     >> azrt.bottom_temperature(season='spring', year='2019'):
 
+    ** For NAFO SA4:
+    >> azrt.bottom_temperature(season='summer', year='2019', climato_file='Tbot_climato_SA4_summer_0.10.h5'):
+
     Frederic.Cyr@dfo-mpo.gc.ca - January 2020
 
     '''
-
-    if season=='spring':
-        climato_file = 'Tbot_climato_spring_0.10.h5'
-    elif season=='fall':
-        climato_file = 'Tbot_climato_fall_0.10.h5'
-    elif season=='summer':
-        climato_file = 'Tbot_climato_summer_0.10.h5'
+    if len(climato_file) == 0: # climato file not provided
+        if season=='spring':
+            climato_file = 'Tbot_climato_spring_0.10.h5'
+        elif season=='fall':
+            climato_file = 'Tbot_climato_fall_0.10.h5'
+        elif season=='summer':
+            climato_file = 'Tbot_climato_summer_0.10.h5'
+    
     year_file = netcdf_path + year + '.nc'
 
 
@@ -134,13 +138,13 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
 
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    ds = xr.open_dataset(year_file)
 
     # Remome problematic datasets
     print('!!Remove MEDBA data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
@@ -784,7 +788,7 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
 
 
 #### bottom_stats
-def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/'):
+def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file=''):
 
     '''
         Function bottom_stats() based on script azmp_bottom_stats.py
@@ -797,21 +801,30 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
         >> import numpy as np
         >> azrt.bottom_stats(years=np.arange(1980, 2020), season='fall')
 
+        *** This needs to be improve because at the moment I need to comment the generation of .pkl file to not over-write when I change my map region.        
+                
+        For NAFO SA4:
+        >> azrt.bottom_stats(years=np.arange(1980, 2020), season='summer', climato_file='Tbot_climato_SA4_summer_0.10.h5')
+        
+        For COSEWIC:
+        >> azrt.bottom_stats(years=np.arange(1980, 2020), season='summer', climato_file='Tbot_climato_2GH_summer_0.10.h5')
+        >> azrt.bottom_stats(years=np.arange(1980, 2020), season='summer', climato_file='Tbot_climato_SA45_summer_0.10.h5')
+
+        
         Frederic.Cyr@dfo-mpo.gc.ca - January 2020
     '''
 
     # load climato
-    if season == 'fall':
-        climato_file = 'Tbot_climato_fall_0.10.h5'
-    elif season == 'spring':
-        climato_file = 'Tbot_climato_spring_0.10.h5'
-    elif season == 'summer':
-        if SPECIAL=='COSEWIC_north':
-            climato_file = 'Tbot_climato_2GH_summer_0.10.h5'
-        elif SPECIAL=='COSEWIC_south':
-            climato_file = 'Tbot_climato_SA45_summer_0.10.h5'
-        else:
+    if len(climato_file) == 0: # climato not provided (default)
+        if season == 'fall':
+            climato_file = 'Tbot_climato_fall_0.10.h5'
+        elif season == 'spring':
+            climato_file = 'Tbot_climato_spring_0.10.h5'
+        elif season == 'summer':
             climato_file = 'Tbot_climato_summer_0.10.h5'
+    else:
+        print('Climato file provided')
+               
     h5f = h5py.File(climato_file, 'r')
     Tbot_climato = h5f['Tbot'][:]
     lon_reg = h5f['lon_reg'][:]
@@ -827,23 +840,23 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
 
     # NAFO divisions
     nafo_div = azu.get_nafo_divisions()
-    polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
-    polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
-    polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
-    shape = [polygon3L, polygon3N, polygon3O]
-    shape_3LNO = cascaded_union(shape)
-    shape_3M = Polygon(zip(nafo_div['3M']['lon'], nafo_div['3M']['lat']))
-    shape_3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
-    shape_2G = Polygon(zip(nafo_div['2G']['lon'], nafo_div['2G']['lat']))
-    shape_2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
-    shape_2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
-    shape_3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
-    shape_3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
-    shape_3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
-    shape = [shape_2J, shape_2H]
-    shape_2HJ = cascaded_union(shape)
-    shape = [shape_2G, shape_2H]
-    shape_2GH = cascaded_union(shape)
+    ## polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
+    ## polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
+    ## polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
+    ## shape = [polygon3L, polygon3N, polygon3O]
+    ## shape_3LNO = cascaded_union(shape)
+    ## shape_3M = Polygon(zip(nafo_div['3M']['lon'], nafo_div['3M']['lat']))
+    ## shape_3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
+    ## shape_2G = Polygon(zip(nafo_div['2G']['lon'], nafo_div['2G']['lat']))
+    ## shape_2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
+    ## shape_2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+    ## shape_3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+    ## shape_3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
+    ## shape_3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
+    ## shape = [shape_2J, shape_2H]
+    ## shape_2HJ = cascaded_union(shape)
+    ## shape = [shape_2G, shape_2H]
+    ## shape_2GH = cascaded_union(shape)
     shape_4R = Polygon(zip(nafo_div['4R']['lon'], nafo_div['4R']['lat']))
     shape_4S = Polygon(zip(nafo_div['4S']['lon'], nafo_div['4S']['lat']))
     shape_4T = Polygon(zip(nafo_div['4T']['lon'], nafo_div['4T']['lat']))
@@ -892,22 +905,22 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
 
 
         # NAFO division stats    
-        dict_stats_2GH[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2GH)
-        dict_stats_2G[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2G)
-        dict_stats_2H[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2H)
-        dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
-        dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
-        dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
-        dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
-        dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
-        dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
-        dict_stats_3L[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3L)
-        dict_stats_3O[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3O)
+        ## dict_stats_2GH[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2GH)
+        ## dict_stats_2G[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2G)
+        ## dict_stats_2H[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2H)
+        ## dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
+        ## dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
+        ## dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
+        ## dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
+        ## dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
+        ## dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
+        ## dict_stats_3L[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3L)
+        ## dict_stats_3O[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3O)
         dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
         dict_stats_4S[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4S)
         dict_stats_4RS[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RS)
         dict_stats_4RST[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RST)
-        #dict_stats_4T[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4T)
+        dict_stats_4T[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4T)
         dict_stats_4VWX[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
         #dict_stats_5Y[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_5Y)
 
@@ -1004,28 +1017,28 @@ def bottom_stats(years, season, proj='merc', plot=False, SPECIAL=None, netcdf_pa
     df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
     #df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
 
-    outname = 'stats_3Ps_' + season + '.pkl'
-    df_3Ps.to_pickle(outname)
-    outname = 'stats_3LNO_' + season + '.pkl'
-    df_3LNO.to_pickle(outname)
-    outname = 'stats_3M_' + season + '.pkl'
-    df_3M.to_pickle(outname)
-    outname = 'stats_3K_' + season + '.pkl'
-    df_3K.to_pickle(outname)
-    outname = 'stats_3L_' + season + '.pkl'
-    df_3L.to_pickle(outname)
-    outname = 'stats_3O_' + season + '.pkl'
-    df_3O.to_pickle(outname)
-    outname = 'stats_2G_' + season + '.pkl'
-    df_2G.to_pickle(outname)
-    outname = 'stats_2H_' + season + '.pkl'
-    df_2H.to_pickle(outname)
-    outname = 'stats_2J_' + season + '.pkl'
-    df_2J.to_pickle(outname)
-    outname = 'stats_2HJ_' + season + '.pkl'
-    df_2HJ.to_pickle(outname)
-    outname = 'stats_2GH_' + season + '.pkl'
-    df_2GH.to_pickle(outname)
+    ## outname = 'stats_3Ps_' + season + '.pkl'
+    ## df_3Ps.to_pickle(outname)
+    ## outname = 'stats_3LNO_' + season + '.pkl'
+    ## df_3LNO.to_pickle(outname)
+    ## outname = 'stats_3M_' + season + '.pkl'
+    ## df_3M.to_pickle(outname)
+    ## outname = 'stats_3K_' + season + '.pkl'
+    ## df_3K.to_pickle(outname)
+    ## outname = 'stats_3L_' + season + '.pkl'
+    ## df_3L.to_pickle(outname)
+    ## outname = 'stats_3O_' + season + '.pkl'
+    ## df_3O.to_pickle(outname)
+    ## outname = 'stats_2G_' + season + '.pkl'
+    ## df_2G.to_pickle(outname)
+    ## outname = 'stats_2H_' + season + '.pkl'
+    ## df_2H.to_pickle(outname)
+    ## outname = 'stats_2J_' + season + '.pkl'
+    ## df_2J.to_pickle(outname)
+    ## outname = 'stats_2HJ_' + season + '.pkl'
+    ## df_2HJ.to_pickle(outname)
+    ## outname = 'stats_2GH_' + season + '.pkl'
+    ## df_2GH.to_pickle(outname)
     outname = 'stats_4R_' + season + '.pkl'
     df_4R.to_pickle(outname)
     outname = 'stats_4S_' + season + '.pkl'

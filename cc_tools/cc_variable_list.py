@@ -4,45 +4,24 @@ Created on Mon Feb 18 09:34:09 2019
 add some comments
 @author: gibbo
 """
-import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
-from matplotlib.colors import from_levels_and_colors
-import matplotlib as mpl
-import numpy as np
-import seaborn as sns
-import datetime
-from scipy import stats
-import water_masses as wm
-import seawater as swx
 import cmocean
 import cmocean.cm as cmo
-import cartopy. crs as ccrs
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-import cartopy.feature as cpf
-from cartopy.mpl.geoaxes import GeoAxes
-import matplotlib.ticker as mticker
-import os
-import netCDF4
-import io
-import h5py
-import sys
 
-########import variable_parameters as var_params
-
-#my_variable='pH'
 
 def variable_parameters(my_variable):
 
     print(my_variable)
     if my_variable == 'pH':
-        return [17, 7.5, 8.3, 7.8, cmo.dense, [7.5, 7.7, 7.9, 8.1, 8.3], r'$\rm pH_{T,is}$', 'both']
+        return [9, 7.4, 8.2, 7.8, cmo.thermal_r, [7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 8.0, 8.1, 8.2], r'$\rm pH_{T,is}$', 'both']
+        #return [17, 7.4, 8.2, 7.7, cmo.halin_r, [7.4, 7.6, 7.8, 8.0, 8.2], r'$\rm pH_{T,is}$', 'both']
+#        return [17, 7.5, 8.3, 7.8, cmo.thermal, [7.5, 7.7, 7.9, 8.1, 8.3], r'$\rm pH_{T,is}$', 'both']
 
 #    elif my_variable == 'temperature':
 #        return [25, -2, 22, 12, plt.cm.plasma, [-2, 2, 6, 10, 14, 18, 22], r'$\theta\ (^\circ$C)', 'both']
 
     elif my_variable == 'temperature':
-        return [25, -2, 26, 12, plt.cm.plasma, [-2, 2, 6, 10, 14, 18, 22, 26], r'$\theta\ (^\circ$C)', 'both']
+        return [25, -2, 26, 12, cmo.thermal, [-2, 2, 6, 10, 14, 18, 22, 26], r'$\theta\ (^\circ$C)', 'both']
 
     elif my_variable == 'Omega_A':
         return [21, 0, 4, 1, plt.cm.seismic_r, [0, 1, 2, 3, 4], r'$\Omega_{\rm{arg}}$', 'both']
@@ -54,19 +33,19 @@ def variable_parameters(my_variable):
 #        return [21, 27, 37, 32, cmo.haline, [27, 29, 31, 33, 35, 37], r'Salinity', 'both']
     
     elif my_variable == 'satO2_perc':
-        return [13, 0, 120, 30, plt.cm.seismic_r, [0,20,40,60,80,100, 120], r'$\rm O_{2,sat}$ (%)', 'both']
+        return [11, 0, 100, 30, plt.cm.seismic_r, [0,20,40,60,80,100], r'$\rm O_{2,sat}$ (%)', 'both']
 
 #    elif my_variable == 'satO2_perc':
 #        return [11, 50, 100, 75, plt.cm.plasma, [50,60,70,80,90,100], r'$\rm O_{2,sat}$ (%)', 'both']
 
     elif my_variable == 'TA':
-        return [20, 1750, 2450, 2100, plt.cm.plasma, [1800, 1900, 2000,2100,2200,2300,2400], r'TA $(\rm \mu $mol/kg)', 'both']
+        return [20, 1750, 2450, 2100, cmo.thermal_r, [1800, 1900, 2000,2100,2200,2300,2400], r'TA $(\rm \mu $mol/kg)', 'both']
 
     elif my_variable == 'TIC':
-        return [20, 1750, 2350, 2050, plt.cm.plasma, [1800,1900,2000,2100,2200,2300], r'DIC $(\rm \mu $mol/kg)', 'both']
+        return [20, 1750, 2350, 2050, cmo.thermal_r, [1800,1900,2000,2100,2200,2300], r'DIC $(\rm \mu $mol/kg)', 'both']
     
     elif my_variable == 'pCO2':
-        return [20, 250, 1350, 800, plt.cm.plasma, [250,500,750,1000,1250], r'$\rm pCO_{2} (\rm \mu $atm)', 'both']
+        return [20, 250, 1350, 800, cmo.thermal_r, [250,500,750,1000,1250], r'$\rm pCO_{2} (\rm \mu $atm)', 'both']
     
     elif my_variable == 'chla':
         return [11, 0, 2.5, 1.25, cmo.algae, [0,0.5,1,1.5,2,2.5], r'Chlorophyll a (mg/m$^{3}$))', 'both']

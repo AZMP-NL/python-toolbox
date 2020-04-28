@@ -144,7 +144,8 @@ for idx, YEAR in enumerate(years):
     da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
     da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
     da_sig = da_sig.groupby_bins('level', bins).mean(dim='level')
-
+    del ds
+    
     # 1. Temperature to Pandas Dataframe
     print('Process temperature')
     df = da_temp.to_pandas()

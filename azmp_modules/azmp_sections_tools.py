@@ -28,7 +28,6 @@ import os
 #from sys import version_info
 import cmocean
 from math import radians, cos, sin, asin, sqrt
-from math import radians, cos, sin, asin, sqrt
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
 from scipy.interpolate import griddata
 

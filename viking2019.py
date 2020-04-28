@@ -39,25 +39,48 @@ df_temp = ds['temperature'].to_dataframe()
 df_temp = df_temp.unstack()
 df_temp = df_temp.resample('1D').mean()
 df_temp = df_temp.dropna(how='all')
+df_temp = df_temp.droplevel(None, axis=1)
 df_sal = ds['salinity'].to_dataframe()
 df_sal = df_sal.unstack()
 df_sal = df_sal.resample('1D').mean()
 df_sal = df_sal.dropna(how='all')
+df_sal = df_sal.droplevel(None, axis=1)
 df_sig = ds['sigma-t'].to_dataframe()
 df_sig = df_sig.unstack()
 df_sig = df_sig.resample('1D').mean()
 df_sig = df_sig.dropna(how='all')
+df_sig = df_sig.droplevel(None, axis=1)
 
 df_fluo = ds['fluorescence'].to_dataframe()
 df_fluo = df_fluo.unstack()
 df_fluo = df_fluo.resample('1D').mean()
 df_fluo = df_fluo.dropna(how='all')
+df_fluo = df_fluo.droplevel(None, axis=1)
 
 Vsig = np.arange(21,27)
 Vtemp = np.arange(-2, 20, .5)
 Vsal = np.arange(29.5, 34, .25)
 XLIM = [datetime.date(2019, 6, 1), datetime.date(2019, 11, 1)]
 
+## Dorian mixing ##
+df_sigH = ds['sigma-t'].to_dataframe()
+df_sigH = df_sigH.unstack()
+df_sigH = df_sigH.resample('1H').mean()
+df_sigH = df_sigH.dropna(how='all')
+df_sigH = df_sigH.droplevel(None, axis=1)
+A = df_sigH[df_sigH.index.month==9]   
+B = A[(A.index.day<=9) & (A.index.day>=6) ]     
+B.T.plot()  
+plt.close('all') 
+
+plt.plot(B.iloc[1].values, B.columns.values)   
+plt.plot(B.iloc[6].values, B.columns.values)   
+plt.plot(B.iloc[8].values, B.columns.values)   
+plt.plot(B.iloc[10].values, B.columns.values)
+plt.gca().invert_yaxis()  
+plt.grid()   
+plt.xlabel(r'$\sigma_0 (\rm{kg\,m^{-1}})$')          
+plt.legend(['6 Sept. 12:00','7 Sept. 20:00','9 Sept. 2:00', '9 sept. 21:00'])
 
 ## ---- plot temperature ---- ##
 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -72,8 +95,7 @@ plt.grid('on')
 #plt.xlabel('Time', fontsize=15, fontweight='bold')
 plt.ylabel('Depth (m)', fontsize=15, fontweight='bold')
 plt.ylim([0, 175])
-plt.gca().invert_yaxis()
-
+plt.gca().invert_yaxis()  
 cax = fig.add_axes([0.91, .15, 0.01, 0.7])
 cb = plt.colorbar(c, cax=cax, orientation='vertical')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')

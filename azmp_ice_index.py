@@ -97,7 +97,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 # Save French Figure
 plt.sca(ax)
 plt.ylabel(u'Anomalie normalisée', weight='bold', fontsize=14)
-plt.title(u'Indice glace de mer et icebergs - T-N-L', weight='bold', fontsize=14)
+plt.title(u'Indice glace de mer - T-N-L', weight='bold', fontsize=14)
 #fig.set_size_inches(w=15,h=7)
 fig_name = 'ice_index_FR.png'
 fig.savefig(fig_name, dpi=200)

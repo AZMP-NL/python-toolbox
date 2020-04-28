@@ -1,6 +1,7 @@
 '''
 
-WORK IN PROGRESS...
+**** This script is now deprecated! ****
+-> See azmp_report_tools.bottom_stats instead
 
 
 To generate bottom climato:
@@ -61,11 +62,12 @@ from shapely.ops import cascaded_union
 
 ## ---- preamble ---- ##
 #years = np.arange(1950, 2019)
-years = np.arange(1980, 2019)
+years = np.arange(1980, 2020)
 proj = 'merc'
 plot = False # to plot or not to plot...
 season = 'summer'
-SPECIAL = 'COSEWIC_north'
+#SPECIAL = 'COSEWIC_north'
+SPECIAL = ''
 
 
 # load climato
@@ -151,31 +153,30 @@ dict_stats_5Y = {}
 df_list = []
 for year in years:
     print(' ---- ' + np.str(year) + ' ---- ')
-    year_file = '/home/cyrf0006/data/dev_database/' + np.str(year) + '.nc'
+    year_file = '/home/cyrf0006/data/dev_database/netCDF/' + np.str(year) + '.nc'
     Tdict = azu.get_bottomT(year_file, season, climato_file)    
     Tbot = Tdict['Tbot']
     lons = Tdict['lons']
     lats = Tdict['lats']
     anom = Tbot-Tbot_climato
-
     
     # NAFO division stats    
     dict_stats_2GH[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2GH)
-    ## dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
-    ## dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
-    ## dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
-    ## dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
-    ## dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
-    ## dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
-    ## dict_stats_3L[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3L)
-    ## dict_stats_3O[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3O)
-    ## dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
-    ## dict_stats_4S[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4S)
-    ## dict_stats_4RS[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RS)
-    ## dict_stats_4RST[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RST)
-    ## dict_stats_4T[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4T)
-    ## dict_stats_4VWX[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
-    ## dict_stats_5Y[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_5Y)
+    dict_stats_2J[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
+    dict_stats_2HJ[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
+    dict_stats_3LNO[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
+    dict_stats_3M[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
+    dict_stats_3Ps[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
+    dict_stats_3K[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
+    dict_stats_3L[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3L)
+    dict_stats_3O[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_3O)
+    dict_stats_4R[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
+    dict_stats_4S[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4S)
+    dict_stats_4RS[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RS)
+    dict_stats_4RST[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RST)
+    dict_stats_4T[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4T)
+    dict_stats_4VWX[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
+    #dict_stats_5Y[np.str(year)] = azu.polygon_temperature_stats(Tdict, shape_5Y)
 
     # Append bottom temperature for multi-index export
     df = pd.DataFrame(index=lat_reg, columns=lon_reg)
@@ -267,7 +268,7 @@ df_4RS = pd.DataFrame.from_dict(dict_stats_4RS, orient='index')
 df_4RST = pd.DataFrame.from_dict(dict_stats_4RST, orient='index')
 df_4T = pd.DataFrame.from_dict(dict_stats_4T, orient='index')
 df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
-df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
+#df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
 
 outname = 'stats_3Ps_' + season + '.pkl'
 df_3Ps.to_pickle(outname)
@@ -299,8 +300,8 @@ outname = 'stats_4T_' + season + '.pkl'
 df_4T.to_pickle(outname)
 outname = 'stats_4VWX_' + season + '.pkl'
 df_4VWX.to_pickle(outname)
-outname = 'stats_5Y_' + season + '.pkl'
-df_5Y.to_pickle(outname)
+#outname = 'stats_5Y_' + season + '.pkl'
+#df_5Y.to_pickle(outname)
 
 # Save in multi-index  dataFrame
 year_index = pd.Series(years)

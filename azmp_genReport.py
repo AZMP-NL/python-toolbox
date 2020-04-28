@@ -57,6 +57,8 @@ os.system('cp ice_index.png ice_index_FR.png ../2019/')
 # 5. bottom temperature maps
 azrt.bottom_temperature(season='spring', year='2019') 
 azrt.bottom_temperature(season='fall', year='2019')
+# For NAFO STACFEN and STACFIS input:
+azrt.bottom_temperature(season='summer', year='2019', climato_file='Tbot_climato_SA4_summer_0.10.h5')
 
 # bottom salinity maps
 azrt.bottom_salinity(season='spring', year='2019') 
@@ -65,8 +67,11 @@ azrt.bottom_salinity(season='fall', year='2019')
 # bottom stats and scorecards
 azrt.bottom_stats(years=np.arange(1980, 2020), season='spring')
 azrt.bottom_stats(years=np.arange(1980, 2020), season='fall')
+azrt.bottom_stats(years=np.arange(1980, 2020), season='summer')
 azrt.bottom_scorecards(years=[1980, 2019])
 os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png ../2019')
+# For NAFO STACFEN and STACFIS input (for azmp_composite_index.py):
+azrt.bottom_stats(years=np.arange(1980, 2020), season='summer', climato_file='Tbot_climato_SA4_summer_0.10.h5')
 
 # bottom temperature bar plots
 %my_run azmp_bottomT_mean_anomaly.py # same as previous

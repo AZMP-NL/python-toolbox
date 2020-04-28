@@ -33,6 +33,8 @@ JOURNAL OF GEOPHYSICAL RESEARCH, VOL. 111, D11105, doi:10.1029/2005JD006810, 200
 https://www.dmi.dk/fileadmin/user_upload/Rapporter/TR/2018/DMIRep18-05.zip
 https://www.dmi.dk/publikationer/
 
+** Note that NUUK Air temperature is also provided in ices/iroc by Boris**
+
 Frederic.Cyr@dfo-mpo.gc.ca - February 2019
 
 '''
@@ -172,7 +174,6 @@ ax.set_title('Annual air temperature anomalies')
 fig = ax.get_figure()
 fig.set_size_inches(w=12,h=8)
 fig_name = 'air_temp_anom.png'
-#plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 

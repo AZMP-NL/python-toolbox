@@ -310,7 +310,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     latLims = [42, 58]
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='sp[ring', h5_outputfile='Tbot_climato2HJ3KLNOPs_sp[ring_0.10.h5')
+    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato2HJ3KLNOPs_spring_0.10.h5')
     
     """
 
@@ -421,6 +421,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         df_temp = df_temp.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
+        del ds
         print(' -> Done!')        
 
         ## --- fill 3D cube --- ##  
@@ -798,7 +799,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
 
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    ds = xr.open_dataset(year_file)
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
@@ -818,8 +819,9 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     # Remome problematic datasets
     print('!!Remove MEDBA data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)        
-        
+    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)        
+    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    
     # Restrict max depth to zmax defined earlier
     ds = ds.sel(level=ds['level']<zmax)
     # Vertical binning (on dataArray; more appropriate here
@@ -837,6 +839,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     #df_temp.to_pickle('T_2000-2017.pkl')
+    del ds
     print(' -> Done!')
 
 
@@ -1018,7 +1021,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
 
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    ds = xr.open_dataset(year_file)
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
