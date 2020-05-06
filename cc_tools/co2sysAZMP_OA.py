@@ -286,7 +286,7 @@ df['NO3']=df['NO3']/1.025 #####convert nutrient data from uM=mmol/m3/umol/L to u
 df['SiO']=df['SiO']/1.025
 df['PO4']=df['PO4']/1.025
 #df.to_excel("C:\Users\gibbo\Documents\data\AZMP_OA\AZMP_OA_Alldata.xlsx")
-dforig = df.copy(deep=True) ###all original data, since some is replaced/modified
+dforig = df.copy(deep=True) ###all original data, since some is replaced/modified ** This one could be exported.
 
 #############data clean up for CO2sys = estimate TA from TA-S plot, remove empty rows, remove flagged data, replace nutrient nan with zeros################
 #############drop flagged data####################
@@ -426,7 +426,7 @@ dfCO2gulf = pd.merge(df_gulf, dfCO2out_gulf, how='outer', left_index=True, right
 
 #############combine data and create/cleanup new dataframe for PCA or plotting############
 dfCO2sys = pd.concat([dfCO2shelf, dfCO2gulf], axis=0)
-variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'temperature', 'salinity', 'satO2_perc', 'NO3', 'PO4', 'SiO', 'TCO2', 'TAlk', 'pHoutTOTAL', 'pCO2out', 'OmegaCAout', 'OmegaARout']
+variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'temperature', 'salinity', 'satO2_perc', 'NO3', 'PO4', 'SiO', 'TCO2', 'TAlk', 'pHoutTOTAL', 'pCO2out', 'OmegaCAout', 'OmegaARout'] # here you can keep original variables by adding them.
 dfCO2sys = dfCO2sys.loc[:,variables]
 dfCO2sys = dfCO2sys.rename(columns={'TAlk' : 'TA'})
 dfCO2sys = dfCO2sys.rename(columns={'TCO2' : 'TIC'})

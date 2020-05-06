@@ -101,7 +101,7 @@ from PyCO2SYS import CO2SYS
 import gsw
 
 #my_region=''
-my_year=2019
+my_year=2018
 my_season='spring'
 my_depth='bottom'
 my_variable='pH'
@@ -565,7 +565,40 @@ color_bar = ColorBar(color_mapper=mapper['transform'], width=8,  location=(0,0),
 p.add_layout(color_bar, 'right')
 show(p)
 
+# 3. T-S
+mapper = linear_cmap(field_name='depth', palette=cmo.cm.deep ,low=0 ,high=300)
+output_file('OA_T-S.html')
+source = ColumnDataSource(df)
+p = figure(plot_width=900, plot_height=600)
+p.scatter('longitude', 'latitude', source=source, size=8,
+          line_color=mapper,color=mapper)
+p.title.text = 'Carbonate parameters in the Atlantic Zone - 2014-2019'
+p.xaxis.axis_label = 'Longitude'
+p.yaxis.axis_label = 'Latitude'
+p.add_tools(HoverTool(
+    tooltips=[
+        ('Temperature', '@temperature'),
+        ('Salinity', '@salinity'),
+        ('Depth (m)', '@depth'),
+        ('pH', '@pH'),
+        ('Saturation Aragonite', '@Omega_A'),
+        ('Saturation Calcite', '@Omega_C'),
+        ('Total Alkalinity', '@TA'),
+        ('Inorg. Carbon', '@TIC'),
+        ('O2 sat (%)', '@satO2_perc'),
+        ('O2 dissolved (ml/l)', '@O2_ml_l'),
+        ('Region', '@Region'),
+        ('Station', '@StationID'),
+        ('Timestamp', '@timestamp'),
+        ('Latitude', '@latitude'),
+        ('Longitude', '@longitude')      
+    ],
 
+    mode='mouse'
+))
+color_bar = ColorBar(color_mapper=mapper['transform'], width=8,  location=(0,0),title="T-S diagram")
+p.add_layout(color_bar, 'right')
+show(p)
 ## #Seasonal analysis
 ## df = df[df.depth<=50]
 ## df_NL = df[df.Region == 'NL']

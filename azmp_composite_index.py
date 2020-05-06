@@ -300,7 +300,7 @@ df_comp_SA3 = pd.concat([df_s27_mean,
                          df_air.Bonavista, df_air.StJohns,
                          df_sst_SA3.mean(axis=1),
                          df_3LNO_spring, df_3LNO_fall, df_3M_summer,
-                         df_BB, df_FC_shelf,
+                         df_BB, df_FC,
                          df_CIL_BB.vol_itp, df_CIL_FC.vol_itp
                          ], axis=1)
 df_comp_SA4 = pd.concat([df_p5_90, df_hfx2_surf, df_hfx2_150,
