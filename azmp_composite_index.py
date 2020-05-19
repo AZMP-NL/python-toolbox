@@ -43,14 +43,17 @@ df_air = df_air.resample('As').mean()
 df_air.index = df_air.index.year
 
 # 4. SSTs (problem: NS data missing prior 1997...)
-df_sst = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SSTs_merged_monthly.pkl')
-df_sst = df_sst.resample('As').mean()
-df_sst.index = df_sst.index.year
+df_sst_boxes = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SSTs_merged_monthly.pkl')
+df_sst_boxes = df_sst_boxes.resample('As').mean()
+df_sst_boxes.index = df_sst_boxes.index.year
 
-df_sst_1997 = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SSTs_bometrics_annual.pkl')
-df_sst_1997 = df_sst_1997.resample('As').mean()
-df_sst_1997.index = df_sst_1997.index.year
-
+## df_sst_1997 = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SSTs_bometrics_annual.pkl')
+## df_sst_1997 = df_sst_1997.resample('As').mean()
+## df_sst_1997.index = df_sst_1997.index.year
+# Peter's SST
+df_sst = pd.read_csv('/home/cyrf0006/data/SST_IML/AZMP_SST_Seasonal.dat', delimiter=r"\s+", index_col='#Yr', header=26)
+df_sst.index.name = 'year'
+df_sst = df_sst.replace(-99.00, np.nan)
 
 # 5. Bottom temperature
 # 3LNO - Spring
@@ -178,7 +181,7 @@ df_comp_3LNO = pd.concat([df_s27_mean,
                           df_3LNO_spring, df_3LNO_fall,
                           df_SI, df_BB, df_FC_shelf,
                           df_CIL_SI.vol_itp, df_CIL_BB.vol_itp, df_CIL_FC.vol_itp,
-                          df_sst.Avalon_Channel, df_sst.Hybernia, df_sst.Flemish_Pass 
+                          df_sst['3L'], df_sst['3N'], df_sst['3O'] 
                           ], axis=1)
 
 df_3LNO_clim = df_comp_3LNO[(df_comp_3LNO.index>=clim_year[0]) & (df_comp_3LNO.index<=clim_year[1])]
@@ -211,7 +214,7 @@ os.system('convert -trim composite_3LNO.png composite_3LNO.png')
 
 #### ---- STACFIS - 3M ---- ####
 df_comp_3M = pd.concat([df_FC_cap, 
-                        df_sst.Flemish_Cap,
+                        df_sst['3M'],
                         df_3M_summer
                         ], axis=1)
 
@@ -240,10 +243,10 @@ fig.savefig(fig_name, dpi=200)
 os.system('convert -trim composite_3M.png composite_3M.png')
 
 #### ---- STACFIS - SA01 ---- #### (0B1CDEF)
-df_comp_SA01 = pd.concat([df_sst.Central_Labrador_Sea,
-                         df_sst.North_Central_Labrador_Sea,
-                         df_sst.Greenland_Shelf,
-                         df_sst.Hudson_Strait,
+df_comp_SA01 = pd.concat([df_sst_boxes.Central_Labrador_Sea,
+                         df_sst_boxes.North_Central_Labrador_Sea,
+                         df_sst_boxes.Greenland_Shelf,
+                         df_sst_boxes.Hudson_Strait,
                          df_FB4, df_CD3_200, df_CD3_2000,
                          df_air.Nuuk, df_air.Iqaluit
                           ], axis=1)
@@ -277,11 +280,11 @@ os.system('convert -trim composite_SA01.png composite_SA01.png')
 # ** HEre I ignored SSTs, because not available for NS region prior to 1997
 #                          df_sst.Hudson_Strait, df_sst.Hamilton_Bank, df_sst['St.Anthony_Basin'], df_sst.Orphan_Knoll 
 #                          df_sst.Avalon_Channel, df_sst.Hybernia, df_sst.Flemish_Pass, df_sst.Flemish_Cap, ...
-df_sst_SA3 = pd.concat([df_sst['St.Anthony_Basin'], df_sst['Northeast_Nfld_Shelf'],
-                        df_sst['Orphan_Knoll'],df_sst['Avalon_Channel'],
-                        df_sst['Hybernia'],df_sst['Flemish_Cap'],
-                        df_sst['Flemish_Pass'],df_sst['Green-St._Pierre_Bank']
-                        ], axis=1)
+## df_sst_SA3 = pd.concat([df_sst['St.Anthony_Basin'], df_sst['Northeast_Nfld_Shelf'],
+##                         df_sst['Orphan_Knoll'],df_sst['Avalon_Channel'],
+##                         df_sst['Hybernia'],df_sst['Flemish_Cap'],
+##                         df_sst['Flemish_Pass'],df_sst['Green-St._Pierre_Bank']
+##                         ], axis=1)
                         
 df_comp_SA234 = pd.concat([df_s27_mean, df_p5_90, df_hfx2_surf, df_hfx2_150,
                           df_2H_fall, df_2J_fall,
@@ -292,18 +295,20 @@ df_comp_SA234 = pd.concat([df_s27_mean, df_p5_90, df_hfx2_surf, df_hfx2_150,
                           ], axis=1)
 df_comp_SA2 = pd.concat([df_2H_fall, df_2J_fall,
                          df_air.Cartwright,
-                         df_sst.Hamilton_Bank,
+                         df_sst['2G'], df_sst['2H'], df_sst['2J'],
                          df_SI,
                          df_CIL_SI.vol_itp
                          ], axis=1)
 df_comp_SA3 = pd.concat([df_s27_mean,
                          df_air.Bonavista, df_air.StJohns,
-                         df_sst_SA3.mean(axis=1),
+                         df_sst['3K'], df_sst['3L'], df_sst['3M'], 
+                         df_sst['3N'], df_sst['3O'], df_sst['3P'],
                          df_3LNO_spring, df_3LNO_fall, df_3M_summer,
                          df_BB, df_FC,
                          df_CIL_BB.vol_itp, df_CIL_FC.vol_itp
                          ], axis=1)
 df_comp_SA4 = pd.concat([df_p5_90, df_hfx2_surf, df_hfx2_150,
+                         df_sst['4Vn'], df_sst['4Vs'], df_sst['4W'], df_sst['4XSS'],
                           df_4VWX_summer,                          
                           df_egom, df_nec
                           ], axis=1)

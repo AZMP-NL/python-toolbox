@@ -158,7 +158,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     ## -------- Get CTD data -------- ##
     year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(year) + '.nc'
     print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    ds = xr.open_dataset(year_file)
 
     # Remame problematic datasets
     print('!!Remove MEDBA & MEDTE data!!')
@@ -412,7 +412,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
 
     A full usage example:
     import azmp_sections_tools as azst
-    nc_file = '/home/cyrf0006/data/dev_database/201*.nc'
+    nc_file = '/home/cyrf0006/data/dev_database/netCDF/201*.nc'
     azst.extract_section_casts(nc_file, section_name='SI', nc_outfile='SI.nc')
     
     Frederic.Cyr@dfo-mpo.gc.ca
