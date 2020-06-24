@@ -102,9 +102,9 @@ import gsw
 
 #my_region=''
 my_year=2018
-my_season='spring'
+my_season='fall'
 my_depth='bottom'
-my_variable='pH'
+my_variable='satO2_perc'
 
 #### Load Carbonate data into a Pandas DataFrame ######
 if my_year != 2019:

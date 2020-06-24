@@ -4,11 +4,16 @@ Created on Tue Apr  2 13:50:49 2019
 
 @author: GIBBO
 """
+# maps
+import os
+os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
+from mpl_toolkits.basemap import Basemap
 import pandas as pd
 import cc_tools as cct
-import os
 
-my_file = pd.read_excel('C:\Users\gibbo\Documents\data\AZMP_OA\AZMP_OA_plot.xlsx')
+
+#my_file = pd.read_excel('C:\Users\gibbo\Documents\data\AZMP_OA\AZMP_OA_plot.xlsx')
+my_file = pd.read_excel('/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_NL_plot.xlsx')
 years = ['2014', '2015', '2016', '2017', '2018']
 seasons = ['spring','summer','fall']
 variables = ['pH','Omega_A']

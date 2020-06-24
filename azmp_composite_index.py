@@ -343,10 +343,12 @@ os.system('convert -trim composite_SA234.png composite_SA234.png')
 df_comp_SA234_stack = pd.concat([df_comp_SA2.mean(axis=1),
                                  df_comp_SA3.mean(axis=1),
                                  df_comp_SA4.mean(axis=1),
-                                 ], axis=1)
+                                 ], keys = ['SA2', 'SA3', 'SA4'], axis=1)
 df_comp_SA234_stack = df_comp_SA234_stack[df_comp_SA234_stack.index>=1950]
 df_SA234_stack_clim = df_comp_SA234_stack[(df_comp_SA234_stack.index>=clim_year[0]) & (df_comp_SA234_stack.index<=clim_year[1])]
 std_anom_SA234_stack = (df_comp_SA234_stack-df_SA234_stack_clim.mean(axis=0))/df_SA234_stack_clim.std(axis=0)
+
+std_anom_SA234_stack.to_csv('SA234_std_anom.csv', float_format='%.2f')
 
 ## ---- plot annual ---- ##
 #fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -360,6 +362,7 @@ plt.grid('on')
 ax.set_ylabel(r'Standardized anomaly')
 ax.set_title('NAFO sub-areas 2, 3 & 4')
 plt.legend(['SA-2', 'SA-3', 'SA-4'])
+plt.xlim( 
 fig = ax.get_figure()
 fig.set_size_inches(w=12,h=8)
 fig_name = 'composite_SA234_stacked.png'

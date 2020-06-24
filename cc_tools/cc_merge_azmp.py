@@ -134,7 +134,7 @@ df_MAR.SiO.update(df_MAR.SiO4_Tech_Fsh)
 df_MAR.SiO.update(df_MAR.SiO4_Tech_SF)
 df_MAR.temperature.update(df_MAR.Temp_CTD_1990)
 df_MAR.pH_25.update(df_MAR.pH_invitro_total_p)
-df_MAR['Region'] = 'SS'
+df_MAR['Region'] = 'MAR'
 df_MAR.loc[(df_MAR['collector_event_id'].str.contains('IML')), 'Region'] = 'GSL'
 #change units of GSL data from umol/L to ml/L (/44.661):
 df_MAR['O2GSL'] = df_MAR.loc[df_MAR['Region'].str.contains('GSL')]['O2']/44.661
@@ -160,7 +160,7 @@ df_MAR['sample_id'] = df_MAR['collector_event_id'] +"_"+ df_MAR['collector_sampl
 df_MAR = df_MAR.merge(bio_flags, on='sample_id', how='left')
 
 # Only select desired columns
-variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'NO3', 'O2', 'TA', 'temp_pH', 'pH_25', 'PO4', 'salinity', 'SiO', 'temperature', 'TIC', 'TAflag', 'pHflag', 'TICflag']
+variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'NO3', 'O2', 'O2sat_perc', 'TA', 'temp_pH', 'pH_25', 'PO4', 'salinity', 'SiO', 'temperature', 'TIC', 'TAflag', 'pHflag', 'TICflag']
 df_MAR = df_MAR.loc[:,variables]
 
 # Drop GSL data > 2014 (in 2014, data processed at BIO, the rest at IML).
@@ -310,7 +310,7 @@ df_NL = df_NL.reset_index(drop=True)
 df_NL = df_NL.loc[:,variables]
 
 # 2.2 Updated NL data
-df_NLu = pd.read_excel(os.path.join(dataset_main_path, 'Ocean_Carbon.xlsx'))
+df_NLu = pd.read_excel(os.path.join(dataset_main_path, 'Ocean_Carbon_NL.xlsx'))
 df_NLu['timestamp'] = pd.to_datetime(df_NLu.Date.astype(str)) + pd.to_timedelta(df_NLu.GMT.astype(str)) 
 df_NLu.index = df_NLu.timestamp
 # Rename columns
@@ -368,87 +368,94 @@ df2018s = df2018s.rename(columns={'CTD Mission (nom)' : 'Mission  (nom)'})
 df2018f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018f.xlsx'), encoding='utf-8')
 
 # Include 2019 in dataset HERE!!!!
-df2019s = pd.read_excel(os.path.join(dataset_path,'IMLJune2019(Gibb).xlsx'), header=1)
+xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
+df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
+df2019f = pd.read_excel(xls, 'Fall 2019', header=1)
 df2019s = df2019s.drop(0)
-df2019s.Date = pd.to_datetime(df2019s.Date)
-df2019s = df2019s.drop(columns=['zbouteille'])
-df2019s = df2019s.drop(columns=['Unnamed: 49'])
-df2019s = df2019s.drop(columns=['Unnamed: 50'])
+df2019f = df2019f.drop(0)
+# merge 2 sheets
+df2019f = df2019f.rename(columns={'PSAL_BS' : 'psal_bs'})
+df2019f = df2019f.rename(columns={'oxy_02' : 'OXY_02'})
+df2019f = df2019f.rename(columns={'Q_oxy' : 'Q_OXY'})
+df2019f = df2019f.rename(columns={'oxy_02.1' : 'OXY_02.1'})
+df2019f = df2019f.rename(columns={'Q_oxy.1' : 'Q_OXY.1'})
+df2019 = pd.concat([df2019s, df2019f])
+# clean un-necessary columns
+df2019.Date = pd.to_datetime(df2019.Date)
+df2019 = df2019.drop(columns=['Unnamed: 49'])
+df2019 = df2019.drop(columns=['Unnamed: 50'])
 # Rename columns because 2019 was provided in a different format.
-df2019s = df2019s.rename(columns={'Unnamed: 0' : 'Mission  (nom)'})
-df2019s = df2019s.rename(columns={'Fichier' : 'CTD Fichier (nom)'})
-df2019s = df2019s.rename(columns={'Station' : 'CTD Station (nom/no)'})
-df2019s = df2019s.rename(columns={'Latitude' : 'CTD Latitude (degres)'})
-df2019s = df2019s.rename(columns={'Longitude' : 'CTD Longitude (degres)'})
-df2019s = df2019s.rename(columns={'Date' : 'CTD Date (jj-mmm-yyyy)'})
-df2019s = df2019s.rename(columns={'Heure' : 'CTD Heure (GMT)'})
-df2019s = df2019s.rename(columns={'PRES' : 'CTD PRES (dbar)'})
-df2019s = df2019s.rename(columns={'PRES_SDEV' : 'CTD PRES_SDEV (dbar)'})
-df2019s = df2019s.rename(columns={'TE90' : 'CTD TE90 (celsius)'})
-df2019s = df2019s.rename(columns={'TE90_SDEV' : 'CTD TE90_SDEV (celsius)'})
-df2019s = df2019s.rename(columns={'PSAL' : 'CTD PSAL (psu)'})
-df2019s = df2019s.rename(columns={'SIGT' : 'CTD SIGT (kg/m**3)'})
-df2019s = df2019s.rename(columns={'FLOR' : 'CTD FLOR (mg/m**3)'})
-df2019s = df2019s.rename(columns={'DOXY' : 'CTD DOXY (ml/l)'})
-df2019s = df2019s.rename(columns={'PHPH_T' : 'CTD PHPH (NBS scale)'})
-df2019s = df2019s.rename(columns={'psal_bs' : 'labo psal_bs (PSU)'})
-df2019s = df2019s.rename(columns={'Q_PSAL' : 'labo Q_PSAL ((none))'})
-df2019s = df2019s.rename(columns={'OXY_02' : 'labo oxy_02 (ml/l)'})
-df2019s = df2019s.rename(columns={'Q_OXY' : 'labo Q_OXY ((none))'})
-df2019s = df2019s.rename(columns={'OXY_02.1' : 'labo oxy_02 (ml/l).1'})
-df2019s = df2019s.rename(columns={'Q_OXY.1' : 'labo Q_OXY ((none)).1'})
-df2019s = df2019s.rename(columns={'NO2_03' : 'labo NO2_03 (mmol/m**3)'})
-df2019s = df2019s.rename(columns={'Q_NO2' : 'labo Q_NO2 ((none))'})
-df2019s = df2019s.rename(columns={'NO2_03.1' : 'labo NO2_03 (mmol/m**3).1'})
-df2019s = df2019s.rename(columns={'Q_NO2.1' : 'labo Q_NO2 ((none)).1'})
-df2019s = df2019s.rename(columns={'NO2_03.2' : 'labo NO2_03 (mmol/m**3).2'})
-df2019s = df2019s.rename(columns={'Q_NO2.2' : 'labo Q_NO2 ((none)).2'})
-df2019s = df2019s.rename(columns={'NOX_03' : 'labo NOX_03 (mmol/m**3)'})
-df2019s = df2019s.rename(columns={'Q_NOX' : 'labo Q_NOX ((none))'})
-df2019s = df2019s.rename(columns={'NOX_03.1' : 'labo NOX_03 (mmol/m**3).1'})
-df2019s = df2019s.rename(columns={'Q_NOX.1' : 'labo Q_NOX ((none)).1'})
-df2019s = df2019s.rename(columns={'NOX_03.2' : 'labo NOX_03 (mmol/m**3).2'})
-df2019s = df2019s.rename(columns={'Q_NOX.2' : 'labo Q_NOX ((none)).2'})
-df2019s = df2019s.rename(columns={'PO4_03' : 'labo PO4_03 (mmol/m**3)'})
-df2019s = df2019s.rename(columns={'Q_PO4' : 'labo Q_PO4 ((none))'})
-df2019s = df2019s.rename(columns={'PO4_03.1' : 'labo PO4_03 (mmol/m**3).1'})
-df2019s = df2019s.rename(columns={'Q_PO4.1' : 'labo Q_PO4 ((none)).1'})
-df2019s = df2019s.rename(columns={'PO4_03.2' : 'labo PO4_03 (mmol/m**3).2'})
-df2019s = df2019s.rename(columns={'Q_PO4.2' : 'labo Q_PO4 ((none)).2'})
-df2019s = df2019s.rename(columns={'Si_03' : 'labo Si_03 (mmol/m**3)'})
-df2019s = df2019s.rename(columns={'Q_Si' : 'labo Q_Si ((none))'})
-df2019s = df2019s.rename(columns={'Si_03.1' : 'labo Si_03 (mmol/m**3).1'})
-df2019s = df2019s.rename(columns={'Q_Si.1' : 'labo Q_Si ((none)).1'})
-df2019s = df2019s.rename(columns={'LBPHT_02' : 'labo LBPHT_02 (Total scale)'})
-df2019s = df2019s.rename(columns={'pHT_02' : 'labo pHT_02 (Total scale)'})
-df2019s = df2019s.rename(columns={'pHT_02.1' : 'labo pHT_02 (Total scale).1'})
-df2019s = df2019s.rename(columns={'ALKW_01' : 'labo_ALKW_01_(umol/kg**1)'}) # only one alk, so same as 'At' below
-df2019s = df2019s.rename(columns={'At' : 'Moyenne At (umol/kg)'})
-df2019s = df2019s.drop(columns=['At.1']) # N
-df2019s = df2019s.drop(columns=['At.2']) # empty
-df2019s = df2019s.rename(columns={'At.3' : 'Flag At '})
-df2019s = df2019s.rename(columns={'LABT_01' : 'labo LABT_01 (deg C)'})
-df2019s = df2019s.rename(columns={'pH  labo' : 'Moyenne  pH total in situ'})
-df2019s = df2019s.drop(columns=['pH  labo.1']) # N
-df2019s = df2019s.drop(columns=['pH  labo.2']) # empty
-df2019s = df2019s.rename(columns={'pH  labo.3' : 'Flag pH total in situ'})
-df2019s = df2019s.rename(columns={'PO4_03.3' : 'Mean PO4_03 (mmol/m**3)'})
-df2019s = df2019s.rename(columns={'PO4_03.4' : 'Flag PO4_03 '})
-df2019s = df2019s.rename(columns={'Si_03.2' : 'Mean Si_03 (mmol/m**3)'})
-df2019s = df2019s.rename(columns={'Si_03.3' : 'Flag Si_03 '})
-df2019s = df2019s.drop(columns=['Unnamed: 64']) # pH in situ
-df2019s = df2019s.rename(columns={'Unnamed: 65' : ' WCa out '})
-df2019s = df2019s.rename(columns={'Unnamed: 66' : ' WAr out '})
-df2019s = df2019s.rename(columns={'Unnamed: 67' : ' Strate '})
-
+df2019 = df2019.rename(columns={'Unnamed: 0' : 'Mission  (nom)'})
+df2019 = df2019.rename(columns={'Fichier' : 'CTD Fichier (nom)'})
+df2019 = df2019.rename(columns={'Station' : 'CTD Station (nom/no)'})
+df2019 = df2019.rename(columns={'Latitude' : 'CTD Latitude (degres)'})
+df2019 = df2019.rename(columns={'Longitude' : 'CTD Longitude (degres)'})
+df2019 = df2019.rename(columns={'Date' : 'CTD Date (jj-mmm-yyyy)'})
+df2019 = df2019.rename(columns={'Heure' : 'CTD Heure (GMT)'})
+df2019 = df2019.rename(columns={'PRES' : 'CTD PRES (dbar)'})
+df2019 = df2019.rename(columns={'PRES_SDEV' : 'CTD PRES_SDEV (dbar)'})
+df2019 = df2019.rename(columns={'TE90' : 'CTD TE90 (celsius)'})
+df2019 = df2019.rename(columns={'TE90_SDEV' : 'CTD TE90_SDEV (celsius)'})
+df2019 = df2019.rename(columns={'PSAL' : 'CTD PSAL (psu)'})
+df2019 = df2019.rename(columns={'SIGT' : 'CTD SIGT (kg/m**3)'})
+df2019 = df2019.rename(columns={'FLOR' : 'CTD FLOR (mg/m**3)'})
+df2019 = df2019.rename(columns={'DOXY' : 'CTD DOXY (ml/l)'})
+df2019 = df2019.rename(columns={'PHPH' : 'CTD PHPH (NBS scale)'})
+df2019 = df2019.rename(columns={'PHPH_T' : 'CTD PHPH (Total scale)'})
+df2019 = df2019.rename(columns={'psal_bs' : 'labo psal_bs (PSU)'})
+df2019 = df2019.rename(columns={'Q_PSAL' : 'labo Q_PSAL ((none))'})
+df2019 = df2019.rename(columns={'OXY_02' : 'labo oxy_02 (ml/l)'})
+df2019 = df2019.rename(columns={'Q_OXY' : 'labo Q_OXY ((none))'})
+df2019 = df2019.rename(columns={'OXY_02.1' : 'labo oxy_02 (ml/l).1'})
+df2019 = df2019.rename(columns={'Q_OXY.1' : 'labo Q_OXY ((none)).1'})
+df2019 = df2019.rename(columns={'NO2_03' : 'labo NO2_03 (mmol/m**3)'})
+df2019 = df2019.rename(columns={'Q_NO2' : 'labo Q_NO2 ((none))'})
+df2019 = df2019.rename(columns={'NO2_03.1' : 'labo NO2_03 (mmol/m**3).1'})
+df2019 = df2019.rename(columns={'Q_NO2.1' : 'labo Q_NO2 ((none)).1'})
+df2019 = df2019.rename(columns={'NO2_03.2' : 'labo NO2_03 (mmol/m**3).2'})
+df2019 = df2019.rename(columns={'Q_NO2.2' : 'labo Q_NO2 ((none)).2'})
+df2019 = df2019.rename(columns={'NOX_03' : 'labo NOX_03 (mmol/m**3)'})
+df2019 = df2019.rename(columns={'Q_NOX' : 'labo Q_NOX ((none))'})
+df2019 = df2019.rename(columns={'NOX_03.1' : 'labo NOX_03 (mmol/m**3).1'})
+df2019 = df2019.rename(columns={'Q_NOX.1' : 'labo Q_NOX ((none)).1'})
+df2019 = df2019.rename(columns={'NOX_03.2' : 'labo NOX_03 (mmol/m**3).2'})
+df2019 = df2019.rename(columns={'Q_NOX.2' : 'labo Q_NOX ((none)).2'})
+df2019 = df2019.rename(columns={'PO4_03' : 'labo PO4_03 (mmol/m**3)'})
+df2019 = df2019.rename(columns={'Q_PO4' : 'labo Q_PO4 ((none))'})
+df2019 = df2019.rename(columns={'PO4_03.1' : 'labo PO4_03 (mmol/m**3).1'})
+df2019 = df2019.rename(columns={'Q_PO4.1' : 'labo Q_PO4 ((none)).1'})
+df2019 = df2019.rename(columns={'PO4_03.2' : 'labo PO4_03 (mmol/m**3).2'})
+df2019 = df2019.rename(columns={'Q_PO4.2' : 'labo Q_PO4 ((none)).2'})
+df2019 = df2019.rename(columns={'Si_03' : 'labo Si_03 (mmol/m**3)'})
+df2019 = df2019.rename(columns={'Q_Si' : 'labo Q_Si ((none))'})
+df2019 = df2019.rename(columns={'Si_03.1' : 'labo Si_03 (mmol/m**3).1'})
+df2019 = df2019.rename(columns={'Q_Si.1' : 'labo Q_Si ((none)).1'})
+df2019 = df2019.rename(columns={'LBPHT_02' : 'labo LBPHT_02 (Total scale)'})
+df2019 = df2019.rename(columns={'pHT_02' : 'labo pHT_02 (Total scale)'})
+df2019 = df2019.rename(columns={'pHT_02.1' : 'labo pHT_02 (Total scale).1'})
+df2019 = df2019.rename(columns={'ALKW_01' : 'labo_ALKW_01_(umol/kg**1)'}) # only one alk, so same as 'At' below
+df2019 = df2019.rename(columns={'TICW_01' : 'labo_TICW_01_(umol/kg**1)'}) # only since fall 2019
+df2019 = df2019.rename(columns={'At' : 'Moyenne At (umol/kg)'})
+df2019 = df2019.drop(columns=['At.1']) # N
+df2019 = df2019.drop(columns=['At.2']) # empty
+df2019 = df2019.rename(columns={'At.3' : 'Flag At '})
+df2019 = df2019.rename(columns={'LABT_01' : 'labo LABT_01 (deg C)'})
+df2019 = df2019.rename(columns={'pH  labo' : 'Moyenne  pH total in situ'})
+df2019 = df2019.drop(columns=['pH  labo.1']) # N
+df2019 = df2019.drop(columns=['pH  labo.2']) # empty
+df2019 = df2019.rename(columns={'pH  labo.3' : 'Flag pH total in situ'})
+df2019 = df2019.rename(columns={'PO4_03.3' : 'Mean PO4_03 (mmol/m**3)'})
+df2019 = df2019.rename(columns={'PO4_03.4' : 'Flag PO4_03 '})
+df2019 = df2019.rename(columns={'Si_03.2' : 'Mean Si_03 (mmol/m**3)'})
+df2019 = df2019.rename(columns={'Si_03.3' : 'Flag Si_03 '})
+df2019 = df2019.drop(columns=['pH in situ'])
+df2019 = df2019.rename(columns={'Unnamed: 65' : ' WCa out '})
+df2019 = df2019.rename(columns={'Unnamed: 66' : ' WAr out '})
+df2019 = df2019.rename(columns={'Unnamed: 67' : ' Strate '})
 
 # Merge all 
-df_IML = pd.concat([df2019s, df2018f, df2018s, df2018, df2017f, df2017s, df2017, df2016f, df2016, df2015, df2015f], axis=0, sort=False)
+df_IML = pd.concat([df2019, df2018f, df2018s, df2018, df2017f, df2017s, df2017, df2016f, df2016, df2015, df2015f], axis=0, sort=False)
 df_IML = df_IML.reset_index()
-# Remove space at beginning and end
-#df_IML.columns = df_IML.columns.str.rstrip() 
-#df_IML.columns = df_IML.columns.str.rstrip() 
-#df_IML.columns = df_IML.columns.str.replace(' ', '_')
 
 # Clean dataframe
 cols = df_IML.columns
@@ -462,7 +469,6 @@ df_IML['timestamp'] =  pd.to_datetime(df_IML['timestamp'], format='%Y/%m/%d %H:%
 df_IML = df_IML.rename(columns={'CTD_Fichier_(nom)' : 'TripID'})
 df_IML['TripID'] = df_IML['TripID'].replace('-','', regex=True)
 df_IML.loc[(df_IML['TripID'].str.contains('iml|TEL|PER', na=False)), 'TripID'] = df_IML['TripID'].str[:10]
-
 
 # Rename columns
 df_IML = df_IML.rename(columns={'CTD_Station_(nom/no)' : 'StationID'})
@@ -505,20 +511,22 @@ df_IML['NO3'] = df_IML[['labo_NOX_03_(mmol/m**3)', 'labo_NOX_03_(mmol/m**3).1', 
 df_IML['PO4'] = df_IML[['labo_PO4_03_(mmol/m**3)', 'labo_PO4_03_(mmol/m**3).1', 'labo_PO4_03_(mmol/m**3).2']].mean(axis=1)
 df_IML['SiO'] = df_IML[['labo_Si_03_(mmol/m**3)', 'labo_Si_03_(mmol/m**3).1', 'labo_Si_03_(mmol/m**3).2']].mean(axis=1)
 df_IML['TA'] = df_IML[['labo_ALKW_01_(umol/kg**1)', 'labo_ALKW_01_(umol/kg**1).1']].mean(axis=1)
+df_IML['TIC'] = df_IML[['labo_TICW_01_(umol/kg**1)']].mean(axis=1)
 df_IML['pH_25'] = df_IML[['labo_LBPHT_02_(Total_scale)', 'labo_LBPHT_02_(Total_scale).1']].mean(axis=1)
-df_IML['TIC']= np.NaN
 df_IML['O2'] = df_IML[['labo_oxy_02_(ml/l)', 'labo_oxy_02_(ml/l).1', 'labo_OXY_02_(ml/l)', 'labo_OXY_02_(ml/l).1']].mean(axis=1)
+
+# Fill missing depths (with zbouteille)
+idx_missing_depth = df_IML.loc[df_IML.depth.isna()].index
+df_IML.loc[idx_missing_depth, 'depth'] = df_IML.loc[idx_missing_depth, 'CTD_zbouteille_(dbar)']
 
 # Only select subset variables 
 df_IML = df_IML.loc[:,variables]
-
-
 
 ## 4. Merged dataset 
 df = pd.concat([df_MAR, df_NLu, df_IML], axis=0)
 df = df.reset_index(drop=True)
 satO2 = swx.satO2(df['salinity'], df['temperature']) 
-df['satO2_perc'] = df['O2']/satO2*100 # calculate oxygen saturation %
+df['O2sat_perc'] = df['O2']/satO2*100 # calculate oxygen saturation %
 #df['AOU'] = df['O2']-df['satO2']
 df['NO3']=df['NO3']/1.025 # convert nutrient data from uM=mmol/m3/umol/L to umol/kgSW
 df['SiO']=df['SiO']/1.025
@@ -654,9 +662,9 @@ df['TripID'] = df['TripID'].astype(str)
 df['StationID'] = df['StationID'].astype(str)
 
 # Update some Trip Names
-df['TripID'] = df['TripID'].replace('20114', 'HUD114,')
-df['TripID'] = df['TripID'].replace('20115', 'HUD115,')
-df['TripID'] = df['TripID'].replace('20116', 'HUD116,')
+df['TripID'] = df['TripID'].replace('20114', 'HUD114')
+df['TripID'] = df['TripID'].replace('20115', 'HUD115')
+df['TripID'] = df['TripID'].replace('20116', 'HUD116')
 df['TripID'] = df['TripID'].replace('39144', 'TEL144')
 df['TripID'] = df['TripID'].replace('39148', 'TEL148')
 df['TripID'] = df['TripID'].replace('39157', 'TEL157')
@@ -664,6 +672,8 @@ df['TripID'] = df['TripID'].replace('39159', 'TEL159')
 df['TripID'] = df['TripID'].replace('39160', 'TEL160')
 df['TripID'] = df['TripID'].replace('39173', 'TEL173')
 df['TripID'] = df['TripID'].replace('39176', 'TEL176')
+#df['TripID'] = df['TripID'].replace('TEL2017177', 'TEL177')
+#df['TripID'] = df['TripID'].replace('TEL2018196', 'TEL196')
 df['TripID'] = df['TripID'].replace('15009', 'DIS009')
 df['TripID'] = df['TripID'].replace('JC001', 'COO001')
 
@@ -676,6 +686,10 @@ df['StationID'] = df['StationID'].replace('CMO1/CH1', 'CMO1/CH1')
 df['StationID'] = df['StationID'].replace('CMO1', 'CMO1/CH1')
 df['StationID'] = df['StationID'].replace('TIDM7 (6.2)', 'TIDM7')
 df['StationID'] = df['StationID'].replace('TIDM9 Shediac Valley', 'TIDM9')
+df['StationID'] = df['StationID'].replace('TIDM9 (Shédiac)', 'TIDM9')
+df['StationID'] = df['StationID'].replace('Tesl-2', 'TESL2')
+df['StationID'] = df['StationID'].replace('Tesl-3  (Riki-1)', 'TESL3')
+df['StationID'] = df['StationID'].replace('Tesl-6', 'TESL6')
 df['StationID'] = df['StationID'].replace('nan', 'unknown')
 
 
@@ -684,8 +698,9 @@ df = df[[
     'timestamp', 'Region', 'TripID', 'StationID',
     'latitude', 'longitude', 'depth',
     'temperature', 'salinity', 'O2',
-    'TAc', 'TICc', 'pH_tot', 'Omega_A', 'Omega_C',
-    'pH_25', 'temp_pH', 'TA', 'TIC' ]]
+    'NO3', 'PO4', 'SiO',
+    'TAc', 'TICc', 'pH_tot', 'Omega_A', 'Omega_C', 'pCO2', 'O2sat_perc',
+    'pH_25', 'temp_pH', 'TA', 'TIC']]
 
 # HERE!!! Check names      
 df = df.rename(columns={'TripID' : 'Trip_Name'})
@@ -698,9 +713,10 @@ df = df.rename(columns={'temperature' : 'Temperature_(degC)'})
 df = df.rename(columns={'salinity' : 'Salinity_(psu)'})
 df = df.rename(columns={'NO3' : 'Nitrate_Concentration_(mmol/m3'})
 df = df.rename(columns={'O2' : 'Dissolved_Oxygen_(mL/L)'})
+df = df.rename(columns={'O2sat_perc' : 'Oxygen_Saturation_(%)'})
 df = df.rename(columns={'TA' : 'Total_Alkalinity_Measured_(umol/kg)'})
 df = df.rename(columns={'temp_pH' : 'pH_lab_temp_(degC)'})
-df = df.rename(columns={'pH_25' : 'pH_lab_(-)'})
+df = df.rename(columns={'pH_25' : 'pH_lab_(--)'})
 df = df.rename(columns={'PO4' : 'Phosphate_Concentration_(mmol/m3)'})
 df = df.rename(columns={'SiO' : 'Silicate Concentration_(mmol/m3)'})
 df = df.rename(columns={'TIC' : 'Inorganic_Carbon_measured_(umol/kg)'})

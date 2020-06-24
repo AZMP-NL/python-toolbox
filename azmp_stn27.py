@@ -33,7 +33,7 @@ s27 = [47.55,-52.59]
 dc = .1
 year_clim = [1981, 2010]
 current_year = 2019
-variable = 'temperature'
+variable = 'salinity'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 

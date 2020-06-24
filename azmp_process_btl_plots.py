@@ -16,6 +16,12 @@ sections = ['BB', 'FC', 'SEGB', 'SESPB']
 seasons = ['spring', 'fall']
 variables = ['satO2_perc', 'PO4', 'NO3', 'SIO', 'oxygen']
 
+# summer
+years = np.arange(1999, 2019)
+sections = ['SI', 'BB', 'WB', 'FC']
+seasons = ['summer']
+variables = ['satO2_perc', 'PO4', 'NO3', 'SIO', 'oxygen']
+
 for year in years:
     for section in sections:
         for season in seasons:

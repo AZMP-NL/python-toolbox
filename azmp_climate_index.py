@@ -25,6 +25,7 @@ width = 0.7
 #### ---- LOAD THE DATA (and prepare) ---- ####
 # 1. NAO
 nao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
+nao_natural = nao.copy()
 nao = nao*-1
 nao = nao.rename(columns={'Value':'NAO'})
 nao = nao[nao.index<2020]
@@ -37,11 +38,13 @@ air = air.mean(axis=1)
 
 # 3. Sea Ice (And icebergs)
 ice = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/ice/ice_index.pkl')
+ice_natural = ice.copy()
 ice = ice*-1
 
 # 4. Icebergs
 bergs = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bergs/bergs_std_anom.pkl')
 bergs.index.name='Year'
+bergs_natural = bergs.copy()
 bergs = bergs*-1
 
 # 5. SSTs
@@ -65,6 +68,7 @@ s27_cil = s27_cil[['CIL temp', 'CIL core T']].mean(axis=1)
 
 # 7. Section CIL (only area)
 section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/CIL/section_cil_index.pkl')
+section_cil_natural = section_cil.copy()
 section_cil = section_cil.volume*-1
 
 # 8. bottomT
@@ -84,8 +88,21 @@ climate_index = climate_index.rename(columns={5:'S27 Sal'})
 climate_index = climate_index.rename(columns={6:'S27 CIL'})
 climate_index = climate_index.rename(columns={'volume':'CIL volume'})
 climate_index = climate_index.rename(columns={7:'Bottom Temp'})
-
 climate_index = climate_index[climate_index.index>=1950]
+
+# keep a copy with Natural signs
+climate_index_natural = pd.concat([nao_natural, air, ice_natural, bergs_natural, sst, s27_temp,  s27_sal, s27_cil, section_cil_natural, bottomT], axis=1)
+climate_index_natural = climate_index_natural.rename(columns={0:'Air Temp'})
+climate_index_natural = climate_index_natural.rename(columns={1:'Sea Ice'})
+climate_index_natural = climate_index_natural.rename(columns={2:'Icebergs'})
+climate_index_natural = climate_index_natural.rename(columns={3:'SST'})
+climate_index_natural = climate_index_natural.rename(columns={4:'S27 Temp'})
+climate_index_natural = climate_index_natural.rename(columns={5:'S27 Sal'})
+climate_index_natural = climate_index_natural.rename(columns={6:'S27 CIL'})
+climate_index_natural = climate_index_natural.rename(columns={'volume':'CIL volume'})
+climate_index_natural = climate_index_natural.rename(columns={7:'Bottom Temp'})
+climate_index_natural = climate_index_natural[climate_index_natural.index>=1950]
+
 
 #### ----- Plot climate index ---- ####
 n = 5 # xtick every n years
@@ -107,6 +124,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 ## Save index
 climate_index.to_csv('NL_climate_index_preliminary_all_fields.csv', float_format='%.2f')
+climate_index_natural.to_csv('NL_climate_index_preliminary_natural_signs.csv', float_format='%.2f')
 
 
 
