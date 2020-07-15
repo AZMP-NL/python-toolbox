@@ -53,6 +53,7 @@ sst = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SST_anom.pkl')
 # 6. Stn27 (0-176m, 0-50m, 150-176m)
 s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_temp_std_anom.pkl')
 s27_temp.index = s27_temp.index.year
+#s27_temp.to_csv('S27_stn_anom_3fields.csv', float_format='%.2f')
 s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_sal_std_anom.pkl')
 s27_sal.index = s27_sal.index.year
 # average 3 series above (assume fresh = cold)
@@ -175,3 +176,5 @@ plt.show()
 # correlation
 df_merged = pd.concat([df_cei.mean(axis=1), climate_index.mean(axis=1)], axis=1)
 df_merged.corr('pearson')
+
+

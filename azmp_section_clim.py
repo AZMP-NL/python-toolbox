@@ -22,7 +22,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'BB'
+SECTION = 'BI'
 SEASON = 'summer'
 CLIM_YEAR = [1981, 2010]
 dlat = 2 # how far from station we search
@@ -59,38 +59,78 @@ lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
 ## --------- Get Bathymetry -------- ####
-print('Get bathy...')
-dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
-lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-# Load data
-dataset = netCDF4.Dataset(dataFile)
-x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
-y = [-89-59.75/60, 89+59.75/60]
-spacing = dataset.variables['spacing']
-# Compute Lat/Lon
-nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-lon = np.linspace(x[0],x[-1],nx)
-lat = np.linspace(y[0],y[-1],ny)
-# interpolate data on regular grid (temperature grid)
-# Reshape data
-zz = dataset.variables['z']
-Z = zz[:].reshape(ny, nx)
-Z = np.flipud(Z) # <------------ important!!!
-# Reduce data according to Region params
-idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-lon = lon[idx_lon[0]]
-lat = lat[idx_lat[0]]
-# interpolate data on regular grid (temperature grid)
-lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-z_vec = np.reshape(Z, Z.size)
-Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
-print(' -> Done!')
+## print('Get bathy...')
+## dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+## lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+## # Load data
+## dataset = netCDF4.Dataset(dataFile)
+## x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+## y = [-89-59.75/60, 89+59.75/60]
+## spacing = dataset.variables['spacing']
+## # Compute Lat/Lon
+## nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+## ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+## lon = np.linspace(x[0],x[-1],nx)
+## lat = np.linspace(y[0],y[-1],ny)
+## # interpolate data on regular grid (temperature grid)
+## # Reshape data
+## zz = dataset.variables['z']
+## Z = zz[:].reshape(ny, nx)
+## Z = np.flipud(Z) # <------------ important!!!
+## # Reduce data according to Region params
+## idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+## idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+## Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+## lon = lon[idx_lon[0]]
+## lat = lat[idx_lat[0]]
+## # interpolate data on regular grid (temperature grid)
+## lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
+## lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
+## lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
+## z_vec = np.reshape(Z, Z.size)
+## Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+## del dataset, zz, Z, lon, lat
+## print(' -> Done!')
 
+bathy_file = './' + SECTION + '_bathy.npy'
+if os.path.isfile(bathy_file):
+    print('Load saved bathymetry!')
+    Zitp = np.load(bathy_file)
+
+else:
+    print('Get bathy...')
+    dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+    # Load data
+    dataset = netCDF4.Dataset(dataFile)
+    x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+    y = [-89-59.75/60, 89+59.75/60]
+    spacing = dataset.variables['spacing']
+    # Compute Lat/Lon
+    nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+    ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+    lon = np.linspace(x[0],x[-1],nx)
+    lat = np.linspace(y[0],y[-1],ny)
+    # interpolate data on regular grid 
+    # Reshape data
+    zz = dataset.variables['z']
+    Z = zz[:].reshape(ny, nx)
+    Z = np.flipud(Z) # <------------ important!!!
+    # Reduce data according to Region params
+    idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+    idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+    Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+    lon = lon[idx_lon[0]]
+    lat = lat[idx_lat[0]]
+    # interpolate data on regular grid 
+    lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
+    lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
+    lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
+    z_vec = np.reshape(Z, Z.size)
+    Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+    np.save(bathy_file, Zitp)
+    del dataset, zz, Z, lon, lat
+    print(' -> Done!')
 
 
 ## Loop on climatological years
@@ -144,7 +184,6 @@ for idx, YEAR in enumerate(years):
     da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
     da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
     da_sig = da_sig.groupby_bins('level', bins).mean(dim='level')
-    del ds
     
     # 1. Temperature to Pandas Dataframe
     print('Process temperature')
@@ -446,6 +485,8 @@ for idx, YEAR in enumerate(years):
     ## cil_vol_itp_clim[idx] = cil_vol_itp
     ## cil_core_stn_clim[idx] = np.nanmin(df_section_stn.values)
     ## cil_core_itp_clim[idx] = np.nanmin(df_section_itp.values)
+    del ds, df
+
     
 ## # Save temperature (not necessary)
 df_stn_mindex = pd.concat(df_stn_temp,keys=years_series)

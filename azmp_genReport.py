@@ -121,7 +121,14 @@ os.system('cp Viking2017_sal_FR.png Viking2017_temp_FR.png ~/to_windows/')
 # (** or look at azmp_section_report_plot.py)
 years = np.arange(1980, 2019)
 sections = ['SI', 'BB', 'WB', 'FC', 'SEGB', 'SESPB']
+
 seasons = ['spring', 'summer', 'fall']
+variables = ['temperature', 'salinity']
+
+# For MB/BI:
+years = np.arange(2000, 2019)
+sections = ['MB', 'BI']
+seasons = ['summer']
 variables = ['temperature', 'salinity']
 
 for year in years:

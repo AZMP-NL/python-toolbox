@@ -146,3 +146,4 @@ fig.savefig(fig_name, dpi=200)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 #plt.show()
 
+

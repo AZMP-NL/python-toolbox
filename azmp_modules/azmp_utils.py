@@ -402,7 +402,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         print('!!Remove MEDBA data!!')
         print('  ---> I Should be improme because I remove good data!!!!')
         ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-            
+        ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+ 
             
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
@@ -623,7 +624,8 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         print('!!Remove MEDBA data!!')
         print('  ---> I Should be improme because I remove good data!!!!')
         ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-        
+        ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
@@ -819,8 +821,8 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     # Remome problematic datasets
     print('!!Remove MEDBA data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
-    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)        
-    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)        
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
     
     # Restrict max depth to zmax defined earlier
     ds = ds.sel(level=ds['level']<zmax)
@@ -1043,6 +1045,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     print('!!Remove MEDBA data!!')
     print('  ---> I Should be improme because I remove good data!!!!')
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
     
     # Vertical binning (on dataset; slower here as we don't need it)
