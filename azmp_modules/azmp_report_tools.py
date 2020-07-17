@@ -1248,7 +1248,6 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
                           colLabels=['-- NAFO division 2J --'],
                           loc='center'
                           )
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
     header.set_fontsize(12.5)
     the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
