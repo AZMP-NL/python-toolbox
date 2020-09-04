@@ -430,7 +430,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     if season=='fall':
         plt.title(u'Climatologie de température au fond - Automne ' + year )
     elif season=='spring':
-        plt.title(u'Climatologie de température au fond - Printemp ' + year )
+        plt.title(u'Climatologie de température au fond - Printemps ' + year )
     else:
         plt.title(u'Climatologie de température au fond ' + year )
     fig.set_size_inches(w=6, h=9)
@@ -1738,3 +1738,5 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring.png')
     # French montage
     os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring_FR.png')
+
+    

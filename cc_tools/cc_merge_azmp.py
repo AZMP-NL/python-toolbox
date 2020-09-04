@@ -367,7 +367,7 @@ df2018s = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018s.xlsx'), enc
 df2018s = df2018s.rename(columns={'CTD Mission (nom)' : 'Mission  (nom)'})
 df2018f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018f.xlsx'), encoding='utf-8')
 
-# Include 2019 in dataset HERE!!!!
+# 2019 data
 xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
 df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
 df2019f = pd.read_excel(xls, 'Fall 2019', header=1)
@@ -452,6 +452,26 @@ df2019 = df2019.drop(columns=['pH in situ'])
 df2019 = df2019.rename(columns={'Unnamed: 65' : ' WCa out '})
 df2019 = df2019.rename(columns={'Unnamed: 66' : ' WAr out '})
 df2019 = df2019.rename(columns={'Unnamed: 67' : ' Strate '})
+
+# Station Riki
+xls_riki = pd.ExcelFile(os.path.join(dataset_path,'StationRimouski (2013-2018)(GIBBB).xlsx'))
+riki2013 = pd.read_excel(xls_riki, 'Rimouski 2013', header=1)
+riki2014 = pd.read_excel(xls_riki, 'Rimouski 2014', header=1)
+riki2015 = pd.read_excel(xls_riki, 'Rimouski 2015', header=1)
+riki2017 = pd.read_excel(xls_riki, 'Rimouski 2017', header=1)
+riki2018 = pd.read_excel(xls_riki, 'Rimouski 2018', header=1)
+
+
+df2019s = df2019s.drop(0)
+df2019f = df2019f.drop(0)
+# merge 2 sheets
+df2019f = df2019f.rename(columns={'PSAL_BS' : 'psal_bs'})
+df2019f = df2019f.rename(columns={'oxy_02' : 'OXY_02'})
+df2019f = df2019f.rename(columns={'Q_oxy' : 'Q_OXY'})
+df2019f = df2019f.rename(columns={'oxy_02.1' : 'OXY_02.1'})
+df2019f = df2019f.rename(columns={'Q_oxy.1' : 'Q_OXY.1'})
+df2019 = pd.concat([df2019s, df2019f])
+# clean un-necessary columns
 
 # Merge all 
 df_IML = pd.concat([df2019, df2018f, df2018s, df2018, df2017f, df2017s, df2017, df2016f, df2016, df2015, df2015f], axis=0, sort=False)

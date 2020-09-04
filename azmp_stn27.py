@@ -29,8 +29,10 @@ import cmocean
 ## plt.rc('font', **font)
 
 ## ---- Some custom parameters ---- ##
-s27 = [47.55,-52.59]
-dc = .1
+#s27 = [47.55,-52.59]
+#dc = .1
+s27 = [47.54667,-52.58667]
+dc = .025
 year_clim = [1981, 2010]
 current_year = 2019
 variable = 'salinity'
@@ -63,24 +65,45 @@ else:
 ## month_fmt = mdates.DateFormatter('%b')
 
 ## ---- Open data and select ---- ##
-ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/netCDF_5m_2000m/*.nc')
+if os.path.isfile('stn27_all_casts.nc'):
+    ds = xr.open_dataset('stn27_all_casts.nc') 
+    
+else:
+    ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/netCDF/*.nc')
+    # Remome GTS datasets
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
+    # Select a depth range
+    ds = ds.sel(level=ds['level']<180)
+    ds = ds.sel(level=ds['level']>0)
+    # Select stn27 data according to lat-lon in a box [47.55,-52.59]
+    ds = ds.where((ds.longitude>s27[1]-dc/2) & (ds.longitude<s27[1]+dc/2), drop=True) # original one
+    ds = ds.where((ds.latitude>s27[0]-dc/2) & (ds.latitude<s27[0]+dc/2), drop=True)
+    ds = ds.sortby('time')
+    # Save data
+    ds.to_netcdf('stn27_all_casts.nc')
 
-# Remome GTS datasets
-ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
-ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
-
-# Select a depth range
-ds = ds.sel(level=ds['level']<180)
-ds = ds.sel(level=ds['level']>0)
-
-# Select stn27 data according to lat-lon in a box [47.55,-52.59]
-ds = ds.where((ds.longitude>s27[1]-dc/2) & (ds.longitude<s27[1]+dc/2), drop=True) # original one
-ds = ds.where((ds.latitude>s27[0]-dc/2) & (ds.latitude<s27[0]+dc/2), drop=True)
-ds = ds.sortby('time')
-
+# select variable
 da = ds[variable]
 df_hydro = da.to_pandas()
+# Drop when all NaNs... but will still be in netCDF...
+df_hydro.dropna(axis=0, how='all', inplace=True)
 
+## ---- Visual QA/QC ---- ##
+## for i in np.arange(1,13):
+##     fig = plt.figure()
+##     df_tmp = df_hydro[df_hydro.index.month == i]
+##     ax = df_tmp.mean(axis=0).reset_index().plot(x=0, y='level', color='k', lw=3)
+##     for idx, iddx in enumerate(df_tmp.index):        
+##         df_tmp.iloc[idx].reset_index().plot(ax = ax, x=iddx, y='level', alpha=0.5)
+##     df_tmp.mean(axis=0).reset_index().plot(ax = ax, x=0, y='level', color='k', lw=3)
+##     plt.gca().invert_yaxis()
+##     ax.get_legend().remove()
+##     plt.xlabel(variable)
+##     plt.ylabel('Depth (m)')
+##     fig_name = 'stn27_all_' + variable + '_' + str(i) + '.png'
+##     fig.savefig(fig_name, dpi=150)
+    
 ## ---- Open Viking data and concatenate ---- ##
 if use_viking:
     # open dataset
@@ -100,6 +123,9 @@ else:
     df = df_hydro.copy()
     
 ## ---- 1. Climatologies ---- ##
+# Weekly average (weekly average before monthly average)
+#df_weekly = df.resample('W').mean()
+
 # Monthly average (15th of the month) +  pickle for further analysis
 df_monthly = df.resample('MS', loffset=pd.Timedelta(14, 'd')).mean()
 df_monthly.to_pickle('S27_' + variable + '_monthly.pkl')

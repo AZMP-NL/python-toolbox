@@ -44,6 +44,9 @@ def is_number(s):
 nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
 ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AO_annual.pkl')
 amo = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AMO_annual.pkl')
+ao.to_csv('ao_annual.csv', float_format='%.2f')
+amo.to_csv('amo_annual.csv', float_format='%.2f')
+
 # restrict years
 nao_winter = nao_winter[(nao_winter.index>=years[0]) & (nao_winter.index<=years[1])]
 ao = ao[(ao.index>=years[0]) & (ao.index<=years[1])]

@@ -17,124 +17,121 @@ Then I opened it and copy-pasted it in /home/cyrf0006/github/AZMP-NL/utils/SST_b
 
 '''
 
-
+import os
 import netCDF4
+import h5py                                                                
+os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 from mpl_toolkits.basemap import Basemap
 import numpy as  np
 import matplotlib.pyplot as plt
 import openpyxl, pprint
 import pandas as pd
-import os
 import cmocean
+import cmocean.cm as cmo
+
+import cartopy.crs as ccrs
+import cartopy.feature as cpf
+import matplotlib.ticker as mticker
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 ## ---- Region parameters ---- ##
-dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc'
 lon_0 = -50
 lat_0 = 50
 #lonLims = [-60, -52]
 #latLims = [46, 52]
-lonLims = [-61.5, -50.25]
-latLims = [45, 52.25]
+lonLims = [-60, -52]
+latLims = [46, 52]
 proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/github/AZMP-NL/utils/Headlands_sites.xlsx'
 fig_name = 'map_headlands_sites.png'
-
-## ---- Load SST boxes ---- ##
-df_box = pd.read_excel('/home/cyrf0006/github/AZMP-NL/utils/SST_boxes.xslx')
-#df_box = df_box[df_box.region=='NL']
-df_box = df_box[(df_box.region=='NL') | (df_box.region=='GSL')]
-
-
-## ---- Bathymetry ---- ####
 v = np.linspace(0, 500, 11)
 
-# Load data
-dataset = netCDF4.Dataset(dataFile)
+## ---- Bathymetry ---- ##
+print('Load and grid bathymetry')
+# h5 file
+h5_outputfile = 'hl_bathymetry.h5'
+if os.path.isfile(h5_outputfile):
+     print([h5_outputfile + ' exists! Reading directly'])
+     h5f = h5py.File(h5_outputfile,'r')
+     lon = h5f['lon'][:]
+     lat = h5f['lat'][:]
+     Z = h5f['Z'][:]
+     h5f.close()
 
-# Extract variables
-x = dataset.variables['x_range']
-y = dataset.variables['y_range']
-spacing = dataset.variables['spacing']
+else:
+    # Extract variables
+    dataset = netCDF4.Dataset(dataFile)
+    x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+    y = [-89-59.75/60, 89+59.75/60]
+    spacing = dataset.variables['spacing']
 
-# Compute Lat/Lon
-nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+    # Compute Lat/Lon
+    nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+    ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+    lon = np.linspace(x[0],x[-1],nx)
+    lat = np.linspace(y[0],y[-1],ny)
+    # Reshape data
+    zz = dataset.variables['z']
+    Z = zz[:].reshape(ny, nx)
+    Z = np.flipud(Z) # <------------ important!!!
+    # Reduce data according to Region params
+    idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+    idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+    Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+    lon = lon[idx_lon[0]]
+    lat = lat[idx_lat[0]]
 
-lon = np.linspace(x[0],x[-1],nx)
-lat = np.linspace(y[0],y[-1],ny)
+    # Save data for later use
+    h5f = h5py.File(h5_outputfile, 'w')
+    h5f.create_dataset('lon', data=lon)
+    h5f.create_dataset('lat', data=lat)
+    h5f.create_dataset('Z', data=Z)
+    h5f.close()
+    print(' -> Done!')
 
-# Reshape data
-zz = dataset.variables['z']
-Z = zz[:].reshape(ny, nx)
-
-# Reduce data according to Region params and decim scale
-## idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-## idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-## Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-## lon = lon[idx_lon[0]]
-## lat = lat[idx_lat[0]]
-
-lon = lon[::decim_scale]
-lat = lat[::decim_scale]
-Z = Z[::decim_scale, ::decim_scale]
 
 ## ---- Station info ---- ##
-import pandas as pd
 df = pd.read_excel(stationFile)
-#print the column names
-print df.columns
-#get the values for a given column
-station = df['Site'].values
-stationLat = df['Lat'].values
-stationLon = df['Lon'].values
-
 
 ## ---- plot ---- ##
-fig = plt.figure(1)
-#m = Basemap(projection='ortho',lon_0=lon_0,lat_0=lat_0,resolution=None)
-m = Basemap(projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution='h')
-x,y = m(*np.meshgrid(lon,lat))
-c = m.contourf(x, y, np.flipud(-Z), v, cmap=cmocean.cm.deep, extend="both");
-cc = m.contour(x, y, np.flipud(-Z), [25, 50, 100, 200, 400], colors='lightgrey', linewidths=.5);
-plt.clabel(cc, inline=1, fontsize=10, colors='gray', fmt='%d')
-#ccc = m.contour(x, y, np.flipud(-Z), [0], colors='black');
-m.fillcontinents(color='peru');
-m.drawparallels(np.arange(10,70,2), labels=[1,0,0,0], fontsize=12, fontweight='bold');
-m.drawmeridians(np.arange(-80, 5, 2), labels=[0,0,0,1], fontsize=12, fontweight='bold');
+#plt.title('Standard air temperature sites')
+print('--- Now plot ---')
+fig = plt.figure(figsize=(7,5))
+ax = fig.add_subplot(111, projection=ccrs.Mercator())
+ax.set_extent([lonLims[0], lonLims[1], latLims[0], latLims[1]], crs=ccrs.PlateCarree())
+ax.add_feature(cpf.NaturalEarthFeature('physical', 'coastline', '50m', edgecolor='k', alpha=0.7, linewidth=0.6, facecolor='black'), zorder=1)
+m=ax.gridlines(linewidth=0.5, color='black', draw_labels=True, alpha=0.5)
+m.xlabels_top=False
+m.ylabels_right=False
+m.xlocator = mticker.FixedLocator([-60, -58, -56, -54, -52])
+m.ylocator = mticker.FixedLocator([46, 48, 50, 52])
+m.xformatter = LONGITUDE_FORMATTER
+m.yformatter = LATITUDE_FORMATTER
+m.ylabel_style = {'size': 7, 'color': 'black', 'weight':'bold'}
+m.xlabel_style = {'size': 7, 'color': 'black', 'weight':'bold'}
+lightdeep = cmocean.tools.lighten(cmo.deep, 0.5)
+c = plt.contourf(lon, lat, -Z, v, transform=ccrs.PlateCarree(), cmap=lightdeep, extend='max', zorder=5)
+cc = plt.contour(lon, lat, -Z, [100, 500], colors='silver', linewidths=.5, transform=ccrs.PlateCarree(), zorder=10)
+plt.clabel(cc, inline=True, fontsize=7, fmt='%i')
 
 # plot Headlands
 sites = df.Site.values
 lats = df.Lat.values
 lons = df.Lon.values
+ax.plot(lons, lats, '.', color='palevioletred', transform=ccrs.PlateCarree(), markersize=15, zorder=10)
 
+# add text
 for idx, name in enumerate(sites):
-    x, y = m(lons[idx], lats[idx])
-    m.plot(x,y,'p',color='k')
-    #plt.text(x, y, np.str(' '+name), horizontalalignment='left', verticalalignment='center', fontsize=15, color='k', fontweight='bold')
-    plt.text(x, y, np.str(name), horizontalalignment='center', verticalalignment='top', fontsize=15, color='k', fontweight='bold')
+    if (name == "Bristol's Hope") | (name == "Upper Gullies") | (name == "Comfort Cove") | (name == "Cape Freels") | (name == "Stock Cove"):
+        ax.text(lons[idx], lats[idx], name+' ', horizontalalignment='right', verticalalignment='top', fontsize=10, color='palevioletred', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+    else:
+        ax.text(lons[idx], lats[idx], name+' ', horizontalalignment='right', verticalalignment='bottom', fontsize=10, color='palevioletred', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
 
-# plot SST_boxes
-abbr = df_box.abbr.values
-lat_min = df_box.lat_min.values
-lat_max = df_box.lat_max.values
-lon_min = df_box.lon_min.values
-lon_max = df_box.lon_max.values
-for idx, name in enumerate(abbr):
-    xbox = np.array([lon_min[idx], lon_max[idx], lon_max[idx], lon_min[idx], lon_min[idx]])
-    ybox = np.array([lat_min[idx], lat_min[idx], lat_max[idx], lat_max[idx], lat_min[idx]])
-    x, y = m(xbox, ybox)
-    if (name=='NEGSL') | (name=='SAB') | (name=='NENL') | (name=='AC') | (name=='SPB'):
-        m.plot(x,y,color='k')
-        plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='k', fontweight='bold')
-    elif (name=='CS'):
-        m.plot(x,y,color='w')
-        plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold')
-
-
-#### ---- Save Figure ---- ####
+# Save    
 fig.set_size_inches(w=10, h=12)
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
-#plt.show()
+
 

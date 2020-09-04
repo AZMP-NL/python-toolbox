@@ -422,6 +422,12 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
     # Open netCDF file using xarray
     ds = xr.open_mfdataset(nc_file)
 
+    # Remome problematic datasets
+    print('!!Remove MEDBA data!!')
+    print('  ---> I Should be improme because I remove good data!!!!')
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    
     # Read unique station names from section file
     df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
     df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)

@@ -112,8 +112,8 @@ def get_closures(name='mpas'):
             mpas[rec[0]] = np.array(shapes[idx].points)            
     return mpas
         
-def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file='', closure_scenario = 'all'):
-    
+def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file='', closure_scenario = '4'):
+
     '''
     Closed area groupings:
 
@@ -135,8 +135,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     4.        Exclude groups A, B, C
 
 
-    closure_scenario = [1, 2, 3 or 4]
-
+    closure_scenario = ['1', '2', '3' or '4']
 
     for usage example see:
     >> mpa_genReport.py
@@ -213,16 +212,21 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     #To Pandas Dataframe
     df_temp = da_temp.to_pandas()
     df_temp.columns = bins[0:-1] #rename columns with 'bins'
+    # Get comments
+    da_comments = ds['comments']
+    df_comments = da_comments.to_pandas()
+    df_comments = df_comments.str.lower() # only lower case!
     # Remove empty columns
     idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
     df_temp = df_temp.dropna(axis=0,how='all')
+    df_comments = df_comments.drop(df_comments.index[idx_empty_rows])
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     print(' -> Done!')
 
-    
     ## ---- Real difference to traditional bottom_temp. ----#
     print('Apply masks for closures scenario: ' + closure_scenario)
+    # DFO closures
     polygon5 = Polygon(zip(mpas[5][:,0], mpas[5][:,1]))
     polygon6 = Polygon(zip(mpas[6][:,0], mpas[6][:,1]))
     polygon7 = Polygon(zip(mpas[7][:,0], mpas[7][:,1]))
@@ -230,29 +234,59 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     polygon15 = Polygon(zip(mpas[15][:,0], mpas[15][:,1]))
     polygon9 = Polygon(zip(mpas[9][:,0], mpas[9][:,1]))
     polygon14 = Polygon(zip(mpas[14][:,0], mpas[14][:,1]))
+    # NAFO 3O
+    polygon_n3O = Polygon(zip(nafo_3O[0][:,0], nafo_3O[0][:,1]))
+    # NAFO seamounts
+    polygon_ns1 = Polygon(zip(nafo_seamounts[1][:,0], nafo_seamounts[1][:,1]))
+    polygon_ns2 = Polygon(zip(nafo_seamounts[2][:,0], nafo_seamounts[2][:,1]))
+    polygon_ns3 = Polygon(zip(nafo_seamounts[3][:,0], nafo_seamounts[3][:,1]))
+    polygon_ns4 = Polygon(zip(nafo_seamounts[4][:,0], nafo_seamounts[4][:,1]))
+    polygon_ns5 = Polygon(zip(nafo_seamounts[5][:,0], nafo_seamounts[5][:,1]))
+    polygon_ns6 = Polygon(zip(nafo_seamounts[6][:,0], nafo_seamounts[6][:,1]))
+    # NAFO Coral and Sponges
+    polygon_nc1 = Polygon(zip(nafo_coral[1][:,0], nafo_coral[1][:,1]))
+    polygon_nc2 = Polygon(zip(nafo_coral[2][:,0], nafo_coral[2][:,1]))
+    polygon_nc3 = Polygon(zip(nafo_coral[3][:,0], nafo_coral[3][:,1]))
+    polygon_nc4 = Polygon(zip(nafo_coral[4][:,0], nafo_coral[4][:,1]))
+    polygon_nc5 = Polygon(zip(nafo_coral[5][:,0], nafo_coral[5][:,1]))
+    polygon_nc6 = Polygon(zip(nafo_coral[6][:,0], nafo_coral[6][:,1]))
+    polygon_nc7 = Polygon(zip(nafo_coral[7][:,0], nafo_coral[7][:,1]))
+    polygon_nc8 = Polygon(zip(nafo_coral[8][:,0], nafo_coral[8][:,1]))
+    polygon_nc9 = Polygon(zip(nafo_coral[9][:,0], nafo_coral[9][:,1]))
+    polygon_nc10 = Polygon(zip(nafo_coral[10][:,0], nafo_coral[10][:,1]))
+    polygon_nc11 = Polygon(zip(nafo_coral[11][:,0], nafo_coral[11][:,1]))
+    polygon_nc12 = Polygon(zip(nafo_coral[12][:,0], nafo_coral[12][:,1]))
+    polygon_nc13 = Polygon(zip(nafo_coral[13][:,0], nafo_coral[13][:,1]))
 
-    keyboard
-    
     idx_toremove = []
     for i, lat in enumerate(lats):
-        point = Point(lons[i], lats[i])
-        if closure_scenario == 'all':
-            if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon15.contains(point) | polygon9.contains(point) | polygon14.contains(point):
-                idx_toremove.append(i)
-        elif closure_scenario == 'A':
-            if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point):
-                idx_toremove.append(i)        
-        elif closure_scenario == 'B':
-            if polygon15.contains(point):
-                idx_toremove.append(i)
-        elif closure_scenario == 'C':
-            if polygon9.contains(point) | polygon14.contains(point) :
-                idx_toremove.append(i)
+        if (df_comments[i] == '') | (('set' in df_comments[i]) | ('unsucces' in df_comments[i])): # check if string "set" or "unsucces" is there or comments is empty
+        
+            point = Point(lons[i], lats[i])
+            if closure_scenario == '1': # Remove A only
+                if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon_n3O.contains(point) | polygon_ns1.contains(point) | polygon_ns2.contains(point) |  polygon_ns3.contains(point) | polygon_ns4.contains(point) | polygon_ns5.contains(point) | polygon_ns6.contains(point) | polygon_nc1.contains(point) | polygon_nc2.contains(point) | polygon_nc3.contains(point) | polygon_nc4.contains(point) | polygon_nc5.contains(point) | polygon_nc6.contains(point) | polygon_nc7.contains(point) | polygon_nc8.contains(point) | polygon_nc9.contains(point) | polygon_nc10.contains(point) | polygon_nc11.contains(point) | polygon_nc12.contains(point) | polygon_nc13.contains(point):
+
+                    idx_toremove.append(i)
+
+            elif closure_scenario == '2': # Remove B only
+                if polygon15.contains(point):
+
+                    idx_toremove.append(i)
+
+            elif closure_scenario == '3': # Remove A & B
+                if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon_n3O.contains(point) | polygon_ns1.contains(point) | polygon_ns2.contains(point) |  polygon_ns3.contains(point) | polygon_ns4.contains(point) | polygon_ns5.contains(point) | polygon_ns6.contains(point) | polygon_nc1.contains(point) | polygon_nc2.contains(point) | polygon_nc3.contains(point) | polygon_nc4.contains(point) | polygon_nc5.contains(point) | polygon_nc6.contains(point) | polygon_nc7.contains(point) | polygon_nc8.contains(point) | polygon_nc9.contains(point) | polygon_nc10.contains(point) | polygon_nc11.contains(point) | polygon_nc12.contains(point) | polygon_nc13.contains(point) | polygon15.contains(point):
+
+                    idx_toremove.append(i)
+
+            elif closure_scenario == '4': # Remove A, B & C
+                if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon_n3O.contains(point) | polygon_ns1.contains(point) | polygon_ns2.contains(point) |  polygon_ns3.contains(point) | polygon_ns4.contains(point) | polygon_ns5.contains(point) | polygon_ns6.contains(point) | polygon_nc1.contains(point) | polygon_nc2.contains(point) | polygon_nc3.contains(point) | polygon_nc4.contains(point) | polygon_nc5.contains(point) | polygon_nc6.contains(point) | polygon_nc7.contains(point) | polygon_nc8.contains(point) | polygon_nc9.contains(point) | polygon_nc10.contains(point) | polygon_nc11.contains(point) | polygon_nc12.contains(point) | polygon_nc13.contains(point) | polygon15.contains(point) | polygon9.contains(point) | polygon14.contains(point) :
+
+                    idx_toremove.append(i)
+                
     # Drop now
     df_temp.drop(df_temp.index[idx_toremove], inplace=True) 
     lons = np.delete(lons,idx_toremove)
     lats = np.delete(lats,idx_toremove)
-    
                 
     ## --- fill 3D cube --- ##  
     print('Fill regular cube')
@@ -462,7 +496,28 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
         div_lon, div_lat = m(poly_x, poly_y)
         m.plot(div_lon, div_lat, 'olivedrab', linewidth=2)
         ax.text(np.mean(div_lon), np.mean(div_lat), str(key), fontsize=12, color='black', fontweight='bold')
-        
+    for idx, key in enumerate(nafo_3O.keys()):
+        coords = nafo_3O[key]  
+        poly_x = coords[:,0]
+        poly_y = coords[:,1]
+        div_lon, div_lat = m(poly_x, poly_y)
+        m.plot(div_lon, div_lat, 'olivedrab', linewidth=2)
+        ax.text(np.mean(div_lon), np.mean(div_lat), str(key), fontsize=12, color='black', fontweight='bold')
+    for idx, key in enumerate(nafo_seamounts.keys()):
+        coords = nafo_seamounts[key]
+        poly_x = coords[:,0]
+        poly_y = coords[:,1]
+        div_lon, div_lat = m(poly_x, poly_y)
+        m.plot(div_lon, div_lat, 'olivedrab', linewidth=2)
+        ax.text(np.mean(div_lon), np.mean(div_lat), str(key), fontsize=12, color='black', fontweight='bold')    
+    for idx, key in enumerate(nafo_coral.keys()):
+        coords = nafo_coral[key]  
+        poly_x = coords[:,0]
+        poly_y = coords[:,1]
+        div_lon, div_lat = m(poly_x, poly_y)
+        m.plot(div_lon, div_lat, 'olivedrab', linewidth=2)
+        ax.text(np.mean(div_lon), np.mean(div_lat), str(key), fontsize=12, color='black', fontweight='bold')
+                  
     # Save Figure
     fig.set_size_inches(w=6, h=9)
     fig.set_dpi(200)
@@ -550,7 +605,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
 
 
 #### get_bottomT (originally from azmp_utils)
-def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, closure_scenario = 'all'):
+def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, closure_scenario = 'reference'):
     """ Generate and returns bottom temperature data corresponding to a certain climatology map
     (previously generated with get_bottomT_climato)
     Function returns:
@@ -598,7 +653,10 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, 
 
     ## ---- get closures ---- ##
     mpas = get_closures()
-
+    nafo_3O = get_closures(name='nafo_3O') # group A
+    nafo_seamounts = get_closures(name='nafo_seamounts') # group A
+    nafo_coral = get_closures(name='nafo_coral') # group A
+    
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
@@ -616,7 +674,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, 
     elif season == 'spring':
         ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
     elif season == 'fall':
-        ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
+        ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
     else:
         print('!! no season specified, used them all! !!')
 
@@ -631,6 +689,10 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, 
     lats = np.array(ds.latitude)
     bins = np.arange(dz/2.0, ds.level.max(), dz)
     da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
+    # Get comments
+    da_comments = ds['comments']
+    df_comments = da_comments.to_pandas()
+    df_comments = df_comments.str.lower() # only lower case!
     #To Pandas Dataframe
     df_temp = da_temp.to_pandas()
     df_temp.columns = bins[0:-1] #rename columns with 'bins'
@@ -645,6 +707,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, 
 
     ## ---- Real difference to traditional bottom_temp. ----#
     print('Apply masks for closures scenario: ' + closure_scenario)
+    # DFO closures
     polygon5 = Polygon(zip(mpas[5][:,0], mpas[5][:,1]))
     polygon6 = Polygon(zip(mpas[6][:,0], mpas[6][:,1]))
     polygon7 = Polygon(zip(mpas[7][:,0], mpas[7][:,1]))
@@ -652,27 +715,65 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, 
     polygon15 = Polygon(zip(mpas[15][:,0], mpas[15][:,1]))
     polygon9 = Polygon(zip(mpas[9][:,0], mpas[9][:,1]))
     polygon14 = Polygon(zip(mpas[14][:,0], mpas[14][:,1]))
+    # NAFO 3O
+    polygon_n3O = Polygon(zip(nafo_3O[0][:,0], nafo_3O[0][:,1]))
+    # NAFO seamounts
+    polygon_ns1 = Polygon(zip(nafo_seamounts[1][:,0], nafo_seamounts[1][:,1]))
+    polygon_ns2 = Polygon(zip(nafo_seamounts[2][:,0], nafo_seamounts[2][:,1]))
+    polygon_ns3 = Polygon(zip(nafo_seamounts[3][:,0], nafo_seamounts[3][:,1]))
+    polygon_ns4 = Polygon(zip(nafo_seamounts[4][:,0], nafo_seamounts[4][:,1]))
+    polygon_ns5 = Polygon(zip(nafo_seamounts[5][:,0], nafo_seamounts[5][:,1]))
+    polygon_ns6 = Polygon(zip(nafo_seamounts[6][:,0], nafo_seamounts[6][:,1]))
+    # NAFO Coral and Sponges
+    polygon_nc1 = Polygon(zip(nafo_coral[1][:,0], nafo_coral[1][:,1]))
+    polygon_nc2 = Polygon(zip(nafo_coral[2][:,0], nafo_coral[2][:,1]))
+    polygon_nc3 = Polygon(zip(nafo_coral[3][:,0], nafo_coral[3][:,1]))
+    polygon_nc4 = Polygon(zip(nafo_coral[4][:,0], nafo_coral[4][:,1]))
+    polygon_nc5 = Polygon(zip(nafo_coral[5][:,0], nafo_coral[5][:,1]))
+    polygon_nc6 = Polygon(zip(nafo_coral[6][:,0], nafo_coral[6][:,1]))
+    polygon_nc7 = Polygon(zip(nafo_coral[7][:,0], nafo_coral[1][:,1]))
+    polygon_nc8 = Polygon(zip(nafo_coral[8][:,0], nafo_coral[1][:,1]))
+    polygon_nc9 = Polygon(zip(nafo_coral[9][:,0], nafo_coral[1][:,1]))
+    polygon_nc10 = Polygon(zip(nafo_coral[10][:,0], nafo_coral[1][:,1]))
+    polygon_nc11 = Polygon(zip(nafo_coral[11][:,0], nafo_coral[1][:,1]))
+    polygon_nc12 = Polygon(zip(nafo_coral[12][:,0], nafo_coral[1][:,1]))
+    polygon_nc13 = Polygon(zip(nafo_coral[13][:,0], nafo_coral[1][:,1]))
 
-    idx_toremove = []
-    for i, lat in enumerate(lats):
-        point = Point(lons[i], lats[i])
-        if closure_scenario == 'all':
-            if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon15.contains(point) | polygon9.contains(point) | polygon14.contains(point):
-                idx_toremove.append(i)
-        elif closure_scenario == 'A':
-            if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point):
-                idx_toremove.append(i)        
-        elif closure_scenario == 'B':
-            if polygon15.contains(point):
-                idx_toremove.append(i)
-        elif closure_scenario == 'C':
-            if polygon9.contains(point) | polygon14.contains(point) :
-                idx_toremove.append(i)
+    # Now remove the sets in closures, except if reference scenario
+    if closure_scenario == 'reference':
+        print(' -> Reference scenario, nothing to remove.')
+        
+    else:
+        idx_toremove = []
+        for i, lat in enumerate(lats):
+            if (df_comments[i] == '') | (('set' in df_comments[i]) | ('unsucces' in df_comments[i])):
+                # check if string "set" or "unsucces" is there or comments is empty
 
-    # Drop now
-    df_temp.drop(df_temp.iloc[idx_toremove].index, inplace=True) 
-    lons = np.delete(lons,idx_toremove)
-    lats = np.delete(lats,idx_toremove)
+                point = Point(lons[i], lats[i])
+                if closure_scenario == '1': # Remove A only
+                    if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon_ns1.contains(point) | polygon_ns2.contains(point) |  polygon_ns3.contains(point) | polygon_ns4.contains(point) | polygon_ns5.contains(point) | polygon_ns6.contains(point) | polygon_nc1.contains(point) | polygon_nc2.contains(point) | polygon_nc3.contains(point) | polygon_nc4.contains(point) | polygon_nc5.contains(point) | polygon_nc6.contains(point) | polygon_nc7.contains(point) | polygon_nc8.contains(point) | polygon_nc9.contains(point) | polygon_nc10.contains(point) | polygon_nc11.contains(point) | polygon_nc12.contains(point) | polygon_nc13.contains(point):
+
+                        idx_toremove.append(i)
+
+                elif closure_scenario == '2': # Remove B only
+                    if polygon15.contains(point):
+
+                        idx_toremove.append(i)
+
+                elif closure_scenario == '3': # Remove A & B
+                    if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) |  polygon_ns1.contains(point) | polygon_ns2.contains(point) |  polygon_ns3.contains(point) | polygon_ns4.contains(point) | polygon_ns5.contains(point) | polygon_ns6.contains(point) | polygon_nc1.contains(point) | polygon_nc2.contains(point) | polygon_nc3.contains(point) | polygon_nc4.contains(point) | polygon_nc5.contains(point) | polygon_nc6.contains(point) | polygon_nc7.contains(point) | polygon_nc8.contains(point) | polygon_nc9.contains(point) | polygon_nc10.contains(point) | polygon_nc11.contains(point) | polygon_nc12.contains(point) | polygon_nc13.contains(point) | polygon15.contains(point):
+
+                        idx_toremove.append(i)
+
+                elif closure_scenario == '4': # Remove A, B & C
+                    if polygon5.contains(point) | polygon6.contains(point) | polygon7.contains(point) | polygon35.contains(point) | polygon_ns1.contains(point) | polygon_ns2.contains(point) |  polygon_ns3.contains(point) | polygon_ns4.contains(point) | polygon_ns5.contains(point) | polygon_ns6.contains(point) | polygon_nc1.contains(point) | polygon_nc2.contains(point) | polygon_nc3.contains(point) | polygon_nc4.contains(point) | polygon_nc5.contains(point) | polygon_nc6.contains(point) | polygon_nc7.contains(point) | polygon_nc8.contains(point) | polygon_nc9.contains(point) | polygon_nc10.contains(point) | polygon_nc11.contains(point) | polygon_nc12.contains(point) | polygon_nc13.contains(point) | polygon15.contains(point) | polygon9.contains(point) | polygon14.contains(point) :
+
+                        idx_toremove.append(i)
+
+        # Drop now
+        df_temp.drop(df_temp.index[idx_toremove], inplace=True) 
+        lons = np.delete(lons,idx_toremove)
+        lats = np.delete(lats,idx_toremove)
     
     ## --- fill 3D cube --- ##  
     print('Fill regular cube')
@@ -802,7 +903,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True, 
 
 
 #### bottom_stats
-def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file='', closure_scenario = 'all'):
+def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file='', closure_scenario = 'reference'):
 
     '''
         Function bottom_stats() based on script azmp_bottom_stats.py
@@ -889,7 +990,7 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     for year in years:
         print(' ---- ' + np.str(year) + ' ---- ')
         year_file = netcdf_path + np.str(year) + '.nc'
-        Tdict = get_bottomT(year_file, season, climato_file, closure_scenario='all')    
+        Tdict = get_bottomT(year_file, season, climato_file, closure_scenario=closure_scenario)    
         Tbot = Tdict['Tbot']
         lons = Tdict['lons']
         lats = Tdict['lats']
@@ -1031,18 +1132,24 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     '''
 
     #### ------------- For fall ---------------- ####
-    # 0.
-    infile0 = '/home/cyrf0006/AZMP/state_reports/bottomT/stats_2H_fall.pkl'
-    infileA = 'stats_2H_fall_A.pkl'
-    infileC = 'stats_2H_fall_C.pkl'
+    # 0. - 2H -
+    infile0 = 'stats_2H_fall_reference.pkl'
+    infile1 = 'stats_2H_fall_1.pkl'
+    infile2 = 'stats_2H_fall_2.pkl'
+    infile3 = 'stats_2H_fall_3.pkl'
+    infile4 = 'stats_2H_fall_4.pkl'
+
     df0 = pd.read_pickle(infile0).Tmean    
-    dfA = pd.read_pickle(infileA).Tmean
-    dfC = pd.read_pickle(infileC).Tmean
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
     
-    df = pd.concat([df0, dfA, dfC], axis=1, keys=['sc0', 'scA', 'scC'])
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-           
+    df = df.round(1)
+    
     # Flag bad years (no or weak sampling):
     bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
     for i in bad_years:
@@ -1057,9 +1164,11 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
     std_anom = std_anom.T
         
-    # Add 2 rows for % change by case
-    std_anom.loc['scAp'] = (df['scA'] - df['sc0']) / df['sc0'] * 100
-    std_anom.loc['scCp'] = (df['scC'] - df['sc0']) / df['sc0'] * 100
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
     # add mean and std inm both DataFrames
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1067,30 +1176,49 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # Now by-pass std_anom with bottom T values (keep colors according to std anom)
     temperatures = std_anom.copy()
     temperatures.loc['sc0'] = df['sc0']
-    temperatures.loc['scA'] = df['scA']
-    temperatures.loc['scC'] = df['scC']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
     # add mean and std inm both DataFrames
     temperatures['MEAN'] = df_clim.mean(axis=0)
     temperatures['SD'] = df_clim.std(axis=0)
-    sdA = (temperatures.loc['scAp']).std()
-    sdC = (temperatures.loc['scCp']).std()    
-    temperatures.loc['scAp']['MEAN'] = np.abs(temperatures.loc['scAp']).mean()
-    temperatures.loc['scCp']['MEAN'] = np.abs(temperatures.loc['scCp']).mean()
-    temperatures.loc['scAp']['SD'] = sdA
-    temperatures.loc['scCp']['SD'] = sdC
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
     # Rename columns
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Rename index
     std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)', 'scCp': r'Sc. C (% change)'})
-    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)',
-                                 'scCp': r'Sc. C (% change)'})
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
     
     # Get text values +  cell color
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
@@ -1099,8 +1227,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     vals[vals==-0.] = 0.
     vals_color = np.around(std_anom.values,1)
     vals_color[vals_color==-0.] = 0.    
-    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 2 rows
-    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 2 rows        
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows        
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
 
@@ -1149,8 +1279,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         elif key[0] == 0: #year's row = no color
             pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 4) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+            cell._text.set_color('dimgray')
+            cell._text.set_weight('bold')
+        elif (key[0] < 6) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1158,7 +1289,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 4:
+        if key[0] >= 6:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_2H.png", dpi=300)
@@ -1167,14 +1298,22 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # French table
     temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
                                         r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~A$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~C$',
-                                        r'Sc. A (% change)' :
-                                        r'Sc. A (% chang.)',
-                                        r'Sc. C (% change)' :
-                                        r'Sc. C (% chang.)'})
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
        
     year_list[-1] = u'ET'
     
@@ -1200,8 +1339,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         elif key[0] == 0: #year's row = no color
             pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 4) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+            cell._text.set_color('dimgray')
+            cell._text.set_weight('bold')
+        elif (key[0] < 6) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')   
@@ -1209,38 +1349,49 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 4:
+        if key[0] >= 6:
             cell._text.set_weight('bold')
 
     plt.savefig("scorecards_fall_2H_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_2H_FR.png scorecards_fall_2H_FR.png')
 
-    
- # 1.
-    infile0 = '/home/cyrf0006/AZMP/state_reports/bottomT/stats_2J_fall.pkl'
-    infileA = 'stats_2J_fall_A.pkl'
-    infileC = 'stats_2J_fall_C.pkl'
-    df0 = pd.read_pickle(infile0).Tmean    
-    dfA = pd.read_pickle(infileA).Tmean
-    dfC = pd.read_pickle(infileC).Tmean
+ #  1. - 2J -
+    infile0 = 'stats_2J_fall_reference.pkl'
+    infile1 = 'stats_2J_fall_1.pkl'
+    infile2 = 'stats_2J_fall_2.pkl'
+    infile3 = 'stats_2J_fall_3.pkl'
+    infile4 = 'stats_2J_fall_4.pkl'
 
-    df = pd.concat([df0, dfA, dfC], axis=1, keys=['sc0', 'scA', 'scC'])
+    df0 = pd.read_pickle(infile0).Tmean    
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
+    
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    df = df.round(1)
     
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([1995])
+    bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
     for i in bad_years:
         df[df.index.year==i]=np.nan
 
-        # Calculate std anomalies
+    # get year list (only for first scorecards) 
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+
+    # Calculate std anomalies
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
     std_anom = std_anom.T
         
-    # Add 2 rows for % change by case
-    std_anom.loc['scAp'] = (df['scA'] - df['sc0']) / df['sc0'] * 100
-    std_anom.loc['scCp'] = (df['scC'] - df['sc0']) / df['sc0'] * 100
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
     # add mean and std inm both DataFrames
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1248,39 +1399,278 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # Now by-pass std_anom with bottom T values (keep colors according to std anom)
     temperatures = std_anom.copy()
     temperatures.loc['sc0'] = df['sc0']
-    temperatures.loc['scA'] = df['scA']
-    temperatures.loc['scC'] = df['scC']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
     # add mean and std inm both DataFrames
     temperatures['MEAN'] = df_clim.mean(axis=0)
     temperatures['SD'] = df_clim.std(axis=0)
-    sdA = (temperatures.loc['scAp']).std()
-    sdC = (temperatures.loc['scCp']).std()    
-    temperatures.loc['scAp']['MEAN'] = np.abs(temperatures.loc['scAp']).mean()
-    temperatures.loc['scCp']['MEAN'] = np.abs(temperatures.loc['scCp']).mean()
-    temperatures.loc['scAp']['SD'] = sdA
-    temperatures.loc['scCp']['SD'] = sdC
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
     # Rename columns
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Rename index
     std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Scenario A (% change)',
-                                 'scCp': r'Scenario C (% change)'})
-    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)',
-                                 'scCp': r'Sc. C (% change)'})
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    
+    # Get text values +  cell color
+    year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+    year_list.append(r'sd')   
+    vals = np.around(temperatures.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = np.around(std_anom.values,1)
+    vals_color[vals_color==-0.] = 0.    
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+
+    # Build the colormap (only for 1st scorecard)
+    vmin = -3.49
+    vmax = 3.49
+    midpoint = 0
+    levels = np.linspace(vmin, vmax, 15)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+    normal = plt.Normalize(-3.49, 3.49)
+    reds = plt.cm.Reds(np.linspace(0,1, num=7))
+    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+    whites = [(1,1,1,1)]*2
+    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+
+    nrows, ncols = temperatures.index.size+1, temperatures.columns.size
+    hcell, wcell = 0.5, 0.5
+    hpad, wpad = 1, 1    
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 2H --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[1] in last_columns:
+            cell._text.set_color('dimgray')
+            cell._text.set_weight('bold')
+        elif (key[0] < 6) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+            cell._text.set_color('white')
+        elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+        # Bold face % change
+        if key[0] >= 6:
+            cell._text.set_weight('bold')
+            
+    plt.savefig("scorecards_fall_2H.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2H.png scorecards_fall_2H.png')
+
+    # French table
+    temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
+                                        r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
+       
+    year_list[-1] = u'ET'
+    
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 2H de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[1] in last_columns:
+            cell._text.set_color('dimgray')
+            cell._text.set_weight('bold')
+        elif (key[0] < 6) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+            cell._text.set_color('white')
+        elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
+            cell._text.set_color('white')   
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+        # Bold face % change
+        if key[0] >= 6:
+            cell._text.set_weight('bold')
+
+    plt.savefig("scorecards_fall_2H_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2H_FR.png scorecards_fall_2H_FR.png')
+
+ #  1. - 2J -
+    infile0 = 'stats_2J_fall_reference.pkl'
+    infile1 = 'stats_2J_fall_1.pkl'
+    infile2 = 'stats_2J_fall_2.pkl'
+    infile3 = 'stats_2J_fall_3.pkl'
+    infile4 = 'stats_2J_fall_4.pkl'
+
+    df0 = pd.read_pickle(infile0).Tmean    
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
+    
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    df.round(1)
+    
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([1995])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+
+    # Calculate std anomalies
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+        
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
+    # add mean and std inm both DataFrames
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    
+    # Now by-pass std_anom with bottom T values (keep colors according to std anom)
+    temperatures = std_anom.copy()
+    temperatures.loc['sc0'] = df['sc0']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
+    # add mean and std inm both DataFrames
+    temperatures['MEAN'] = df_clim.mean(axis=0)
+    temperatures['SD'] = df_clim.std(axis=0)
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
+    # Rename columns
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Rename index
+    std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
     
     # Get text values +  cell color
     vals = np.around(temperatures.values,1)
     vals[vals==-0.] = 0.
     vals_color = np.around(std_anom.values,1)
     vals_color[vals_color==-0.] = 0.    
-    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 2 rows
-    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 2 rows        
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
 
@@ -1307,15 +1697,15 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
     for key, cell in the_table.get_celld().items():
         cell_text = cell.get_text().get_text()
-        print(key, vals_color[key[0]-1, key[1]], cell_text)
         if is_number(cell_text) == False:
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 3) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
-            print('white')
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
+            #print('white')
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1323,7 +1713,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 3:
+        if key[0] >= 5:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_2J.png", dpi=300)
@@ -1332,14 +1722,22 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # French table
     temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
                                         r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~A$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~C$',
-                                        r'Sc. A (% change)' :
-                                        r'Sc. A (% chang.)',
-                                        r'Sc. C (% change)' :
-                                        r'Sc. C (% chang.)'})
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
 
     header = ax.table(cellText=[['']],
                           colLabels=['-- Division 2J de l\'OPANO --'],
@@ -1363,8 +1761,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 3) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1372,37 +1771,45 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 3:
+        if key[0] >= 5:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_2J_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_2J_FR.png scorecards_fall_2J_FR.png')
-    
-    # 2. ---- 3K ----
-    infile0 = '/home/cyrf0006/AZMP/state_reports/bottomT/stats_3K_fall.pkl'
-    infileA = 'stats_3K_fall_A.pkl'
-    infileC = 'stats_3K_fall_C.pkl'
-    df0 = pd.read_pickle(infile0).Tmean    
-    dfA = pd.read_pickle(infileA).Tmean
-    dfC = pd.read_pickle(infileC).Tmean
 
-    df = pd.concat([df0, dfA, dfC], axis=1, keys=['sc0', 'scA', 'scC'])
+    # 2. ---- 3K ----
+    infile0 = 'stats_3K_fall_reference.pkl'
+    infile1 = 'stats_3K_fall_1.pkl'
+    infile2 = 'stats_3K_fall_2.pkl'
+    infile3 = 'stats_3K_fall_3.pkl'
+    infile4 = 'stats_3K_fall_4.pkl'
+
+    df0 = pd.read_pickle(infile0).Tmean    
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
+    
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    df.round(1)
     
     # Flag bad years (no or weak sampling):
     bad_years = np.array([1995])
     for i in bad_years:
         df[df.index.year==i]=np.nan
 
-        # Calculate std anomalies
+    # Calculate std anomalies
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
     std_anom = std_anom.T
         
-    # Add 2 rows for % change by case
-    std_anom.loc['scAp'] = (df['scA'] - df['sc0']) / df['sc0'] * 100
-    std_anom.loc['scCp'] = (df['scC'] - df['sc0']) / df['sc0'] * 100
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
     # add mean and std inm both DataFrames
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1410,44 +1817,64 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # Now by-pass std_anom with bottom T values (keep colors according to std anom)
     temperatures = std_anom.copy()
     temperatures.loc['sc0'] = df['sc0']
-    temperatures.loc['scA'] = df['scA']
-    temperatures.loc['scC'] = df['scC']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
     # add mean and std inm both DataFrames
     temperatures['MEAN'] = df_clim.mean(axis=0)
     temperatures['SD'] = df_clim.std(axis=0)
-    sdA = (temperatures.loc['scAp']).std()
-    sdC = (temperatures.loc['scCp']).std()    
-    temperatures.loc['scAp']['MEAN'] = np.abs(temperatures.loc['scAp']).mean()
-    temperatures.loc['scCp']['MEAN'] = np.abs(temperatures.loc['scCp']).mean()
-    temperatures.loc['scAp']['SD'] = sdA
-    temperatures.loc['scCp']['SD'] = sdC
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
     # Rename columns
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Rename index
     std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)',
-                                 'scCp': r'Sc. C (% change)'})
-    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)',
-                                 'scCp': r'Sc. C (% change)'})
-        
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    
     # Get text values +  cell color
     vals = np.around(temperatures.values,1)
     vals[vals==-0.] = 0.
     vals_color = np.around(std_anom.values,1)
     vals_color[vals_color==-0.] = 0.    
-    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 2 rows
-    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 2 rows        
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
 
     # Start drawing
-    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    nrows, ncols = temperatures.index.size, temperatures.columns.size
     fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
     ax = fig.add_subplot(111)
     ax.axis('off')
@@ -1457,7 +1884,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
                           loc='center'
                           )
     header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=None, 
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                         bbox=[0, 0, 1.0, 0.5]
                         )
@@ -1474,8 +1901,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 3) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
+            #print('white')
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1483,7 +1912,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 3:
+        if key[0] >= 5:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_3K.png", dpi=300)
@@ -1492,22 +1921,29 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # French table
     temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
                                         r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~A$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~C$',
-                                        r'Sc. A (% change)' :
-                                        r'Sc. A (% chang.)',
-                                        r'Sc. C (% change)' :
-                                        r'Sc. C (% chang.)'})
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
 
     header = ax.table(cellText=[['']],
                           colLabels=['-- Division 3K de l\'OPANO --'],
                           loc='center'
                           )
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
     header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=None, 
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                         bbox=[0, 0, 1.0, 0.50]
                         )
@@ -1524,8 +1960,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 3) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1533,37 +1970,46 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 3:
+        if key[0] >= 5:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_3K_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_3K_FR.png scorecards_fall_3K_FR.png')
 
-    # 3. ---- 3LNO ----
-    infile0 = '/home/cyrf0006/AZMP/state_reports/bottomT/stats_3LNO_fall.pkl'
-    infileA = 'stats_3LNO_fall_A.pkl'
-    infileC = 'stats_3LNO_fall_C.pkl'
-    df0 = pd.read_pickle(infile0).Tmean    
-    dfA = pd.read_pickle(infileA).Tmean
-    dfC = pd.read_pickle(infileC).Tmean
 
-    df = pd.concat([df0, dfA, dfC], axis=1, keys=['sc0', 'scA', 'scC'])
+    # 3. ---- 3LNO ----
+    infile0 = 'stats_3LNO_fall_reference.pkl'
+    infile1 = 'stats_3LNO_fall_1.pkl'
+    infile2 = 'stats_3LNO_fall_2.pkl'
+    infile3 = 'stats_3LNO_fall_3.pkl'
+    infile4 = 'stats_3LNO_fall_4.pkl'
+
+    df0 = pd.read_pickle(infile0).Tmean    
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
+    
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    df.round(1)
     
     # Flag bad years (no or weak sampling):
     bad_years = np.array([1995])
     for i in bad_years:
         df[df.index.year==i]=np.nan
 
-        # Calculate std anomalies
+    # Calculate std anomalies
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
     std_anom = std_anom.T
         
-    # Add 2 rows for % change by case
-    std_anom.loc['scAp'] = (df['scA'] - df['sc0']) / df['sc0'] * 100
-    std_anom.loc['scCp'] = (df['scC'] - df['sc0']) / df['sc0'] * 100
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
     # add mean and std inm both DataFrames
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1571,44 +2017,64 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # Now by-pass std_anom with bottom T values (keep colors according to std anom)
     temperatures = std_anom.copy()
     temperatures.loc['sc0'] = df['sc0']
-    temperatures.loc['scA'] = df['scA']
-    temperatures.loc['scC'] = df['scC']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
     # add mean and std inm both DataFrames
     temperatures['MEAN'] = df_clim.mean(axis=0)
     temperatures['SD'] = df_clim.std(axis=0)
-    sdA = (temperatures.loc['scAp']).std()
-    sdC = (temperatures.loc['scCp']).std()    
-    temperatures.loc['scAp']['MEAN'] = np.abs(temperatures.loc['scAp']).mean()
-    temperatures.loc['scCp']['MEAN'] = np.abs(temperatures.loc['scCp']).mean()
-    temperatures.loc['scAp']['SD'] = sdA
-    temperatures.loc['scCp']['SD'] = sdC
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
     # Rename columns
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Rename index
     std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)',
-                                 'scCp': r'Sc. C (% change)'})
-    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}(^{\circ}C)~-~Reference$',
-                                 'scA': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~A$',
-                                 'scC': r'$\rm T_{bot}(^{\circ}C)~-~Scenario~C$',
-                                 'scAp': r'Sc. A (% change)',
-                                 'scCp': r'Sc. C (% change)'})
-        
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    
     # Get text values +  cell color
     vals = np.around(temperatures.values,1)
     vals[vals==-0.] = 0.
     vals_color = np.around(std_anom.values,1)
     vals_color[vals_color==-0.] = 0.    
-    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 2 rows
-    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 2 rows        
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
 
     # Start drawing
-    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    nrows, ncols = temperatures.index.size, temperatures.columns.size
     fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
     ax = fig.add_subplot(111)
     ax.axis('off')
@@ -1618,7 +2084,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
                           loc='center'
                           )
     header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=None, 
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                         bbox=[0, 0, 1.0, 0.5]
                         )
@@ -1635,8 +2101,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 3) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
+            #print('white')
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1644,7 +2112,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 3:
+        if key[0] >= 5:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_3LNO.png", dpi=300)
@@ -1653,22 +2121,29 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     # French table
     temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
                                         r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~A$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~A$',
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~C$' :
-                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~C$',
-                                        r'Sc. A (% change)' :
-                                        r'Sc. A (% chang.)',
-                                        r'Sc. C (% change)' :
-                                        r'Sc. C (% chang.)'})
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
 
     header = ax.table(cellText=[['']],
                           colLabels=['-- Division 3LNO de l\'OPANO --'],
                           loc='center'
                           )
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
     header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=None, 
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                         bbox=[0, 0, 1.0, 0.50]
                         )
@@ -1685,8 +2160,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (key[0] < 3) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
             cell._text.set_color('white')
         elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
@@ -1694,54 +2170,141 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
         # Bold face % change
-        if key[0] >= 3:
+        if key[0] >= 5:
             cell._text.set_weight('bold')
             
     plt.savefig("scorecards_fall_3LNO_FR.png", dpi=300)
     os.system('convert -trim scorecards_fall_3LNO_FR.png scorecards_fall_3LNO_FR.png')
 
-    plt.close('all')
-
     ## Montage of different scorecards
     # English
     os.system('montage  scorecards_fall_2H.png scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall_closures.png') 
     # French
-    os.system('montage  scorecards_fall_2H_FR.png scorecards_fall_2J.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall_closures_FR.png') 
+    os.system('montage  scorecards_fall_2H_FR.png scorecards_fall_2J_FR.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall_closures_FR.png') 
 
     
-    keyboard
-
     #### ------------- For Spring ---------------- ####
-    # 1.
-    infile = 'stats_3LNO_spring.pkl'
-    df = pd.read_pickle(infile)
+    # 0. - 3LNO -
+    infile0 = 'stats_3LNO_spring_reference.pkl'
+    infile1 = 'stats_3LNO_spring_1.pkl'
+    infile2 = 'stats_3LNO_spring_2.pkl'
+    infile3 = 'stats_3LNO_spring_3.pkl'
+    infile4 = 'stats_3LNO_spring_4.pkl'
+
+    df0 = pd.read_pickle(infile0).Tmean    
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
+    
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    df.round(1)
+           
+    # Flag bad years (no or weak sampling):
+    # None
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+
+    # get year list (only for first scorecards) 
     year_list = df.index.year.astype('str')
     year_list = [i[2:4] for i in year_list] # 2-digit year
-    df.index = pd.to_datetime(df.index) # update index to datetime
-    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
-    df['area_warmer2'] = df['area_warmer2']/1000
+
+    # Calculate std anomalies
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
     std_anom = std_anom.T
+        
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
+    # add mean and std inm both DataFrames
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+    
+    # Now by-pass std_anom with bottom T values (keep colors according to std anom)
+    temperatures = std_anom.copy()
+    temperatures.loc['sc0'] = df['sc0']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
+    # add mean and std inm both DataFrames
+    temperatures['MEAN'] = df_clim.mean(axis=0)
+    temperatures['SD'] = df_clim.std(axis=0)
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
+    # Rename columns
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-
+    temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Rename index
+    std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    
+    # Get text values +  cell color
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
-    year_list.append(r'sd')
-    vals = np.around(std_anom.values,1)
+    year_list.append(r'sd')   
+    vals = np.around(temperatures.values,1)
     vals[vals==-0.] = 0.
-    vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color = np.around(std_anom.values,1)
+    vals_color[vals_color==-0.] = 0.    
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows        
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
-    #normal = plt.Normalize(-4.49, 4.49)
-    #cmap = plt.cm.get_cmap('seismic', 9) 
+
+    # Build the colormap (only for 1st scorecard)
+    vmin = -3.49
+    vmax = 3.49
+    midpoint = 0
+    levels = np.linspace(vmin, vmax, 15)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+    normal = plt.Normalize(-3.49, 3.49)
+    reds = plt.cm.Reds(np.linspace(0,1, num=7))
+    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+    whites = [(1,1,1,1)]*2
+    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+
+    nrows, ncols = temperatures.index.size+1, temperatures.columns.size
+    hcell, wcell = 0.5, 0.5
+    hpad, wpad = 1, 1    
     fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
     ax = fig.add_subplot(111)
     ax.axis('off')
@@ -1750,47 +2313,8 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
                           colLabels=['-- NAFO division 3LNO --'],
                           loc='center'
                           )
-
-    header.set_fontsize(12.5)
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
-                        )
-    # change font color to white where needed:
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    table_props = the_table.properties()
-    table_cells = table_props['child_artists']
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        elif key[0] == 0:
-            pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
-
-    plt.savefig("scorecards_spring_3LNO.png", dpi=300)
-    os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
-
-    # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
-    year_list[-1] = u'ET'
-
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- Divisions 3LNO de l\'OPANO --'],
-                          loc='center'
-                          )
     header.set_fontsize(13)
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=year_list,
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
                         bbox=[0, 0, 1, 0.5]
                         )
@@ -1807,60 +2331,52 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         elif key[0] == 0: #year's row = no color
             pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('dimgray')
+            cell._text.set_weight('bold')
+        elif (key[0] < 6) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
+            cell._text.set_color('white')
+        elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
+        # Bold face % change
+        if key[0] >= 6:
+            cell._text.set_weight('bold')
+            
+    plt.savefig("scorecards_spring_3LNO.png", dpi=300)
+    os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
 
-    plt.savefig("scorecards_spring_3LNO_FR.png", dpi=300)
-    os.system('convert -trim scorecards_spring_3LNO_FR.png scorecards_spring_3LNO_FR.png')
-
-
-    # 2.
-    infile = 'stats_3Ps_spring.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
-    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    # Flag bad years (no or weak sampling):
-    bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
-    for i in bad_years:
-        df[df.index.year==i]=np.nan
-    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
-    df['area_warmer2'] = df['area_warmer2']/1000
-    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
-    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
-    std_anom = std_anom.T
-    std_anom['MEAN'] = df_clim.mean(axis=0)
-    std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
-    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-
-    vals = np.around(std_anom.values,1)
-    vals[vals==-0.] = 0.
-    vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
-    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
-    vals_color[:,-2] = 0 
-    #normal = plt.Normalize(-4.49, 4.49)
-    #cmap = plt.cm.get_cmap('seismic', 9) 
-    nrows, ncols = std_anom.index.size, std_anom.columns.size
-    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
-    ax = fig.add_subplot(111)
-    ax.axis('off')
-    #do the table
+    # French table
+    temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
+                                        r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
+       
+    year_list[-1] = u'ET'
+    
     header = ax.table(cellText=[['']],
-                          colLabels=['-- NAFO division 3Ps --'],
+                          colLabels=['-- Division 3LNO de l\'OPANO --'],
                           loc='center'
                           )
-    header.set_fontsize(12.5)
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+    header.set_fontsize(13)
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=year_list,
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
+                        bbox=[0, 0, 1, 0.5]
                         )
     # change font color to white where needed:
     the_table.auto_set_font_size(False)
@@ -1872,35 +2388,139 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         cell_text = cell.get_text().get_text()
         if is_number(cell_text) == False:
             pass
-        #elif key[0] == 0: # <--- remove when no years
-        #    pass
+        elif key[0] == 0: #year's row = no color
+            pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('dimgray')
+            cell._text.set_weight('bold')
+        elif (key[0] < 6) & ((vals_color[key[0]-1, key[1]]  <= -1.5) | (vals_color[key[0]-1, key[1]] >= 1.5)) :
             cell._text.set_color('white')
+        elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
+            cell._text.set_color('white')   
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
-            
-    plt.savefig("scorecards_spring_3Ps.png", dpi=300)
-    os.system('convert -trim scorecards_spring_3Ps.png scorecards_spring_3Ps.png')
+        # Bold face % change
+        if key[0] >= 6:
+            cell._text.set_weight('bold')
 
-    # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    plt.savefig("scorecards_spring_3LNO_FR.png", dpi=300)
+    os.system('convert -trim scorecards_spring_3LNO_FR.png scorecards_spring_3LNO_FR.png')
+
+ #  1. - 3Ps -
+    infile0 = 'stats_3Ps_spring_reference.pkl'
+    infile1 = 'stats_3Ps_spring_1.pkl'
+    infile2 = 'stats_3Ps_spring_2.pkl'
+    infile3 = 'stats_3Ps_spring_3.pkl'
+    infile4 = 'stats_3Ps_spring_4.pkl'
+
+    df0 = pd.read_pickle(infile0).Tmean    
+    df1 = pd.read_pickle(infile1).Tmean
+    df2 = pd.read_pickle(infile2).Tmean
+    df3 = pd.read_pickle(infile3).Tmean
+    df4 = pd.read_pickle(infile4).Tmean
+    
+    df = pd.concat([df0, df1, df2, df3, df4], axis=1, keys=['sc0', 'sc1', 'sc2', 'sc3', 'sc4'])
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    df.round(1)
+    
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+
+    # Calculate std anomalies
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+        
+    # Add 4 rows for % change by case
+    std_anom.loc['sc1p'] = (df['sc1'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc2p'] = (df['sc2'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc3p'] = (df['sc3'] - df['sc0']) / df['sc0'] * 100
+    std_anom.loc['sc4p'] = (df['sc4'] - df['sc0']) / df['sc0'] * 100
+    # add mean and std inm both DataFrames
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    
+    # Now by-pass std_anom with bottom T values (keep colors according to std anom)
+    temperatures = std_anom.copy()
+    temperatures.loc['sc0'] = df['sc0']
+    temperatures.loc['sc1'] = df['sc1']
+    temperatures.loc['sc2'] = df['sc2']
+    temperatures.loc['sc3'] = df['sc3']
+    temperatures.loc['sc4'] = df['sc4']
+    # add mean and std inm both DataFrames
+    temperatures['MEAN'] = df_clim.mean(axis=0)
+    temperatures['SD'] = df_clim.std(axis=0)
+    sd1 = (temperatures.loc['sc1p']).std()
+    sd2 = (temperatures.loc['sc2p']).std()
+    sd3 = (temperatures.loc['sc3p']).std()
+    sd4 = (temperatures.loc['sc4p']).std()    
+    temperatures.loc['sc1p']['MEAN'] = np.abs(temperatures.loc['sc1p']).mean()
+    temperatures.loc['sc2p']['MEAN'] = np.abs(temperatures.loc['sc2p']).mean()
+    temperatures.loc['sc3p']['MEAN'] = np.abs(temperatures.loc['sc3p']).mean()
+    temperatures.loc['sc4p']['MEAN'] = np.abs(temperatures.loc['sc4p']).mean()
+    temperatures.loc['sc1p']['SD'] = sd1
+    temperatures.loc['sc2p']['SD'] = sd2
+    temperatures.loc['sc3p']['SD'] = sd3
+    temperatures.loc['sc4p']['SD'] = sd4
+    # Rename columns
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    temperatures.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Rename index
+    std_anom = std_anom.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    temperatures = temperatures.rename({'sc0': r'$\rm T_{bot}~(^{\circ}C)~-~Reference$',
+                                 'sc1': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$',
+                                 'sc2': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$',
+                                 'sc3': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$',
+                                 'sc4': r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$',
+                                 'sc1p': r'Sc. 1 (% change)',
+                                 'sc2p': r'Sc. 2 (% change)',
+                                 'sc3p': r'Sc. 3 (% change)',
+                                 'sc4p': r'Sc. 4 (% change)'
+                                 })
+    
+    # Get text values +  cell color
+    vals = np.around(temperatures.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = np.around(std_anom.values,1)
+    vals_color[vals_color==-0.] = 0.    
+    vals_color[-1,] = vals_color[-1,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[-2,] = vals_color[-2,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-3,] = vals_color[-3,]*.1 # scale down a factor 10 for last 4 rows        
+    vals_color[-4,] = vals_color[-4,]*.1 # scale down a factor 10 for last 4 rows
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+
+    # Start drawing
+    nrows, ncols = temperatures.index.size, temperatures.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
     header = ax.table(cellText=[['']],
-                          colLabels=['-- Division 3Ps de l\'OPANO --'],
+                          colLabels=['-- NAFO division 3Ps --'],
                           loc='center'
                           )
-
     header.set_fontsize(12.5)
-
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=None, 
                         loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
+                        bbox=[0, 0, 1.0, 0.5]
                         )
-    # change font color to white where needed:
     the_table.auto_set_font_size(False)
     the_table.set_fontsize(12.5)
+    # change font color to white where needed:
     table_props = the_table.properties()
     table_cells = table_props['child_artists']
     last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
@@ -1911,16 +2531,82 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
         #elif key[0] == 0:# <--- remove when no years
         #    pass
         elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
+            #print('white')
+            cell._text.set_color('white')
+        elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
             cell._text.set_color('lightgray')
+        # Bold face % change
+        if key[0] >= 5:
+            cell._text.set_weight('bold')
+            
+    plt.savefig("scorecards_spring_3Ps.png", dpi=300)
+    os.system('convert -trim scorecards_spring_3Ps.png scorecards_spring_3Ps.png')
+
+    # French table
+    temperatures = temperatures.rename({r'$\rm T_{bot}~(^{\circ}C)~-~Reference$' :
+                                        r'$\rm T_{fond}~(^{\circ}C)~-~Référence$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~1$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~1$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~2$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~2$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~3$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~3$',
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scenario~4$' :
+                                        r'$\rm T_{bot}~(^{\circ}C)~-~Scénario~4$',
+                                        r'Sc. 1 (% change)' :
+                                        r' Sc. 1 (% changem.)',
+                                        r'Sc. 2 (% change)' :
+                                        r' Sc. 2 (% changem.)',
+                                        r'Sc. 3 (% change)' :
+                                        r' Sc. 3 (% changem.)',
+                                        r'Sc. 4 (% change)' :
+                                        r' Sc. 4 (% changem.)'})
+
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 3Ps de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=temperatures.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('dimgray')
+             cell._text.set_weight('bold')
+        elif (key[0] < 5) & ((vals_color[key[0], key[1]]  <= -1.5) | (vals_color[key[0], key[1]] >= 1.5)) :
+            cell._text.set_color('white')
+        elif (np.float(cell_text) <= -15) | (np.float(cell_text) >= 15) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+        # Bold face % change
+        if key[0] >= 5:
+            cell._text.set_weight('bold')
             
     plt.savefig("scorecards_spring_3Ps_FR.png", dpi=300)
     os.system('convert -trim scorecards_spring_3Ps_FR.png scorecards_spring_3Ps_FR.png')
-
+    
+    
     plt.close('all')
     # English montage
     os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring.png')
