@@ -18,12 +18,20 @@ __version__ = '0.1'
 
 import re
 import pandas as pd
-import pfiles_basics
 import numpy as np
 import time as tt
 import netCDF4 as nc
 import os
 from sys import version_info
+
+def eoh():
+    """End-of-header key
+
+    """
+    # end-of-header key
+    eoh = '-- DATA --'
+
+    return eoh
 
 
 def pfile_variables(filename):
@@ -31,7 +39,7 @@ def pfile_variables(filename):
 
     """
 
-    eoh = pfiles_basics.eoh()
+    eoh = eoh()
 
     # read line by line until finding eoh
     tmp = []
@@ -60,7 +68,7 @@ def pfile_header(filename):
 
     """
 
-    eoh = pfiles_basics.eoh()
+    eoh = eoh()
 
     # Read header
     header = []
@@ -79,7 +87,7 @@ def pfile_to_dataframe(filename):
        columns being the variables
 
     """
-    eoh = pfiles_basics.eoh()
+    eoh = eoh()
     in_header = True
 
     # Read header
