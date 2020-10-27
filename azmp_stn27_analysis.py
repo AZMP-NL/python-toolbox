@@ -8,6 +8,7 @@ Station 27 analysis for CSAS/NAFO ResDocs. This scripts compute:
 
 ** see azmp_stn27.py and azmp_stn27_explore.py for more options and ways to explore the dataset
 
+* note that since Sept. 2020, density, MLD and stratification are calculated in azmp_stn27_density.py
 
 Frederic.Cyr@dfo-mpo.gc.ca - July 2019
 
@@ -46,37 +47,42 @@ french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 # Load pickled data
 df_temp = pd.read_pickle('S27_temperature_monthly.pkl')
 df_sal = pd.read_pickle('S27_salinity_monthly.pkl')
+mld_monthly = pd.read_pickle('S27_MLD_monthly.pkl')
+strat_monthly = pd.read_pickle('S27_stratif_monthly.pkl')
+
 df_temp = df_temp[df_temp.index.year>=1950]
 df_sal = df_sal[df_sal.index.year>=1950]
+mld_monthly = mld_monthly[mld_monthly.index.year>=1950]
+strat_monthly = strat_monthly[strat_monthly.index.year>=1950]
 
 df_temp_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
 df_sal_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
 
-# Compute density
-Z = df_temp.columns
-SP = df_sal.values
-PT = df_temp.values
-SA = gsw.SA_from_SP(SP, Z, -50, 47)
-CT = gsw.CT_from_pt(SA, PT)
-RHO = gsw.rho(SA, CT, Z)
-SIG0 = gsw.sigma0(SA, CT)
-df_rho = pd.DataFrame(RHO, index=df_temp.index, columns=df_temp.columns)
-df_sig = pd.DataFrame(SIG0, index=df_temp.index, columns=df_temp.columns)
+## # Compute density
+## Z = df_temp.columns
+## SP = df_sal.values
+## PT = df_temp.values
+## SA = gsw.SA_from_SP(SP, Z, -50, 47)
+## CT = gsw.CT_from_pt(SA, PT)
+## RHO = gsw.rho(SA, CT, Z)
+## SIG0 = gsw.sigma0(SA, CT)
+## df_rho = pd.DataFrame(RHO, index=df_temp.index, columns=df_temp.columns)
+## df_sig = pd.DataFrame(SIG0, index=df_temp.index, columns=df_temp.columns)
 
-# Compute N2 and MLD
-print('Compute N2 and MLD for every index (make take some time...)')
-N2 = np.full((df_rho.index.size, df_rho.columns.size-1), np.nan)
-MLD = np.full((df_rho.index.size), np.nan)
-for i,idx in enumerate(df_rho.index):     
-        N2_tmp, pmid = gsw.Nsquared(SA[i,:], CT[i,:], Z, 47)
-        N2[i,:] =  N2_tmp
-        N2_tmp[np.where((pmid<=10) | (pmid>=100))] = np.nan
-        if ~np.isnan(N2_tmp).all():
-                MLD[i] = pmid[np.nanargmax(N2_tmp)]
-print('  Done!')
-df_N2 = pd.DataFrame(N2, index=df_temp.index, columns=pmid)
-MLD = pd.Series(MLD, index=df_temp.index)
-MLD.to_pickle('S27_MLD_monthly.pkl')
+## # Compute N2 and MLD
+## print('Compute N2 and MLD for every index (make take some time...)')
+## N2 = np.full((df_rho.index.size, df_rho.columns.size-1), np.nan)
+## MLD = np.full((df_rho.index.size), np.nan)
+## for i,idx in enumerate(df_rho.index):     
+##         N2_tmp, pmid = gsw.Nsquared(SA[i,:], CT[i,:], Z, 47)
+##         N2[i,:] =  N2_tmp
+##         N2_tmp[np.where((pmid<=10) | (pmid>=100))] = np.nan
+##         if ~np.isnan(N2_tmp).all():
+##                 MLD[i] = pmid[np.nanargmax(N2_tmp)]
+## print('  Done!')
+## df_N2 = pd.DataFrame(N2, index=df_temp.index, columns=pmid)
+## MLD = pd.Series(MLD, index=df_temp.index)
+## MLD.to_pickle('S27_MLD_monthly.pkl')
 
 
 
@@ -450,10 +456,10 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 ## ---- 3. Stratification ---- ##
-rho_5m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==5)))]
-rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==50)))]
-strat_monthly = (rho_50m-rho_5m)/45
-strat_monthly.to_pickle('S27_stratif_monthly.pkl')
+## rho_5m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==5)))]
+## rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==50)))]
+## strat_monthly = (rho_50m-rho_5m)/45
+## strat_monthly.to_pickle('S27_stratif_monthly.pkl')
     
 # New monthly anom
 #stack months
@@ -572,7 +578,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 ## ---- 4. MLD ---- ##
-mld_monthly = MLD
+#mld_monthly = MLD
 #stack months
 mld = mld_monthly
 mld_stack = mld.groupby([(mld.index.year),(mld.index.month)]).mean()

@@ -345,7 +345,7 @@ df_NLu['pHflag']= np.NaN
 df_NLu = df_NLu.loc[:,variables]
 
 ## 3. --- IML data
-# 2014 very different format, thus will be taken from Biochem (see above)
+# 3.1 --- all years except 2019 (2014 very different format, thus will be taken from Biochem, see above)
 df2015 = pd.read_excel(os.path.join(dataset_path2, 'AZMP_OA_IML2015.xlsx'), encoding='utf-8')
 df2015['CTD Station (nom/no)'] = df2015['CTD Station (nom/no)'].replace(7, 'TESL2')
 df2015['CTD Station (nom/no)'] = df2015['CTD Station (nom/no)'].replace(16, 'TSI3')
@@ -367,7 +367,7 @@ df2018s = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018s.xlsx'), enc
 df2018s = df2018s.rename(columns={'CTD Mission (nom)' : 'Mission  (nom)'})
 df2018f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018f.xlsx'), encoding='utf-8')
 
-# 2019 data
+## 3.2 --- 2019 data
 xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
 df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
 df2019f = pd.read_excel(xls, 'Fall 2019', header=1)
@@ -453,27 +453,12 @@ df2019 = df2019.rename(columns={'Unnamed: 65' : ' WCa out '})
 df2019 = df2019.rename(columns={'Unnamed: 66' : ' WAr out '})
 df2019 = df2019.rename(columns={'Unnamed: 67' : ' Strate '})
 
-# Station Riki
-xls_riki = pd.ExcelFile(os.path.join(dataset_path,'StationRimouski (2013-2018)(GIBBB).xlsx'))
-riki2013 = pd.read_excel(xls_riki, 'Rimouski 2013', header=1)
-riki2014 = pd.read_excel(xls_riki, 'Rimouski 2014', header=1)
-riki2015 = pd.read_excel(xls_riki, 'Rimouski 2015', header=1)
-riki2017 = pd.read_excel(xls_riki, 'Rimouski 2017', header=1)
-riki2018 = pd.read_excel(xls_riki, 'Rimouski 2018', header=1)
+## 3.3 --- Station Riki
+##
+# HERE!! Need to load result from cc_azmp_riki.py
+##
 
-
-df2019s = df2019s.drop(0)
-df2019f = df2019f.drop(0)
-# merge 2 sheets
-df2019f = df2019f.rename(columns={'PSAL_BS' : 'psal_bs'})
-df2019f = df2019f.rename(columns={'oxy_02' : 'OXY_02'})
-df2019f = df2019f.rename(columns={'Q_oxy' : 'Q_OXY'})
-df2019f = df2019f.rename(columns={'oxy_02.1' : 'OXY_02.1'})
-df2019f = df2019f.rename(columns={'Q_oxy.1' : 'Q_OXY.1'})
-df2019 = pd.concat([df2019s, df2019f])
-# clean un-necessary columns
-
-# Merge all 
+## 3.4 --- Merge all 
 df_IML = pd.concat([df2019, df2018f, df2018s, df2018, df2017f, df2017s, df2017, df2016f, df2016, df2015, df2015f], axis=0, sort=False)
 df_IML = df_IML.reset_index()
 

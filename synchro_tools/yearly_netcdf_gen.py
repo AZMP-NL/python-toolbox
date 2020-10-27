@@ -10,7 +10,7 @@ Frederic.Cyr@dfo-mpo.gc.ca, October 2017
 
 # NOTE: azmp*.list were generated with bash command (folder ~/research/AZMP_database):
 # $ for i in `seq 1950 2016`; do ls data/*.p$i > azmp$i.list; done
-# (this might caus problems when list too long...)
+# (this might cause problems when list too long...)
 
 import pfile_tools as p
 import glob
@@ -22,7 +22,7 @@ os.system('echo " --------- New run ------ " >> .netcdfgen_log.txt')
 
 for yearfile in lists:
     outfile = os.path.splitext(yearfile)[0] + '.nc'
-    p.pfiles_to_netcdf(yearfile, outfile, zbin=1, zmax=1500)
+    p.pfiles_to_netcdf(yearfile, outfile, zbin=5, zmax=2000)
     expr_print = ' -> ' + outfile + ' done!'
     print(expr_print)
     expr = 'mv ' + yearfile + ' ./list_done'

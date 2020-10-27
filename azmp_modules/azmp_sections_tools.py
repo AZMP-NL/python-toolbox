@@ -412,7 +412,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
 
     A full usage example:
     import azmp_sections_tools as azst
-    nc_file = '/home/cyrf0006/data/dev_database/netCDF/201*.nc'
+    nc_file = '/home/cyrf0006/data/dev_database/netCDF/20*.nc'
     azst.extract_section_casts(nc_file, section_name='SI', nc_outfile='SI.nc')
     
     Frederic.Cyr@dfo-mpo.gc.ca
@@ -661,6 +661,10 @@ def btl_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400):
         CMAP = cmocean.cm.thermal
     elif VAR == 'SIO':
         v = np.arange(0, 20, 1)
+        v_anom = np.linspace(-5, 5, 11)
+        CMAP = cmocean.cm.thermal
+    elif VAR == 'sigmat':
+        v = np.arange(25, 27.6, .1)
         v_anom = np.linspace(-5, 5, 11)
         CMAP = cmocean.cm.thermal
     else:

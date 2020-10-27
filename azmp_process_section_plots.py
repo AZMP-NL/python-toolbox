@@ -46,6 +46,10 @@ sections = ['SI', 'BB', 'FC', 'SEGB']
 seasons = ['spring', 'summer', 'fall']
 variables = ['temperature', 'salinity']
 
+## sections = ['SI']
+## seasons = ['fall']
+## variables = ['temperature', 'salinity']
+
 for year in years:
     for section in sections:
         for season in seasons:
@@ -60,6 +64,7 @@ for year in years:
 
 
 
+            
  # Bottles sections
 years = np.arange(1999,2019)
 sections = ['SEGB']

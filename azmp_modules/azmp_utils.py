@@ -1309,7 +1309,225 @@ def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
-        ds = ds.sel(level=ds['level']<zmax)
+        # Vertical limitation (for surface; or CIL, for example)
+        ds = ds.sel(level=ds['level']<=zmax*2) #double the search for zmax (restrict later)
+        # Vertical binning (on dataArray; more appropriate here
+        da_temp = ds['temperature']
+        lons = np.array(ds.longitude)
+        lats = np.array(ds.latitude)
+        bins = np.arange(dz/2.0, ds.level.max(), dz)
+        da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
+        #To Pandas Dataframe
+        df_temp = da_temp.to_pandas()
+        df_temp.columns = bins[0:-1] #rename columns with 'bins'
+        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        df_temp = df_temp.dropna(axis=0,how='all')
+        lons = np.delete(lons,idx_empty_rows)
+        lats = np.delete(lats,idx_empty_rows)
+        del ds, da_temp
+        print(' -> Done!')        
+
+        ## --- fill 3D cube --- ##  
+        print('Fill regular cube')
+        z = df_temp.columns.values
+        V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
+
+        # Aggregate on regular grid
+        for i, xx in enumerate(lon_reg):
+            for j, yy in enumerate(lat_reg):    
+                idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
+                tmp = np.array(df_temp.iloc[idx].mean(axis=0))
+                idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
+                if np.size(idx_good)==1:
+                    V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
+                elif np.size(idx_good)>1: # vertical interpolation between pts
+                    interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
+                    idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                    V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
+
+
+        # horiozntal interpolation at each depth
+        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+        lon_vec = np.reshape(lon_grid, lon_grid.size)
+        lat_vec = np.reshape(lat_grid, lat_grid.size)
+        for k, zz in enumerate(z):
+            # Meshgrid 1D data (after removing NaNs)
+            tmp_grid = V[:,:,k]
+            tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
+            #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
+            # griddata (after removing nans)
+            idx_good = np.argwhere(~np.isnan(tmp_vec))
+            if idx_good.size>10: # will ignore depth where no data exist
+                LN = np.squeeze(lon_vec[idx_good])
+                LT = np.squeeze(lat_vec[idx_good])
+                TT = np.squeeze(tmp_vec[idx_good])
+                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+                V[:,:,k] = zi
+            else:
+                continue
+        print(' -> Done!')    
+
+        # mask using bathymetry
+        if zmin>10: # this is CIL
+             for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    if Zitp[j,i] > -np.array([zmin, zmax]).mean(): # remove shallower than depth range ave
+                        V[j,i,:] = np.nan           
+        else: # this is SST            
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    if Zitp[j,i] > -10: # remove shallower than 10m
+                        V[j,i,:] = np.nan
+
+        # average surface obs
+        print('Restricting depth range: ' + str(zmin) + '-' + str(zmax)+'m')
+        idx = np.where([(z>=zmin) & (z<=zmax)])[1]
+        Tsurf = np.nanmean(V[:,:,idx], 2)
+
+        # Save data for further use
+        if np.size(h5_outputfile):
+            h5f = h5py.File(h5_outputfile, 'w')
+            h5f.create_dataset('Tsurf', data=Tsurf)
+            h5f.create_dataset('lon_reg', data=lon_reg)
+            h5f.create_dataset('lat_reg', data=lat_reg)
+            h5f.create_dataset('lon_orig', data=lons)
+            h5f.create_dataset('lat_orig', data=lats)
+            h5f.create_dataset('Zitp', data=Zitp)
+            h5f.create_dataset('z', data=z)
+            h5f.close()
+
+    # Fill dict for output
+    dict = {}
+    dict['Tsurf'] = Tsurf
+    dict['bathy'] = Zitp
+    dict['lon_reg'] = lon_reg
+    dict['lat_reg'] = lat_reg
+    dict['lon_orig'] = lons
+    dict['lat_orig'] = lats
+    
+    return dict
+
+def get_cilT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[5, 500], dz=5, h5_outputfile=[]):
+    """ Generate and returns the climatological surface temperature map from ship observations.
+
+    If the pickled filename exists, the function will by-pass the processing and return only saved climatology.
+    
+    Usage ex:
+    dc = .1
+    import numpy as np
+    import azmp_utils as azu
+    lonLims = [-60, -43] # fish_hab region
+    latLims = [39, 56]
+    lonLims = [-60, -45] # FC AZMP report region
+    latLims = [42, 56]
+    lonLims = [-63, -45] # include 2H in above
+    latLims = [42, 58]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    azu.get_surfT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Tsurf_climato_fall_0.10.h5') 
+
+    OR
+
+    azu.get_cil_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[1980, 2019], season='fall', h5_outputfile='Tsurf_climato_fall_0.10_1980_2019.h5')
+    
+    """
+
+    # Because the code is trying to divide by zero
+    # (https://stackoverflow.com/questions/14861891/runtimewarning-invalid-value-encountered-in-divide)
+    np.seterr(divide='ignore', invalid='ignore')
+
+    ## ---- Check if H5 file exists ---- ##        
+    if os.path.isfile(h5_outputfile):
+        print(h5_outputfile + ' exist! Reading directly')
+        h5f = h5py.File(h5_outputfile,'r')
+        Tsurf = h5f['Tsurf'][:]
+        lon_reg = h5f['lon_reg'][:]
+        lat_reg = h5f['lat_reg'][:]
+        lon_orig = h5f['lon_orig'][:]
+        lat_orig = h5f['lat_orig'][:]
+        Zitp = h5f['Zitp'][:]
+        h5f.close()
+
+    else:
+
+        ## ---- Region parameters ---- ##
+        #    add_path('/home/cyrf0006/data/GEBCO/')
+        dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+        lonLims = [LON_REG[0], LON_REG[-1]]
+        latLims = [LAT_REG[0], LAT_REG[-1]]
+        zmin = zlims[0] # do try to compute bottom temp above that depth
+        zmax = zlims[1] # do try to compute bottom temp below that depth
+        lon_reg = LON_REG
+        lat_reg = LAT_REG
+        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+        dc = np.round(np.diff(lon_reg[0:2]), 3)[0]
+
+        ## ---- Bathymetry ---- ####
+        print('Load and grid bathymetry')
+        # Load data
+        dataset = netCDF4.Dataset(dataFile)
+        # Extract variables
+        #x = dataset.variables['x_range'] 
+        #y = dataset.variables['y_range']
+        x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+        y = [-89-59.75/60, 89+59.75/60]
+        spacing = dataset.variables['spacing']
+        # Compute Lat/Lon
+        nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+        ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+        lon = np.linspace(x[0],x[-1],nx)
+        lat = np.linspace(y[0],y[-1],ny)
+        # interpolate data on regular grid (temperature grid)
+        # Reshape data
+        zz = dataset.variables['z']
+        Z = zz[:].reshape(ny, nx)
+        Z = np.flipud(Z) # <------------ important!!!
+        # Reduce data according to Region params
+        idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+        idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+        Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+        lon = lon[idx_lon[0]]
+        lat = lat[idx_lat[0]]
+        # interpolate data on regular grid (temperature grid)
+        lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
+        lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
+        lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
+        z_vec = np.reshape(Z, Z.size)
+        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+        del Z, lon, lat, zz, dataset
+        print(' -> Done!')
+
+        ## ---- Get CTD data --- ##
+        print('Get historical data')
+        ds = xr.open_mfdataset(INFILES)
+        # Selection of a subset region
+        ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
+        ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
+        # Select time (save several options here)
+        if season == 'summer':
+            #ds = ds.sel(time=ds['time.season']=='JJA')
+            ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
+        elif season == 'spring':
+            #ds = ds.sel(time=ds['time.season']=='MAM')
+            ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
+        elif season == 'fall':
+            #ds = ds.sel(time=ds['time.season']=='SON')
+            ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
+        else:
+            print('!! no season specified, used them all! !!')
+
+        # Remome problematic datasets
+        print('!!Remove MEDBA data!!')
+        print('  ---> I Should be improme because I remove good data!!!!')
+        ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+        ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+ 
+            
+        # Time period for climatology
+        ds = ds.sel(time=ds['time.year']>=year_lims[0])
+        ds = ds.sel(time=ds['time.year']<=year_lims[1])
+        # Vertical limitation (for surface; or CIL, for example)
+        ds = ds.sel(level=ds['level']<=zmax) #double the search for zmax (restrict later)
         # Vertical binning (on dataArray; more appropriate here
         da_temp = ds['temperature']
         lons = np.array(ds.longitude)
@@ -1369,17 +1587,23 @@ def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season
         # mask using bathymetry
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
+                
                 if Zitp[j,i] > -10: # remove shallower than 10m
                     V[j,i,:] = np.nan
-
-        # average surface obs
-        print('Getting bottom Temp. (5-20m is default)')    
-        Tsurf = V.mean(2)
+                    
+        # Find CIL and average
+        for i, xx in enumerate(lon_reg):
+            for j,yy in enumerate(lat_reg):
+                for k, zz in enumerate(z):
+                    if V[j,i,k] > 0: # remove all temp >0
+                        V[j,i,k] = np.nan
+                                        
+        Tcil = np.nanmean(V, 2)
 
         # Save data for further use
         if np.size(h5_outputfile):
             h5f = h5py.File(h5_outputfile, 'w')
-            h5f.create_dataset('Tsurf', data=Tsurf)
+            h5f.create_dataset('Tcil', data=Tcil)
             h5f.create_dataset('lon_reg', data=lon_reg)
             h5f.create_dataset('lat_reg', data=lat_reg)
             h5f.create_dataset('lon_orig', data=lons)
@@ -1390,7 +1614,7 @@ def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season
 
     # Fill dict for output
     dict = {}
-    dict['Tsurf'] = Tsurf
+    dict['Tcil'] = Tcil
     dict['bathy'] = Zitp
     dict['lon_reg'] = lon_reg
     dict['lat_reg'] = lat_reg
@@ -1398,6 +1622,7 @@ def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season
     dict['lat_orig'] = lats
     
     return dict
+
 
 def bottomT_quickplot(h5_outputfile, figure_file=[]):
     """ Using h5 file created by get_bottomT_climato, this function plots the bottom temperature using basemap.

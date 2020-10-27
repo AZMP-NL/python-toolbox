@@ -47,6 +47,8 @@ decim_scale = 4
 stationFile = '/home/cyrf0006/github/AZMP-NL/utils/Headlands_sites.xlsx'
 fig_name = 'map_headlands_sites.png'
 v = np.linspace(0, 500, 11)
+newStationFile = '/home/cyrf0006/AZMP/Headlands/LTTMPup_stations_20200928.csv'
+
 
 ## ---- Bathymetry ---- ##
 print('Load and grid bathymetry')
@@ -94,6 +96,7 @@ else:
 
 ## ---- Station info ---- ##
 df = pd.read_excel(stationFile)
+dfn = pd.read_csv(newStationFile)
 
 ## ---- plot ---- ##
 #plt.title('Standard air temperature sites')
@@ -122,13 +125,58 @@ lats = df.Lat.values
 lons = df.Lon.values
 ax.plot(lons, lats, '.', color='palevioletred', transform=ccrs.PlateCarree(), markersize=15, zorder=10)
 
-# add text
+# Plot other sites
+df_smart = dfn[dfn.comments.str.contains('smartAtlantic')]
+ax.plot(df_smart['Longitude(DecDeg)'], df_smart['Latitude(DecDeg)'], '.', color='green', transform=ccrs.PlateCarree(), markersize=15, zorder=10)
+
+df_new = dfn[dfn.comments.str.contains('new site')]
+ax.plot(df_new['Longitude(DecDeg)'], df_new['Latitude(DecDeg)'], '.', color='cyan', transform=ccrs.PlateCarree(), markersize=15, zorder=10)
+
+df_aq = dfn[dfn.comments.str.contains('Aquaculture')]
+ax.plot(df_aq['Longitude(DecDeg)'], df_aq['Latitude(DecDeg)'], '.', color='salmon', transform=ccrs.PlateCarree(), markersize=15, zorder=10)
+
+df_chs = dfn[dfn.comments.str.contains('CHS')]
+ax.plot(df_chs['Longitude(DecDeg)'], df_chs['Latitude(DecDeg)'], '.', color='red', transform=ccrs.PlateCarree(), markersize=15, zorder=10)
+
+# add text Headlands
 for idx, name in enumerate(sites):
     if (name == "Bristol's Hope") | (name == "Upper Gullies") | (name == "Comfort Cove") | (name == "Cape Freels") | (name == "Stock Cove"):
         ax.text(lons[idx], lats[idx], name+' ', horizontalalignment='right', verticalalignment='top', fontsize=10, color='palevioletred', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
     else:
         ax.text(lons[idx], lats[idx], name+' ', horizontalalignment='right', verticalalignment='bottom', fontsize=10, color='palevioletred', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
 
+# Station name SmartAtl.
+for idx, name in enumerate(df_smart.Station):
+    if (name == "St Johns"):
+        ax.text(df_smart['Longitude(DecDeg)'].iloc[idx], df_smart['Latitude(DecDeg)'].iloc[idx], ' '+name, horizontalalignment='left', verticalalignment='bottom', fontsize=10, color='green', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+    else:
+        ax.text(df_smart['Longitude(DecDeg)'].iloc[idx], df_smart['Latitude(DecDeg)'].iloc[idx], name+' ', horizontalalignment='right', verticalalignment='top', fontsize=10, color='green', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+  
+# Station name Aquaculture.
+for idx, name in enumerate(df_aq.Station):
+    ax.text(df_aq['Longitude(DecDeg)'].iloc[idx], df_aq['Latitude(DecDeg)'].iloc[idx], name+' ', horizontalalignment='right', verticalalignment='bottom', fontsize=10, color='salmon', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+
+# Station name New sites.
+for idx, name in enumerate(df_new.Station):
+    if (name == "Port au Choix"):
+        ax.text(df_new['Longitude(DecDeg)'].iloc[idx], df_new['Latitude(DecDeg)'].iloc[idx], ' '+name, horizontalalignment='left', verticalalignment='center', fontsize=10, color='cyan', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+    else:
+        ax.text(df_new['Longitude(DecDeg)'].iloc[idx], df_new['Latitude(DecDeg)'].iloc[idx], name+'  ', horizontalalignment='right', verticalalignment='center', fontsize=10, color='cyan', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+    
+# Station name CHS
+for idx, name in enumerate(df_chs.Station):
+    ax.text(df_chs['Longitude(DecDeg)'].iloc[idx], df_chs['Latitude(DecDeg)'].iloc[idx], name+'  ', horizontalalignment='right', verticalalignment='top', fontsize=10, color='red', fontweight='bold', transform=ccrs.PlateCarree(), zorder=10)
+
+    
+# Custom legend
+import matplotlib.lines as mlines
+legend_elements = [mlines.Line2D([],[], marker='.',linestyle='None', color='palevioletred', markersize=15, label='Headlands'),
+                   mlines.Line2D([],[], marker='.',linestyle='None', color='green', markersize=15, label='Smart Atl.'),
+                   mlines.Line2D([],[], marker='.',linestyle='None', color='salmon', markersize=15, label='Aquaculture'),
+                   mlines.Line2D([],[], marker='.',linestyle='None', color='red', markersize=15, label='CHS'),
+                   mlines.Line2D([],[], marker='.',linestyle='None', color='cyan', markersize=15, label='New sites')]
+ax.legend(handles=legend_elements)
+      
 # Save    
 fig.set_size_inches(w=10, h=12)
 fig.savefig(fig_name, dpi=200)

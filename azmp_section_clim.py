@@ -22,7 +22,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'BI'
+SECTION = 'SI'
 SEASON = 'summer'
 CLIM_YEAR = [1981, 2010]
 dlat = 2 # how far from station we search

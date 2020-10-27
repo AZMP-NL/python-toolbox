@@ -1,3 +1,7 @@
+'''
+General script to generate btl section plots
+'''
+
 ## ----------- SECTION PLOT ---------------- ##
 import numpy as np 
 import azmp_sections_tools as azst 

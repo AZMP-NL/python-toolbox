@@ -29,9 +29,9 @@ def eoh():
 
     """
     # end-of-header key
-    eoh = '-- DATA --'
+    feoh = '-- DATA --'
 
-    return eoh
+    return feoh
 
 
 def pfile_variables(filename):
@@ -39,14 +39,14 @@ def pfile_variables(filename):
 
     """
 
-    eoh = eoh()
+    feoh = eoh()
 
     # read line by line until finding eoh
     tmp = []
     with open(filename, 'r', encoding="utf8", errors='ignore') as td:
         for line in td:
         
-            if re.match(eoh, line): # end-of-header            
+            if re.match(feoh, line): # end-of-header            
                 break
             else:
                 tmp.append(line)
@@ -68,14 +68,14 @@ def pfile_header(filename):
 
     """
 
-    eoh = eoh()
+    feoh = eoh()
 
     # Read header
     header = []
     with open(filename, 'r', encoding="utf8", errors='ignore') as td:
         for line in td:
         
-            if re.match(eoh, line): # end-of-header            
+            if re.match(feoh, line): # end-of-header            
                 break
             else:
                 header.append(line)
@@ -87,7 +87,7 @@ def pfile_to_dataframe(filename):
        columns being the variables
 
     """
-    eoh = eoh()
+    feoh = eoh()
     in_header = True
 
     # Read header
@@ -96,7 +96,7 @@ def pfile_to_dataframe(filename):
     with open(filename, 'r', encoding="utf8", errors='ignore') as td:
         for line in td:
         
-            if re.match(eoh, line): # end-of-header            
+            if re.match(feoh, line): # end-of-header            
                 in_header = False
                 continue # ignore line
             elif in_header: # read header
@@ -400,7 +400,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         if 'flor' in df.columns:
             X = np.array(df['flor'])
             Flist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
-        if 'flor-ug/l' in df.columns:
+        elif 'flor-ug/l' in df.columns:
             X = np.array(df['flor-ug/l'])
             Flist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
@@ -410,7 +410,7 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         if 'oxy' in df.columns:
             X = np.array(df['oxy'])
             O2list.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
-        if 'oxy-umol/l' in df.columns:
+        elif 'oxy-umol/l' in df.columns:
             X = np.array(df['oxy-umol/l'])
             O2list.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
