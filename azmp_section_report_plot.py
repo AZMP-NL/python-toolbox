@@ -21,11 +21,12 @@ import cmocean
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-VAR = 'sigma-t'
+VAR = 'temperature'
 SECTION = 'SI'
 SEASON = 'summer'
-YEAR = 2019
-STATION_BASED=True
+YEAR = 1990
+STATION_BASED=False
+ZMAX = 500
 
 # derived parameters
 if VAR == 'temperature':
@@ -76,7 +77,7 @@ if df_section.size == 0:
 else:
 
     ## ---- Get climatology ---- ## 
-    clim_name = 'df_' + VAR + '_' + SECTION + '_' + SEASON + '_clim.pkl' 
+    clim_name = '/home/cyrf0006/AZMP/state_reports/sections_plots/df_' + VAR + '_' + SECTION + '_' + SEASON + '_clim.pkl' 
     df_clim = pd.read_pickle(clim_name)
     # Update index to add distance (in addition to existing station name)    
     df_clim.index = df_section_itp.loc[df_clim.index].index
@@ -92,6 +93,8 @@ else:
     #df_section = df_section.reset_index(level=0, drop=True)
     # drop empty columns
     df_anom.dropna(how='all', inplace=True)
+    distance = df_section.index.droplevel(0)                                   
+
     
     ## ---- plot Figure ---- ##
     XLIM = df_section_itp.index[-1][1]
@@ -101,12 +104,14 @@ else:
     c = plt.contourf(df_section.index.droplevel(0), df_section.columns, df_section.T, v, cmap=CMAP, extend='max')
     if VAR == 'temperature':
         c_cil_itp = plt.contour(df_section.index.droplevel(0), df_section.columns, df_section.T, [0,], colors='k', linewidths=2)
-    ax.set_ylim([0, 1500])
+    ax.set_ylim([0, ZMAX])
     ax.set_xlim([0,  XLIM])
     ax.set_ylabel('Depth (m)', fontWeight = 'bold')
     ax.invert_yaxis()
-    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
     ax.add_patch(Bgon)
+    for i in range(0,len(distance)):
+        plt.plot(np.array([distance[i], distance[i]]), np.array([0, ZMAX]), '--k', linewidth=0.5, zorder=5)   
     plt.colorbar(c)
     ax.xaxis.label.set_visible(False)
     ax.tick_params(labelbottom='off')
@@ -117,11 +122,11 @@ else:
     c = plt.contourf(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, v, cmap=CMAP, extend='max')
     if VAR == 'temperature':
         c_cil_itp = plt.contour(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, [0,], colors='k', linewidths=2)
-    ax2.set_ylim([0, 1500])
+    ax2.set_ylim([0, ZMAX])
     ax2.set_xlim([0,  XLIM])
     ax2.set_ylabel('Depth (m)', fontWeight = 'bold')
     ax2.invert_yaxis()
-    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1)
     ax2.add_patch(Bgon)
     plt.colorbar(c)
     ax2.xaxis.label.set_visible(False)
@@ -133,12 +138,12 @@ else:
     # ax3
     ax3 = plt.subplot2grid((3, 1), (2, 0))
     c = plt.contourf(df_anom.index, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
-    ax3.set_ylim([0, 1500])
+    ax3.set_ylim([0, ZMAX])
     ax3.set_xlim([0,  XLIM])
     ax3.set_ylabel('Depth (m)', fontWeight = 'bold')
     ax3.set_xlabel('Distance (km)', fontWeight = 'bold')
     ax3.invert_yaxis()
-    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1)
     ax3.add_patch(Bgon)
     plt.colorbar(c)
     ax3.set_title(r'Anomaly')

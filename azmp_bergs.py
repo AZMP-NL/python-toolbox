@@ -22,9 +22,9 @@ import os
 import seaborn as sns
  
 # Adjust fontsize/weight
-font = {'family' : 'normal',
+font = {'family' : 'sans-serif',
         'weight' : 'normal',
-        'size'   : 10}
+        'size'   : 14}
 plt.rc('font', **font)
 
 clim_year = [1981, 2010]
@@ -120,3 +120,61 @@ ax.set_ylabel('Nombre d\'icebergs')
 fig_name = 'bergs_annual_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+
+## ---- plot annual normalized (with scorecards) ---- ##
+# preamble
+from matplotlib.colors import from_levels_and_colors
+# Build the colormap
+vmin = -3.49
+vmax = 3.49
+midpoint = 0
+levels = np.linspace(vmin, vmax, 15)
+midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+normal = plt.Normalize(-3.49, 3.49)
+reds = plt.cm.Reds(np.linspace(0,1, num=7))
+blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+whites = [(1,1,1,1)]*2
+colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+# Common parameters
+hcell, wcell = 0.5, 0.6
+hpad, wpad = 0, 0
+
+     
+fig, ax = plt.subplots() 
+ax.bar(df_annual.index, df_annual.values, width)
+ax.set_ylabel('Counts')
+plt.xlim([1899.5, 2019.5])
+plt.grid()
+ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
+
+std_anom = (df_annual - df_annual_clim.mean()) / df_annual_clim.std()
+
+ax.set_title('Annual icebergs count')
+colors = cmap(normal(std_anom.values*-1))
+cell_text = [std_anom.values.round(1)]
+the_table = ax.table(cellText=cell_text,
+        rowLabels=['Icebergs subindex'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.1, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(6)
+
+for key, cell in the_table.get_celld().items():
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    else:
+        cell._text.set_rotation(90)
+
+fig.set_size_inches(w=13,h=8)
+fig_name = 'icebergs_climate_index.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)

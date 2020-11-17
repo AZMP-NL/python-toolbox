@@ -506,9 +506,9 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
 
     ## ---- Get this year's section ---- ## 
     df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR)
-    if df_section_itp.dropna(how='all', axis=0).size == 0: # empty return
-        return
 
+    #if df_section_itp.dropna(how='all', axis=0).size == 0: # Not sure why this is needed...
+    #    return
     # Use itp or station-based definition
     if STATION_BASED:
         df_section = df_section_stn
@@ -516,10 +516,11 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         df_section = df_section_itp
 
     # In case df_section only contains NaNs..
-    df_section.dropna(axis=0,how='all')  
+    df_section.dropna(axis=0,how='all', inplace=True)  
     if df_section.size == 0:
         print(' !!! Empty section [return None] !!!')
-        return None    
+        return None
+
     ## ---- Get climatology ---- ## 
     clim_name = 'df_' + VAR + '_' + SECTION + '_' + SEASON + '_clim.pkl' 
     df_clim = pd.read_pickle(clim_name)

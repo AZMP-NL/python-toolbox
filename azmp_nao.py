@@ -96,10 +96,10 @@ df_winter.to_pickle('NAO_winter.pkl')
 df_summer.to_pickle('NAO_summer.pkl')
 
 # Remove 2020 for 2019 ResDoc
-df_winter.loc[2020]=np.nan
+#df_winter.loc[2020]=np.nan
 
 ## ## ---- plot winter NAO bar plots ---- ##
-#df_winter[df_winter.index==2019]=np.nan 
+df_winter[df_winter.index==2020]=np.nan 
 df1 = df_winter[df_winter>0]
 df2 = df_winter[df_winter<0]
 
@@ -111,14 +111,19 @@ width = .9
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
 #p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.5, color='white')
-plt.ylabel('NAO index')
+plt.ylabel('NAO subindex')
 plt.title('Winter NAO average (DJFM)')
+ticks = plt.gca().xaxis.get_ticklocs()
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.xlim([1950, 2020])
 plt.grid()
 fig.set_size_inches(w=15,h=9)
 fig_name = 'NAO_winter_1950-2019.png'
-plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+#plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
-os.system('convert -trim ' + fig_name + ' ' + fig_name)
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+
+keyboard
 
 # French Figure
 fig = plt.figure(4)
@@ -131,7 +136,7 @@ plt.ylabel('indice ONA')
 plt.title('Oscillation Nord-Atlantique hivernale (DJFM)')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'NAO_winter_1950-2019_FR.png'
+fig_name = 'NAO_winter_1950-2020_FR.png'
 plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

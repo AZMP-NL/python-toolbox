@@ -273,6 +273,37 @@ def get_NLshelf(infile):
   
     return A
 
+def get_ice_regions():
+    """ Will generate a dict with Galbraiths ice region shapes.
+    Example to access info:
+    In [14]: dict['NFLD']['lat']
+    Out[14]: [55.33, 55.33, 52.25, 52.25]
+
+    """
+
+    # NLab
+    xlon = [-64.67084639498432, -62.2, -55, -55, -64.67084639498432]
+    xlat = [60.5, 56.3333, 56.3333, 60.5, 60.5]
+    NLab = {'lat' : xlat, 'lon' : xlon}
+
+    # SLab
+    xlon = [-56, -56, -58.225, -60.15, -61.5, -62.2, -40, -40, -56]
+    xlat = [52.25, 53.383, 54.3333, 54.3333, 56.0, 56.3333, 56.3333, 52.25, 52.25]
+    SLab = {'lat' : xlat, 'lon' : xlon}
+
+    # Nfld
+    xlon = [-55, -55, -57.1, -56, -55.4166, -55.4166, -40, -40, -55]
+    xlat = [43, 48, 49.7, 51.5, 51.5833, 52.25, 52.25, 43, 43]
+    Nfld = {'lat' : xlat, 'lon' : xlon}
+
+               
+    dict = {}
+    dict['NLab'] = NLab
+    dict['SLab'] = SLab
+    dict['Nfld'] = Nfld
+
+    return dict
+
 
 def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[10, 1000], dz=5, h5_outputfile=[]):
     """ Generate and returns the climatological bottom temperature map.
