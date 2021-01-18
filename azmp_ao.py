@@ -70,7 +70,7 @@ plt.ylabel('AO index')
 plt.title('Annual AO average')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'AO_1950-2019.png'
+fig_name = 'AO_1950-2020.png'
 plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

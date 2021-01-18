@@ -401,7 +401,7 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
     return None
 
 
-def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], nc_outfile='out.nc'):
+def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], nc_outfile='out.nc', STATION_BASED=True):
     """
     To extract hydrographic data from a certain section.
     [Menu to be finished]
@@ -414,9 +414,16 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
     import azmp_sections_tools as azst
     nc_file = '/home/cyrf0006/data/dev_database/netCDF/20*.nc'
     azst.extract_section_casts(nc_file, section_name='SI', nc_outfile='SI.nc')
+
+    Nov. 2020 - Added the potential to provide non-station based searching.
+    Example:
+    import azmp_sections_tools as azst
+    nc_file = '/home/cyrf0006/data/dev_database/netCDF/*.nc'
+    azst.extract_section_casts(nc_file, section_name='SI', nc_outfile='SI_all.nc', STATION_BASED=False)
     
     Frederic.Cyr@dfo-mpo.gc.ca
-    December 2018    
+    Created: December 2018
+    Revision: November 2020
     
     """
     # Open netCDF file using xarray
@@ -427,27 +434,47 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
     print('  ---> I Should be improme because I remove good data!!!!')
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
     ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
-    
-    # Read unique station names from section file
-    df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
-    df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
-    df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
-    df_stn = df_stn.dropna()
-    df_stn = df_stn[df_stn.STATION.str.contains(section_name)]
-    df_stn = df_stn.reset_index(drop=True)
-    stn_list = df_stn.STATION.values
 
-    # loop on stations and append datasets in a list
-    datasets = []
-    for stn in stn_list:
-        ds_section = ds.where(ds.comments == stn, drop=True)  
-        datasets.append(ds_section)
-
-    # concatenate the list of datasets
-    ds_combined = xr.concat(datasets, dim='time')
-
-    # save combined dataset in NetCDF
-    ds_combined.to_netcdf(nc_outfile)
+    if STATION_BASED:
+        print('Station-based search (will only work since year ~2000)')
+        # Read unique station names from section file
+        df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+        df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
+        df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
+        df_stn = df_stn.dropna()
+        df_stn = df_stn[df_stn.STATION.str.contains(section_name)]
+        df_stn = df_stn.reset_index(drop=True)
+        stn_list = df_stn.STATION.values
+        # loop on stations and append datasets in a list
+        datasets = []
+        for stn in stn_list:
+            ds_section = ds.where(ds.comments == stn, drop=True)  
+            datasets.append(ds_section)
+            
+        # concatenate the list of datasets
+        ds_combined = xr.concat(datasets, dim='time')
+        # save combined dataset in NetCDF
+        ds_combined.to_netcdf(nc_outfile)
+       
+    else:
+        print('non station-based search (based on lat/lon near section)')
+        
+        # Get Stations
+        df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+        df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
+        df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
+        df_stn = df_stn.dropna()
+        df_stn = df_stn[df_stn.STATION.str.contains(section_name+'-')]
+        df_stn = df_stn.reset_index(drop=True)
+        #Keep only data +- 2deg around section
+        dlat=2
+        dlon=2
+        latLims = np.array([df_stn.LAT.min() - dlat, df_stn.LAT.max() + dlat])
+        lonLims = np.array([df_stn.LON.min() - dlon, df_stn.LON.max() + dlon])
+        ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
+        ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
+        # Save file
+        ds.to_netcdf(nc_outfile)
     
     
     return None

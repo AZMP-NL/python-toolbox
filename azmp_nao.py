@@ -95,11 +95,8 @@ df_annual.to_pickle('NAO_annual.pkl')
 df_winter.to_pickle('NAO_winter.pkl')
 df_summer.to_pickle('NAO_summer.pkl')
 
-# Remove 2020 for 2019 ResDoc
-#df_winter.loc[2020]=np.nan
-
-## ## ---- plot winter NAO bar plots ---- ##
-df_winter[df_winter.index==2020]=np.nan 
+## ---- plot winter NAO bar plots ---- ##
+df_winter[df_winter.index==2021]=np.nan # Remove 2020 for 2019 ResDoc
 df1 = df_winter[df_winter>0]
 df2 = df_winter[df_winter<0]
 
@@ -115,15 +112,14 @@ plt.ylabel('NAO subindex')
 plt.title('Winter NAO average (DJFM)')
 ticks = plt.gca().xaxis.get_ticklocs()
 plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
-plt.xlim([1950, 2020])
+plt.xlim([1950, 2021])
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'NAO_winter_1950-2019.png'
+fig_name = 'NAO_winter_1950-2020.png'
 #plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
-keyboard
 
 # French Figure
 fig = plt.figure(4)

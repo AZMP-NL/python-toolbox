@@ -87,7 +87,9 @@ from scipy import stats
 import seawater as swx
 from PyCO2SYS import CO2SYS 
 from PyCO2SYS.meta import version
-    
+import gsw
+
+
 # Setup paths (user specific, to be adjusted)
 #for cyrf0006:
 dataset_main_path = '/home/cyrf0006/github/AZMP-NL/datasets/carbonates/'
@@ -367,7 +369,7 @@ df2018s = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018s.xlsx'), enc
 df2018s = df2018s.rename(columns={'CTD Mission (nom)' : 'Mission  (nom)'})
 df2018f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018f.xlsx'), encoding='utf-8')
 
-## 3.2 --- 2019 data
+## 3.2 --- 2019 data  !!!! CHECK, DATA MAY NOT BE OK
 xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
 df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
 df2019f = pd.read_excel(xls, 'Fall 2019', header=1)
@@ -455,8 +457,8 @@ df2019 = df2019.rename(columns={'Unnamed: 67' : ' Strate '})
 
 ## 3.3 --- Station Riki
 ##
-# HERE!! Need to load result from cc_azmp_riki.py
-##
+print('load riki.pkl - Make sure it is updated')
+df_riki = pd.read_pickle('riki.pkl')
 
 ## 3.4 --- Merge all 
 df_IML = pd.concat([df2019, df2018f, df2018s, df2018, df2017f, df2017s, df2017, df2016f, df2016, df2015, df2015f], axis=0, sort=False)
@@ -528,11 +530,19 @@ df_IML.loc[idx_missing_depth, 'depth'] = df_IML.loc[idx_missing_depth, 'CTD_zbou
 df_IML = df_IML.loc[:,variables]
 
 ## 4. Merged dataset 
-df = pd.concat([df_MAR, df_NLu, df_IML], axis=0)
+df = pd.concat([df_MAR, df_NLu, df_IML, df_riki], axis=0, sort=False)
+#df = pd.concat([df_MAR, df_NLu, df_IML], axis=0, sort=False)
 df = df.reset_index(drop=True)
-satO2 = swx.satO2(df['salinity'], df['temperature']) 
-df['O2sat_perc'] = df['O2']/satO2*100 # calculate oxygen saturation %
-#df['AOU'] = df['O2']-df['satO2']
+
+# HERE!!!
+#O2sol = gsw.O2sol(SA,CT,p,long,lat) # <--- use this!
+SA = gsw.SA_from_SP(df['salinity'], df['depth'], df['longitude'], df['latitude'])
+CT = gsw.CT_from_t(SA, df['temperature'], df['depth'])
+O2sol = gsw.O2sol(SA, CT, df['depth'], df['longitude'], df['latitude']) # in umol/kg
+O2sol = O2sol/43.570 # in ml/l 
+#satO2 = swx.satO2(df['salinity'], df['temperature']) 
+df['O2sat_perc'] = df['O2']/O2sol*100 # calculate oxygen saturation %
+
 df['NO3']=df['NO3']/1.025 # convert nutrient data from uM=mmol/m3/umol/L to umol/kgSW
 df['SiO']=df['SiO']/1.025
 df['PO4']=df['PO4']/1.025
@@ -682,7 +692,8 @@ df['TripID'] = df['TripID'].replace('39176', 'TEL176')
 df['TripID'] = df['TripID'].replace('15009', 'DIS009')
 df['TripID'] = df['TripID'].replace('JC001', 'COO001')
 
-# Update some Trip Names
+# Update some StationID
+df['StationID'] = df['StationID'].replace('TESL3    RIKI', 'TESL3')
 df['StationID'] = df['StationID'].replace('TESL3(IML4)RIKI', 'TESL3')
 df['StationID'] = df['StationID'].replace('CM03 (CH12)', 'CMO3/CH12')
 df['StationID'] = df['StationID'].replace('CMO3', 'CMO3/CH12')
@@ -732,6 +743,10 @@ df = df.rename(columns={'Omega_C' : 'Omega_Calcite_(--)'})
 df = df.rename(columns={'Omega_A' : 'Omega_Aragonite_(--)'})
 df = df.rename(columns={'pCO2' : 'pCO2_(uatm)'})
 
+# Sort the dataset
+df.set_index('Timestamp', inplace=True)
+df.sort_index(inplace=True)        
+
 # Save final dataset
-df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data.csv'), float_format='%.4f', index=False)
+df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data.csv'), float_format='%.4f', index=True)
 

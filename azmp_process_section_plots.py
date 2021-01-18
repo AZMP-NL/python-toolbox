@@ -46,9 +46,11 @@ sections = ['SI', 'BB', 'FC', 'SEGB']
 seasons = ['spring', 'summer', 'fall']
 variables = ['temperature', 'salinity']
 
-## sections = ['SI']
-## seasons = ['fall']
-## variables = ['temperature', 'salinity']
+# For Steve Jan 2021
+years = np.arange(2008, 2020)
+sections = ['FC']
+seasons = ['spring', 'summer', 'fall']
+variables = ['temperature', 'salinity']
 
 for year in years:
     for section in sections:
