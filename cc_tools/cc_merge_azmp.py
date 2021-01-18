@@ -265,39 +265,31 @@ df_MAR = df_MAR.append(MAR2019, ignore_index=True)
 
 
 ## 2. --- NL data (main NL file. Olivia may have changed the headers)
-# This one is not used (updated at 2.2 below)
-df_NL = pd.read_csv(os.path.join(dataset_path2,'AZMP_OA_NL.csv'), delimiter=',', encoding='ISO-8859-1')
-df_NL['timestamp'] = df_NL.Date.astype(str) + ' ' + df_NL.GMT.astype(str)
-df_NL['timestamp'] =  pd.to_datetime(df_NL['timestamp'], format='%m/%d/%Y %H:%M:%S')
+# *This is not the call originally done by Olivia (Fred changed it for updated dataset)
+df_NL = pd.read_excel(os.path.join(dataset_main_path, 'Ocean_Carbon_NL.xlsx'))
+df_NL['timestamp'] = pd.to_datetime(df_NL.Date.astype(str)) + pd.to_timedelta(df_NL.GMT.astype(str)) 
 df_NL.index = df_NL.timestamp
-
-# Add more DO data (3245 to 3571 good data) Because it was provided late.
-df_NL2018DO = pd.read_excel(os.path.join(dataset_path2, 'NL_2018_satO2_perc.xlsx'))
-df_NL2018DO['timestamp'] = df_NL2018DO.Date.astype(str) + ' ' + df_NL2018DO.GMT.astype(str)
-df_NL2018DO['timestamp'] =  pd.to_datetime(df_NL2018DO['timestamp'], format='%Y/%m/%d %H:%M:%S')
-df_NL2018DO.index = df_NL2018DO.timestamp
-df_NL['Dissolved Oxygen (mL/L)'].update(df_NL2018DO['Dissolved Oxygen (mL/L)'])
-
 # Rename columns
 df_NL = df_NL.rename(columns={'Ship_Trip' : 'TripID'})
+df_NL = df_NL.rename(columns={'Station Name' : 'StationID'})
 df_NL = df_NL.rename(columns={'Latitude (Decimal Degrees)' : 'latitude'})
-df_NL = df_NL.rename(columns={'Longiude (Decimal Degrees)' : 'longitude'})
+df_NL = df_NL.rename(columns={'Longitude (Decimal Degrees)' : 'longitude'})
 df_NL = df_NL.rename(columns={'Station Name' : 'StationID'})
 df_NL = df_NL.rename(columns={'Pressure (dbar)' : 'depth'})
 df_NL = df_NL.rename(columns={'Salinity (psu)' : 'salinity'})
-df_NL = df_NL.rename(columns={'Temperature (C)' : 'temperature'})
+df_NL = df_NL.rename(columns={'Temperature (°C)' : 'temperature'})
 df_NL = df_NL.rename(columns={'Dissolved Oxygen (mL/L)' : 'O2'})
 df_NL = df_NL.rename(columns={'Calibrated Oxygen (mL/L)' : 'oxygen'})
 df_NL = df_NL.rename(columns={'Phosphate Concentration (mmol m-3)' : 'PO4'})
 df_NL = df_NL.rename(columns={'Silicate Concentration (mmol m-3)' : 'SiO'})
 df_NL = df_NL.rename(columns={'Nitrate Concentration (mmol m-3)' : 'NO3'})
-df_NL = df_NL.rename(columns={'pH 25 ' : 'pH 25'})
+#df_NL = df_NL.rename(columns={'pH 25 ' : 'pH 25'})
 df_NL = df_NL.rename(columns={'Discrete Chlorophyll a (mg m-3)' : 'chla'})
 df_NL = df_NL.rename(columns={'Total P (mmol m-3)' : 'PO4'})
 df_NL = df_NL.rename(columns={'Total Si (mmol m-3)' : 'SiO'})
 df_NL = df_NL.rename(columns={'Total NO2/3 (mmol m-3)' : 'NO3'})
-df_NL = df_NL.rename(columns={'Measured TA (micromol/kg)' : 'TA'})
-df_NL = df_NL.rename(columns={'Measure TCO2 (micromol/kg)' : 'TIC'})
+df_NL = df_NL.rename(columns={'Measured TA (µmol/kg)' : 'TA'})
+df_NL = df_NL.rename(columns={'Measured TCO2 (µmol/kg)' : 'TIC'})
 df_NL = df_NL.rename(columns={'Density (kg m3)' : 'density'})
 df_NL = df_NL.rename(columns={'TA Data Flag' : 'TAflag'})
 df_NL = df_NL.rename(columns={'TCO2 Data Flag' : 'TICflag'})
@@ -305,46 +297,9 @@ df_NL['Region'] = 'NL'
 df_NL['temp_pH']= np.NaN
 df_NL['pHflag']= np.NaN
 
-# reset index
-df_NL = df_NL.reset_index(drop=True)
-
-# Only select subset variables 
+# Only select subset variables
+# *might raise an error in the future since not all variables are present*
 df_NL = df_NL.loc[:,variables]
-
-# 2.2 Updated NL data
-df_NLu = pd.read_excel(os.path.join(dataset_main_path, 'Ocean_Carbon_NL.xlsx'))
-df_NLu['timestamp'] = pd.to_datetime(df_NLu.Date.astype(str)) + pd.to_timedelta(df_NLu.GMT.astype(str)) 
-df_NLu.index = df_NLu.timestamp
-# Rename columns
-df_NLu = df_NLu.rename(columns={'Ship_Trip' : 'TripID'})
-df_NLu = df_NLu.rename(columns={'Station Name' : 'StationID'})
-df_NLu = df_NLu.rename(columns={'Latitude (Decimal Degrees)' : 'latitude'})
-df_NLu = df_NLu.rename(columns={'Longitude (Decimal Degrees)' : 'longitude'})
-df_NLu = df_NLu.rename(columns={'Station Name' : 'StationID'})
-df_NLu = df_NLu.rename(columns={'Pressure (dbar)' : 'depth'})
-df_NLu = df_NLu.rename(columns={'Salinity (psu)' : 'salinity'})
-df_NLu = df_NLu.rename(columns={'Temperature (°C)' : 'temperature'})
-df_NLu = df_NLu.rename(columns={'Dissolved Oxygen (mL/L)' : 'O2'})
-df_NLu = df_NLu.rename(columns={'Calibrated Oxygen (mL/L)' : 'oxygen'})
-df_NLu = df_NLu.rename(columns={'Phosphate Concentration (mmol m-3)' : 'PO4'})
-df_NLu = df_NLu.rename(columns={'Silicate Concentration (mmol m-3)' : 'SiO'})
-df_NLu = df_NLu.rename(columns={'Nitrate Concentration (mmol m-3)' : 'NO3'})
-#df_NLu = df_NLu.rename(columns={'pH 25 ' : 'pH 25'})
-df_NLu = df_NLu.rename(columns={'Discrete Chlorophyll a (mg m-3)' : 'chla'})
-df_NLu = df_NLu.rename(columns={'Total P (mmol m-3)' : 'PO4'})
-df_NLu = df_NLu.rename(columns={'Total Si (mmol m-3)' : 'SiO'})
-df_NLu = df_NLu.rename(columns={'Total NO2/3 (mmol m-3)' : 'NO3'})
-df_NLu = df_NLu.rename(columns={'Measured TA (µmol/kg)' : 'TA'})
-df_NLu = df_NLu.rename(columns={'Measured TCO2 (µmol/kg)' : 'TIC'})
-df_NLu = df_NLu.rename(columns={'Density (kg m3)' : 'density'})
-df_NLu = df_NLu.rename(columns={'TA Data Flag' : 'TAflag'})
-df_NLu = df_NLu.rename(columns={'TCO2 Data Flag' : 'TICflag'})
-df_NLu['Region'] = 'NL'
-df_NLu['temp_pH']= np.NaN
-df_NLu['pHflag']= np.NaN
-
-# Only select subset variables 
-df_NLu = df_NLu.loc[:,variables]
 
 ## 3. --- IML data
 # 3.1 --- all years except 2019 (2014 very different format, thus will be taken from Biochem, see above)
@@ -530,8 +485,7 @@ df_IML.loc[idx_missing_depth, 'depth'] = df_IML.loc[idx_missing_depth, 'CTD_zbou
 df_IML = df_IML.loc[:,variables]
 
 ## 4. Merged dataset 
-df = pd.concat([df_MAR, df_NLu, df_IML, df_riki], axis=0, sort=False)
-#df = pd.concat([df_MAR, df_NLu, df_IML], axis=0, sort=False)
+df = pd.concat([df_MAR, df_NL, df_IML, df_riki], axis=0, sort=False)
 df = df.reset_index(drop=True)
 
 # HERE!!!
