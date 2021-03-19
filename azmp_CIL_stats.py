@@ -20,7 +20,7 @@ import azmp_sections_tools as azst
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 SECTION = 'BB'
 SEASON = 'summer'
-CLIM_YEAR = [1950, 2019]
+YEAR = [1950, 2020]
 dlat = 2 # how far from station we search
 dlon = 2
 dz = 1 # vertical bins
@@ -28,7 +28,7 @@ dc = .2 # grid resolution
 
 # Years to flag
 flag_BB_summer = [1982]
-flag_WB_summer = [1953, 1956, 1959, 1982, 2019]
+flag_WB_summer = [1953, 1956, 1959, 1982, 2019, 2020]
 flag_SI_summer = [1989]
 
 # CIL surface (Note that there is a bias because )
@@ -95,7 +95,7 @@ print(' -> Done!')
 
 
 ## Loop on climatological years
-years = np.arange(CLIM_YEAR[0], CLIM_YEAR[1]+1)
+years = np.arange(YEAR[0], YEAR[1]+1)
 years_series = pd.Series(years)
 years_series.name='year'
 
@@ -124,11 +124,11 @@ for idx, YEAR in enumerate(years):
 
     # Select time (save several options here)
     if SEASON == 'summer':
-        ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
+        ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=8)))
     elif SEASON == 'spring':
         ds = ds.sel(time=((ds['time.month']>=3)) & ((ds['time.month']<=5)))
     elif SEASON == 'fall':
-        ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
+        ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
     else:
         print('!! no season specified, used them all! !!')
 
