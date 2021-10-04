@@ -51,13 +51,14 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
    
-clim_year = [1981, 2010]
-current_year = 2019
+#clim_year = [1981, 2010]
+clim_year = [1991, 2020]
+current_year = 2020
          
 ## ---- Read 4 stations of interest ---- ##
 ## 1. Bonavista - 8400601
 # tmp file without blank space
-with open('/home/cyrf0006/data/AZMP/AirT/mm8400601.txt', 'r') as f:
+with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8400601.txt', 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -81,7 +82,7 @@ del df
 
 ## 2. St. John's - 8403505
 # tmp file without blank space
-with open('/home/cyrf0006/data/AZMP/AirT/mm8403505.txt', 'r') as f:
+with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8403505.txt', 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -105,7 +106,7 @@ del df
 
 ## 3. Cartwright - 8501106
 # tmp file without blank space
-with open('/home/cyrf0006/data/AZMP/AirT/mm8501106.txt', 'r') as f:
+with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8501106.txt', 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -129,7 +130,7 @@ del df
 
 ## 4. Iqaluit - 2402592
 # tmp file without blank space
-with open('/home/cyrf0006/data/AZMP/AirT/mm2402592.txt', 'r') as f:
+with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm2402592.txt', 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -174,19 +175,33 @@ std_anom = (df_current_year - df_monthly_clim)/df_monthly_std
 std_anom.index = year_index.strftime('%b') # replace index (by text)
 anom.index = year_index.strftime('%b') # replace index (by text)
 
-
-## ---- Annual anomalies ---- ##
-df_annual = df.resample('As').mean()
-df_annual = df_annual[df_annual.index.year>=1950]
-clim = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].mean()
-std = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].std()
-anom_annual = (df_annual - clim)
-std_anom_annual = (df_annual - clim)/std
-std_anom_annual.index = std_anom_annual.index.year
+## ---- Annual anomalies (2021 version) ---- ##
+# how to select one year: df_monthly_stack.xs(2015,level=0)
+df_stack = df.groupby([(df.index.year),(df.index.month)]).mean() 
+df_stack_anom = df_stack.sub(df_monthly_clim, level=1)
+df_annual_anom = df_stack_anom.groupby(level=0).mean()
+# Calculate df_annual* , a "fake" annual mean T
+# (used as an annual time series from which anomalies are calculated)
+df_annual_star =  df_annual_anom + df_monthly_clim.mean() 
+clim = df_annual_star[(df_annual_star.index>=clim_year[0]) & (df_annual_star.index<=clim_year[1])].mean()
+std = df_annual_star[(df_annual_star.index>=clim_year[0]) & (df_annual_star.index<=clim_year[1])].std()
+anom_annual = (df_annual_star - clim)
+std_anom_annual = anom_annual/std
 
 # Save for scorecards
+anom_annual.to_pickle('airT_anom.pkl') # for IROC
 std_anom_annual.to_pickle('airT_std_anom.pkl')
 df.to_pickle('airT_monthly.pkl')
+# restrict time for following
+std_anom_annual = std_anom_annual[std_anom_annual.index>=1950]
+
+## ---- Annual anomalies (old version) ---- ##
+## df_annual = df.resample('As').mean()
+## clim2 = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].mean()
+## std2 = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].std()
+## anom_annual2 = (df_annual - clim2)
+## anom_annual2.index = anom_annual2.index.year
+## std_anom_annual2 = anom_annual2/std2
 
 
 ## ---- plot monthly ---- ##
@@ -195,7 +210,7 @@ plt.grid('on')
 ax.set_ylabel(r'[$^{\circ}$C]')
 ax.set_title(np.str(current_year) + ' Air temperature anomalies')
 #ax.legend(loc='upper center')
-plt.ylim([-6, 14])
+plt.ylim([-5, 20])
 
 fig = ax.get_figure()
 fig.set_size_inches(w=9,h=6)

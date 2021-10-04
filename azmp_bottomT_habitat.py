@@ -30,6 +30,8 @@ import os
 import netCDF4
 import h5py
 import xarray as xr
+# maps
+os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 from mpl_toolkits.basemap import Basemap
 import numpy as  np
 import matplotlib.pyplot as plt
@@ -72,8 +74,8 @@ dz = 5 # vertical bins
 #lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 #season = 'spring'
 #climato_file = 'Tbot_climato_spring_0.10.h5'
-season = 'spring'
-year = '2019'
+season = 'fall'
+year = '2020'
 
 if season=='spring':
     climato_file = 'Tbot_climato_spring_0.10.h5'

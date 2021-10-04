@@ -205,7 +205,6 @@ MAR2019 = pd.read_excel(os.path.join(dataset_path, '2019_Spring_AZMP_Mar_TIC-TA.
 MAR2019 = MAR2019.replace('I23', 3)
 MAR2019 = MAR2019.replace('I22', 3)
 
-
 # add oxygen
 df_o2 = pd.read_csv(os.path.join(dataset_path, 'WinklerOxygen_COR2019001_Final.dat'), header=9, sep=',')
 # rename sample no.
@@ -218,6 +217,7 @@ df_o2 = df_o2['O2_Concentration(ml/l)']
 df_o2 = df_o2.reset_index()
 df_o2 = df_o2.rename(columns={'Sample' : 'sample_id'})
 df_o2 = df_o2.astype({'sample_id':'int'})
+df_o2.to_csv('O2_file_example.csv', float_format='%.4f', index=False)
 # merge O2 into carbonate data
 MAR_index = MAR2019.index
 MAR2019 = MAR2019.merge(df_o2, on='sample_id', how='left')
@@ -241,6 +241,7 @@ df_nut = df_nut.rename(columns={'SAMPLE ID' : 'sample_id'})
 df_nut = df_nut.astype({'sample_id':'int'})
 # merge O2 into carbonate data
 df_nut = df_nut[['sample_id', 'PO4', 'SiO', 'NO3']]
+df_nut.to_csv('nuts_file_example.csv', float_format='%.4f', index=False)
 MAR_index = MAR2019.index
 MAR2019 = MAR2019.merge(df_nut, on='sample_id', how='left')
 MAR2019.index = MAR_index
@@ -263,6 +264,52 @@ MAR2019['Region'] ='MAR'
 # append to df_MAR
 df_MAR = df_MAR.append(MAR2019, ignore_index=True)
 
+## 1.4 --- BIO's 2020
+# Load data (no nutrients, no oxygen)
+MAR2020 = pd.read_excel(os.path.join(dataset_path, 'HUD2020063_allchemdata.xlsx'), parse_dates = {'timestamp' : [8, 9]})
+# swap weird flags
+MAR2020 = MAR2020.replace('I23', 3)
+MAR2020 = MAR2020.replace('I22', 3)
+MAR2020 = MAR2020.replace('I03', 3)
+# Remove "" from timestamp
+MAR2020['timestamp'] = MAR2020['timestamp'].replace({'"':''}, regex=True)
+MAR2020['timestamp'] = pd.to_datetime(MAR2020['timestamp'])
+
+# Add O2 
+df_o220 = pd.read_excel(os.path.join(dataset_path, 'Mean_AcrossReplicates_O2_Concentration_HUD2020063.xlsx'))
+MAR2020 = MAR2020.merge(df_o220, on='sample_id', how='left')
+
+# Add Nutrients
+df_nut20 = pd.read_excel(os.path.join(dataset_path, 'Mean_AcrossReplicates_Nutrient_Concentration_HUD2020063.xlsx'))
+# some cleaning for inter-regional calibration
+df_nut20 = df_nut20[~df_nut20.sample_id.str.contains('NAFC')]
+df_nut20 = df_nut20[~df_nut20.sample_id.str.contains('IML')]
+df_nut20 = df_nut20.astype({'sample_id':'str'})
+df_nut20.sample_id = df_nut20.sample_id.str.replace(' BIO', '')
+df_nut20 = df_nut20.astype({'sample_id':'int64'})
+# add nitrate nitrite and rename columns
+df_nut20['NO3'] = df_nut20['NITRATE'] + df_nut20['NITRITE'] 
+df_nut20 = df_nut20.rename(columns={'PHOSPHATE' : 'PO4'})
+df_nut20 = df_nut20.rename(columns={'SILICATE' : 'SiO'})
+df_nut20 = df_nut20[['sample_id', 'PO4', 'SiO', 'NO3']]
+MAR2020 = MAR2020.merge(df_nut20, on='sample_id', how='left')
+
+# Rename columns
+MAR2020 = MAR2020.rename(columns={'Station' : 'StationID'})
+MAR2020 = MAR2020.rename(columns={'PrDM' : 'depth'})
+MAR2020 = MAR2020.rename(columns={'T068C' : 'temperature'})
+MAR2020 = MAR2020.rename(columns={'Sal00' : 'salinity'})
+MAR2020 = MAR2020.rename(columns={'TA (umol/kg) ' : 'TA'}) # <-- YES! there's a space in TA!!
+MAR2020 = MAR2020.rename(columns={'TA flag' : 'TAflag'})
+MAR2020 = MAR2020.rename(columns={'TIC (umol/kg)' : 'TIC'})
+MAR2020 = MAR2020.rename(columns={'TIC flag' : 'TICflag'})
+MAR2020 = MAR2020.rename(columns={'O2_Concentration(ml/l)' : 'O2'})
+MAR2020 = MAR2020.rename(columns={'cruise_number' : 'TripID'})
+# select columns
+MAR2020 = MAR2020.loc[:,variables]
+MAR2020['Region'] ='MAR'
+# append to df_MAR
+df_MAR = df_MAR.append(MAR2020, ignore_index=True)
 
 ## 2. --- NL data (main NL file. Olivia may have changed the headers)
 # *This is not the call originally done by Olivia (Fred changed it for updated dataset)
@@ -324,19 +371,21 @@ df2018s = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018s.xlsx'), enc
 df2018s = df2018s.rename(columns={'CTD Mission (nom)' : 'Mission  (nom)'})
 df2018f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018f.xlsx'), encoding='utf-8')
 
-## 3.2 --- 2019 data  !!!! CHECK, DATA MAY NOT BE OK
+## 3.2 --- 2019 & 2020 data 
 xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
 df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
 df2019f = pd.read_excel(xls, 'Fall 2019', header=1)
+df2020f = pd.read_excel(os.path.join(dataset_path,'AZMPIceforcast2020(Cyr).xlsx'), header=1, encoding='utf-8')
 df2019s = df2019s.drop(0)
 df2019f = df2019f.drop(0)
+df2020f = df2020f.drop(0)
 # merge 2 sheets
 df2019f = df2019f.rename(columns={'PSAL_BS' : 'psal_bs'})
 df2019f = df2019f.rename(columns={'oxy_02' : 'OXY_02'})
 df2019f = df2019f.rename(columns={'Q_oxy' : 'Q_OXY'})
 df2019f = df2019f.rename(columns={'oxy_02.1' : 'OXY_02.1'})
 df2019f = df2019f.rename(columns={'Q_oxy.1' : 'Q_OXY.1'})
-df2019 = pd.concat([df2019s, df2019f])
+df2019 = pd.concat([df2019s, df2019f, df2020f]) # <------- note 2020 data here
 # clean un-necessary columns
 df2019.Date = pd.to_datetime(df2019.Date)
 df2019 = df2019.drop(columns=['Unnamed: 49'])
@@ -410,6 +459,7 @@ df2019 = df2019.rename(columns={'Unnamed: 65' : ' WCa out '})
 df2019 = df2019.rename(columns={'Unnamed: 66' : ' WAr out '})
 df2019 = df2019.rename(columns={'Unnamed: 67' : ' Strate '})
 
+
 ## 3.3 --- Station Riki
 ##
 print('load riki.pkl - Make sure it is updated')
@@ -426,7 +476,8 @@ df_IML.columns = cols
 df_IML = df_IML.replace(r'^\s+$', np.nan, regex=True)
 df_IML = df_IML.rename(columns={'CTD_Date_(jj-mmm-yyyy)' : 'Dates'})
 df_IML = df_IML.rename(columns={'CTD_Heure_(GMT)' : 'Times'})
-df_IML['timestamp'] = df_IML.Dates.astype(str) + ' ' + df_IML.Times.astype(str)
+#df_IML['timestamp'] = df_IML.Dates.astype(str) + ' ' + df_IML.Times.astype(str) (below to avoid yyyy-mm-dd 00:00:00)
+df_IML['timestamp'] = pd.to_datetime(df_IML['Dates']).astype(str) + ' ' + df_IML.Times.astype(str)
 df_IML['timestamp'] =  pd.to_datetime(df_IML['timestamp'], format='%Y/%m/%d %H:%M:%S')
 df_IML = df_IML.rename(columns={'CTD_Fichier_(nom)' : 'TripID'})
 df_IML['TripID'] = df_IML['TripID'].replace('-','', regex=True)
@@ -488,7 +539,6 @@ df_IML = df_IML.loc[:,variables]
 df = pd.concat([df_MAR, df_NL, df_IML, df_riki], axis=0, sort=False)
 df = df.reset_index(drop=True)
 
-# HERE!!!
 #O2sol = gsw.O2sol(SA,CT,p,long,lat) # <--- use this!
 SA = gsw.SA_from_SP(df['salinity'], df['depth'], df['longitude'], df['latitude'])
 CT = gsw.CT_from_t(SA, df['temperature'], df['depth'])
@@ -500,29 +550,22 @@ df['O2sat_perc'] = df['O2']/O2sol*100 # calculate oxygen saturation %
 df['NO3']=df['NO3']/1.025 # convert nutrient data from uM=mmol/m3/umol/L to umol/kgSW
 df['SiO']=df['SiO']/1.025
 df['PO4']=df['PO4']/1.025
-dforig = df.copy(deep=True) # all original data, since some is replaced/modified
-# ** This one could be exported for dataset paper.
-
-# **** Note that out of total 22422 samples, 14346 have pH, TA and TIC NaNs...
-# I think we should get rid of them now (to same dforig above).
-df.drop(df.loc[(df.pH_25.isna()) & (df.TA.isna()) & (df.TIC.isna())].index, inplace=True)
 
 
 ###########################################
-## ------ Prepare data for CO2sys ------ ##
+## ------ Prepare data for CO2ys ------- ##
 ###########################################
-# (estimate TA from TA-S plot, remove empty rows, remove flagged data, replace nutrient nan with zeros)
 
-# HERE!!!!!n problems with flag: df.TAflag.unique()  -> array([0.0, nan, 'I23', 'I22', 1, 3, 8, 7.0], dtype=object)
-# try:
-#    df[df.TAflag=='I23'].values    
-# make sure not str in columns
-df = df.astype({'TAflag':'float', 'pHflag':'float', 'TICflag':'float'})
+# Deal with weird flags (e.g., 'I23', 'I22')
+df = df.astype({'TAflag':'float', 'pHflag':'float', 'TICflag':'float'}) # weird flags... 'I23', 'I22'
 
-# Drop flagged data
-df.drop(df.loc[df['TAflag']>=3].index, inplace=True)
-df.drop(df.loc[df['pHflag']>=3].index, inplace=True)
-df.drop(df.loc[df['TICflag']>=3].index, inplace=True)
+# Replace flagged data by NaNs
+df['TA'][df.loc[df['TAflag']>=3].index] = np.nan
+df['pH_25'][df.loc[df['pHflag']>=3].index] = np.nan
+df['TIC'][df.loc[df['TICflag']>=3].index] = np.nan
+
+# Drop indices where 3 parameters are NaNs (get rid of more that 50%)
+df.dropna(subset=['TA', 'TIC', 'pH_25'], axis=0, how='all', inplace=True)
 
 # Calculate missing TA values based on TA-S relationship
 dflinreg = df.copy(deep=True)
@@ -555,7 +598,8 @@ print("standard error: ", std_err)
 print("95% confidence interval: ", ci)
 print('')
 
-# Replace (*note that it's okay to do df.salinity since associated to index)
+# Replace missing TA for this specify GSL mission
+# * these will need to be removed from "measured" column at the end
 df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region'].str.contains('GSL')), 'TA'] = ((slope * df.salinity)+ intercept)
 
 
@@ -565,6 +609,7 @@ df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region
 print('Use PyCO2SYS v{}'.format(version))
 
 # Keep only indices with at least 2 parameters
+dforig = df.copy(deep=True) # copy used to re-introduce instance where only one parameter is measured
 df.dropna(subset=['TA', 'TIC', 'pH_25'], axis=0, thresh=2, inplace=True)
 
 # replace NaN in nutrient by zero (CO2sys default)
@@ -622,6 +667,15 @@ df['Omega_C'] = df_co2sys['OmegaCAout']
 df['Omega_A'] = df_co2sys['OmegaARout']
 df['pCO2'] = df_co2sys['pCO2out']
 
+# Remove derived TA data from "measured column"
+df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region'].str.contains('GSL')), 'TA'] = np.nan
+
+# Put back data with single parameter (that we cannot run CO2sys)
+df_missing = dforig.drop(df.index)
+df_missing = df_missing
+df_missing.drop(['TAflag', 'pHflag', 'TICflag'], axis=1, inplace=True)
+df = df.append(df_missing, sort=False)
+
 ################################################
 ## -------- Final Cleaning and Saving ------- ##
 ################################################
@@ -646,7 +700,7 @@ df['TripID'] = df['TripID'].replace('39176', 'TEL176')
 df['TripID'] = df['TripID'].replace('15009', 'DIS009')
 df['TripID'] = df['TripID'].replace('JC001', 'COO001')
 
-# Update some StationID
+# Update some StationIDd
 df['StationID'] = df['StationID'].replace('TESL3    RIKI', 'TESL3')
 df['StationID'] = df['StationID'].replace('TESL3(IML4)RIKI', 'TESL3')
 df['StationID'] = df['StationID'].replace('CM03 (CH12)', 'CMO3/CH12')
@@ -661,7 +715,11 @@ df['StationID'] = df['StationID'].replace('Tesl-2', 'TESL2')
 df['StationID'] = df['StationID'].replace('Tesl-3  (Riki-1)', 'TESL3')
 df['StationID'] = df['StationID'].replace('Tesl-6', 'TESL6')
 df['StationID'] = df['StationID'].replace('nan', 'unknown')
+df['StationID'] = df['StationID'].replace('TESL3', 'Rimouski') # latest consensus
+df['StationID'] = df['StationID'].replace('PB-01', 'PB-04')
 
+# Capitalize trip name
+df['TripID'] = df['TripID'].str.upper()
 
 # Reorder columns
 df = df[[
@@ -686,20 +744,32 @@ df = df.rename(columns={'O2' : 'Dissolved_Oxygen_(mL/L)'})
 df = df.rename(columns={'O2sat_perc' : 'Oxygen_Saturation_(%)'})
 df = df.rename(columns={'TA' : 'Total_Alkalinity_Measured_(umol/kg)'})
 df = df.rename(columns={'temp_pH' : 'pH_lab_temp_(degC)'})
-df = df.rename(columns={'pH_25' : 'pH_lab_(--)'})
+df = df.rename(columns={'pH_25' : 'pH_lab_(seawater_scale)'})
 df = df.rename(columns={'PO4' : 'Phosphate_Concentration_(mmol/m3)'})
 df = df.rename(columns={'SiO' : 'Silicate_Concentration_(mmol/m3)'})
 df = df.rename(columns={'TIC' : 'Inorganic_Carbon_measured_(umol/kg)'})
-df = df.rename(columns={'ph_tot' : 'pH_Total_(total_scale)'})
+df = df.rename(columns={'pH_tot' : 'pH_Total_(total_scale)'})
 df = df.rename(columns={'TAc' : 'Total_Alkalinity_(umol/kg)'})
 df = df.rename(columns={'TICc' : 'Inorganic_Carbon_(umol/kg)'})
-df = df.rename(columns={'Omega_C' : 'Omega_Calcite_(--)'})
-df = df.rename(columns={'Omega_A' : 'Omega_Aragonite_(--)'})
+df = df.rename(columns={'Omega_C' : 'Omega_Calcite_(unitless)'})
+df = df.rename(columns={'Omega_A' : 'Omega_Aragonite_(unitless)'})
 df = df.rename(columns={'pCO2' : 'pCO2_(uatm)'})
 
 # Sort the dataset
 df.set_index('Timestamp', inplace=True)
 df.sort_index(inplace=True)        
+
+# Save final dataset
+df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data_with2020.csv'), float_format='%.4f', index=True)
+
+
+# Some info and ignore 2020
+print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
+df = df[df.index.year<2020]  
+df_missing = df_missing[pd.to_datetime(df_missing.timestamp).dt.year<2020]
+print('When 2020 ignored: ' + str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
+
+
 
 # Save final dataset
 df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data.csv'), float_format='%.4f', index=True)

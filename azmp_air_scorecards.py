@@ -22,8 +22,8 @@ import os
 import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
-clim_year = [1981, 2010]
-years = [1980, 2019]
+clim_year = [1991, 2020]
+years = [1980, 2020]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -41,9 +41,9 @@ def is_number(s):
 
 
 #### ------------- NAO & AO ---------------- ####
-nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
-ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AO_annual.pkl')
-amo = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AMO_annual.pkl')
+nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter.pkl')
+ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/AO_annual.pkl')
+amo = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/AMO_annual.pkl')
 ao.to_csv('ao_annual.csv', float_format='%.2f')
 amo.to_csv('amo_annual.csv', float_format='%.2f')
 

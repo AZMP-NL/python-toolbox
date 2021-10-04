@@ -13,8 +13,8 @@ import os
 import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
-clim_year = [1981, 2010]
-years = [1980, 2019]
+clim_year = [1991, 2020]
+years = [1980, 2020]
 
 
 def is_number(s):
@@ -500,6 +500,8 @@ os.system('convert -trim scorecards_CIL_FC_FR.png scorecards_CIL_FC_FR.png')
 os.system('montage  scorecards_CIL_SI.png scorecards_CIL_BB.png scorecards_CIL_FC.png -tile 1x3 -geometry +1+1  -background white  scorecards_CIL.png') 
 # French
 os.system('montage  scorecards_CIL_SI_FR.png scorecards_CIL_BB_FR.png scorecards_CIL_FC_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_CIL_FR.png') 
+
+os.system('rm scorecards_CIL_SI* scorecards_CIL_BB* scorecards_CIL_FC*')
 
 
 

@@ -38,6 +38,8 @@ import azmp_utils as azu
 ## for scorecards
 import unicodedata
 from matplotlib.colors import from_levels_and_colors
+# For shapefiles
+import shapefile 
 
 
 def is_number(s):
@@ -449,7 +451,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
 
 
 #### bottom_salinity
-def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_path='/home/cyrf0006/data/dev_database/netCDF/'):
+def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file=''):
 
     
     '''
@@ -467,10 +469,13 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcdf_p
 
     '''
 
-    if season=='spring':
-        climato_file = 'Sbot_climato_spring_0.10.h5'
-    elif season=='fall':
-        climato_file = 'Sbot_climato_fall_0.10.h5'
+    if len(climato_file) == 0: # climato file not provided
+        if season=='spring':
+            climato_file = 'Sbot_climato_spring_0.10.h5'
+        elif season=='fall':
+            climato_file = 'Sbot_climato_fall_0.10.h5'
+        elif season=='summer':
+            climato_file = 'Sbot_climato_summer_0.10.h5'
 
     year_file = netcdf_path + str(year) + '.nc'
 
@@ -1017,7 +1022,7 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
     #df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
 
-    ## outname = 'stats_3Ps_' + season + '.pkl'
+    outname = 'stats_3Ps_' + season + '.pkl'
     df_3Ps.to_pickle(outname)
     outname = 'stats_3LNO_' + season + '.pkl'
     df_3LNO.to_pickle(outname)
@@ -1060,8 +1065,252 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     df_mindex = pd.concat(df_list,keys=year_index)
     df_mindex.to_pickle(season + '_bottom_temperature.pkl')
 
+    #### bottom_stats
+def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', sfas=[2,3,4], climato_file=''):
 
-def bottom_scorecards(years, clim_year=[1981, 2010]):
+    '''
+        Function sfa_bottom_stats() is based bottom_stats(), but sfa instead of NAFO divs.
+
+        Run in:
+        /home/cyrf0006/AZMP/state_reports/bottomT/NSRF
+
+        usage example:
+        >> import azmp_report_tools as azrt
+        >> import numpy as np
+        >> azrt.sfa_bottom_stats(years=np.arange(2006, 2020), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2018.h5')
+
+        *** This needs to be improve because at the moment I need to comment the generation of .pkl file to not over-write when I change my map region.        
+                
+        Frederic.Cyr@dfo-mpo.gc.ca - January 2021
+    '''
+
+    # load climato
+    if len(climato_file) == 0: # climato not provided (default)
+        if season == 'fall':
+            climato_file = 'Tbot_climato_NSRF_fall.h5'
+        elif season == 'spring':
+            climato_file = 'Tbot_climato_NSRF_spring.h5'
+        elif season == 'summer':
+            climato_file = 'Tbot_climato_NSRF_summer.h5'
+    else:
+        print('Climato file provided')
+               
+    h5f = h5py.File(climato_file, 'r')
+    Tbot_climato = h5f['Tbot'][:]
+    lon_reg = h5f['lon_reg'][:]
+    lat_reg = h5f['lat_reg'][:]
+    Zitp = h5f['Zitp'][:]
+    h5f.close()
+
+    # Derive some map parameters
+    lon_0 = np.round(np.mean(lon_reg))
+    lat_0 = np.round(np.mean(lat_reg))
+    lonLims = [lon_reg[0], lon_reg[-1]]
+    latLims = [lat_reg[0], lat_reg[-1]]
+
+    # HERE, need to swap NAFO by SFAs...
+    myshp = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp', 'rb')
+    mydbf = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf', 'rb')
+    r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
+    records = r.records()
+    shapes = r.shapes()
+    
+    # Fill dictionary with NAFO divisions
+    shrimp_area = {}
+    for idx, rec in enumerate(records):
+        if rec[1] == 'Eastern Assessment Zone':
+            shrimp_area['2'] = np.array(shapes[idx].points)
+        elif rec[1] == 'Western Assessment Zone':
+            shrimp_area['3'] = np.array(shapes[idx].points)
+        else:
+            shrimp_area[rec[0]] = np.array(shapes[idx].points)            
+
+    ## sfa0 = Polygon(shrimp_area['0'])
+    ## sfa1 = Polygon(shrimp_area['1'])
+    sfa2 = Polygon(shrimp_area['2'])
+    sfa3 = Polygon(shrimp_area['3'])
+    sfa4 = Polygon(shrimp_area['4'])
+    sfa5 = Polygon(shrimp_area['5'])
+    sfa6 = Polygon(shrimp_area['6'])
+    sfa7 = Polygon(shrimp_area['7'])
+    ## sfa8 = Polygon(shrimp_area['8'])
+    ## sfa9 = Polygon(shrimp_area['9'])
+    ## sfa10 = Polygon(shrimp_area['10'])
+    ## sfa11 = Polygon(shrimp_area['11'])
+    ## sfa12 = Polygon(shrimp_area['12'])
+    ## sfa13 = Polygon(shrimp_area['13'])
+    ## sfa14 = Polygon(shrimp_area['14'])
+    ## sfa15 = Polygon(shrimp_area['15'])
+
+    ## dict_stats_sfa0 = {}
+    ## dict_stats_sfa1 = {}
+    dict_stats_sfa2 = {}
+    dict_stats_sfa3 = {}
+    dict_stats_sfa4 = {}
+    dict_stats_sfa5 = {}
+    dict_stats_sfa6 = {}
+    dict_stats_sfa7 = {}
+    ## dict_stats_sfa8 = {}
+    ## dict_stats_sfa9 = {}
+    ## dict_stats_sfa10 = {}
+    ## dict_stats_sfa11 = {}
+    ## dict_stats_sfa12 = {}
+    ## dict_stats_sfa13 = {}
+    ## dict_stats_sfa14 = {}
+    ## dict_stats_sfa15 = {}
+
+    # Loop on years
+    df_list = []
+    for year in years:
+        print(' ---- ' + np.str(year) + ' ---- ')
+        year_file = netcdf_path + np.str(year) + '.nc'
+        Tdict = azu.get_bottomT(year_file, season, climato_file)    
+        Tbot = Tdict['Tbot']
+        lons = Tdict['lons']
+        lats = Tdict['lats']
+        anom = Tbot-Tbot_climato
+
+        # NAFO division stats
+        if season == 'summer':    
+            dict_stats_sfa2[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa2)
+            dict_stats_sfa3[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa3)
+            dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4)
+        elif season=='fall':
+            dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4)
+            dict_stats_sfa5[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa5)
+            dict_stats_sfa6[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa6)
+            dict_stats_sfa7[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa7)
+        elif season == 'spring':
+            print('Not implemented, check this!')
+            keyboard
+        ## dict_stats_sfa8[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa8)
+        ## dict_stats_sfa9[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa9)
+        ## dict_stats_sfa10[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa10)
+        ## dict_stats_sfa11[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa11)
+        ## dict_stats_sfa12[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa12)
+        ## dict_stats_sfa13[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa13)
+        ## dict_stats_sfa14[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa14)
+        ## dict_stats_sfa15[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa15)
+
+
+        # Append bottom temperature for multi-index export
+        df = pd.DataFrame(index=lat_reg, columns=lon_reg)
+        df.index.name='latitude'
+        df.columns.name='longitude'
+        df[:] = Tbot
+        df_list.append(df)
+
+        if plot:
+            div_toplot = [ '2', '3', '4', '5', '6', '7']
+    
+            # 1.1 - Plot Anomaly
+            fig, ax = plt.subplots(nrows=1, ncols=1)
+            m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
+            levels = np.linspace(-3.5, 3.5, 8)
+            xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
+            c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
+            cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
+            plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
+            if season=='fall':
+                plt.title('Fall Bottom Temperature Anomaly')
+            elif season=='spring':
+                plt.title('Spring Bottom Temperature Anomaly')
+            else:
+                plt.title('Bottom Temperature Anomaly')
+            m.fillcontinents(color='tan');
+            m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
+            m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
+            cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
+            cb = plt.colorbar(c, cax=cax)
+            cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+            for div in div_toplot:
+                div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
+                m.plot(div_lon, div_lat, 'k', linewidth=2)
+                ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
+            # Save Figure
+            fig.set_size_inches(w=7, h=8)
+            fig.set_dpi(200)
+            outfile = 'bottom_temp_anomaly_' + season + '_' + np.str(year) + '.png'
+            fig.savefig(outfile)
+
+            # 1.2 - Plot Temperature
+            fig, ax = plt.subplots(nrows=1, ncols=1)
+            m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
+            levels = np.linspace(-2, 6, 9)
+            xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
+            c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
+            cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
+            plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
+            if season=='fall':
+                plt.title('Fall Bottom Temperature')
+            elif season=='spring':
+                plt.title('Spring Bottom Temperature')
+            else:
+                plt.title('Bottom Temperature')
+            m.fillcontinents(color='tan');
+            m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
+            m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
+            x, y = m(lons, lats)
+            m.scatter(x,y, s=50, marker='.',color='k')
+            cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
+            cb = plt.colorbar(c, cax=cax)
+            cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+            for div in div_toplot:
+                div_lon, div_lat = m(shrimp_area[div][:,1], shrimp_area[div][:,0])
+                m.plot(div_lon, div_lat, 'k', linewidth=2)
+                ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
+            # Save Figure
+            fig.set_size_inches(w=7, h=8)
+            fig.set_dpi(200)
+            outfile = 'bottom_temp_' + season + '_' + np.str(year) + '.png'
+            fig.savefig(outfile)
+            plt.close('all')
+
+            # clear memory
+            del Tdict, Tbot, anom
+
+    ## df_sfa0 = pd.DataFrame.from_dict(dict_stats_sfa0, orient='index')
+    ## df_sfa1 = pd.DataFrame.from_dict(dict_stats_sfa1, orient='index')
+    df_sfa2 = pd.DataFrame.from_dict(dict_stats_sfa2, orient='index')
+    df_sfa3 = pd.DataFrame.from_dict(dict_stats_sfa3, orient='index')
+    df_sfa4 = pd.DataFrame.from_dict(dict_stats_sfa4, orient='index')
+    df_sfa5 = pd.DataFrame.from_dict(dict_stats_sfa5, orient='index')
+    df_sfa6 = pd.DataFrame.from_dict(dict_stats_sfa6, orient='index')
+    df_sfa7 = pd.DataFrame.from_dict(dict_stats_sfa7, orient='index')
+    ## df_sfa8 = pd.DataFrame.from_dict(dict_stats_sfa8, orient='index')
+    ## df_sfa9 = pd.DataFrame.from_dict(dict_stats_sfa9, orient='index')
+    ## df_sfa10 = pd.DataFrame.from_dict(dict_stats_sfa10, orient='index')
+    ## df_sfa11 = pd.DataFrame.from_dict(dict_stats_sfa11, orient='index')
+    ## df_sfa12 = pd.DataFrame.from_dict(dict_stats_sfa12, orient='index')
+    ## df_sfa13 = pd.DataFrame.from_dict(dict_stats_sfa13, orient='index')
+    ## df_sfa14 = pd.DataFrame.from_dict(dict_stats_sfa14, orient='index')
+    ## df_sfa15 = pd.DataFrame.from_dict(dict_stats_sfa15, orient='index')
+
+    ## outname = 'stats_sfa0_' + season + '.pkl' # Some are missing here
+    ## df_sfa0.to_pickle(outname)
+    ## outname = 'stats_sfa1_' + season + '.pkl'
+    ## df_sfa1.to_pickle(outname)      
+    outname = 'stats_sfa2_' + season + '.pkl'
+    df_sfa2.to_pickle(outname)
+    outname = 'stats_sfa3_' + season + '.pkl'
+    df_sfa3.to_pickle(outname)   
+    outname = 'stats_sfa4_' + season + '.pkl'
+    df_sfa4.to_pickle(outname)
+    outname = 'stats_sfa5_' + season + '.pkl'
+    df_sfa5.to_pickle(outname)   
+    outname = 'stats_sfa6_' + season + '.pkl'
+    df_sfa6.to_pickle(outname)
+    outname = 'stats_sfa7_' + season + '.pkl'
+    df_sfa7.to_pickle(outname)   
+
+    # Save in multi-index  dataFrame
+    year_index = pd.Series(years)
+    year_index.name='year'
+    df_mindex = pd.concat(df_list,keys=year_index)
+    df_mindex.to_pickle(season + '_sfa_bottom_temperature.pkl')
+
+
+def bottom_scorecards(years, clim_year=[1991, 2020]):
 
 
     '''
@@ -1092,6 +1341,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df['area_warmer2'] = df['area_warmer2']/1000
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_2H_fall.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1224,6 +1476,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df['area_warmer2'] = df['area_warmer2']/1000
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_2J_fall.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1327,6 +1582,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df['area_warmer2'] = df['area_warmer2']/1000
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_3K_fall.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1425,6 +1683,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df['area_warmer2'] = df['area_warmer2']/1000
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_3LNO_fall.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1529,6 +1790,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([2020])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
     year_list = df.index.year.astype('str')
     year_list = [i[2:4] for i in year_list] # 2-digit year
     df.index = pd.to_datetime(df.index) # update index to datetime
@@ -1537,6 +1802,10 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df['area_warmer2'] = df['area_warmer2']/1000
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_3LNO_spring.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1636,7 +1905,7 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
+    bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -1644,6 +1913,9 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     df['area_warmer2'] = df['area_warmer2']/1000
     df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
     std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_3Ps_spring.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
@@ -1740,3 +2012,362 @@ def bottom_scorecards(years, clim_year=[1981, 2010]):
     os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring_FR.png')
 
     
+def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
+
+
+    '''
+    Similar to bottom_scorcards, but for SAFs
+
+    usage example (see azmp_genreport.py):
+    azrt.sfa_bottom_scorecards(years=np.arange(2006, 2021), clim_year=[2006, 2020])
+
+    '''
+
+    #### ------------- For summer ---------------- ####
+    # 0.
+    infile = 'stats_sfa2_summer.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([2017])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    
+    # Get text values +  cell color
+    year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+    year_list.append(r'sd')   
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+
+    # Build the colormap
+    vmin = -3.49
+    vmax = 3.49
+    midpoint = 0
+    levels = np.linspace(vmin, vmax, 15)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+    normal = plt.Normalize(-3.49, 3.49)
+    reds = plt.cm.Reds(np.linspace(0,1, num=7))
+    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+    whites = [(1,1,1,1)]*2
+    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+    # Common parameters
+    #hcell, wcell = 0.5, 0.6
+    #hpad, wpad = 0, 0
+
+    ## normal = plt.Normalize(-4.49, 4.49)
+    ## cmap = plt.cm.get_cmap('seismic', 9) 
+    #cmap = plt.cm.get_cmap('seismic', 15) 
+
+    nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+    hcell, wcell = 0.5, 0.5
+    hpad, wpad = 1, 1    
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- SFA2 / EAZ --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_summer_SFA2.png", dpi=300)
+    os.system('convert -trim scorecards_summer_SFA2.png scorecards_summer_SFA2.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    year_list[-1] = u'ET'
+
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- SFA2 / EAZ --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_summer_SFA2_FR.png", dpi=300)
+    os.system('convert -trim scorecards_summer_SFA2_FR.png scorecards_summer_SFA2_FR.png')
+
+ # 1.
+    infile = 'stats_sfa3_summer.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2017])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0 
+    #normal = plt.Normalize(-4.49, 4.49)
+    #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- SFA3 / WAZ --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_summer_SFA3.png", dpi=300)
+    os.system('convert -trim scorecards_summer_SFA3.png scorecards_summer_SFA3.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- SFA3 / WAZ --'],
+                          loc='center'
+                          )
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_summer_SFA3_FR.png", dpi=300)
+    os.system('convert -trim scorecards_summer_SFA3_FR.png scorecards_summer_SFA3_FR.png')
+
+
+    # 2.
+    infile = 'stats_sfa4_summer.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([2017])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0 
+    #normal = plt.Normalize(-4.49, 4.49)
+    #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- SFA4 --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_summer_SFA4.png", dpi=300)
+    os.system('convert -trim scorecards_summer_SFA4.png scorecards_summer_SFA4.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- SFA4 --'],
+                          loc='center'
+                          )
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_summer_SFA4_FR.png", dpi=300)
+    os.system('convert -trim scorecards_summer_SFA4_FR.png scorecards_summer_SFA4_FR.png')
+
+    plt.close('all')
+    # English
+    os.system('montage  scorecards_summer_SFA2.png scorecards_summer_SFA3.png scorecards_summer_SFA4.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_summer.png') 
+    # French
+    os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3.png scorecards_summer_SFA4_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_SFA2-4_summer_FR.png') 
+
+
+
+
+    #### ------------- For fall / NOT IMPLEMENTED ---------------- ####

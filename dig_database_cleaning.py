@@ -16,7 +16,7 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 # This is a dataset
-ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/*.nc')
+ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/NetCDF*.nc')
 
 
 # Problems with LAT>90 or LON<-180:

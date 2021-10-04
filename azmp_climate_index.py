@@ -27,9 +27,10 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 
-YEAR_MIN = 1951
-YEAR_MAX = 2019
-clim_year = [1981, 2010]
+YEAR_MIN = 1950
+YEAR_MAX = 2020
+#clim_year = [1981, 2010]
+clim_year = [1991, 2020]
 width = 0.7
 
 
@@ -37,23 +38,27 @@ width = 0.7
 # 1. NAO
 nao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
 nao = nao.rename(columns={'Value':'Wint. NAO'})
-nao = nao[nao.index<2020]
+nao = nao[nao.index<YEAR_MAX+1]
+# normalize NAO with std.
+#nao_clim = nao[(nao.index>=clim_year[0]) & (nao.index<=clim_year[1])]
+#nao = nao / nao_clim.std()
 nao_natural = nao.copy()
 nao = nao*-1
 
 # 2. Air temp
-air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_std_anom.pkl')
+if clim_year[0] == 1981:
+    air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_std_81anom.pkl')
+else:
+    air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_std_anom.pkl')
 air.index.name='Year'
 air = air.mean(axis=1)
 air.name = 'Air Temp'
 
 # 3. Sea Ice (And icebergs)
-#ice = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/ice/ice_index.pkl')
-#ice_natural = ice.copy()
-#ice = ice*-1
-
-# Peter's version
-ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.dat', header=None, sep=' ')
+if clim_year[0] == 1981:
+    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1981-2010.dat', header=None, sep=' ')
+else:
+    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1991-2020.dat', header=None, sep=' ')
 ice.set_index(0, inplace=True)
 ice.index.name='Year'
 ice.rename(columns={ice.columns[0]: "Sea Ice" }, inplace = True)
@@ -61,27 +66,55 @@ ice = ice[['Sea Ice']]
 ice_natural = ice.copy()
 ice = ice*-1
 
+# previous version:
+#ice = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/ice/ice_index.pkl')
+#ice_natural = ice.copy()
+#ice = ice*-1
+
 # 4. Icebergs
-bergs = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bergs/bergs_std_anom.pkl')
+if clim_year[0] == 1981:
+    bergs = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bergs/bergs_std_anom_1981clim.pkl')
+else:
+    bergs = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bergs/bergs_std_anom.pkl')
 bergs.index.name='Year'
 bergs.name = 'Icebergs'
 bergs_natural = bergs.copy()
 bergs = bergs*-1
 
 # 5. SSTs
-#sst = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SST_anom.pkl')
-# Peter's version
-sst = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/NL_ClimateIndex_SST.dat', header=None, sep=' ')
+if clim_year[0] == 1981:
+    sst = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/NL_ClimateIndex_SST.1981-2010.dat', header=None, sep=' ')
+else:
+    sst = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/NL_ClimateIndex_SST.1991-2020.dat', header=None, sep=' ')
 sst.set_index(0, inplace=True)
 sst.index.name='Year'
 sst.rename(columns={sst.columns[0]: "SST" }, inplace = True)
 sst = sst[['SST']]
 
+# previous version
+#sst = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/SSTs/SST_anom.pkl')
+
 # 6. Stn27 (0-176m, 0-50m, 150-176m)
-s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_temp_std_anom.pkl')
+if clim_year[0] == 1981:
+    s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/1981clim/s27_temp_std_anom.pkl')
+    s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/1981clim/s27_sal_std_anom.pkl')    
+else:
+    s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_temp_std_anom.pkl')
+    s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_sal_std_anom.pkl')
+
+# Flag years with less than 8 months (!!!Should be in pkl object!!!)
+s27_temp[s27_temp.index.year==1950] = np.nan
+s27_temp[s27_temp.index.year==1980] = np.nan
+s27_temp[s27_temp.index.year==1981] = np.nan
+s27_temp[s27_temp.index.year==2020] = np.nan
+s27_sal[s27_sal.index.year==1950] = np.nan
+s27_sal[s27_sal.index.year==1980] = np.nan
+s27_sal[s27_sal.index.year==1981] = np.nan
+s27_sal[s27_sal.index.year==2020] = np.nan
+
+# Set index and rename
 s27_temp.index = s27_temp.index.year
 #s27_temp.to_csv('S27_stn_anom_3fields.csv', float_format='%.2f')
-s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_sal_std_anom.pkl')
 s27_sal.index = s27_sal.index.year
 # Take only 0-176m average (correlation is 0.94, see below) 
 #s27_temp = s27_temp.mean(axis=1)
@@ -112,6 +145,13 @@ s27_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_CIL_summer
 s27_cil.index = s27_cil.index.year
 s27_cil_clim = s27_cil[(s27_cil.index>=clim_year[0]) & (s27_cil.index<=clim_year[1])]
 s27_cil = (s27_cil-s27_cil_clim.mean(axis=0))/s27_cil_clim.std(axis=0)
+
+# Flag years with less than 8 months
+s27_cil[s27_cil.index==1950] = np.nan
+s27_cil[s27_cil.index==1980] = np.nan
+s27_cil[s27_cil.index==1981] = np.nan
+s27_cil[s27_cil.index==2020] = np.nan
+
 #  compa previous and new CIL index
 ## C = pd.concat([s27_cil[['CIL temp', 'CIL core T']].mean(axis=1), s27_cil[['CIL core T']].mean(axis=1)], axis=1)  
 ## C.plot()
@@ -121,59 +161,42 @@ s27_cil = (s27_cil-s27_cil_clim.mean(axis=0))/s27_cil_clim.std(axis=0)
 s27_cil = s27_cil[['CIL core T']].mean(axis=1) # new version
 s27_cil.name = 'S27 CIL'
 
-# 7. Section CIL (only area)
-section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/CIL/section_cil_index.pkl')
+# 7. Section CIL (only area) [.pkl files form azmp_CIL_mean_anomaly.py]
+if clim_year[0] == 1981:
+    section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/section_cil_index_1981clim.pkl')
+else:
+    section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/section_cil_index.pkl')
+# Select volume and/or coreT
 section_cil = section_cil['volume'] # volume and/or core
 section_cil.name = 'CIL area' 
 section_cil_natural = section_cil.copy()
 section_cil = section_cil*-1
 
-# 8. bottomT
-bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring.pkl')
-bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall.pkl')
+# 8. bottomT [.pkl files from azmp_bottomT_mean_anomaly.py]
+if clim_year[0] == 1981:
+    bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring_1981clim.pkl')
+    bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall_1981clim.pkl')
+else:
+    bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring.pkl')
+    bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall.pkl')
 bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
 bottomT.name = 'Bottom T'
 
 #### ----- Merge the data ---- ####
 climate_index = pd.concat([nao, air, ice, bergs, sst, s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
-climate_index = climate_index[climate_index.index>=1950]
+climate_index = climate_index[climate_index.index>=YEAR_MIN]
+climate_index_sc = climate_index.copy() # for scorecards at top
 climate_index.loc[1950] = climate_index.loc[1950]*np.nan
-climate_index = climate_index[climate_index.index>=1950]
 
 # keep a copy with Natural signs
-climate_index_natural = pd.concat([nao_natural, air, ice_natural, bergs_natural, sst, s27_temp,  s27_sal, s27_cil, section_cil_natural, bottomT], axis=1)
-climate_index_natural.loc[1950] = climate_index_natural.loc[1950]*np.nan
-
-#### ----- Plot climate index ---- ####
-climate_index = climate_index[climate_index.index<2020]
-#climate_index_norm = climate_index / 10
-climate_index_norm = climate_index.divide((10 - climate_index.isna().sum(axis=1)).values, axis=0)
-
-n = 5 # xtick every n years
-#ax = climate_index.plot(kind='bar', stacked=True, cmap='gist_rainbow')
-ax = climate_index_norm.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
-ticks = ax.xaxis.get_ticklocs()
-ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
-ax.xaxis.set_ticks(ticks[::n])
-ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
-plt.grid('on')
-ax.set_ylabel(r'Normalized anomaly')
-ax.set_title('NL Climate Index')
-#ax.legend(loc=2, bbox_to_anchor=(0.45, 1), fontsize=12) 
-ax.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize=12)
-#ax.legend(fontsize=12) 
-fig = ax.get_figure()
-fig.set_size_inches(w=15.5,h=8)
-fig_name = 'NL_climate_index.png'
-fig.savefig(fig_name, dpi=300)
-os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+climate_index_natural = pd.concat([nao_natural, air, ice_natural, bergs_natural, sst, s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
+climate_index_natural = climate_index_natural[climate_index_natural.index>=YEAR_MIN]
 
 ## Save index (in English)
 # 1. All fields.
 climate_index = climate_index[(climate_index.index>=YEAR_MIN) & (climate_index.index<=YEAR_MAX)]
 climate_index.index.name = 'Year'
-climate_index.to_csv('NL_climate_index_all_fields.csv', float_format='%.2f')
+climate_index_sc.to_csv('NL_climate_index_all_fields.csv', float_format='%.2f')
 # 2. All fields natural signs
 climate_index_natural = climate_index_natural[(climate_index_natural.index>=YEAR_MIN) & (climate_index_natural.index<=YEAR_MAX)]
 climate_index_natural.index.name = 'Year'
@@ -184,8 +207,134 @@ climate_index_mean.index.name = 'Year'
 climate_index_mean = climate_index_mean.rename('Climate index').to_frame()  
 climate_index_mean.to_csv('NL_climate_index.csv', float_format='%.2f')
 
+## restrict time series and normalize for plots.
+climate_index = climate_index[climate_index.index<YEAR_MAX+1]
+climate_index_norm = climate_index.divide((10 - climate_index.isna().sum(axis=1)).values, axis=0)
+climate_index_norm_ns = climate_index_sc.divide((10 - climate_index_sc.isna().sum(axis=1)).values, axis=0)
+
+#### ----- Plot climate index [1] ---- ####
+## n = 5 # xtick every n years
+## #ax = climate_index.plot(kind='bar', stacked=True, cmap='gist_rainbow')
+## ax = climate_index_norm.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
+## ticks = ax.xaxis.get_ticklocs()
+## ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+## ax.xaxis.set_ticks(ticks[::n])
+## ax.xaxis.set_ticklabels(ticklabels[::n])
+## plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+## plt.grid('on')
+## ax.set_ylabel(r'Normalized anomaly')
+## ax.set_title('NL Climate Index')
+## #ax.legend(loc=2, bbox_to_anchor=(0.45, 1), fontsize=12) 
+## ax.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize=12)
+## #ax.legend(fontsize=12) 
+## fig = ax.get_figure()
+## fig.set_size_inches(w=15.5,h=8)
+## fig_name = 'NL_climate_index.png'
+## fig.savefig(fig_name, dpi=300)
+## os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+
 #### ----- Plot climate index (French) ---- ####
-climate_index.rename(columns={
+## climate_index_normFR = climate_index_norm.copy()
+## climate_index_normFR.rename(columns={
+##     'Winter NAO':'ONA hiver',
+##     'Air Temp':'Temp Air',
+##     'Sea Ice':'Glace',
+##     'SST':'SST',
+##     'S27 CIL':'S27 CIF',
+##     'CIL area':'Aire CIF',
+##     'Bottom T.': 'Temp Fond'
+##     }, inplace=True)
+
+## ax = climate_index_normFR.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
+## ticks = ax.xaxis.get_ticklocs()
+## ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+## ax.xaxis.set_ticks(ticks[::n])
+## ax.xaxis.set_ticklabels(ticklabels[::n])
+## plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+## plt.grid('on')
+## ax.set_ylabel(r'Anomalie normalisée cummulée')
+## ax.set_title('Indice climatique pour TNL')
+## fig = ax.get_figure()
+## fig.set_size_inches(w=12,h=8)
+## fig_name = 'NL_climate_index_FR.png'
+## fig.savefig(fig_name, dpi=300)
+## os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+
+#### ----- Climate index with simple Scorecards [1] ---- ####
+# Need this from above:
+#climate_index = climate_index[climate_index.index<YEAR_MAX+1]
+#climate_index_norm = climate_index.divide((10 - climate_index.isna().sum(axis=1)).values, axis=0)
+
+# Build the colormap - Stack
+from matplotlib.colors import from_levels_and_colors
+YlGn = plt.cm.YlGn(np.linspace(0,1, num=12))
+YlGn = YlGn[4:,]
+cmap_stack, norm_stack = from_levels_and_colors(np.arange(0,7), YlGn, extend='both') 
+# Build the colormap - Scorecard
+vmin = -3.49
+vmax = 3.49
+midpoint = 0
+levels = np.linspace(vmin, vmax, 15)
+midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+normal = plt.Normalize(-3.49, 3.49)
+reds = plt.cm.Reds(np.linspace(0,1, num=7))
+blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+whites = [(1,1,1,1)]*2
+colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+
+# Plot
+fig, ax = plt.subplots(nrows=1, ncols=1)
+n = 5 # xtick every n years
+ax = climate_index_norm.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.grid('on')
+ax.set_xlabel(r'')
+ax.set_ylabel(r'Normalized anomaly')
+ax.set_title('NL Climate Index')
+ax.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize=12)
+
+colors = cmap(normal(np.nansum(climate_index_norm.values, axis=1)))
+nlci_text = np.nansum(climate_index_norm.values, axis=1).round(1).astype('str')
+if nlci_text[0] == '0.0':
+    nlci_text[0] = 'nan'
+the_table = ax.table(cellText=[nlci_text],
+        rowLabels=['NL climate index'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.14, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell.set_fontsize(0)
+    else:
+        cell._text.set_rotation(90)
+        
+fig = ax.get_figure()
+fig.set_size_inches(w=15.5,h=12)
+fig_name = 'NL_climate_index_ms.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+
+### ----- Plot climate index (French) ---- ####
+climate_index_normFR = climate_index_norm.copy()
+climate_index_normFR.rename(columns={
     'Winter NAO':'ONA hiver',
     'Air Temp':'Temp Air',
     'Sea Ice':'Glace',
@@ -200,16 +349,355 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
+ax.set_xlabel(r'')
 ax.set_ylabel(r'Anomalie normalisée cummulée')
 ax.set_title('Indice climatique pour TNL')
+ax.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize=12)
+
+colors = cmap(normal(np.nansum(climate_index_norm.values, axis=1)))
+nlci_text = np.nansum(climate_index_norm.values, axis=1).round(1).astype('str')
+if nlci_text[0] == '0.0':
+    nlci_text[0] = 'nan'
+the_table = ax.table(cellText=[nlci_text],                     
+        rowLabels=['Indice climatique'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.14, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell.set_fontsize(0)
+    else:
+        cell._text.set_rotation(90)
+        
 fig = ax.get_figure()
-fig.set_size_inches(w=12,h=8)
-fig_name = 'NL_climate_index_FR.png'
+fig.set_size_inches(w=15.5,h=12)
+fig_name = 'NL_climate_index_ms_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
+
+#### ----- Climate index with extended Scorecards [2] ---- ####
+# Build the colormap - Stack
+from matplotlib.colors import from_levels_and_colors
+YlGn = plt.cm.YlGn(np.linspace(0,1, num=12))
+YlGn = YlGn[4:,]
+cmap_stack, norm_stack = from_levels_and_colors(np.arange(0,7), YlGn, extend='both') 
+# Build the colormap - Scorecard
+vmin = -3.49
+vmax = 3.49
+midpoint = 0
+levels = np.linspace(vmin, vmax, 15)
+midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+normal = plt.Normalize(-3.49, 3.49)
+reds = plt.cm.Reds(np.linspace(0,1, num=7))
+blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+whites = [(1,1,1,1)]*2
+colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+
+fig, ax = plt.subplots(nrows=1, ncols=1)
+n = 5 # xtick every n years
+ax = climate_index_norm.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.grid('on')
+ax.set_ylim([-1.6, 1.6])
+ax.set_xlabel(r'')
+ax.set_ylabel(r'Normalized anomaly')
+#ax.set_title('NL Climate Index')
+#leg = ax.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize=12)
+leg = ax.legend(fontsize=12)
+
+# Climate Index
+colors = cmap(normal(np.nansum(climate_index_norm.values, axis=1)))
+# nansum leads to 0.0 when only NaNs; correcting it here:
+nlci_text = np.nansum(climate_index_norm.values, axis=1).round(1).astype('str')
+if nlci_text[0] == '0.0':
+    nlci_text[0] = 'nan'
+nlci_table = ax.table(cellText=[nlci_text],
+        rowLabels=['NL climate index'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.14, 1, 0.05])
+nlci_table.auto_set_font_size (False)
+nlci_table.set_fontsize(11)
+
+for key, cell in nlci_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell.set_fontsize(0)
+    else:
+        cell._text.set_rotation(90)
+
+# CIL area
+colors = cmap(normal(climate_index_sc['CIL area'].values))
+the_table = ax.table(cellText=[climate_index_sc['CIL area'].values.round(1)],
+        rowLabels=['CIL area '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.01, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Bottom T
+colors = cmap(normal(climate_index_sc['Bottom T'].values))
+the_table = ax.table(cellText=[climate_index_sc['Bottom T'].values.round(1)],
+        rowLabels=['Bottom T '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.06, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# S27 CIL
+colors = cmap(normal(climate_index_sc['S27 CIL'].values))
+the_table = ax.table(cellText=[climate_index_sc['S27 CIL'].values.round(1)],
+        rowLabels=['S27 CIL '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.11, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# S27 S
+colors = cmap(normal(climate_index_sc['S27 S'].values))
+the_table = ax.table(cellText=[climate_index_sc['S27 S'].values.round(1)],
+        rowLabels=['S27 S '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.16, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# S27 T
+colors = cmap(normal(climate_index_sc['S27 T'].values))
+the_table = ax.table(cellText=[climate_index_sc['S27 T'].values.round(1)],
+        rowLabels=['S27 T '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.21, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+        
+# SST
+colors = cmap(normal(climate_index_sc['SST'].values))
+the_table = ax.table(cellText=[climate_index_sc['SST'].values.round(1)],
+        rowLabels=['SST '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.26, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Icebergs
+colors = cmap(normal(climate_index_sc['Icebergs'].values))
+the_table = ax.table(cellText=[climate_index_sc['Icebergs'].values.round(1)],
+        rowLabels=['Icebergs '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.31, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Sea Ice
+colors = cmap(normal(climate_index_sc['Sea Ice'].values))
+the_table = ax.table(cellText=[climate_index_sc['Sea Ice'].values.round(1)],
+        rowLabels=['Sea Ice '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.36, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_text('')
+        cell._text.set_rotation(90)
+
+# Air Temp
+colors = cmap(normal(climate_index_sc['Air Temp'].values))
+the_table = ax.table(cellText=[climate_index_sc['Air Temp'].values.round(1)],
+        rowLabels=['Air Temp '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.41, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Wint. NAO
+colors = cmap(normal(climate_index_sc['Wint. NAO'].values))
+nao_table = ax.table(cellText=[climate_index_sc['Wint. NAO'].values.round(1)],
+        rowLabels=['Wint. NAO '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.46, 1, 0.05])
+nao_table.auto_set_font_size (False)
+nao_table.set_fontsize(11)
+
+for key, cell in nao_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_text('')
+        cell._text.set_rotation(90)
+                                      
+fig = ax.get_figure()
+fig.set_size_inches(w=15.5,h=12)
+fig_name = 'NL_climate_index_ms_scorecards.png'
+fig.savefig(fig_name, dpi=300, bbox_extra_artists=(nao_table,nlci_table,leg), bbox_inches='tight')
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
 
 #### ----- Comparison with Eugene's CEI ---- ####
@@ -228,7 +716,7 @@ plt.plot(df_cei.mean(axis=1), linewidth=2)
 plt.plot(climate_index.mean(axis=1), linewidth=2)
 plt.grid()
 plt.text(1950,-1.5,'r=0.87', fontsize=20)
-plt.legend(['CEI (Petrie et al., 2007)','NL climate index (this study)'])
+plt.legend(['CEI (Cyr et al., 2019)','NL climate index (this study)'])
 fig.set_size_inches(w=12,h=8)
 fig_name = 'CEI_climate_compa.png'
 fig.savefig(fig_name, dpi=300)
@@ -240,10 +728,10 @@ ax1 = fig.add_subplot(111)
 ax2 = ax1.twinx()
 ax1.plot(df_cei.mean(axis=1), linewidth=2, color='tab:blue')
 ax2.plot(climate_index.mean(axis=1), linewidth=2, color='tab:orange')
-ax1.set_ylabel('CEI (Petrie et al., 2007)', color='tab:blue')
-ax2.set_ylabel('NL climate index (this study)', color='tab:orange')
+ax1.set_ylabel('CEI (Cyr et al., 2019)', color='tab:blue')
+ax2.set_ylabel('NLCI (this study)', color='tab:orange')
 ax1.grid()
-ax1.text(1951, -1.5, 'r=0.87', fontsize=16, color='dimgray', weight='bold')
+ax1.text(1951, -30, 'r=0.87', fontsize=16, color='dimgray', weight='bold')
 ax1.tick_params(axis='y', colors='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
 #plt.legend(['CEI (Petrie et al., 2007)','NL climate index (this study)'])
@@ -261,9 +749,9 @@ plt.scatter(dfs[0].values, dfs[1].values, c=dfs.index)
 plt.grid()
 cb = plt.colorbar()
 cb.ax.set_ylabel('Year', fontsize=14)
-plt.xlabel('CEI (Petrie et al., 2007)')
-plt.ylabel('NL climate index (this study)')
-plt.text(-2,1,'r=0.87', fontsize=20)
+plt.xlabel('CEI (Cyr et al., 2019)')
+plt.ylabel('NLCI (this study)')
+plt.text(-2,1,'r=0.86', fontsize=20)
 fig.set_size_inches(w=12,h=8)
 fig_name = 'CEI_climate_scatter.png'
 fig.savefig(fig_name, dpi=300)

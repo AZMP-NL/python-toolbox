@@ -14,6 +14,7 @@ from matplotlib.patches import Polygon
 
 ## ---- Region parameters ---- ##
 dataFile = '/home/cyrf0006/data/GEBCO/GRIDONE_1D.nc'
+dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc'
 lon_0 = -50
 lat_0 = 50
 lonLims = [-70, -40]
@@ -28,24 +29,46 @@ swot_kml = 'SWOT_Science_sept2015_Swath_10_60.kml'
 ## ---- Bathymetry ---- ####
 v = np.linspace(-4000, 0, 9)
 
-# Load data
 dataset = netCDF4.Dataset(dataFile)
-
-# Extract variables
-x = dataset.variables['x_range']
-y = dataset.variables['y_range']
+x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+y = [-89-59.75/60, 89+59.75/60]
 spacing = dataset.variables['spacing']
 
 # Compute Lat/Lon
 nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
 ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-
 lon = np.linspace(x[0],x[-1],nx)
 lat = np.linspace(y[0],y[-1],ny)
-
 # Reshape data
 zz = dataset.variables['z']
 Z = zz[:].reshape(ny, nx)
+Z = np.flipud(Z) # <------------ important!!!
+# Reduce data according to Region params
+idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+lon = lon[idx_lon[0]]
+lat = lat[idx_lat[0]]
+
+
+## # Load data
+## dataset = netCDF4.Dataset(dataFile)
+
+## # Extract variables
+## x = dataset.variables['x_range']
+## y = dataset.variables['y_range']
+## spacing = dataset.variables['spacing']
+
+## # Compute Lat/Lon
+## nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+## ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+
+## lon = np.linspace(x[0],x[-1],nx)
+## lat = np.linspace(y[0],y[-1],ny)
+
+## # Reshape data
+## zz = dataset.variables['z']
+## Z = zz[:].reshape(ny, nx)
 
 # Reduce data according to Region params
 lon = lon[::decim_scale]
@@ -101,7 +124,7 @@ fig = plt.figure(1)
 #m = Basemap(projection='ortho',lon_0=lon_0,lat_0=lat_0,resolution=None)
 m = Basemap(projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution='l')
 x,y = m(*np.meshgrid(lon,lat))
-c = m.contourf(x, y, np.flipud(Z), v, cmap=plt.cm.PuBu_r, extend="min");
+c = m.contourf(x, y, Z, v, cmap=plt.cm.PuBu_r, extend="min");
 #c = m.contourf(x, y, np.flipud(Z), v, cmap=plt.cm.PuRd_r, extend="min");
 m.fillcontinents(color='grey');
 m.drawparallels(np.arange(10,70,10), labels=[1,0,0,0], fontsize=12, fontweight='bold');
@@ -154,6 +177,11 @@ plt.text(x[-1], y[-1], 'SWSPB ', horizontalalignment='right', verticalalignment=
 x, y = m(stationLon[index_S27],stationLat[index_S27])
 m.scatter(x[0],y[0],40,marker='*',color='r')
 plt.text(x[0], y[0], '  Stn-27', horizontalalignment='left', verticalalignment='center', fontsize=10, color='r', fontweight='bold')
+
+# HiBio moorings
+x, y = m([-61.267],[60.4729])
+m.scatter(x[0],y[0],40,marker='*',color='m')
+plt.text(x[0], y[0], '  HiBio', horizontalalignment='left', verticalalignment='center', fontsize=10, color='m', fontweight='bold')
 
 
 ## PLot swot stuff
@@ -223,17 +251,17 @@ x, y = m(box_x, box_y)
 m.plot(x, y, color='black', alpha=.9, linewidth=2)   
 
 ## Fancy arrows (To highlight GS and LC)
-x_text, y_text = m(-1,1)
-x_gs, y_gs = m(-50, 41)
-plt.annotate(' ',
-            xy=(x_gs, y_gs), xycoords='data',
-            xytext=(x_text, y_text), textcoords='offset points',
-            size=20,
-            # bbox=dict(boxstyle="round", fc="0.8"),
-            arrowprops=dict(arrowstyle="fancy",
-                            #fc="0.6", ec="none",
-                            facecolor='orange',
-                            connectionstyle="angle3,angleA=1,angleB=-180"))
+## x_text, y_text = m(-1,1)
+## x_gs, y_gs = m(-50, 41)
+## plt.annotate(' ',
+##             xy=(x_gs, y_gs), xycoords='data',
+##             xytext=(x_text, y_text), textcoords='offset points',
+##             size=20,
+##             # bbox=dict(boxstyle="round", fc="0.8"),
+##             arrowprops=dict(arrowstyle="fancy",
+##                             #fc="0.6", ec="none",
+##                             facecolor='orange',
+##                             connectionstyle="angle3,angleA=1,angleB=-180"))
 
 
 

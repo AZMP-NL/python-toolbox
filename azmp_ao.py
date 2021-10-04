@@ -32,7 +32,7 @@ if os.path.exists(ao_file):
             import urllib3
             http = urllib3.PoolManager()
             r = http.request('GET', url)
-            open('/home/cyrf0006/data/AZMP/indices/data.csv', 'wb').write(r.data)
+            open('/home/cyrf0006/data/AZMP/indices/ao_data.csv', 'wb').write(r.data)
             response_isnt_good = False
         elif response == 'n':
             response_isnt_good = False

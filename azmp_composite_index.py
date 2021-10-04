@@ -20,10 +20,10 @@ from matplotlib.colors import from_levels_and_colors
 import cmocean as cmo
 
 clim_year = [1981, 2010]
-years = [1980, 2019]
+years = [1980, 2020]
 width = 0.5
 year0 = 1985
-yearf = 2019
+yearf = 2020
 n=5
 
 #### ---- LOAD THE DATA ---- ####
@@ -33,9 +33,9 @@ df_CIL_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL
 df_CIL_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
 
 # 2. NAO & AO [years: Value]
-nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
+nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter.pkl')
 nao_winter = nao_winter[nao_winter.index<=yearf]
-ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/AO_annual.pkl')
+ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/AO_annual.pkl')
 
 # 3. Air Temperature
 df_air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_monthly.pkl')
@@ -51,9 +51,10 @@ df_sst_boxes.index = df_sst_boxes.index.year
 ## df_sst_1997 = df_sst_1997.resample('As').mean()
 ## df_sst_1997.index = df_sst_1997.index.year
 # Peter's SST
-df_sst = pd.read_csv('/home/cyrf0006/data/SST_IML/AZMP_SST_Seasonal.dat', delimiter=r"\s+", index_col='#Yr', header=26)
+df_sst = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/AZMP_SST_Seasonal.dat', delimiter=r"\s+", index_col='#Yr', header=27)
 df_sst.index.name = 'year'
 df_sst = df_sst.replace(-99.00, np.nan)
+df_sst = df_sst[df_sst.index<=yearf]
 
 # 5. Bottom temperature
 # 3LNO - Spring
@@ -99,12 +100,18 @@ df_4VWX_summer.index = df_4VWX_summer.index.year
 df_4VWX_summer = df_4VWX_summer.Tmean
 
 # 4VWX from Hebert (not used for now)
-df_4v = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4v_julyGroundfishBottomT.csv', index_col='year')
-df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4vn_julyGroundfishBottomT.csv', index_col='year')
-df_4vs = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4vs_julyGroundfishBottomT.csv', index_col='year')
-df_4w = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4w_julyGroundfishBottomT.csv', index_col='year')
-df_4x = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4x_julyGroundfishBottomT.csv', index_col='year')
-df_4vwx = pd.concat([df_4v['ann.mean'],df_4w['ann.mean'],df_4x['ann.mean']], axis=1).mean(axis=1)
+## df_4v = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4v_julyGroundfishBottomT.csv', index_col='year')
+## df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4vn_julyGroundfishBottomT.csv', index_col='year')
+## df_4vs = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4vs_julyGroundfishBottomT.csv', index_col='year')
+## df_4w = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4w_julyGroundfishBottomT.csv', index_col='year')
+## df_4x = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4x_julyGroundfishBottomT.csv', index_col='year')
+df_4v = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4V.dat', delimiter=r",", index_col='year', header=10)
+df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4Vn.dat', delimiter=r",", index_col='year', header=10)
+df_4vs = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4Vs.dat', delimiter=r",", index_col='year', header=10)
+df_4w = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4W.dat', delimiter=r",", index_col='year', header=10)
+df_4x = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4X.dat', delimiter=r",", index_col='year', header=10)
+
+df_4vwx = pd.concat([df_4v['anomaly'],df_4w['anomaly'],df_4x['anomaly']], axis=1).mean(axis=1)
 df_4VWX_summer.plot()
 df_4vwx.plot()
 plt.legend(['from NAFC using IGOSS', 'from BIO'])
@@ -123,10 +130,10 @@ df_s27_mean = df_s27.mean(axis=1)
 #df_hfx2_surf = df_hfx2_surf.iloc[:,0]
 #df_hfx2_surf.index = np.array(df_hfx2_surf.index, dtype=int) 
 #df_hfx2_surf = pd.to_numeric(df_hfx2_surf, errors='coerce').astype('Float64')
-df_hfx2_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/H2_0-50m_integrated.dat', sep=' ', index_col='Year')
-df_hfx2_surf.drop('----', inplace=True)
+df_hfx2_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/H2_0-50m_integrated.dat', sep=' ', skiprows=[1], index_col='Year')
 df_hfx2_surf = df_hfx2_surf['T'].astype('float')
-df_hfx2_surf.index = df_hfx2_surf.index.astype('int')       
+df_hfx2_surf = df_hfx2_surf.replace(-99.00, np.nan)
+df_hfx2_surf = df_hfx2_surf[df_hfx2_surf.index<=yearf]
 
 # HFX-2 150m
 #df_hfx2_150 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/HFX2_150m_Temperature.csv', header=2, index_col='Year')
@@ -134,19 +141,26 @@ df_hfx2_surf.index = df_hfx2_surf.index.astype('int')
 df_hfx2_150 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/HFX2_150m_temp.dat', sep=' ')
 df_hfx2_150.columns=['year', 'temp']
 df_hfx2_150.set_index('year', inplace=True)
-
+df_hfx2_150 = df_hfx2_150.replace(-99.00, np.nan)
+df_hfx2_150 = df_hfx2_150[df_hfx2_150.index<=yearf]
 
 # Prince-5 0-50m
 #df_p5_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_Annual_Series_0-50m.csv', header=1, index_col='Year')
-df_p5_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_0-50m_integrated.dat', sep=' ', index_col='Year')
-df_p5_surf.drop('----', inplace=True)
+df_p5_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_0-50m_integrated.dat', sep=' ', skiprows=[1], index_col='Year')
 df_p5_surf = df_p5_surf['T'].astype('float')
+df_p5_surf = df_p5_surf.replace(-99.00, np.nan)
+df_p5_surf = df_p5_surf[df_p5_surf.index<=yearf]
 
-# Prince-5 0-90m
+# Prince-5 0-90m (Have to manually tweak it)
 #df_p5_90 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_Integrated_0-90m.csv', header=0, index_col='Year')
 #df_p5_90 = df_p5_90.iloc[:,1]
-df_p5_90 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/prince5integratedVariables.csv', index_col='year')
-df_p5_90 = df_p5_90['integratedTemperature']
+df_p5_90 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/prince5IntegratedTemperature0-90m.dat', index_col='year', header=10)
+df_p5_90 = df_p5_90.replace(-99.00, np.nan)
+df_p5_90 = df_p5_90.replace('       NA', np.nan)
+df_p5_90 = df_p5_90['anomaly'].astype('float')
+df_p5_90 = df_p5_90[df_p5_90.index<=yearf]
+# convert anomaly to degC:
+df_p5_90 = (df_p5_90*.53) + 6.86
 
 # 7. Section average Temeprature (should eventually add salinity in these dataFrame, see azmp_CIL_stats.py)
 df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_SI_meanT_summer.pkl')
@@ -155,11 +169,11 @@ df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_
 df_FC_shelf = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_FC_meanT_shelf_summer.pkl')
 df_FC_cap = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_FC_meanT_cap_summer.pkl')
 
-# 8. Greenland Fylla and Cape Desolation
+# 8. Greenland Fylla and Cape Desolation (from IROC)
 df_FB4 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Fylla_0-50_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
 df_CD3_2000 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_2000_Annual.csv', header=14, index_col='Year', encoding = "ISO-8859-1")
 df_CD3_200 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_75-200_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
-# Keep only temeprature
+# Keep only tempeprature
 df_FB4 = df_FB4.iloc[:,0]
 df_CD3_2000 = df_CD3_2000.iloc[:,0]
 df_CD3_200 = df_CD3_200.iloc[:,0]
@@ -169,11 +183,17 @@ df_emeral = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Scotian_Emerald_Ann
 df_misaine = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Scotian_Misaine_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
 df_egom =  pd.read_csv('/home/cyrf0006/data/IROC_timeseries/USA_EGOM_Annual.csv', header=19, index_col='Year', encoding = "ISO-8859-1")
 df_nec = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/USA_NEC_Annual.csv', header=19, index_col='Year', encoding = "ISO-8859-1")
-# Keep only temperature
-df_emeral = df_emeral.iloc[:,0]
-df_misaine = df_misaine.iloc[:,0]
+##  Keep only temperature
+df_emeral = df_emeral.iloc[:,1] # Already stn anom!!
+df_misaine = df_misaine.iloc[:,1] # already std anom!!
 df_egom = df_egom.iloc[:,0]
 df_nec = df_nec.iloc[:,0]
+
+# 10. Central Lab Sea (from IROC)
+df_cls = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/LabradorSea_0020-1800_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
+df_cls = df_cls.iloc[:,0]
+df_cls.index = df_cls.index.astype('int')
+df_cls = df_cls[df_cls.index<=yearf]
 
 
 #### ---- STACFIS - 3LNO ---- ####
@@ -206,7 +226,7 @@ plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly 3LNO', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2,2])
-fig.set_size_inches(w=15,h=7)
+#fig.set_size_inches(w=15,h=7)
 fig_name = 'composite_3LNO.png'
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim composite_3LNO.png composite_3LNO.png')
@@ -237,7 +257,7 @@ plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly 3M', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-1.5,1.5])
-fig.set_size_inches(w=15,h=7)
+#fig.set_size_inches(w=15,h=7)
 fig_name = 'composite_3M.png'
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim composite_3M.png composite_3M.png')
@@ -248,7 +268,7 @@ df_comp_SA01 = pd.concat([df_sst_boxes.Central_Labrador_Sea,
                          df_sst_boxes.Greenland_Shelf,
                          df_sst_boxes.Hudson_Strait,
                          df_FB4, df_CD3_200, df_CD3_2000,
-                         df_air.Nuuk, df_air.Iqaluit
+                         df_air.Nuuk, df_air.Iqaluit, df_cls
                           ], axis=1)
 
 df_SA01_clim = df_comp_SA01[(df_comp_SA01.index>=clim_year[0]) & (df_comp_SA01.index<=clim_year[1])]
@@ -270,7 +290,7 @@ plt.ylabel('Normalized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly SA01', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-2,2])
-fig.set_size_inches(w=15,h=7)
+#fig.set_size_inches(w=15,h=7)
 fig_name = 'composite_SA01.png'
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim composite_SA01.png composite_SA01.png')
@@ -285,7 +305,8 @@ os.system('convert -trim composite_SA01.png composite_SA01.png')
 ##                         df_sst['Hybernia'],df_sst['Flemish_Cap'],
 ##                         df_sst['Flemish_Pass'],df_sst['Green-St._Pierre_Bank']
 ##                         ], axis=1)
-                        
+
+# Here df_p5_0-90 is missing because anomaly was provided rather than T
 df_comp_SA234 = pd.concat([df_s27_mean, df_p5_90, df_hfx2_surf, df_hfx2_150,
                           df_2H_fall, df_2J_fall,
                           df_3LNO_spring, df_3LNO_fall, df_3M_summer, df_4VWX_summer,
@@ -313,11 +334,32 @@ df_comp_SA4 = pd.concat([df_p5_90, df_hfx2_surf, df_hfx2_150,
                           df_egom, df_nec
                           ], axis=1)
 
-
+# anomaly calculations
 df_SA234_clim = df_comp_SA234[(df_comp_SA234.index>=clim_year[0]) & (df_comp_SA234.index<=clim_year[1])]
+df_SA2_clim = df_comp_SA2[(df_comp_SA2.index>=clim_year[0]) & (df_comp_SA2.index<=clim_year[1])]
+df_SA3_clim = df_comp_SA3[(df_comp_SA3.index>=clim_year[0]) & (df_comp_SA3.index<=clim_year[1])]
+df_SA4_clim = df_comp_SA4[(df_comp_SA4.index>=clim_year[0]) & (df_comp_SA4.index<=clim_year[1])]
 std_anom_SA234 = (df_comp_SA234-df_SA234_clim.mean(axis=0))/df_SA234_clim.std(axis=0)
+std_anom_SA2 = (df_comp_SA2-df_SA2_clim.mean(axis=0))/df_SA2_clim.std(axis=0)
+std_anom_SA3 = (df_comp_SA3-df_SA3_clim.mean(axis=0))/df_SA3_clim.std(axis=0)
+std_anom_SA4 = (df_comp_SA4-df_SA4_clim.mean(axis=0))/df_SA4_clim.std(axis=0)
+# revert CIL volume
+std_anom_SA234['vol_itp'] = std_anom_SA234['vol_itp']*-1
+std_anom_SA2['vol_itp'] = std_anom_SA2['vol_itp']*-1
+std_anom_SA3['vol_itp'] = std_anom_SA3['vol_itp']*-1
+# add misaine and Emerald (already std anom)
+std_anom_SA234['misaine'] = df_misaine
+std_anom_SA234['emerald'] = df_emeral
+std_anom_SA4['misaine'] = df_misaine
+std_anom_SA4['emerald'] = df_emeral
+
+
+# Composite as average and save
 composite_SA234 = std_anom_SA234.mean(axis=1)
 composite_SA234.to_csv('composite_SA234.csv', float_format='%.2f')
+composite_SA2 = std_anom_SA2.mean(axis=1)
+composite_SA3 = std_anom_SA3.mean(axis=1)
+composite_SA4 = std_anom_SA4.mean(axis=1)
 
 # Plot
 composite_SA234 = composite_SA234[composite_SA234.index>=year0]
@@ -333,27 +375,27 @@ plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly SA234', weight='bold', fontsize=14)
 plt.grid()
 plt.ylim([-1.5,1.5])
-fig.set_size_inches(w=15,h=7)
+#fig.set_size_inches(w=15,h=7)
 fig_name = 'composite_SA234.png'
 fig.savefig(fig_name, dpi=200)
 os.system('convert -trim composite_SA234.png composite_SA234.png')
 
 
 # Plot SA 2-3-4 stacked HERE!!!!!!!
-df_comp_SA234_stack = pd.concat([df_comp_SA2.mean(axis=1),
-                                 df_comp_SA3.mean(axis=1),
-                                 df_comp_SA4.mean(axis=1),
+df_comp_SA234_stack = pd.concat([composite_SA2,
+                                 composite_SA3,
+                                 composite_SA4,
                                  ], keys = ['SA2', 'SA3', 'SA4'], axis=1)
 df_comp_SA234_stack = df_comp_SA234_stack[df_comp_SA234_stack.index>=1950]
-df_SA234_stack_clim = df_comp_SA234_stack[(df_comp_SA234_stack.index>=clim_year[0]) & (df_comp_SA234_stack.index<=clim_year[1])]
-std_anom_SA234_stack = (df_comp_SA234_stack-df_SA234_stack_clim.mean(axis=0))/df_SA234_stack_clim.std(axis=0)
+df_comp_SA234_stack.to_csv('composite_SA234_stacked.csv', float_format='%.2f')
 
-std_anom_SA234_stack.to_csv('SA234_std_anom.csv', float_format='%.2f')
+# Normalize sub indices
+df_comp_SA234_stack_norm = df_comp_SA234_stack.divide((df_comp_SA234_stack.shape[1] - df_comp_SA234_stack.isna().sum(axis=1)).values, axis=0)
 
 ## ---- plot annual ---- ##
 #fig, ax = plt.subplots(nrows=1, ncols=1)
 n = 5 # xtick every n years
-ax = std_anom_SA234_stack.plot(kind='bar', stacked=True, cmap=cmo.cm.haline, alpha=.8)
+ax = df_comp_SA234_stack_norm.plot(kind='bar', stacked=True, cmap=cmo.cm.haline, alpha=.8)
 ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
@@ -362,9 +404,9 @@ plt.grid('on')
 ax.set_ylabel(r'Standardized anomaly')
 ax.set_title('NAFO sub-areas 2, 3 & 4')
 plt.legend(['SA-2', 'SA-3', 'SA-4'])
-plt.xlim( 
+plt.xlim()
 fig = ax.get_figure()
-fig.set_size_inches(w=12,h=8)
+#fig.set_size_inches(w=12,h=8)
 fig_name = 'composite_SA234_stacked.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

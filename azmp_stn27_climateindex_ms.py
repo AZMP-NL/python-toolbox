@@ -33,12 +33,15 @@ def make_patch_spines_invisible(ax):
         sp.set_visible(False)
 
 ## ---- Some custom parameters ---- ##
-year_clim = [1981, 2010]
-current_year = 2019
+#year_clim = [1981, 2010]
+year_clim = [1991, 2020]
+current_year = 2020
 XLIM = [datetime.date(1945, 1, 1), datetime.date(2020, 12, 31)]
 french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 months = mdates.MonthLocator()  # every month
 month_fmt = mdates.DateFormatter('%b')
+Vsig = np.append(np.arange(21,27), 26.5)
+Vsig = np.append(Vsig, 27)
 
 # Load pickled data
 df_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_temperature_monthly.pkl')
@@ -49,8 +52,10 @@ df_sal = df_sal[df_sal.index.year>=1951]
 # Flag years with less than 8 months
 df_temp[df_temp.index.year==1980] = np.nan
 df_temp[df_temp.index.year==1981] = np.nan
+df_temp[df_temp.index.year==2020] = np.nan
 df_sal[df_sal.index.year==1980] = np.nan
 df_sal[df_sal.index.year==1981] = np.nan
+df_sal[df_sal.index.year==2020] = np.nan
 # Climatology period
 df_temp_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
 df_sal_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
@@ -63,12 +68,19 @@ monthly_climS = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_sali
 # add 13th months
 monthly_climT.loc[pd.to_datetime('1901-01-01')] = monthly_climT.loc[pd.to_datetime('1900-01-01')]
 monthly_climS.loc[pd.to_datetime('1901-01-01')] = monthly_climS.loc[pd.to_datetime('1900-01-01')]
+# Calculate density
+SA = gsw.SA_from_SP(monthly_climS, monthly_climS.columns, -52, 47)
+CT = gsw.CT_from_t(SA, monthly_climT, monthly_climT.columns)
+SIG = gsw.sigma0(SA, CT)
+monthly_climSIG = pd.DataFrame(SIG, index=monthly_climT.index, columns=monthly_climT.columns)
 
 # plot T
 fig, ax = plt.subplots(nrows=1, ncols=1)
 CMAP = cmocean.tools.lighten(cmocean.cm.thermal, .9)
 V = np.arange(-2, 14, 1)
 c = plt.contourf(monthly_climT.index, monthly_climT.columns, monthly_climT.values.T, V, extend='max', cmap=CMAP)
+cc = plt.contour(monthly_climSIG.index, monthly_climSIG.columns, monthly_climSIG.values.T, Vsig, colors='dimgray')
+plt.clabel(cc, inline=1, fontsize=10, colors='dimgray', fmt='%1.1f')
 plt.ylim([0, 175])
 plt.ylabel('Depth (m)', fontsize=14)
 plt.ylim([0, 175])
@@ -98,6 +110,8 @@ fig, ax = plt.subplots(nrows=1, ncols=1)
 V = np.arange(30, 33.5, .25)
 CMAP = cmocean.cm.haline
 c = plt.contourf(monthly_climS.index, monthly_climS.columns, monthly_climS.values.T, V, extend='both', cmap=CMAP)
+cc = plt.contour(monthly_climSIG.index, monthly_climSIG.columns, monthly_climSIG.values.T, Vsig, colors='dimgray')
+plt.clabel(cc, inline=1, fontsize=10, colors='dimgray', fmt='%1.1f')
 plt.ylim([0, 175])
 plt.ylabel('Depth (m)', fontsize=14)
 plt.ylim([0, 175])
@@ -185,7 +199,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Average salinity (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2.1, 2.1])
+plt.ylim([-2.5, 2.5])
 plt.grid()
 ax.tick_params(labelbottom=False)
 # Save Figure

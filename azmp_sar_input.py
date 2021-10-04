@@ -16,7 +16,7 @@ import os
 
 # Parameters 
 path = '/home/cyrf0006/AZMP/state_reports/bottomT/'
-clim_year = [1981, 2010]
+clim_year = [1991, 2020]
 year_min = 1948
 stn27_months = [5, 11]
 
@@ -98,16 +98,16 @@ df = pd.read_csv(nao_file, header=1)
 df = df.set_index('Date')
 df.index = pd.to_datetime(df.index, format='%Y%m')
 # Select only DJF
-df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2)]
+df_winter = df[(df.index.month==12) | (df.index.month==1) | (df.index.month==2) |  (df.index.month==3)]
 # Start Dec-1950
 df_winter = df_winter[df_winter.index>pd.to_datetime('1950-10-01')]
 # Average 3 consecutive values (DJF average); We loose index.
-df_winter = df_winter.groupby(np.arange(len(df_winter))//3).mean()
+df_winter = df_winter.groupby(np.arange(len(df_winter))//4).mean()
 # Reset index using years only
 year_unique = pd.unique(df.index.year)[1:,]
 df_winter = df_winter.iloc[np.arange(0, year_unique.size)] # reduce if last month is december (belongs to following year)
 df_winter.index = year_unique
-df_winter.to_csv('NAO_DJF.dat', header=False, sep = ' ', float_format='%.2f')
+df_winter.to_csv('NAO_DJFM.dat', header=False, sep = ' ', float_format='%.2f')
 
 #### ------------- 3. CIL ---------------- ####
 # see /home/cyrf0006/AZMP/state_reports/ColbourneStuff/CIL_AZMP_SPRING_SUMMER_FALL.xlsx
@@ -151,11 +151,14 @@ df_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_temperatur
 df_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_salinity_monthly.pkl')
 df_strat = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_stratif_monthly.pkl')
 
-# Reduce to summer months and annual mean
-df_temp = df_temp[(df_temp.index.month>=stn27_months[0]) & (df_temp.index.month<=stn27_months[1])].resample('As').mean()
-df_sal = df_sal[(df_sal.index.month>=stn27_months[0]) & (df_sal.index.month<=stn27_months[1])].resample('As').mean()
-df_strat = df_strat[(df_strat.index.month>=stn27_months[0]) & (df_strat.index.month<=stn27_months[1])].resample('As').mean()
 
+# Reduce to summer months and annual mean
+df_temp = df_temp[(df_temp.index.month>=stn27_months[0]) & (df_temp.index.month<=stn27_months[1])]
+df_sal = df_sal[(df_sal.index.month>=stn27_months[0]) & (df_sal.index.month<=stn27_months[1])]
+df_strat = df_strat[(df_strat.index.month>=stn27_months[0]) & (df_strat.index.month<=stn27_months[1])]
+
+
+# Choose depth range:
 # Temperature
 T_0_btm = df_temp.mean(axis=1)
 T_0_50 = df_temp[df_temp.columns[(df_temp.columns<=50)]].mean(axis=1)
@@ -165,10 +168,37 @@ S_0_btm = df_sal.mean(axis=1)
 S_0_50 = df_sal[df_sal.columns[(df_sal.columns<=50)]].mean(axis=1)
 S_170_btm = df_sal[df_sal.columns[(df_sal.columns>=170)]].mean(axis=1)
 # Statification
-strat_5_50 = df_strat*45 # Note that this is not stratification, but density difference
+strat_5_50 = df_strat*42 # the SAR presents density difference, not stratification
+
+
+# Recreate annual cycle based on climatology and anomaly
+series_name_in = ['T_0_btm', 'T_0_50', 'T_170_btm', 'S_0_btm', 'S_0_50', 'S_170_btm', 'strat_5_50']
+series_name_out = ['out_T_0_btm', 'out_T_0_50', 'out_T_170_btm', 'out_S_0_btm', 'out_S_0_50', 'out_S_170_btm', 'out_strat_5_50']
+for idx, i in enumerate(series_name_in):
+    my_ts = eval(i)
+    ts_stack = my_ts.groupby([(my_ts.index.year),(my_ts.index.month)]).mean()
+    ts_unstack = ts_stack.unstack()
+    # Monthly clim (ts_monthly_clim)
+    ts_clim_period = my_ts[(my_ts.index.year>=clim_year[0]) & (my_ts.index.year<=clim_year[1])]
+    ts_monthly_stack = ts_clim_period.groupby([(ts_clim_period.index.year),(ts_clim_period.index.month)]).mean()
+    ts_monthly_clim = ts_monthly_stack.mean(level=1)
+    ts_monthly_std = ts_monthly_stack.std(level=1)
+    # monthly anom and normalized anom
+    monthly_anom = ts_unstack - ts_monthly_clim 
+    monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
+    # annual normalized anomaly
+    anom_std = monthly_stdanom.mean(axis=1)
+    anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
+    # annual anomaly
+    anom = monthly_anom.mean(axis=1) 
+    anom.index = pd.to_datetime(anom.index, format='%Y')
+    # Re-create annual mean by adding annual anomaly to monthly clim
+    annual_mean = anom + ts_monthly_clim.mean()
+    exec(series_name_out[idx] + ' = annual_mean')
+
 
 # Merge 
-df_stn27 = pd.concat([T_0_50, T_170_btm, S_0_50, strat_5_50], axis=1, keys=['Temp 0-50m', 'Temp 170-176m', 'Sal 0-50m', 'Strat 5-50m'])
+df_stn27 = pd.concat([out_T_0_50, out_T_170_btm, out_S_0_50, out_strat_5_50], axis=1, keys=['Temp 0-50m', 'Temp 170-176m', 'Sal 0-50m', 'Strat 5-50m'])
 df_stn27.index = df_stn27.index.year
 df_stn27 = df_stn27[df_stn27.index>=year_min]
 df_stn27.to_csv('S27_Integrated.dat', header=True, sep = ' ', na_rep='-99', float_format='%.3f')

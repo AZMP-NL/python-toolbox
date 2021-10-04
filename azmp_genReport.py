@@ -115,7 +115,7 @@ seasons = ['spring', 'summer', 'fall']
 variables = ['temperature', 'salinity']
 
 # For MB/BI:
-years = np.arange(2000, 2020)
+years = np.arange(1950, 2020)
 sections = ['MB', 'BI']
 seasons = ['summer']
 variables = ['temperature', 'salinity']

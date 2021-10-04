@@ -20,8 +20,8 @@ import os
 import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
-year_clim = [1981, 2010]
-years = [1980, 2019]
+year_clim = [1991, 2020]
+years = [1981, 2020]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -168,7 +168,7 @@ old_S_anom_std = old_S_anom_std[old_S_anom_std.index.year>=years[0]]
 # Load pickled data
 df_CIL = pd.read_pickle('S27_CIL_summer_stats.pkl')
 df_CIL = df_CIL[df_CIL.index.year>=years[0]]
-df_CIL.dropna(inplace=True)
+#df_CIL.dropna(inplace=True)
 # Compute anomalies 
 CIL_clim_period = df_CIL[(df_CIL.index.year>=year_clim[0]) & (df_CIL.index.year<=year_clim[1])]
 # Anomaly
@@ -177,37 +177,38 @@ CIL_anom_std = CIL_anom / CIL_clim_period.std()
 
 #### ------------- MLD ---------------- ####
 # Load pickled data
-df_MLD = pd.read_pickle('S27_MLD_monthly.pkl')
+mld_monthly = pd.read_pickle('S27_MLD_monthly.pkl')
+mld = mld = mld_monthly
 # flag some data:
-df_MLD[df_MLD.index=='2019-03-15']=np.nan
-df_MLD = df_MLD[df_MLD.index.year>=years[0]]
-MLD_clim_period = df_MLD[(df_MLD.index.year>=year_clim[0]) & (df_MLD.index.year<=year_clim[1])]
-# Monthly clim
-MLD_monthly_stack = df_MLD.groupby([(df_MLD.index.year),(df_MLD.index.month)]).mean()
-MLD_monthly_clim_stack = MLD_clim_period.groupby([(MLD_clim_period.index.year),(MLD_clim_period.index.month)]).mean()
-MLD_monthly_clim = MLD_monthly_clim_stack.mean(level=1)
-MLD_monthly_std = MLD_monthly_clim_stack.std(level=1)
-# Monthly anomaly
-MLD_anom = MLD_monthly_stack.sub(MLD_monthly_clim, level=1)
-MLD_std_anom = MLD_anom.div(MLD_monthly_std, level=1)
-MLD_std_anom.index = pd.to_datetime(MLD_std_anom.index.get_level_values(0).astype(str) + '-' + MLD_std_anom.index.get_level_values(1).astype(str) + '-1', format="%Y-%m-%d")
-# dropna
-MLD_std_anom.dropna(inplace=True)
+mld[mld.index=='2019-03-15']=np.nan
+mld[mld.index=='1980-03-15']=np.nan
+mld = mld[mld.index.year>=years[0]]
 # Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
-MLD_winter_anom = MLD_std_anom[(MLD_std_anom.index.month>=1) & (MLD_std_anom.index.month<=3)].resample('As').mean()
-MLD_spring_anom = MLD_std_anom[(MLD_std_anom.index.month>=4) & (MLD_std_anom.index.month<=6)].resample('As').mean()
-MLD_summer_anom = MLD_std_anom[(MLD_std_anom.index.month>=7) & (MLD_std_anom.index.month<=9)].resample('As').mean()
-MLD_fall_anom = MLD_std_anom[(MLD_std_anom.index.month>=10) & (MLD_std_anom.index.month<=12)].resample('As').mean()
-MLD_annual_anom = MLD_std_anom.resample('As').mean()
+#stack months
+mld_stack = mld.groupby([(mld.index.year),(mld.index.month)]).mean()
+mld_unstack = mld_stack.unstack()
+# compute clim
+mld_clim_period = mld[(mld.index.year>=year_clim[0]) & (mld.index.year<=year_clim[1])]
+mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_clim_period.index.month)]).mean()
+mld_monthly_clim = mld_monthly_stack.mean(level=1)
+mld_monthly_std = mld_monthly_stack.std(level=1)
+monthly_anom = mld_unstack - mld_monthly_clim 
+monthly_stdanom = (mld_unstack - mld_monthly_clim) /  mld_monthly_std
+# Seasonal and annual anomalies
+mld_winter_anom = monthly_stdanom[[1,2,3]].mean(axis=1)
+mld_spring_anom = monthly_stdanom[[4,5,6]].mean(axis=1)
+mld_summer_anom = monthly_stdanom[[7,8,9]].mean(axis=1)
+mld_fall_anom = monthly_stdanom[[10,11,12]].mean(axis=1)
+mld_annual_anom = monthly_stdanom.mean(axis=1)
 # Mean values for climatology period (for last columns)
-MLD_winter_clim = MLD_clim_period[(MLD_clim_period.index.month>=1) & (MLD_clim_period.index.month<=3)].resample('As').mean()
-MLD_spring_clim = MLD_clim_period[(MLD_clim_period.index.month>=4) & (MLD_clim_period.index.month<=6)].resample('As').mean()
-MLD_summer_clim = MLD_clim_period[(MLD_clim_period.index.month>=7) & (MLD_clim_period.index.month<=9)].resample('As').mean()
-MLD_fall_clim = MLD_clim_period[(MLD_clim_period.index.month>=10) & (MLD_clim_period.index.month<=12)].resample('As').mean()
-MLD_annual_clim = MLD_clim_period.resample('As').mean()
+mld_winter_clim = mld_monthly_clim[[1,2,3]]
+mld_spring_clim = mld_monthly_clim[[4,5,6]]
+mld_summer_clim = mld_monthly_clim[[7,8,9]]
+mld_fall_clim = mld_monthly_clim[[10,11,12]]
+mld_annual_clim = mld_monthly_clim
 # concat clim and anomaly
-MLD_clim = pd.concat([MLD_winter_clim, MLD_spring_clim, MLD_summer_clim, MLD_fall_clim, MLD_annual_clim], axis=1, keys=['MLD winter', 'MLD spring', 'MLD summer', 'MLD fall', 'MLD annual'])
-MLD_anom_std = pd.concat([MLD_winter_anom, MLD_spring_anom, MLD_summer_anom, MLD_fall_anom, MLD_annual_anom], axis=1, keys=['MLD winter', 'MLD spring', 'MLD summer', 'MLD fall', 'MLD annual'])
+mld_clim = pd.concat([mld_winter_clim, mld_spring_clim, mld_summer_clim, mld_fall_clim, mld_annual_clim], axis=1, keys=['MLD winter', 'MLD spring', 'MLD summer', 'MLD fall', 'MLD annual'])
+mld_anom_std = pd.concat([mld_winter_anom, mld_spring_anom, mld_summer_anom, mld_fall_anom, mld_annual_anom], axis=1, keys=['MLD winter', 'MLD spring', 'MLD summer', 'MLD fall', 'MLD annual'])
 ## # Annual and seasonal anomalies (old way)
 ## MLD_winter = df_MLD[(df_MLD.index.month>=1) & (df_MLD.index.month<=3)].resample('As').mean()
 ## MLD_spring = df_MLD[(df_MLD.index.month>=4) & (df_MLD.index.month<=6)].resample('As').mean()
@@ -230,58 +231,73 @@ MLD_anom_std = pd.concat([MLD_winter_anom, MLD_spring_anom, MLD_summer_anom, MLD
 
 #### ------------- Stratification ---------------- ####
 # Load pickled data
-df_strat = pd.read_pickle('S27_stratif_monthly.pkl')
+strat_monthly = pd.read_pickle('S27_stratif_monthly.pkl')
+strat = strat = strat_monthly
 # flag some data:
-df_strat[df_strat.index=='2019-03-15']=np.nan
-df_strat = df_strat[df_strat.index.year>=years[0]]
-strat_clim_period = df_strat[(df_strat.index.year>=year_clim[0]) & (df_strat.index.year<=year_clim[1])]
-# Monthly clim
-strat_monthly_stack = df_strat.groupby([(df_strat.index.year),(df_strat.index.month)]).mean()
-strat_monthly_clim_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
-strat_monthly_clim = strat_monthly_clim_stack.mean(level=1)
-strat_monthly_std = strat_monthly_clim_stack.std(level=1)
-# Monthly anomaly
-strat_anom = strat_monthly_stack.sub(strat_monthly_clim, level=1)
-strat_std_anom = strat_anom.div(strat_monthly_std, level=1)
-strat_std_anom.index = pd.to_datetime(strat_std_anom.index.get_level_values(0).astype(str) + '-' + strat_std_anom.index.get_level_values(1).astype(str) + '-1', format="%Y-%m-%d")
-strat_std_anom.dropna(inplace=True) # dropna
+strat[strat.index=='2019-03-15']=np.nan
+strat[strat.index=='1980-03-15']=np.nan
+strat = strat[strat.index.year>=years[0]]
 # Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
-strat_winter_anom = strat_std_anom[(strat_std_anom.index.month>=1) & (strat_std_anom.index.month<=3)].resample('As').mean()
-strat_spring_anom = strat_std_anom[(strat_std_anom.index.month>=4) & (strat_std_anom.index.month<=6)].resample('As').mean()
-strat_summer_anom = strat_std_anom[(strat_std_anom.index.month>=7) & (strat_std_anom.index.month<=9)].resample('As').mean()
-strat_fall_anom = strat_std_anom[(strat_std_anom.index.month>=10) & (strat_std_anom.index.month<=12)].resample('As').mean()
-strat_annual_anom = strat_std_anom.resample('As').mean()
+#stack months
+strat_stack = strat.groupby([(strat.index.year),(strat.index.month)]).mean()
+strat_unstack = strat_stack.unstack()
+# compute clim
+strat_clim_period = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
+strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
+strat_monthly_clim = strat_monthly_stack.mean(level=1)
+strat_monthly_std = strat_monthly_stack.std(level=1)
+monthly_anom = strat_unstack - strat_monthly_clim 
+monthly_stdanom = (strat_unstack - strat_monthly_clim) /  strat_monthly_std
+
+# Seasonal and annual anomalies
+strat_winter_anom = monthly_stdanom[[1,2,3]].mean(axis=1)
+strat_spring_anom = monthly_stdanom[[4,5,6]].mean(axis=1)
+strat_summer_anom = monthly_stdanom[[7,8,9]].mean(axis=1)
+strat_fall_anom = monthly_stdanom[[10,11,12]].mean(axis=1)
+strat_annual_anom = monthly_stdanom.mean(axis=1)
 # Mean values for climatology period (for last columns)
-strat_winter_clim = strat_clim_period[(strat_clim_period.index.month>=1) & (strat_clim_period.index.month<=3)].resample('As').mean()
-strat_spring_clim = strat_clim_period[(strat_clim_period.index.month>=4) & (strat_clim_period.index.month<=6)].resample('As').mean()
-strat_summer_clim = strat_clim_period[(strat_clim_period.index.month>=7) & (strat_clim_period.index.month<=9)].resample('As').mean()
-strat_fall_clim = strat_clim_period[(strat_clim_period.index.month>=10) & (strat_clim_period.index.month<=12)].resample('As').mean()
-strat_annual_clim = strat_clim_period.resample('As').mean()
+strat_winter_clim = strat_monthly_clim[[1,2,3]]
+strat_spring_clim = strat_monthly_clim[[4,5,6]]
+strat_summer_clim = strat_monthly_clim[[7,8,9]]
+strat_fall_clim = strat_monthly_clim[[10,11,12]]
+strat_annual_clim = strat_monthly_clim
 # concat clim and anomaly
 strat_clim = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
 strat_anom_std = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
 
-## # Annual and seasonal anomalies
-## strat_winter = df_strat[(df_strat.index.month>=1) & (df_strat.index.month<=3)].resample('As').mean()
-## strat_spring = df_strat[(df_strat.index.month>=4) & (df_strat.index.month<=6)].resample('As').mean()
-## strat_summer = df_strat[(df_strat.index.month>=7) & (df_strat.index.month<=9)].resample('As').mean()
-## strat_fall = df_strat[(df_strat.index.month>=10) & (df_strat.index.month<=12)].resample('As').mean()
-## strat_annual = df_strat.resample('As').mean()
-## # Clim period
+
+## # Annual and seasonal anomalies (old way)
+## # Load pickled data
+## df_strat = pd.read_pickle('S27_stratif_monthly.pkl')
+## # flag some data:
+## df_strat[df_strat.index=='2019-03-15']=np.nan
+## df_strat = df_strat[df_strat.index.year>=years[0]]
+## strat_clim_period = df_strat[(df_strat.index.year>=year_clim[0]) & (df_strat.index.year<=year_clim[1])]
+## # Monthly clim
+## strat_monthly_stack = df_strat.groupby([(df_strat.index.year),(df_strat.index.month)]).mean()
+## strat_monthly_clim_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
+## strat_monthly_clim = strat_monthly_clim_stack.mean(level=1)
+## strat_monthly_std = strat_monthly_clim_stack.std(level=1)
+## # Monthly anomaly
+## strat_anom = strat_monthly_stack.sub(strat_monthly_clim, level=1)
+## strat_std_anom = strat_anom.div(strat_monthly_std, level=1)
+## strat_std_anom.index = pd.to_datetime(strat_std_anom.index.get_level_values(0).astype(str) + '-' + strat_std_anom.index.get_level_values(1).astype(str) + '-1', format="%Y-%m-%d")
+## strat_std_anom.dropna(inplace=True) # dropna
+## # Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
+## strat_winter_anom = strat_std_anom[(strat_std_anom.index.month>=1) & (strat_std_anom.index.month<=3)].resample('As').mean()
+## strat_spring_anom = strat_std_anom[(strat_std_anom.index.month>=4) & (strat_std_anom.index.month<=6)].resample('As').mean()
+## strat_summer_anom = strat_std_anom[(strat_std_anom.index.month>=7) & (strat_std_anom.index.month<=9)].resample('As').mean()
+## strat_fall_anom = strat_std_anom[(strat_std_anom.index.month>=10) & (strat_std_anom.index.month<=12)].resample('As').mean()
+## strat_annual_anom = strat_std_anom.resample('As').mean()
+## # Mean values for climatology period (for last columns)
 ## strat_winter_clim = strat_clim_period[(strat_clim_period.index.month>=1) & (strat_clim_period.index.month<=3)].resample('As').mean()
 ## strat_spring_clim = strat_clim_period[(strat_clim_period.index.month>=4) & (strat_clim_period.index.month<=6)].resample('As').mean()
 ## strat_summer_clim = strat_clim_period[(strat_clim_period.index.month>=7) & (strat_clim_period.index.month<=9)].resample('As').mean()
 ## strat_fall_clim = strat_clim_period[(strat_clim_period.index.month>=10) & (strat_clim_period.index.month<=12)].resample('As').mean()
 ## strat_annual_clim = strat_clim_period.resample('As').mean()
-## # Anomalies
-## strat_std_anom_winter = (strat_winter - strat_winter_clim.mean()) / strat_winter_clim.std()
-## strat_std_anom_spring = (strat_spring - strat_spring_clim.mean()) / strat_spring_clim.std()
-## strat_std_anom_summer = (strat_summer - strat_summer_clim.mean()) / strat_summer_clim.std()
-## strat_std_anom_fall = (strat_fall - strat_fall_clim.mean()) / strat_fall_clim.std()
-## strat_std_anom_annual = (strat_annual - strat_annual_clim.mean()) / strat_annual_clim.std()
 ## # concat clim and anomaly
 ## strat_clim = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
-## strat_anom_std = pd.concat([strat_std_anom_winter, strat_std_anom_spring, strat_std_anom_summer, strat_std_anom_fall, strat_std_anom_annual], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+## strat_anom_std = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
 
 
 #### ------------- Build the scorecard ---------------- ####
@@ -570,9 +586,9 @@ os.system('convert -trim scorecards_s27_CIL_FR.png scorecards_s27_CIL_FR.png')
 
 
 ### 4. MLD
-my_df = MLD_anom_std.T
-my_df['MEAN'] = MLD_clim.mean()
-my_df['SD'] =  MLD_clim.std()
+my_df = mld_anom_std.T
+my_df['MEAN'] = mld_clim.mean()
+my_df['SD'] =  mld_clim.std()
 
 # Get text values +  cell color
 vals = np.around(my_df.values,1)
@@ -749,5 +765,6 @@ os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.
 #os.system('montage   -gravity east scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_FR.png -tile 1x5 -geometry +1+1  -background white scorecards_s27_FR.png') 
 os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
 
-
+# remove some images
+os.system('rm scorecards_s27_T* scorecards_s27_S* scorecards_s27_CIL* scorecards_s27_MLD* scorecards_s27_strat*')
 

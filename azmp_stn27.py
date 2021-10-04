@@ -8,6 +8,9 @@ Station 27 analysis for CSAS/NAFO ResDocs. This scripts compute:
 
 ** see azmp_stn27_explore.py for more options and ways to explore the dataset
 
+*** For a year update, the file stn27_all_casts.nc needs to be updated.
+To do so, delete the file and run this script.
+
 Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 
 '''
@@ -33,8 +36,10 @@ import cmocean
 #dc = .1
 s27 = [47.54667,-52.58667]
 dc = .025
-year_clim = [1981, 2010]
-current_year = 2019
+#year_clim = [1981, 2010]
+year_clim = [1991, 2020]
+
+current_year = 2020
 variable = 'salinity'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
@@ -149,7 +154,7 @@ weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear')
 weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
-weekly_clim.index = pd.to_datetime('2019-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
+weekly_clim.index = pd.to_datetime('2020-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
 #weekly_clim.dropna(how='all', axis=1, inplace=True)
 
 
@@ -327,3 +332,48 @@ outfile_occu = 's27_occupation_stats.png'
 fig.savefig(outfile_occu, dpi=200)
 os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
 
+# plot 3 - monthly occupations
+fig = plt.figure()
+M = df_occu.resample('M').count()
+M = M[M>0]  
+M = M.resample('Y').count()
+fig = plt.figure()
+# ax1
+ax1 = plt.subplot2grid((1, 1), (0, 0))
+plt.bar(M.index.year, M.values)
+ax1.xaxis.label.set_visible(False)
+ax1.tick_params(labelbottom='off')
+ax1.set_ylabel('No. of weekly occupations')
+plt.title('Station 27 occupation')
+
+# Sampling this year
+A = df_occu.resample('M').count()
+print('Stn27 sampling in ' + str(current_year) + ':')
+print(A[A.index.year==current_year])
+
+## ---- Simple annual time series ---- ##
+fig = plt.figure(1)
+fig.clf()
+df_tmp = df.mean(axis=1).resample('As').mean()
+df_tmp = df_tmp[df_tmp.index.year>=1950]
+df_clim = df_tmp[(df_tmp.index.year>=year_clim[0]) & (df_tmp.index.year<=year_clim[1])]
+mean = df_clim.mean()
+std = df_clim.std()
+df_tmp.plot(linewidth=2)
+plt.fill_between([df_tmp.index[0], df_tmp.index[-1]], [mean+.5*std, mean+.5*std], [mean-.5*std, mean-.5*std], facecolor='gray', alpha=.2)
+plt.ylabel(r'$\rm T(^{\circ}C)$', fontsize=14)
+plt.xlabel(' ')
+plt.grid()
+plt.title(r'Station 27 - Average temperature (0-176m)', fontsize=14)
+fig.set_size_inches(w=7,h=4)
+outfile_meanT = 's27_meanT.png'
+fig.savefig(outfile_meanT, dpi=300)
+os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
+
+## To check latest start:
+#for i in df.index.year.unique():
+#    print(df[df.index.year==i].iloc[0].name) 
+
+# Save 2020 data for Hannah Hynes
+#df[df.index.year==2020].T.to_csv('Stn27_2020_casts.csv', float_format='%.4f', index=True)
+#df[df.index.year==2020].T.to_csv('Stn27_2020_salinity.csv', float_format='%.4f', index=True) 

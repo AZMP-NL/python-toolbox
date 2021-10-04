@@ -31,15 +31,16 @@ df = df.stack()
 df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0).values.astype(np.str))
 
 
-# Read more recent measures from https://www.dmi.dk/vejrarkiv/
+# Read more recent measures from https://www.dmi.dk/vejrarkiv/ (select Gronland - Nuuk - Maneder - 2020 + download)
 df_14 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2014.csv', delimiter=";")
 df_15 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2015.csv', delimiter=";")
 df_16 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2016.csv', delimiter=";")
 df_17 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2017.csv', delimiter=";")
 df_18 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2018.csv', delimiter=";")
 df_19 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2019.csv', delimiter=";")
+df_20 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2020.csv', delimiter=";")
 
-df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_18.Middel, df_19.Middel], axis=1, keys=np.arange(2014, 2020))
+df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_18.Middel, df_19.Middel, df_20.Middel], axis=1, keys=np.arange(2014, 2021))
 
 df_recent = df_all.T
 df_recent.columns = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']

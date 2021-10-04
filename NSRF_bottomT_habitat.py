@@ -32,10 +32,11 @@ import azmp_utils as azu
 from scipy.ndimage.filters import gaussian_filter
 import scipy.ndimage
 from shapely.geometry import Point
-
 from shapely.geometry.polygon import Polygon
 from matplotlib.patches import Rectangle
 from matplotlib.patches import Polygon as PP
+# For shapefiles
+import shapefile
 
 def draw_screen_poly( lats, lons, m):
     x, y = m( lons, lats )
@@ -53,7 +54,7 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2006'
+year = '2020'
 climato_file = 'Tbot_climato_NSRFx_summer_2006-2018.h5'
 year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
@@ -75,8 +76,39 @@ latLims = [lat_reg[0], lat_reg[-1]]
 lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 dc = np.diff(lon_reg[0:2])
 
-## ---- NAFO divisions ---- ##
-nafo_div = azu.get_nafo_divisions()
+## ---- SFAs ---- ##
+## Get SFA shapes
+myshp = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp', 'rb')
+mydbf = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf', 'rb')
+r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
+records = r.records()
+shapes = r.shapes()
+
+# Fill dictionary with SFAs
+shrimp_area = {}
+for idx, rec in enumerate(records):
+    if rec[1] == 'Eastern Assessment Zone':
+        shrimp_area['2'] = np.array(shapes[idx].points)
+    elif rec[1] == 'Western Assessment Zone':
+        shrimp_area['3'] = np.array(shapes[idx].points)
+    else:
+        shrimp_area[rec[0]] = np.array(shapes[idx].points)    
+
+## sfa0 = Polygon(shrimp_area['0'])
+## sfa1 = Polygon(shrimp_area['1'])
+sfa2 = Polygon(shrimp_area['2'])
+sfa3 = Polygon(shrimp_area['3'])
+sfa4 = Polygon(shrimp_area['4'])
+sfa5 = Polygon(shrimp_area['5'])
+sfa6 = Polygon(shrimp_area['6'])
+sfa7 = Polygon(shrimp_area['7'])
+
+## ## ## ---- Contour of data to mask ---- ##
+## contour_mask = np.load('100m_contour_labrador.npy')
+## polygon_mask = Polygon(contour_mask)
+
+## ## ---- NAFO divisions ---- ##
+## nafo_div = azu.get_nafo_divisions()
 
 ## ---- Get CTD data --- ##
 print('Get ' + year_file)
@@ -176,65 +208,56 @@ for i, xx in enumerate(lon_reg):
     for j,yy in enumerate(lat_reg):
         bottom_depth = -Zitp[j,i] # minus to turn positive
         temp_vec = V[j,i,:]
-        ## idx_no_good = np.argwhere(temp_vec>30)
-        ## if idx_no_good.size:
-        ##     temp_vec[idx_no_good] = np.nan
         idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
         if idx_good.size:
             idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
         else:
             continue
-
         if np.abs([idx_closest] - bottom_depth) <= 20:
             Tbot[j,i] = temp_vec[idx_good[idx_closest]]
         elif np.abs(z[idx_closest] - bottom_depth) <= 50:
             #print('used data located [30,50]m from bottom')
             Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-            
 print(' -> Done!')    
 
-# Mask data outside Nafo div.
-print('Mask according to NAFO division for ' + season)
-# Polygons
-polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
-polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
-polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
-polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
-polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
-polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
-
-# Contour of data to mask
-contour_mask = np.load('100m_contour_labrador.npy')
-polygon_mask = Polygon(contour_mask)
+## # Mask data outside Nafo div.
+## print('Mask according to NAFO division for ' + season)
+## # Polygons
+## polygon3K = Polygon(zip(nafo_div['3K']['lon'], nafo_div['3K']['lat']))
+## polygon3L = Polygon(zip(nafo_div['3L']['lon'], nafo_div['3L']['lat']))
+## polygon3N = Polygon(zip(nafo_div['3N']['lon'], nafo_div['3N']['lat']))
+## polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
+## polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
+## polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
 
 
-if season == 'spring':
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            point = Point(lon_reg[i], lat_reg[j])
-            #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
-            if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                pass #nothing to do but cannot implement negative statement "if not" above
-            else:
-                Tbot[j,i] = np.nan
+## if season == 'spring':
+##     for i, xx in enumerate(lon_reg):
+##         for j,yy in enumerate(lat_reg):
+##             point = Point(lon_reg[i], lat_reg[j])
+##             #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
+##             if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+##                 pass #nothing to do but cannot implement negative statement "if not" above
+##             else:
+##                 Tbot[j,i] = np.nan
             
                 
-elif season == 'fall':
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            point = Point(lon_reg[i], lat_reg[j])
-            if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
-                pass #nothing to do but cannot implement negative statement "if not" above
-            else:
-                Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
-                #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+## elif season == 'fall':
+##     for i, xx in enumerate(lon_reg):
+##         for j,yy in enumerate(lat_reg):
+##             point = Point(lon_reg[i], lat_reg[j])
+##             if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
+##                 pass #nothing to do but cannot implement negative statement "if not" above
+##             else:
+##                 Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
+##                 #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
 
-            if polygon_mask.contains(point): # mask data near Labrador in fall
-                Tbot[j,i] = np.nan 
-else:
-    print('no division mask, all data taken')
+##             if polygon_mask.contains(point): # mask data near Labrador in fall
+##                 Tbot[j,i] = np.nan 
+## else:
+##     print('no division mask, all data taken')
             
-print(' -> Done!')    
+## print(' -> Done!')    
 
 # Temperature anomaly:
 anom = Tbot-Tbot_climato
@@ -263,11 +286,17 @@ m.drawmeridians(np.arange(-66, -54, 2), labels=[0,0,0,1], fontsize=12, fontweigh
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+div_toplot = [ '2', '3', '4']
 for div in div_toplot:
-    div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
+    div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
-    ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
+    ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
+## div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+## for div in div_toplot:
+##     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
+##     m.plot(div_lon, div_lat, 'k', linewidth=2)
+##     ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')  
+    
 # Save Figure
 fig.set_size_inches(w=6, h=9)
 fig.set_dpi(300)
@@ -301,11 +330,16 @@ cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+div_toplot = [ '2', '3', '4']
 for div in div_toplot:
-    div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
+    div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
-    ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
+    ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
+## div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+## for div in div_toplot:
+##     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
+##     m.plot(div_lon, div_lat, 'k', linewidth=2)
+##     ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
 # Save Figure
 fig.set_size_inches(w=6, h=9)
 fig.set_dpi(200)
@@ -334,11 +368,16 @@ m.drawmeridians(np.arange(-66, -54, 2), labels=[0,0,0,1], fontsize=12, fontweigh
 cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
 cb = plt.colorbar(c, cax=cax, orientation='horizontal')
 cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
 for div in div_toplot:
-    div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
+    div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
-    ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
+    ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
+## div_toplot = ['2J', '3K', '3L', '3N', '3O', '3Ps']
+## for div in div_toplot:
+##     div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
+##     m.plot(div_lon, div_lat, 'k', linewidth=2)
+##     ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
+    
 # Save Figure
 fig.set_size_inches(w=6, h=9)
 fig.set_dpi(300)

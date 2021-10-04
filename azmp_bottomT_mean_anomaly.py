@@ -19,7 +19,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 width = 0.7
-clim_year = [1981, 2010]
+clim_year = [1991, 2020]
 years = [1980, 2021]
 
 #### ------------- For fall ---------------- ####
@@ -260,7 +260,7 @@ plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Normalized anomaly')
 ax.set_title('Bottom Temperature')
-plt.ylim([-1.5,2.1])
+plt.ylim([-2,2])
 
 colors = cmap(normal(np.nansum(bottomT_stack_norm.values, axis=1)))
 cell_text = np.nansum(bottomT_stack_norm.values, axis=1).round(1).astype('str')

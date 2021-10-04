@@ -39,10 +39,12 @@ def make_patch_spines_invisible(ax):
         sp.set_visible(False)
 
 ## ---- Some custom parameters ---- ##
-year_clim = [1981, 2010]
-current_year = 2019
-XLIM = [datetime.date(1945, 1, 1), datetime.date(2020, 12, 31)]
+#year_clim = [1981, 2010]
+year_clim = [1991, 2020]
+current_year = 2020
+XLIM = [datetime.date(1945, 1, 1), datetime.date(2021, 12, 31)]
 french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+years_flag = [1980]
 
 # Load pickled data
 df_temp = pd.read_pickle('S27_temperature_monthly.pkl')
@@ -50,8 +52,19 @@ df_sal = pd.read_pickle('S27_salinity_monthly.pkl')
 mld_monthly = pd.read_pickle('S27_MLD_monthly.pkl')
 strat_monthly = pd.read_pickle('S27_stratif_monthly.pkl')
 
+# Flag bad years (e.g. 1980, only 4 casts available):
+for y in years_flag:
+    df_temp[df_temp.index.year==y] = np.nan
+    df_sal[df_sal.index.year==y] = np.nan
+    mld_monthly[mld_monthly.index.year==y] = np.nan
+    strat_monthly[strat_monthly.index.year==y] = np.nan
+
 df_temp = df_temp[df_temp.index.year>=1950]
 df_sal = df_sal[df_sal.index.year>=1950]
+# remove 1950
+df_temp[df_temp.index.year==1950] = np.nan
+df_sal[df_sal.index.year==1950] = np.nan
+
 mld_monthly = mld_monthly[mld_monthly.index.year>=1950]
 strat_monthly = strat_monthly[strat_monthly.index.year>=1950]
 
@@ -427,9 +440,9 @@ par2.spines["right"].set_position(("axes", 1.1))
 make_patch_spines_invisible(par2)
 # Second, show the right spine.
 par2.spines["right"].set_visible(True)
-p1, = host.plot(cil_core.index.year.values, cil_core.rolling(5).mean().values, color="steelblue", label="CIL core temperature", zorder=10)
-p2, = par1.plot(cil_coredepth.index.year.values, cil_coredepth.rolling(5).mean().values, "darkorange", label="CIL core depth", zorder=10)
-p3, = par2.plot(cil_thickness.index.year.values, cil_thickness.rolling(5).mean().values, "indianred", label="CIL thickness", zorder=10)
+p1, = host.plot(cil_core.index.year.values, cil_core.rolling(5, min_periods=3).mean().values, color="steelblue", label="CIL core temperature", zorder=10)
+p2, = par1.plot(cil_coredepth.index.year.values, cil_coredepth.rolling(5, min_periods=3).mean().values, "darkorange", label="CIL core depth", zorder=10)
+p3, = par2.plot(cil_thickness.index.year.values, cil_thickness.rolling(5, min_periods=3).mean().values, "indianred", label="CIL thickness", zorder=10)
 #host.set_xlim(-2, 1)
 host.set_ylim(-2, 1)
 par1.set_ylim(90, 150)
@@ -516,7 +529,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 fig = plt.figure(1)
 plt.clf()
 anom.plot(color='gray')
-anom.rolling(5).mean().plot(color='k', linewidth=3, linestyle='--')
+anom.rolling(5, min_periods=3).mean().plot(color='k', linewidth=3, linestyle='--')
 #ticks = ax.xaxis.get_ticklocs() 
 #plt.fill_between([ticks[0]-1, ticks[-1]+1], [-clim_std*1000, -clim_std*1000], [clim_std*1000, clim_std*1000], facecolor='gray', alpha=.2)
 plt.grid()
@@ -554,7 +567,7 @@ ind = np.arange(len(monthly_anom.keys()))  # the x locations for the groups
 width = 0.35  # the width of the bars
 fig, ax = plt.subplots()
 rects1 = ax.bar(ind - width/2, strat_monthly_clim.values*1000, width, yerr=strat_monthly_std.values*.5*1000,
-                label='1981-2010', color='lightblue', zorder=1)
+                label='1991-2020', color='lightblue', zorder=1)
 rects2 = ax.bar(ind + width/2, np.squeeze(strat_current_year.values*1000), width, yerr=None,
                 label=str(current_year), color='steelblue', zorder=1)
 # Add some text for labels, title and custom x-axis tick labels, etc.
@@ -594,6 +607,12 @@ anom_std = monthly_stdanom.mean(axis=1)
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
 anom = monthly_anom.mean(axis=1)
 anom.index = pd.to_datetime(anom.index, format='%Y')
+# save for capelin
+anom_std_mld = anom_std.copy()
+anom_std_mld.index = anom_std_mld.index.year
+anom_std_mld.to_csv('MLD_std_anom.csv', sep=',', float_format='%0.3f')
+anom_std_mld.rolling(5, min_periods=3).mean().to_csv('MLD_std_anom_5Y.csv', sep=',', float_format='%0.3f')
+
 
 # old version:
 old_mld = mld_monthly.resample('As').mean()
@@ -633,7 +652,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 fig = plt.figure(1)
 plt.clf()
 anom.plot(color='gray')
-anom.rolling(5).mean().plot(color='k', linewidth=3, linestyle='--')
+anom.rolling(5, min_periods=3).mean().plot(color='k', linewidth=3, linestyle='--')
 plt.grid()
 plt.ylabel(r'MLD anomaly (m)')
 plt.xlabel(' ')
@@ -670,7 +689,7 @@ ind = np.arange(len(monthly_anom.keys()))  # the x locations for the groups
 width = 0.35  # the width of the bars
 fig, ax = plt.subplots()
 rects1 = ax.bar(ind - width/2, mld_monthly_clim.values, width, yerr=mld_monthly_std.values*.5,
-                label='1981-2010', color='lightblue', zorder=1)
+                label='1991-2020', color='lightblue', zorder=1)
 rects2 = ax.bar(ind + width/2, np.squeeze(mld_current_year.values), width, yerr=None,
                 label=str(current_year), color='steelblue', zorder=1)
 # Add some text for labels, title and custom x-axis tick labels, etc.
@@ -701,9 +720,15 @@ os.system('montage  s27_vert_temp_anomaly.png s27_vert_sal_anomaly.png -tile 1x2
 os.system('montage  s27_vert_temp_anomalyFR.png s27_vert_sal_anomalyFR.png -tile 1x2 -geometry +1+25  -background white  s27_TS_subplotsFR.png')
 
 # CIL English
-os.system('montage  s27_CILtemp_anomaly.png s27_CILthickness_anomaly.png s27_CILcore_anomaly.png s27_CILcoredepth_anomaly.png  -tile 2x2 -geometry +20+25  -background white  s27_CIL_subplots.png')
+os.system('montage  s27_CILtemp_anomaly.png s27_CILcore_anomaly.png s27_CILcoredepth_anomaly.png  -tile 1x3 -geometry +20+25  -background white  s27_CIL_subplots.png')
 # CIL French
-os.system('montage  s27_CILtemp_anomalyFR.png s27_CILthickness_anomalyFR.png s27_CILcore_anomalyFR.png s27_CILcoredepth_anomalyFR.png  -tile 2x2 -geometry +20+25  -background white  s27_CIL_subplotsFR.png')
+os.system('montage  s27_CILtemp_anomalyFR.png s27_CILcore_anomalyFR.png s27_CILcoredepth_anomalyFR.png  -tile 1x3 -geometry +20+25  -background white  s27_CIL_subplots_FR.png')
+# CIL English
+os.system('montage  s27_CILtemp_anomaly.png s27_CILthickness_anomaly.png s27_CILcore_anomaly.png s27_CILcoredepth_anomaly.png  -tile 2x2 -geometry +20+25  -background white  s27_CIL_subplots_x4.png')
+# CIL French
+os.system('montage  s27_CILtemp_anomalyFR.png s27_CILthickness_anomalyFR.png s27_CILcore_anomalyFR.png s27_CILcoredepth_anomalyFR.png  -tile 2x2 -geometry +20+25  -background white  s27_CIL_subplots_x4_FR.png')
+
+
 
 
 

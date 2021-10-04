@@ -14,7 +14,6 @@ Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 
 '''
 
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,8 +26,8 @@ font = {'family' : 'sans-serif',
         'size'   : 14}
 plt.rc('font', **font)
 
-clim_year = [1981, 2010]
-current_year = 2019
+clim_year = [1991, 2020]
+current_year = 2020
 
 ## ----  Prepare the data ---- ##
 # load from Excel sheets
@@ -63,7 +62,7 @@ width = 0.35  # the width of the bars
 
 fig, ax = plt.subplots()
 rects1 = ax.bar(ind - width/2, df_monthly_clim.values, width, yerr=df_monthly_std.values*.5,
-                label='1981-2010')
+                label='1991-2020')
 rects2 = ax.bar(ind + width/2, np.squeeze(df_monthly.values), width, yerr=None,
                 label=str(current_year))
 
@@ -149,7 +148,7 @@ hpad, wpad = 0, 0
 fig, ax = plt.subplots() 
 ax.bar(df_annual.index, df_annual.values, width)
 ax.set_ylabel('Counts')
-plt.xlim([1899.5, 2019.5])
+plt.xlim([1899.5, 2020.5])
 plt.grid()
 ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
 

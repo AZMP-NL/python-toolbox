@@ -3,6 +3,11 @@
 
 I need to make it a function!
 
+
+** Note; works also for Viking buoy Dfiles.
+Just generate the list with:
+ls viking_pfiles/*.D20 > viking2020.list
+
 ----------
 Frederic.Cyr@dfo-mpo.gc.ca, October 2017
 

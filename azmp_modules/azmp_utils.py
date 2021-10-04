@@ -52,6 +52,31 @@ def get_nafo_divisions():
 
     """
 
+    # 0B
+    xlon = [-62.466, -57.634, -57.8, -57.818, -58.033, -57.557, -57.352, -57.218, -57.218, -57.218, -59, -65, -66.259]
+    xlat = [66.25, 66.25, 64.25, 64.072, 63.582, 62.5, 62, 61, 60.75, 60.2, 61, 61, 61.866]
+    div0B = {'lat' : xlat, 'lon' : xlon}
+
+    # 1C
+    xlon = [-53.342, -57.634, -57.8, -52.044]
+    xlat = [66.25, 66.25, 64.25, 64.25]
+    div1C = {'lat' : xlat, 'lon' : xlon}
+
+    # 1D
+    xlon = [-52.044, -57.8, -57.818, -58.033, -57.557, -50.037]
+    xlat = [64.25, 64.25, 64.072, 63.582, 62.5, 62.5]
+    div1D = {'lat' : xlat, 'lon' : xlon}
+
+    # 1E
+    xlon = [-50.037, -57.557, -57.352, -57.218, -46.153]
+    xlat = [62.5, 62.5, 62, 60.75, 60.75]
+    div1E = {'lat' : xlat, 'lon' : xlon}
+
+    # 1F
+    xlon = [-46.153, -57.218, -57.2187, -42, -42, -44, -44]
+    xlat = [60.75, 60.75, 60.2, 52.25, 59, 59, 60.157]
+    div1F = {'lat' : xlat, 'lon' : xlon}    
+
     # 2G
     xlon = [-64.5, -64.5, -59, -52, -61.9]
     xlat = [60.3, 61, 61, 57.667, 57.667]
@@ -158,6 +183,11 @@ def get_nafo_divisions():
     div5Zw = {'lat' : xlat, 'lon' : xlon}
                
     dict = {}
+    dict['0B'] = div0B
+    dict['1C'] = div1C
+    dict['1D'] = div1D
+    dict['1E'] = div1E
+    dict['1F'] = div1F
     dict['2G'] = div2G
     dict['2H'] = div2H
     dict['2J'] = div2J
@@ -382,6 +412,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         zz = dataset.variables['z']
         Z = zz[:].reshape(ny, nx)
         Z = np.flipud(Z) # <------------ important!!!
+        del zz, dataset
         # Reduce data according to Region params
         idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
         idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
@@ -394,7 +425,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
         z_vec = np.reshape(Z, Z.size)
         Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
-        del Z, lon, lat, zz, dataset
+        del Z, lon, lat
         print(' -> Done!')
 
         ## ---- Get CTD data --- ##
@@ -558,6 +589,10 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Sbot_climato_spring_0.10.h5') 
     
     """
+
+    # Because the code is trying to divide by zero
+    # (https://stackoverflow.com/questions/14861891/runtimewarning-invalid-value-encountered-in-divide)
+    np.seterr(divide='ignore', invalid='ignore')
     
     ## ---- Check if H5 file exists ---- ##        
     if os.path.isfile(h5_outputfile):
@@ -605,6 +640,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         zz = dataset.variables['z']
         Z = zz[:].reshape(ny, nx)
         Z = np.flipud(Z) # <------------ important!!!
+        del zz, dataset
         # Reduce data according to Region params
         idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
         idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
@@ -617,6 +653,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
         z_vec = np.reshape(Z, Z.size)
         Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+        del Z, lon, lat
         print(' -> Done!')
 
         ## ---- Get CTD data --- ##
@@ -661,7 +698,8 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         idx_empty_rows = df_sal.isnull().all(1).nonzero()[0]
         df_sal = df_sal.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
-        lats = np.delete(lats,idx_empty_rows)        
+        lats = np.delete(lats,idx_empty_rows)
+        del ds, da_sal      
         print(' -> Done!')
 
         ## ---- Try to remove outliers ---- ##

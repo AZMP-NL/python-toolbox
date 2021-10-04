@@ -538,9 +538,9 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     #    return
     # Use itp or station-based definition
     if STATION_BASED:
-        df_section = df_section_stn
+        df_section = df_section_stn.copy()
     else:
-        df_section = df_section_itp
+        df_section = df_section_itp.copy()
 
     # In case df_section only contains NaNs..
     df_section.dropna(axis=0,how='all', inplace=True)  
@@ -596,7 +596,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     ax2.add_patch(Bgon)
     ax2.xaxis.label.set_visible(False)
     ax2.tick_params(labelbottom='off')
-    ax2.set_title('1981-2010 climatology')
+    ax2.set_title('1991-2020 climatology')
 
     # ax3
     ax3 = plt.subplot2grid((3, 1), (2, 0))
@@ -628,7 +628,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     ax2.set_ylabel('Profondeur (m)', fontWeight = 'bold')
     ax3.set_ylabel('Profondeur (m)', fontWeight = 'bold')
     
-    ax2.set_title(r'Climatologie 1981-2010')
+    ax2.set_title(r'Climatologie 1991-2020')
     ax3.set_title(r'Anomalie')
     fig_name = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_FR.png' 
     fig.savefig(fig_name, dpi=200)
@@ -645,7 +645,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     itp_pickle = VAR + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_itp.pkl' 
     df_section_stn.to_pickle(stn_pickle) 
     df_section_itp.to_pickle(itp_pickle)
-
+    del df_section_stn, df_section_itp, df_clim, df_anom
 
 def btl_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400):
     """

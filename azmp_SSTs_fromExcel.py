@@ -80,7 +80,7 @@ df_all = df_all[df_all['%coverage']>=15]
 df_sst = df_all.mean_sst 
 df_sst = df_sst.unstack(level=0)
 df_sst = df_sst.replace(-999.00000, np.NaN)
-df_sst = df_sst[df_sst.index.year<=2019]
+df_sst = df_sst[df_sst.index.year<=2020]
 df_sst = df_sst.resample('MS', loffset=pd.Timedelta(14, 'd')).mean() #re-averaged bi-weekly on 15th of the month
 
 df_sst_excel = df_all_excel.unstack(level=0)
@@ -110,7 +110,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 df_sst = df_all.mean_sst
 df_sst = df_sst.unstack(level=0)
 df_sst = df_sst.replace(-999.00000, np.NaN)
-df_sst = df_sst[(df_sst.index.year>=1998) & (df_sst.index.year<=2019)]
+df_sst = df_sst[(df_sst.index.year>=1998) & (df_sst.index.year<=2020)]
 df_sst = df_sst.resample('As').mean()
 
 df_sst_excel = df_sst_excel.resample('As').mean()

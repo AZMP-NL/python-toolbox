@@ -23,7 +23,7 @@ __version__ = '0.1'
 
 import re
 import pandas as pd
-import pfiles_basics
+import pfile_tools
 import numpy as np
 import time as tt
 import netCDF4 as nc

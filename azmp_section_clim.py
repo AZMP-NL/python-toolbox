@@ -22,9 +22,11 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'SI'
-SEASON = 'summer'
-CLIM_YEAR = [1981, 2010]
+SECTION = 'SEGB'
+SEASON = 'fall'
+/CLIM_YEAR = [1999, 2014]
+CLIM_YEAR = [1991, 2020]
+#CLIM_YEAR = [1995, 2018]
 dlat = 2 # how far from station we search
 dlon = 2
 z1 = 2
@@ -59,39 +61,6 @@ lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
 ## --------- Get Bathymetry -------- ####
-## print('Get bathy...')
-## dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
-## lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-## # Load data
-## dataset = netCDF4.Dataset(dataFile)
-## x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
-## y = [-89-59.75/60, 89+59.75/60]
-## spacing = dataset.variables['spacing']
-## # Compute Lat/Lon
-## nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-## ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-## lon = np.linspace(x[0],x[-1],nx)
-## lat = np.linspace(y[0],y[-1],ny)
-## # interpolate data on regular grid (temperature grid)
-## # Reshape data
-## zz = dataset.variables['z']
-## Z = zz[:].reshape(ny, nx)
-## Z = np.flipud(Z) # <------------ important!!!
-## # Reduce data according to Region params
-## idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-## idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-## Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-## lon = lon[idx_lon[0]]
-## lat = lat[idx_lat[0]]
-## # interpolate data on regular grid (temperature grid)
-## lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-## lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-## lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-## z_vec = np.reshape(Z, Z.size)
-## Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
-## del dataset, zz, Z, lon, lat
-## print(' -> Done!')
-
 bathy_file = './' + SECTION + '_bathy.npy'
 if os.path.isfile(bathy_file):
     print('Load saved bathymetry!')
@@ -356,6 +325,11 @@ for idx, YEAR in enumerate(years):
     VS = V_sal.reshape(temp_coords.shape[0],V_temp.shape[2])
     VSi = V_sig.reshape(temp_coords.shape[0],V_temp.shape[2])
     ZZ = Zitp.reshape(temp_coords.shape[0],1)
+    # drop onyl NaNs.. (new from Sept. 2021) <--- cannot do that because it leads to different size for T-S...
+    ## VT = VT[~np.isnan(VT).all(axis=1)]
+    ## VS = VS[~np.isnan(VS).all(axis=1)]
+    ## VSi = VSi[~np.isnan(VSi).all(axis=1)]
+    # Initialize
     section_only = []
     df_section_itp = pd.DataFrame(index=stn_list, columns=z)
     df_section_itp_S = pd.DataFrame(index=stn_list, columns=z)
@@ -365,9 +339,10 @@ for idx, YEAR in enumerate(years):
         ds_tmp = ds.where(ds.comments == stn, drop=True)  
         section_only.append(ds_tmp)
 
-        #2.  From interpolated field (closest to station) 
+        #2.  From interpolated field (closest to station)
         station = df_stn[df_stn.STATION==stn]
         idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(list(zip(station.LAT.values,station.LON.values)))), axis=1))
+        # *** There's a problem here since often the optimum is NaN-only profile for station 1...
         Tprofile = VT[idx_opti,:]
         Sprofile = VS[idx_opti,:]
         Siprofile = VSi[idx_opti,:]
