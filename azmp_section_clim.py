@@ -24,7 +24,6 @@ import azmp_sections_tools as azst
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 SECTION = 'SEGB'
 SEASON = 'fall'
-/CLIM_YEAR = [1999, 2014]
 CLIM_YEAR = [1991, 2020]
 #CLIM_YEAR = [1995, 2018]
 dlat = 2 # how far from station we search

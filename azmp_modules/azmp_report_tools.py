@@ -1791,7 +1791,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([2020])
+    bad_years = np.array([2020, 2021])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     year_list = df.index.year.astype('str')
@@ -1823,6 +1823,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     vals_color[:,-2] = 0
     #normal = plt.Normalize(-4.49, 4.49)
     #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
     fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
     ax = fig.add_subplot(111)
     ax.axis('off')

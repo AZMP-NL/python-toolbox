@@ -371,6 +371,15 @@ df2018s = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018s.xlsx'), enc
 df2018s = df2018s.rename(columns={'CTD Mission (nom)' : 'Mission  (nom)'})
 df2018f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2018f.xlsx'), encoding='utf-8')
 
+keyboard
+# 3.1.2 --- In October 2021, MS provided update groundfish surveys data (2017 and 2019 were incomplete) and fall 2015 data at all depths
+# Fall 2015
+df2015_update = pd.read_excel(os.path.join(dataset_path,'IML Fall 2015 (Gibb)(MS).xlsx'), encoding='utf-8')
+# Groundfish
+df_gf = pd.read_excel(os.path.join(dataset_path,'AZMP_OA_IML_Groundfish surveys_2017-2019(MS-3).xlsx'), encoding='utf-8')
+
+
+
 ## 3.2 --- 2019 & 2020 data 
 xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
 df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
