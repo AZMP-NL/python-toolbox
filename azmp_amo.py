@@ -66,7 +66,7 @@ plt.xlabel('Year')
 plt.grid()
 plt.title('AMO unsmoothed, detrended from the Kaplan SST V2')
 plt.legend(['monthly', '5-year smooth'])
-fig_name = 'AMO_monthly_1950-2020.png'
+fig_name = 'AMO_monthly_1950-2021.png'
 fig.set_size_inches(w=12,h=9)
 fig.savefig(fig_name, dpi=300)
 
@@ -94,7 +94,7 @@ plt.ylabel('AMO index')
 plt.title('AMO unsmoothed, detrended from the Kaplan SST V2')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'AMO_bar_1950-2020.png'
+fig_name = 'AMO_bar_1950-2021.png'
 plt.annotate('data source: http://www.esrl.noaa.gov/psd/data/timeseries/AMO/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)

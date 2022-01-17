@@ -17,7 +17,8 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 # Download and save up-to-date  NAO index from NOAA (data.csv) if needed
-url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv'
+#url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv' (until 2020...)
+url = 'https://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.nao.monthly.b5001.current.ascii.table'
 nao_file = '/home/cyrf0006/data/AZMP/indices/data.csv'
 if os.path.exists(nao_file):
     py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
@@ -40,12 +41,14 @@ if os.path.exists(nao_file):
             print(' -> Please answer "y" or "n"')
             
 # Reload using pandas
-df = pd.read_csv(nao_file, header=1)
+col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+df = pd.read_csv(nao_file, header=None, delimiter=r"\s+", error_bad_lines=False)
+df.set_axis(col_names, axis=1, inplace=True)                              
 
 # Set index
-df = df.set_index('Date')
-df.index = pd.to_datetime(df.index, format='%Y%m')
-
+df = df.set_index('Year')
+df = df.stack()
+df.index = pd.to_datetime(df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str'))
 
 ## ## ----  plot Monthly NAO + 5year running mean ---- ##
 ## fig = plt.figure(1)
@@ -89,6 +92,7 @@ df_summer.index = year_unique
 
 # pickle DataFrame for scorecards:
 df.to_pickle('NAO_monthly.pkl')
+df.to_csv('NAO_monthly.csv')
 df_annual = df.resample('As').mean()
 df_annual.index = df_annual.index.year
 df_annual.to_pickle('NAO_annual.pkl')
@@ -146,7 +150,7 @@ fig.clf()
 width = .9
 p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='steelblue')
 p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='indianred')
-p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.3, color='black')
+#p1 = plt.bar(df1.index[-1], np.squeeze(df1.values[-1]), width, alpha=.3, color='black')
 plt.ylabel('NAO index')
 #plt.xlabel('Year')
 plt.title('Summer NAO average (JJAS)')

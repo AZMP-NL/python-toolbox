@@ -14,7 +14,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1991, 2020]
-years = [1980, 2020]
+years = [1980, 2021]
 
 
 def is_number(s):
@@ -86,7 +86,7 @@ hcell, wcell = 0.6, 0.6
 hpad, wpad = 1, 0
 
 # Get text values +  cell color
-vals = np.around(my_df.values,1)
+vals = np.around(my_df.values.astype(np.double),1)
 vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
@@ -156,7 +156,7 @@ hcell, wcell = 0.6, 0.6
 hpad, wpad = 1, 0
 
 # Get text values +  cell color
-vals = np.around(my_df.values,1)
+vals = np.around(my_df.values.astype(np.double),1)
 vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
@@ -230,7 +230,7 @@ hcell, wcell = 0.6, 0.6
 hpad, wpad = 1, 0
 
 # Get text values +  cell color
-vals = np.around(my_df.values,1)
+vals = np.around(my_df.values.astype(np.double),1)
 vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
@@ -300,7 +300,7 @@ hcell, wcell = 0.6, 0.6
 hpad, wpad = 1, 0
 
 # Get text values +  cell color
-vals = np.around(my_df.values,1)
+vals = np.around(my_df.values.astype(np.double),1)
 vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
@@ -378,7 +378,7 @@ hcell, wcell = 0.6, 0.6
 hpad, wpad = 1, 0
 
 # Get text values +  cell color
-vals = np.around(my_df.values,1)
+vals = np.around(my_df.values.astype(np.double),1)
 vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
@@ -448,7 +448,7 @@ hcell, wcell = 0.6, 0.6
 hpad, wpad = 1, 0
 
 # Get text values +  cell color
-vals = np.around(my_df.values,1)
+vals = np.around(my_df.values.astype(np.double),1)
 vals[vals==-0.] = 0.
 vals_color = vals.copy()
 vals_color[:,-1] = 0 # No color to last two columns (mean and STD)

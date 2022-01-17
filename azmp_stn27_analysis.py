@@ -546,6 +546,30 @@ fig_name = 's27_stratif_plotFR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+# B.5) timeseries with trend
+strat_virtual = anom + strat_monthly_clim.mean()*1000
+fig = plt.figure(5)
+plt.clf()
+strat_virtual.plot(color='gray', linestyle=' ', marker='.')
+strat_virtual.rolling(5, min_periods=3).mean().plot(color='k', linewidth=3, linestyle='--')
+plt.ylabel(r'$\frac{\Delta \sigma}{\Delta z}_{5-50m}$ $\rm (g\,m^{-4})$')
+yi = strat_virtual.dropna().values
+xi = strat_virtual.dropna().index.year
+p = np.polyfit(xi, yi, 1)
+df_fit = pd.Series(np.polyval(p, xi))
+df_fit = pd.Series(np.polyval(p, xi))
+df_fit.index = strat_virtual.dropna().index
+df_fit.plot(color='r')
+plt.grid()
+XLIM = plt.xlim()      
+plt.text(XLIM[0]+42, 17, r'$\rm 0.14\,g m^{-4} yr^{-1}$', color='r')
+plt.text(XLIM[0]+42, 15.2, r'($\sim 5.4\%$ per decade)', color='r')
+# Save Figure
+fig.set_size_inches(w=7,h=4)
+fig_name = 's27_stratif_plot_trend.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
 # C) Monthly bar plot for current year
 strat_clim_period = strat_monthly[(strat_monthly.index.year>=year_clim[0]) & (strat_monthly.index.year<=year_clim[1])]
 strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()

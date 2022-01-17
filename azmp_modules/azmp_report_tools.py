@@ -1077,7 +1077,7 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
         usage example:
         >> import azmp_report_tools as azrt
         >> import numpy as np
-        >> azrt.sfa_bottom_stats(years=np.arange(2006, 2020), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2018.h5')
+        >> azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2018.h5')
 
         *** This needs to be improve because at the moment I need to comment the generation of .pkl file to not over-write when I change my map region.        
                 
@@ -2020,7 +2020,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     Similar to bottom_scorcards, but for SAFs
 
     usage example (see azmp_genreport.py):
-    azrt.sfa_bottom_scorecards(years=np.arange(2006, 2021), clim_year=[2006, 2020])
+    azrt.sfa_bottom_scorecards(years=np.arange(2006, 2022), clim_year=[2006, 2020])
 
     '''
 
@@ -2047,7 +2047,9 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
     std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-    
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_sfa2_summer.csv', sep=',', float_format='%0.3f')
+        
     # Get text values +  cell color
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
     year_list.append(r'sd')   
@@ -2179,6 +2181,8 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
     std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_sfa3_summer.csv', sep=',', float_format='%0.3f')
 
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
@@ -2281,7 +2285,9 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
     std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_sfa4_summer.csv', sep=',', float_format='%0.3f')
+        
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()

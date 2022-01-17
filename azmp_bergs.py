@@ -12,6 +12,10 @@ data in /home/cyrf0006/data/AZMP/ColbourneStuff/NL_ICE_BERG_NUMBERS_DATA_1900_20
 
 Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 
+Modifications:
+
+- Jan 2021 to now take data from NSIDC 
+
 '''
 
 import pandas as pd
@@ -27,12 +31,17 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-current_year = 2020
+current_year = 2021
 
 ## ----  Prepare the data ---- ##
-# load from Excel sheets
-df = pd.read_excel('/home/cyrf0006/data/AZMP/ColbourneStuff/NL_ICE_BERG_NUMBERS_DATA_1900_2019.xlsx', header=5, index_col='YEAR') 
-df = df.drop(columns = 'TOT SEASON')
+# Legacy - Load from Excel sheets
+#df = pd.read_excel('/home/cyrf0006/data/AZMP/ColbourneStuff/NL_ICE_BERG_NUMBERS_DATA_1900_2019.xlsx', header=5, index_col='YEAR') 
+#df = df.drop(columns = 'TOT SEASON')
+
+# Since 2021, load from NSIDC (https://nsidc.org/data/G10028/versions/1)
+df = pd.read_csv('/home/cyrf0006/data/NSIDC/Icebergs/G10028_Icebergs_South_of_48N.csv')
+, header=5, index_col='YEAR') 
+
 
 # Stack months under Years (pretty cool!)
 #df = df.stack() 

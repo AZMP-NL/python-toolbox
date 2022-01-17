@@ -21,7 +21,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-years = [1950, 2020]
+years = [1950, 2021]
 
 #### ---- Load the data and compute anomalies ---- ####
 df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl').astype('float')

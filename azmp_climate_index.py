@@ -28,7 +28,7 @@ plt.rc('font', **font)
 
 
 YEAR_MIN = 1950
-YEAR_MAX = 2020
+YEAR_MAX = 2021
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
 width = 0.7
@@ -36,8 +36,8 @@ width = 0.7
 
 #### ---- LOAD THE DATA (and prepare) ---- ####
 # 1. NAO
-nao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/NAO/NAO_winter.pkl')
-nao = nao.rename(columns={'Value':'Wint. NAO'})
+nao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter.pkl')
+nao.name = 'Wint. NAO'
 nao = nao[nao.index<YEAR_MAX+1]
 # normalize NAO with std.
 #nao_clim = nao[(nao.index>=clim_year[0]) & (nao.index<=clim_year[1])]
@@ -58,7 +58,7 @@ air.name = 'Air Temp'
 if clim_year[0] == 1981:
     ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1981-2010.dat', header=None, sep=' ')
 else:
-    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1991-2020.dat', header=None, sep=' ')
+    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.dat', header=None, sep=' ')
 ice.set_index(0, inplace=True)
 ice.index.name='Year'
 ice.rename(columns={ice.columns[0]: "Sea Ice" }, inplace = True)

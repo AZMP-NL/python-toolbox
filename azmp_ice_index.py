@@ -1,5 +1,8 @@
 '''
 A script to read and plot data from Ice EXtent Excel sheet south of 55N on NL shelves
+
+Note from Nov. 2021: Now deprecated. PSG calculates the new sea-ice subindex.
+
 '''
 # A first test to read Excel nutrient file and export to Pandas.
 

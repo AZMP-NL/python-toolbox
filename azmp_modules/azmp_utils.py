@@ -1757,7 +1757,7 @@ def Tbot_to_GIS_ascii(h5file, ascfile):
     Usage ex:
     import azmp_utils as azu
     azu.Tbot_to_GIS_ascii('Tbot_climato_fall.h5', 'bottom_temp.asc'):
-    
+   
     """    
 
     ## ---- Load data ---- ##    
@@ -1765,8 +1765,11 @@ def Tbot_to_GIS_ascii(h5file, ascfile):
     try:
         Tbot = h5f['Tbot'][:]
     except:
-        Tbot = h5f['Tsurf'][:]
-    
+        try:
+            Tbot = h5f['Tsurf'][:]
+        except:
+            Tbot = h5f['Sbot'][:]
+            
     lon_reg = h5f['lon_reg'][:]
     lat_reg = h5f['lat_reg'][:]
     h5f.close()

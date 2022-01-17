@@ -3,7 +3,13 @@ CIL area and other parameters along hydrographic sections.
 
 
 ** This script must be run into ~/AZMP/state_reports/sections_plots/CIL **
-*** See iroc_CIL_area.py that is similar. These 2 scripts need top be merged!
+
+*** This script will also generate .csv files (e.g., 'CIL_area_BB.csv') necessary for the IROC input (replace iroc_CIL_area.py)
+
+**** When the original .pkl/.csv files are generated, it is posisble to only update the recent years with azmp_CIL_stats_update.py
+
+Final update November 2021
+Frederic.Cyr@dfo-mpo.gc.ca
 
 
 '''
@@ -22,8 +28,8 @@ import azmp_sections_tools as azst
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
 SECTION = 'FC'
 SEASON = 'summer'
-YEAR = [1928, 2020] # For IROC
-YEAR = [1950, 2020] # For AZMP reporting
+YEAR = [1928, 2021] # For IROC
+YEAR = [1950, 2021] # For AZMP reporting
 YEAR_MIN = YEAR[0]
 YEAR_MAX = YEAR[1]
 YEAR_CLIM = [1991, 2020]
@@ -309,7 +315,7 @@ for iyear, YEAR in enumerate(years):
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
 
-    # Remame problematic datasets
+    # Remove problematic datasets
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
     ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
@@ -527,6 +533,11 @@ elif (SECTION=='SI') & (SEASON=='summer'):
         df.loc[i]=np.nan
         df_CIL.loc[i]=np.nan
 
+# Save IROC datadata in csv        
+df.columns = ['station-ID', 'interp_field']
+outfile = 'CIL_area_' + SECTION + '.csv'
+df.to_csv(outfile)
+
 # Save CIL timeseries
 picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
 df_CIL.to_pickle(picklename)
@@ -547,100 +558,3 @@ if SECTION == 'FC':
     
 
 
-
-
-
-
-
-
-
-
-## ## OLD WAY            
-## ## ---- Extract section info (test 2 options) ---- ##
-## ## Temperature
-## temp_coords = np.array([[x,y] for x in lat_reg for y in lon_reg])
-## VT = V_temp.reshape(temp_coords.shape[0],V_temp.shape[2])
-## ZZ = Zitp.reshape(temp_coords.shape[0],1)
-## section_only = []
-## df_section_itp = pd.DataFrame(index=stn_list, columns=z)
-## for stn in stn_list:
-##     #2.  From interpolated field (closest to station) 
-##     station = df_stn[df_stn.STATION==stn]
-##     idx_opti = np.argmin(np.sum(np.abs(temp_coords - np.array(list(zip(station.LAT.values,station.LON.values)))), axis=1))
-##     Tprofile = VT[idx_opti,:]
-##     # remove data below bottom
-##     bottom_depth = -ZZ[idx_opti]
-##     Tprofile[z>=bottom_depth]=np.nan
-##     # store in dataframe
-##     df_section_itp.loc[stn] = Tprofile
-
-## ## CIL Calculation
-## # Compute distance vector for option #2 - interp field
-## distance_itp = np.full((df_section_itp.index.shape), np.nan)
-## for i, stn in enumerate(df_section_itp.index):
-##     distance_itp[i] = azst.haversine(df_stn.LON[0], df_stn.LAT[0], df_stn[df_stn.STATION==df_section_itp.index[i]].LON, df_stn[df_stn.STATION==df_section_itp.index[i]].LAT)
-
-## # Option 2 only
-## if df_section_itp.dropna(axis=1, how='all').shape[1] > 1: # e.g., WB 1982, only surface obs are available
-##     fig, ax = plt.subplots()
-##     c = plt.contourf(distance_itp, df_section_itp.columns, df_section_itp.T)
-##     c_cil_itp = plt.contour(distance_itp, df_section_itp.columns, df_section_itp.T, [0,], colors='k', linewidths=2)
-##     ax.set_ylabel('Depth (m)', fontWeight = 'bold')
-##     ax.set_xlabel('Distance (km)')
-##     ax.invert_yaxis()
-##     plt.title(str(YEAR))
-##     plt.colorbar(c)
-##     fig_name = 'temp_section' + SECTION + '_' + SEASON + '_' + '_' + str(YEAR) + '_2.png'
-##     fig.savefig(fig_name, dpi=150)
-##     fig.clf()
-##     plt.close('all')
-##     # CIL area
-##     cil_vol_itp = 0
-##     CIL = c_cil_itp.collections[0]
-##     for path in CIL.get_paths()[:]:
-##         vs = path.vertices
-##         cil_vol_itp = cil_vol_itp + np.abs(area(vs))/1000
-##     cil_vol_itp_clim[idx] = cil_vol_itp 
-##     # CIL core
-##     #cil_core_itp[idx] = np.nanmin(df_section_itp.values)
-##     narrow_depth = df_section_itp[df_section_itp.columns[(df_section_itp.columns>=25) & (df_section_itp.columns<=250)]]
-##     cil_core_itp[idx] = np.nanmin(narrow_depth.values)
-##     z_idx = np.where(narrow_depth==np.nanmin(narrow_depth.values))
-##     cil_coredepth_itp_clim[idx] = np.array(narrow_depth.columns[z_idx[1].min()])
-##     # Section mean T
-##     section_meanT[idx] = df_section_itp.mean().mean()
-##     if SECTION == 'FC':
-##         section_meanT_shelf[idx] = df_section_itp.iloc[0:20,:].mean().mean() # FC-01 to FC-20
-##         section_meanT_cap[idx] = df_section_itp.iloc[14:,:].mean().mean() # FC-15 to FC-38
-##     plt.close('all')
-##     del da_temp
-            
-## # Merge CIL timeseries
-## df_CIL= pd.DataFrame([cil_vol_itp_clim, cil_core_itp, cil_coredepth_itp_clim]).T
-## df_CIL.index = years_series
-## df_CIL.columns = ['vol_itp', 'core_itp', 'core_depth_itp']
-## # Manually flag some years (check section plots for justification) 
-## if (SECTION=='SI') & (SEASON=='summer'):
-##     df_CIL.loc[flag_SI_summer]=np.nan
-## if (SECTION=='BB') & (SEASON=='summer'):
-##     df_CIL.loc[flag_BB_summer]=np.nan
-## if (SECTION=='WB') & (SEASON=='summer'):
-##     df_CIL.loc[flag_WB_summer]=np.nan
-## # Save CIL timeseries
-## picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
-## df_CIL.to_pickle(picklename)
-## # Save section average temp
-## df_sectionT = pd.Series(section_meanT)
-## df_sectionT.index = years_series
-## picklename = 'df_' + SECTION + '_meanT_' + SEASON + '.pkl'
-## df_sectionT.to_pickle(picklename)
-## if SECTION == 'FC':
-##     df_sectionT = pd.Series(section_meanT_shelf)
-##     df_sectionT.index = years_series
-##     picklename = 'df_' + SECTION + '_meanT_shelf_' + SEASON + '.pkl'
-##     df_sectionT.to_pickle(picklename)
-##     df_sectionT = pd.Series(section_meanT_cap)
-##     df_sectionT.index = years_series
-##     picklename = 'df_' + SECTION + '_meanT_cap_' + SEASON + '.pkl'
-##     df_sectionT.to_pickle(picklename)
-    

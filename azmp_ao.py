@@ -17,7 +17,8 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 # Download and save up-to-date  AO index from NOAA (data.csv) if needed
-url = 'https://www.ncdc.noaa.gov/teleconnections/ao/data.csv'
+# url = 'https://www.ncdc.noaa.gov/teleconnections/ao/data.csv'
+url = 'https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii.table'
 ao_file = '/home/cyrf0006/data/AZMP/indices/ao_data.csv'
 if os.path.exists(ao_file):
     py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
@@ -39,13 +40,14 @@ if os.path.exists(ao_file):
         else:
             print(' -> Please answer "y" or "n"')
 
-                        
+
 # Reload using pandas
-df = pd.read_csv(ao_file, header=1)
+df = pd.read_csv(ao_file, header=0, delimiter=r"\s+", error_bad_lines=False)
 
 # Set index
-df = df.set_index('Date')
-df.index = pd.to_datetime(df.index, format='%Y%m')
+df.index.name = 'Year'
+df = df.stack()
+df.index = pd.to_datetime(df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str'))
 
 # Resample
 # pickle DataFrame for scorecards:
@@ -59,6 +61,7 @@ df1 = df_annual[df_annual>0]
 df2 = df_annual[df_annual<0]
 
 ## ---- plot winter AO bar plots #2 ---- ##
+
 fig = plt.figure(4)
 fig.clf()
 width = .9
@@ -70,7 +73,7 @@ plt.ylabel('AO index')
 plt.title('Annual AO average')
 plt.grid()
 fig.set_size_inches(w=15,h=9)
-fig_name = 'AO_1950-2020.png'
+fig_name = 'AO_1950-2021.png'
 plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
