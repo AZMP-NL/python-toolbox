@@ -196,16 +196,16 @@ climate_index_natural = climate_index_natural[climate_index_natural.index>=YEAR_
 # 1. All fields.
 climate_index = climate_index[(climate_index.index>=YEAR_MIN) & (climate_index.index<=YEAR_MAX)]
 climate_index.index.name = 'Year'
-climate_index_sc.to_csv('NL_climate_index_all_fields.csv', float_format='%.2f')
+climate_index_sc.to_csv('NL_climate_index_all_fields.csv', float_format='%.2f', index_label='Year')
 # 2. All fields natural signs
 climate_index_natural = climate_index_natural[(climate_index_natural.index>=YEAR_MIN) & (climate_index_natural.index<=YEAR_MAX)]
 climate_index_natural.index.name = 'Year'
-climate_index_natural.to_csv('NL_climate_index_all_fields_natural_signs.csv', float_format='%.2f')
+climate_index_natural.to_csv('NL_climate_index_all_fields_natural_signs.csv', float_format='%.2f', index_label='Year')
 # 3. Mean index.
 climate_index_mean = climate_index.mean(axis=1)
 climate_index_mean.index.name = 'Year'
 climate_index_mean = climate_index_mean.rename('Climate index').to_frame()  
-climate_index_mean.to_csv('NL_climate_index.csv', float_format='%.2f')
+climate_index_mean.to_csv('NL_climate_index.csv', float_format='%.2f', index_label='Year')
 
 ## restrict time series and normalize for plots.
 climate_index = climate_index[climate_index.index<YEAR_MAX+1]
@@ -335,13 +335,13 @@ os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + f
 ### ----- Plot climate index (French) ---- ####
 climate_index_normFR = climate_index_norm.copy()
 climate_index_normFR.rename(columns={
-    'Winter NAO':'ONA hiver',
+    'Wint. NAO':'ONA hiver',
     'Air Temp':'Temp Air',
     'Sea Ice':'Glace',
     'SST':'SST',
     'S27 CIL':'S27 CIF',
     'CIL area':'Aire CIF',
-    'Bottom T.': 'Temp Fond'
+    'Bottom T': 'Temp Fond'
     }, inplace=True)
 
 ax = climate_index_norm.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
@@ -699,6 +699,297 @@ fig_name = 'NL_climate_index_ms_scorecards.png'
 fig.savefig(fig_name, dpi=300, bbox_extra_artists=(nao_table,nlci_table,leg), bbox_inches='tight')
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
+
+
+#### ----- Climate index with extended Scorecards [2] (French) ---- ####
+fig, ax = plt.subplots(nrows=1, ncols=1)
+n = 5 # xtick every n years
+ax = climate_index_normFR.plot(kind='bar', stacked=True, cmap='nipy_spectral', zorder=10)
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.grid('on')
+ax.set_ylim([-1.6, 1.6])
+ax.set_xlabel(r'')
+ax.set_ylabel(r'Anomalie normalisée')
+#ax.set_title('NL Climate Index')
+#leg = ax.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize=12)
+leg = ax.legend(fontsize=12)
+
+# Climate Index
+colors = cmap(normal(np.nansum(climate_index_normFR.values, axis=1)))
+# nansum leads to 0.0 when only NaNs; correcting it here:
+nlci_text = np.nansum(climate_index_normFR.values, axis=1).round(1).astype('str')
+if nlci_text[0] == '0.0':
+    nlci_text[0] = 'nan'
+nlci_table = ax.table(cellText=[nlci_text],
+        rowLabels=['Indice climatique TNL'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.14, 1, 0.05])
+nlci_table.auto_set_font_size (False)
+nlci_table.set_fontsize(11)
+
+for key, cell in nlci_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell.set_fontsize(0)
+    else:
+        cell._text.set_rotation(90)
+
+# CIL area
+colors = cmap(normal(climate_index_sc['CIL area'].values))
+the_table = ax.table(cellText=[climate_index_sc['CIL area'].values.round(1)],
+        rowLabels=['Aire CIF '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.01, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Bottom T
+colors = cmap(normal(climate_index_sc['Bottom T'].values))
+the_table = ax.table(cellText=[climate_index_sc['Bottom T'].values.round(1)],
+        rowLabels=['Temp fond '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.06, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# S27 CIL
+colors = cmap(normal(climate_index_sc['S27 CIL'].values))
+the_table = ax.table(cellText=[climate_index_sc['S27 CIL'].values.round(1)],
+        rowLabels=['S27 CIF '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.11, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# S27 S
+colors = cmap(normal(climate_index_sc['S27 S'].values))
+the_table = ax.table(cellText=[climate_index_sc['S27 S'].values.round(1)],
+        rowLabels=['S27 S '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.16, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# S27 T
+colors = cmap(normal(climate_index_sc['S27 T'].values))
+the_table = ax.table(cellText=[climate_index_sc['S27 T'].values.round(1)],
+        rowLabels=['S27 T '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.21, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+        
+# SST
+colors = cmap(normal(climate_index_sc['SST'].values))
+the_table = ax.table(cellText=[climate_index_sc['SST'].values.round(1)],
+        rowLabels=['SST '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.26, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Icebergs
+colors = cmap(normal(climate_index_sc['Icebergs'].values))
+the_table = ax.table(cellText=[climate_index_sc['Icebergs'].values.round(1)],
+        rowLabels=['Icebergs '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.31, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Sea Ice
+colors = cmap(normal(climate_index_sc['Sea Ice'].values))
+the_table = ax.table(cellText=[climate_index_sc['Sea Ice'].values.round(1)],
+        rowLabels=['Glace '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.36, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_text('')
+        cell._text.set_rotation(90)
+
+# Air Temp
+colors = cmap(normal(climate_index_sc['Air Temp'].values))
+the_table = ax.table(cellText=[climate_index_sc['Air Temp'].values.round(1)],
+        rowLabels=['Temp air '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.41, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_rotation(90)
+        cell._text.set_text('')
+
+# Wint. NAO
+colors = cmap(normal(climate_index_sc['Wint. NAO'].values))
+nao_table = ax.table(cellText=[climate_index_sc['Wint. NAO'].values.round(1)],
+        rowLabels=['ONA hiver '],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='top', bbox=[0, +1.46, 1, 0.05])
+nao_table.auto_set_font_size (False)
+nao_table.set_fontsize(11)
+
+for key, cell in nao_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    elif cell_text=='nan':
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+        cell._text.set_text('')
+    else:
+        cell._text.set_text('')
+        cell._text.set_rotation(90)
+                                      
+fig = ax.get_figure()
+fig.set_size_inches(w=15.5,h=12)
+fig_name = 'NL_climate_index_ms_scorecards_FR.png'
+fig.savefig(fig_name, dpi=300, bbox_extra_artists=(nao_table,nlci_table,leg), bbox_inches='tight')
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
 #### ----- Comparison with Eugene's CEI ---- ####
     

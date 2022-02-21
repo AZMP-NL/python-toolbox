@@ -21,7 +21,7 @@ lonLims = [-70, -56] # Lab Sea
 latLims = [57, 67]
 lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
 lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2018], season='summer', h5_outputfile='Tbot_climato_NSRFx_summer_2006-2018.h5')
+Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFx_summer_2006-2021.h5')
 
 
 Frederic.Cyr@dfo-mpo.gc.ca

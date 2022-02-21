@@ -286,3 +286,43 @@ fig_name = 'bottomT_anomalies_climateindex.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
+
+# Plot French Figure
+bottomT_stack_normFR = bottomT_stack_norm.rename(columns={'3LNOPs - Spring':'3LNOPs - Printemps','2HJ3KLNO - Fall':'2HJ3KLNO - Automne'})
+fig, ax = plt.subplots(nrows=1, ncols=1)
+n = 5 # xtick every n years
+ax = bottomT_stack_normFR.plot(kind='bar', stacked=True, cmap=cmap_stack)
+ticks = ax.xaxis.get_ticklocs()
+ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+ax.xaxis.set_ticks(ticks[::n])
+ax.xaxis.set_ticklabels(ticklabels[::n])
+plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.grid('on')
+ax.set_xlabel(r'')
+ax.set_ylabel(r'Anomalie Normalisée')
+ax.set_title('Température fond')
+plt.ylim([-2,2])
+
+colors = cmap(normal(np.nansum(bottomT_stack_normFR.values, axis=1)))
+cell_text = np.nansum(bottomT_stack_normFR.values, axis=1).round(1).astype('str')
+the_table = ax.table(cellText=[np.nansum(bottomT_stack_normFR.values, axis=1).round(1)],
+        rowLabels=['sub-indice temp fond'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.14, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(11)
+
+for key, cell in the_table.get_celld().items():
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    else:
+        cell._text.set_rotation(90)
+        
+fig = ax.get_figure()
+fig.set_size_inches(w=13,h=9.5)
+fig_name = 'bottomT_anomalies_climateindex_FR.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)

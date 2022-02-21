@@ -35,7 +35,7 @@ def make_patch_spines_invisible(ax):
 ## ---- Some custom parameters ---- ##
 #year_clim = [1981, 2010]
 year_clim = [1991, 2020]
-current_year = 2020
+current_year = 2021
 XLIM = [datetime.date(1945, 1, 1), datetime.date(2020, 12, 31)]
 french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 months = mdates.MonthLocator()  # every month

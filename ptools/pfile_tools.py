@@ -344,6 +344,14 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             P = np.array(df['pres-db'])
             Ibtm = np.argmax(P)    
             digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
+        elif 'prdM' in df.columns: # NAFO 0 files
+            P = np.array(df['prdM'])
+            Ibtm = np.argmax(P)    
+            digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
+        elif 'prSM' in df.columns: # NAFO 0 files
+            P = np.array(df['prSM'])
+            Ibtm = np.argmax(P)    
+            digitized = np.digitize(P[0:Ibtm], Pbin) #<- this is awesome!
         else:
             error_msg = 'Problem with file, no pressure channel found [skip]'
             print(error_msg)
@@ -357,11 +365,17 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
 
         
         # Temperature
-        if 'temp' in df.columns:
+        if 'temp' in df.columns:ls
             X = np.array(df['temp'])
             Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         elif 'temp90-C' in df.columns:
             X = np.array(df['temp90-C'])
+            Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'tv290C' in df.columns: 
+            X = np.array(df['tv290C']) # NAFO 0 files
+            Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 't090C' in df.columns: 
+            X = np.array(df['t090C']) # NAFO 0 files
             Tlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Tlist.append(list(Pbin*np.nan))
@@ -373,6 +387,9 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         elif 'sal-PSU' in df.columns:
             X = np.array(df['sal-PSU'])
             Slist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'sal00' in df.columns:
+            X = np.array(df['sal00']) # NAFO 0 files
+            Slist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Slist.append(list(Pbin*np.nan))
 
@@ -383,6 +400,9 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
         elif 'cond90-S/m' in df.columns:
             X = np.array(df['cond90-S/m'])
             Clist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'c0S/m' in df.columns:
+            X = np.array(df['c0S/m']) # NAFO 0 files
+            Clist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             Clist.append(list(Pbin*np.nan))
 
@@ -392,6 +412,9 @@ def pfiles_to_netcdf(infiles, nc_outfile, zbin=1, zmax=1500, zshrink=False): # p
             SIGlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         elif 'sigma-t' in df.columns:
             X = np.array(df['sigma-t'])
+            SIGlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
+        elif 'sigma-t00' in df.columns:
+            X = np.array(df['sigma-t00']) # NAFO 0 files
             SIGlist.append([X[0:Ibtm][digitized == i].mean() for i in range(0, len(Pbin))])
         else:
             SIGlist.append(list(Pbin*np.nan))

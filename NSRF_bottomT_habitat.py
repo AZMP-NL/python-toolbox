@@ -54,8 +54,8 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2020'
-climato_file = 'Tbot_climato_NSRFx_summer_2006-2018.h5'
+year = '2021'
+climato_file = 'Tbot_climato_NSRFx_summer_2006-2021.h5'
 year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 
 
@@ -359,9 +359,9 @@ plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
 if season=='fall':
     plt.title('Fall Bottom Temperature Climatology')
 elif season=='spring':
-    plt.title('Spring Bottom Temperature Climatology')
+    plt.title('Spring Bottom Temperature Climatology'
 else:
-    plt.title('Bottom Temperature Climatology (2006-2018)')
+    plt.title('Bottom Temperature Climatology (2006-2021)')
 m.fillcontinents(color='tan');
 m.drawparallels(np.arange(58, 68, 2), labels=[1,0,0,0], fontsize=12, fontweight='normal');
 m.drawmeridians(np.arange(-66, -54, 2), labels=[0,0,0,1], fontsize=12, fontweight='normal');

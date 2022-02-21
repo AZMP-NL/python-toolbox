@@ -53,9 +53,69 @@ plt.rc('font', **font)
    
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
-current_year = 2020
-         
-## ---- Read 4 stations of interest ---- ##
+current_year = 2021
+use_climate_summaries = True
+
+
+## ---- If climate summaries are needed ---- ##
+if use_climate_summaries:
+    # NL
+    NL_01 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_01-2021.csv', index_col='Clim_ID')
+    NL_01 = NL_01.loc[['8400601','8403505','8501106']].Tm
+    NL_02 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_02-2021.csv', index_col='Clim_ID')
+    NL_02 = NL_02.loc[['8400601','8403505','8501106']].Tm
+    NL_03 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_03-2021.csv', index_col='Clim_ID')
+    NL_03 = NL_03.loc[['8400601','8403505','8501106']].Tm
+    NL_04 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_04-2021.csv', index_col='Clim_ID')
+    NL_04 = NL_04.loc[['8400601','8403505','8501106']].Tm
+    NL_05 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_05-2021.csv', index_col='Clim_ID')
+    NL_05 = NL_05.loc[['8400601','8403505','8501106']].Tm
+    NL_06 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_06-2021.csv', index_col='Clim_ID')
+    NL_06 = NL_06.loc[['8400601','8403505','8501106']].Tm
+    NL_07 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_07-2021.csv', index_col='Clim_ID')
+    NL_07 = NL_07.loc[['8400601','8403505','8501106']].Tm
+    NL_08 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_08-2021.csv', index_col='Clim_ID')
+    NL_08 = NL_08.loc[['8400601','8403505','8501106']].Tm
+    NL_09 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_09-2021.csv', index_col='Clim_ID')
+    NL_09 = NL_09.loc[['8400601','8403505','8501106']].Tm
+    NL_10 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_10-2021.csv', index_col='Clim_ID')
+    NL_10 = NL_10.loc[['8400601','8403505','8501106']].Tm
+    NL_11 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_11-2021.csv', index_col='Clim_ID')
+    NL_11 = NL_11.loc[['8400601','8403505','8501106']].Tm
+    NL_12 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_12-2021.csv', index_col='Clim_ID')      
+    NL_12 = NL_12.loc[['8400601','8403505','8501106']].Tm
+    df_NL = pd.concat([NL_01,NL_02,NL_03,NL_04,NL_05,NL_06,NL_07,NL_08,NL_09,NL_10,NL_11,NL_12], axis=1).T
+    months = pd.Series(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']) 
+    df_NL.index = pd.to_datetime('15-' + months + '-' + str(current_year)) 
+    # NU
+    NU_01 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_01-2021.csv', index_col='Clim_ID')
+    NU_01 = NU_01.loc[['2402592']].Tm
+    NU_02 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_02-2021.csv', index_col='Clim_ID')
+    NU_02 = NU_02.loc[['2402592']].Tm
+    NU_03 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_03-2021.csv', index_col='Clim_ID')
+    NU_03 = NU_03.loc[['2402592']].Tm
+    NU_04 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_04-2021.csv', index_col='Clim_ID')
+    NU_04 = NU_04.loc[['2402592']].Tm
+    NU_05 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_05-2021.csv', index_col='Clim_ID')
+    NU_05 = NU_05.loc[['2402592']].Tm
+    NU_06 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_06-2021.csv', index_col='Clim_ID')
+    NU_06 = NU_06.loc[['2402592']].Tm
+    NU_07 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_07-2021.csv', index_col='Clim_ID')
+    NU_07 = NU_07.loc[['2402592']].Tm
+    NU_08 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_08-2021.csv', index_col='Clim_ID')
+    NU_08 = NU_08.loc[['2402592']].Tm
+    NU_09 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_09-2021.csv', index_col='Clim_ID')
+    NU_09 = NU_09.loc[['2402592']].Tm
+    NU_10 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_10-2021.csv', index_col='Clim_ID')
+    NU_10 = NU_10.loc[['2402592']].Tm
+    NU_11 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_11-2021.csv', index_col='Clim_ID')
+    NU_11 = NU_11.loc[['2402592']].Tm
+    NU_12 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_12-2021.csv', index_col='Clim_ID')      
+    NU_12 = NU_12.loc[['2402592']].Tm
+    df_NU = pd.concat([NU_01,NU_02,NU_03,NU_04,NU_05,NU_06,NU_07,NU_08,NU_09,NU_10,NU_11,NU_12], axis=1).T
+    df_NU.index = pd.to_datetime('15-' + months + '-' + str(current_year)) 
+    
+## ---- Read 4 stations of interest (AHCCD) ---- ##
 ## 1. Bonavista - 8400601
 # tmp file without blank space
 with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8400601.txt', 'r') as f:
@@ -79,6 +139,10 @@ df = pd.to_numeric(df)
 df = df.replace(df[df<-9999], np.nan)
 df_BB = df.copy()
 del df
+# Append climate summaries if needed
+if use_climate_summaries:
+    df_BB = df_BB.append(df_NL['8400601'])  
+
 
 ## 2. St. John's - 8403505
 # tmp file without blank space
@@ -103,7 +167,10 @@ df = pd.to_numeric(df)
 df = df.replace(df[df<-9999], np.nan)
 df_SJ = df.copy()
 del df
-
+# Append climate summaries if needed
+if use_climate_summaries:
+    df_SJ = df_SJ.append(df_NL['8403505'])
+    
 ## 3. Cartwright - 8501106
 # tmp file without blank space
 with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8501106.txt', 'r') as f:
@@ -127,7 +194,10 @@ df = pd.to_numeric(df)
 df = df.replace(df[df<-9999], np.nan)
 df_CA = df.copy()
 del df
-
+# Append climate summaries if needed
+if use_climate_summaries:
+    df_CA = df_CA.append(df_NL['8501106'])
+    
 ## 4. Iqaluit - 2402592
 # tmp file without blank space
 with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm2402592.txt', 'r') as f:
@@ -151,7 +221,10 @@ df = pd.to_numeric(df)
 df = df.replace(df[df<-9999], np.nan)
 df_IQ = df.copy()
 del df
-
+# Append climate summaries if needed
+if use_climate_summaries:
+    df_IQ = df_IQ.append(df_NU['2402592'])
+    
 ## 5. NUUK - see azmp_dmi_nuukAirT.py
 df_NUUK = pd.read_pickle('Nuuk_air_temp.pkl')  
 
@@ -210,7 +283,7 @@ plt.grid('on')
 ax.set_ylabel(r'[$^{\circ}$C]')
 ax.set_title(np.str(current_year) + ' Air temperature anomalies')
 #ax.legend(loc='upper center')
-plt.ylim([-5, 20])
+plt.ylim([-5, 25])
 
 fig = ax.get_figure()
 fig.set_size_inches(w=9,h=6)
@@ -236,7 +309,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_ylabel(r'Standardized anomaly')
 ax.set_title('Annual air temperature anomalies')
@@ -329,7 +402,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_ylabel(r'Standardized anomaly')
 ax.set_title('Annual air temperature anomalies')
@@ -355,3 +428,11 @@ fig.set_size_inches(w=13,h=9.5)
 fig_name = 'air_temp_climate_index.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+
+
+# Save in French
+ax.set_ylabel(r'Anomalie normalisée')
+ax.set_title('Anomalies des températures de l\'air')
+fig_name = 'air_temp_climate_index_FR.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)

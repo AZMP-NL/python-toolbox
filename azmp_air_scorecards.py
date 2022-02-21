@@ -23,7 +23,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1991, 2020]
-years = [1980, 2020]
+years = [1980, 2021]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -52,10 +52,11 @@ nao_winter = nao_winter[(nao_winter.index>=years[0]) & (nao_winter.index<=years[
 ao = ao[(ao.index>=years[0]) & (ao.index<=years[1])]
 amo = amo[(amo.index>=years[0]) & (amo.index<=years[1])]
 # Rename columns
-nao_winter = nao_winter.rename(columns={'Value': r'  $\rm NAO_{winter }$'})
-ao = ao.rename(columns={'Value': '    AO'})
-amo.name='   AMO' 
-df_indices = pd.concat([nao_winter, ao, amo], axis=1)
+#nao_winter = nao_winter.rename(columns={'Value': r'  $\rm NAO_{winter }$'})
+#ao = ao.rename(columns={'Value': '    AO'})
+#amo.name='   AMO' 
+# concat indices
+df_indices = pd.concat([nao_winter, ao, amo], axis=1, keys=[r'  $\rm NAO_{winter }$', '    AO', '   AMO'])
 df_ind_clim = df_indices[(df_indices.index>=clim_year[0]-1) & (df_indices.index<=clim_year[1])]
 #df_ind_anom = (df_indices - df_ind_clim.mean()) / df_ind_clim.std()
 #df_indices = df_ind_anom
@@ -186,7 +187,7 @@ header = ax.table(cellText=[['']],
                       )
 header.set_fontsize(13)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+                    loc='center', cellColours=cmap_r(norm(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
                     )
 # change font color to white where needed:

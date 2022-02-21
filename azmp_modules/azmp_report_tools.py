@@ -1075,9 +1075,9 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
         /home/cyrf0006/AZMP/state_reports/bottomT/NSRF
 
         usage example:
-        >> import azmp_report_tools as azrt
-        >> import numpy as np
-        >> azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2018.h5')
+        import azmp_report_tools as azrt
+        import numpy as np
+        azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5')
 
         *** This needs to be improve because at the moment I need to comment the generation of .pkl file to not over-write when I change my map region.        
                 
@@ -1678,6 +1678,10 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([2021])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
     df['area_colder1'] = df['area_colder1']/1000 # In 1000km
     df['area_warmer2'] = df['area_warmer2']/1000
@@ -2031,7 +2035,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([2017])
+    bad_years = np.array([])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     year_list = df.index.year.astype('str')
@@ -2167,7 +2171,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2017])
+    bad_years = np.array([2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -2271,7 +2275,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([2017])
+    bad_years = np.array([])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -2375,6 +2379,167 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3.png scorecards_summer_SFA4_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_SFA2-4_summer_FR.png') 
 
 
-
-
     #### ------------- For fall / NOT IMPLEMENTED ---------------- ####
+
+
+def SS_bottom_scorecards(years, clim_year=[1991, 2020]):
+
+
+    '''
+    To generate AZMP score cards for bottom temperature
+    on the Scotian shelf (NAFO Div. 4).
+    
+    Data are from D. Hebert
+
+    usage example:
+
+    bottom_scorecards(years=[1980, 2021], clim_year=[1991, 2020]):
+
+    df_4v = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4V.dat', delimiter=r",", index_col='year', header=10)
+    df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4Vn.dat', delimiter=r",", index_col='year', header=10)
+    df_4vs = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4Vs.dat', delimiter=r",", index_col='year', header=10)
+    df_4w = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4W.dat', delimiter=r",", index_col='year', header=10)
+    df_4x = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4X.dat', delimiter=r",", index_col='year', header=10)
+
+
+    UNFINISHED
+    '''
+
+    #### ------------- For summer ---------------- ####
+
+    # 1. 4Vn
+    df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4Vn.dat', delimiter=r",", index_col='year', header=10)
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_2H_fall.csv', sep=',', float_format='%0.3f')
+    # Transpose for table
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    
+    # Get text values +  cell color
+    year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+    year_list.append(r'sd')   
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+
+    # Build the colormap
+    vmin = -3.49
+    vmax = 3.49
+    midpoint = 0
+    levels = np.linspace(vmin, vmax, 15)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+    normal = plt.Normalize(-3.49, 3.49)
+    reds = plt.cm.Reds(np.linspace(0,1, num=7))
+    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+    whites = [(1,1,1,1)]*2
+    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+    # Common parameters
+    #hcell, wcell = 0.5, 0.6
+    #hpad, wpad = 0, 0
+
+    ## normal = plt.Normalize(-4.49, 4.49)
+    ## cmap = plt.cm.get_cmap('seismic', 9) 
+    #cmap = plt.cm.get_cmap('seismic', 15) 
+
+    nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+    hcell, wcell = 0.5, 0.5
+    hpad, wpad = 1, 1    
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 2H --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fall_2H.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2H.png scorecards_fall_2H.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    year_list[-1] = u'ET'
+
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 2H de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fall_2H_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fall_2H_FR.png scorecards_fall_2H_FR.png')

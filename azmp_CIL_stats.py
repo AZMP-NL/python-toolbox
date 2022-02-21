@@ -26,7 +26,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'FC'
+SECTION = 'WB'
 SEASON = 'summer'
 YEAR = [1928, 2021] # For IROC
 YEAR = [1950, 2021] # For AZMP reporting

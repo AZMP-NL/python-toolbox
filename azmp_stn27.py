@@ -9,7 +9,8 @@ Station 27 analysis for CSAS/NAFO ResDocs. This scripts compute:
 ** see azmp_stn27_explore.py for more options and ways to explore the dataset
 
 *** For a year update, the file stn27_all_casts.nc needs to be updated.
-To do so, delete the file and run this script.
+To do so, delete the file and run this script
+OR check !! azmp_stn27_density.py !! to update
 
 Frederic.Cyr@dfo-mpo.gc.ca - June 2019
 
@@ -39,14 +40,15 @@ dc = .025
 #year_clim = [1981, 2010]
 year_clim = [1991, 2020]
 
-current_year = 2020
-variable = 'salinity'
+current_year = 2021
+variable = 'temperature'
 use_viking = True
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
 # Derived parameter
 if variable == 'temperature':
-    V = np.arange(-1, 14, 1)
+    V = np.concatenate([np.arange(-1.75, 0.25, .25), np.arange(1, 14, 1)])  
+    #V = np.arange(-1, 14, 1)
     #Vanom = np.linspace(-5.5, 5.5, 12)
     #Vanom = np.array([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
     Vanom = np.linspace(-5.5, 5.5, 23)
@@ -154,7 +156,7 @@ weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear')
 weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
-weekly_clim.index = pd.to_datetime('2020-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
+weekly_clim.index = pd.to_datetime('2021-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
 #weekly_clim.dropna(how='all', axis=1, inplace=True)
 
 

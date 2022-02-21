@@ -27,7 +27,7 @@ import seaborn as sns
 # Adjust fontsize/weight
 font = {'family' : 'sans-serif',
         'weight' : 'normal',
-        'size'   : 14}
+        'size'   : 10}
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
@@ -39,10 +39,11 @@ current_year = 2021
 #df = df.drop(columns = 'TOT SEASON')
 
 # Since 2021, load from NSIDC (https://nsidc.org/data/G10028/versions/1)
-df = pd.read_csv('/home/cyrf0006/data/NSIDC/Icebergs/G10028_Icebergs_South_of_48N.csv')
-, header=5, index_col='YEAR') 
+df = pd.read_csv('/home/cyrf0006/data/NSIDC/Icebergs/G10028_Icebergs_South_of_48N.csv', index_col='YEAR') 
+df = df.drop(columns = 'TOTAL')
 
-
+# Rename columns
+df.rename(columns={'OCT':'Oct', 'NOV':'Nov', 'DEC':'Dec', 'JAN':'Jan', 'FEB':'Feb', 'MAR':'Mar', 'APR':'Apr', 'MAY':'May', 'JUN':'Jun', 'JUL':'Jul', 'AUG':'Aug', 'SEP':'Sep'}, inplace=True)
 # Stack months under Years (pretty cool!)
 #df = df.stack() 
 
@@ -82,7 +83,7 @@ ax.set_xticks(ind)
 ax.set_xticklabels(df_monthly_clim.index)
 ax.legend()
 ax.yaxis.grid() # horizontal lines
-plt.ylim([0, 800])
+plt.ylim([0, 400])
 
 fig.set_size_inches(w=6,h=3)
 fig_name = 'bergs_monthly.png'
@@ -157,7 +158,7 @@ hpad, wpad = 0, 0
 fig, ax = plt.subplots() 
 ax.bar(df_annual.index, df_annual.values, width)
 ax.set_ylabel('Counts')
-plt.xlim([1899.5, 2020.5])
+plt.xlim([1899.5, 2021.5])
 plt.grid()
 ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
 
@@ -184,5 +185,39 @@ for key, cell in the_table.get_celld().items():
 
 fig.set_size_inches(w=13,h=8)
 fig_name = 'icebergs_climate_index.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+
+## In French ##
+fig, ax = plt.subplots() 
+ax.bar(df_annual.index, df_annual.values, width)
+ax.set_ylabel("Nombre d'icebergs")
+plt.xlim([1899.5, 2021.5])
+plt.grid()
+ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
+
+std_anom = (df_annual - df_annual_clim.mean()) / df_annual_clim.std()
+
+ax.set_title("Décompte annuel d'icebergs")
+colors = cmap(normal(std_anom.values*-1))
+cell_text = [std_anom.values.round(1)]
+the_table = ax.table(cellText=cell_text,
+        rowLabels=['Sous-indice Icebergs'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.1, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(6)
+
+for key, cell in the_table.get_celld().items():
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    else:
+        cell._text.set_rotation(90)
+
+fig.set_size_inches(w=13,h=8)
+fig_name = 'icebergs_climate_index_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)

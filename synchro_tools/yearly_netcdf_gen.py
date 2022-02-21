@@ -6,7 +6,7 @@ I need to make it a function!
 
 ** Note; works also for Viking buoy Dfiles.
 Just generate the list with:
-ls viking_pfiles/*.D20 > viking2020.list
+ls viking_pfiles/*.D21 > viking2021.list
 
 ----------
 Frederic.Cyr@dfo-mpo.gc.ca, October 2017
@@ -27,6 +27,7 @@ os.system('echo " --------- New run ------ " >> .netcdfgen_log.txt')
 
 for yearfile in lists:
     outfile = os.path.splitext(yearfile)[0] + '.nc'
+    #outfile = 'arctic_NAFO0.nc'
     p.pfiles_to_netcdf(yearfile, outfile, zbin=5, zmax=2000)
     expr_print = ' -> ' + outfile + ' done!'
     print(expr_print)
@@ -45,3 +46,9 @@ for yearfile in lists:
 
 # too long...
 #rsync -avL --ignore-existing cyrf@nl-bpo-dev.ent.dfo-mpo.ca:/data/seabird/symlinks_pfiles/* /home/cyrf0006/data/symlinks_pfiles/. 
+
+## Concatenate 2 netCDF files (in case generated separately) ##
+#ds1 = xr.open_mfdataset('./netCDF/2017.nc')
+#ds2 = xr.open_mfdataset('./nsrf2017.nc')                                  
+#ds = xr.concat([ds1, ds2], 'time')
+#ds.to_netcdf('2017.nc')

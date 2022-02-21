@@ -203,7 +203,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Normalized anomaly')
@@ -234,38 +234,79 @@ fig_name = 'CIL_volume_climateindex.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
-
-## ---- CIL area for ms_climate index V2 (RED/BLUE) ---- ##
-vol_stack = pd.concat([std_anom_SI.vol_itp[std_anom_SI.vol_itp<0], std_anom_SI.vol_itp[std_anom_SI.vol_itp>0],
-                         std_anom_BB.vol_itp[std_anom_BB.vol_itp<0], std_anom_BB.vol_itp[std_anom_BB.vol_itp>0],
-                         std_anom_FC.vol_itp[std_anom_FC.vol_itp<0], std_anom_FC.vol_itp[std_anom_FC.vol_itp>0]], axis=1) / 3
-
-
+## In French ##
+# Plot
 fig, ax = plt.subplots(nrows=1, ncols=1)
 n = 5 # xtick every n years
-sign=vol_stack>0
-vol_stack.plot(kind='bar', stacked=True, color=['lightcoral', 'skyblue', 'indianred', 'steelblue', 'firebrick', 'royalblue'], width = width, zorder=10, ax=ax, legend=False)
+ax = std_vol_norm.plot(kind='bar', stacked=True, cmap=cmap_stack)
 ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-ax.set_ylabel(r'Normalized anomaly')
-ax.set_title('CIL volume')
 plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
-plt.grid()
-plt.ylim([-3.5,3.5])
-# Custom legend
-import matplotlib.lines as mlines
-legend_elements = [mlines.Line2D([],[], marker='s',linestyle='None', color='lightcoral', markersize=12, label='\nSI'),
-                    mlines.Line2D([],[], marker='s',linestyle='None', color='skyblue', markersize=12, label=' '),
-                    mlines.Line2D([],[], marker='s',linestyle='None', color='indianred', markersize=12, label='\nBB'),
-                    mlines.Line2D([],[], marker='s',linestyle='None', color='steelblue', markersize=12, label=' '),
-                    mlines.Line2D([],[], marker='s',linestyle='None', color='firebrick', markersize=12, label='\nFC'),
-                    mlines.Line2D([],[], marker='s',linestyle='None', color='royalblue', markersize=12, label=' ')]
-ax.legend(handles=legend_elements)
-      
-fig.set_size_inches(w=15,h=7)
-fig_name = 'CIL_volume_stacked.png'
+plt.grid('on')
+ax.set_xlabel(r'')
+ax.set_ylabel(r'Anomalie normalisée')
+ax.set_title('Aire de la CIF')
+plt.ylim([-3.3,2.6])
+
+colors = cmap(normal(np.nansum(std_vol_norm.values*-1, axis=1)))
+cell_text = np.nansum(std_vol_norm.values, axis=1).round(1).astype('str')
+the_table = ax.table(cellText=[np.nansum(std_vol_norm.values, axis=1).round(1)],
+        rowLabels=['sous-indice aire CIF'],
+        colLabels=None,
+        cellColours = [colors],
+        cellLoc = 'center', rowLoc = 'center',
+        loc='bottom', bbox=[0, -0.14, 1, 0.05])
+the_table.auto_set_font_size (False)
+the_table.set_fontsize(9)
+
+for key, cell in the_table.get_celld().items():
+    if key[1] == -1:
+        cell.set_linewidth(0)
+        cell.set_fontsize(10)
+    else:
+        cell._text.set_rotation(90)
+        
+fig = ax.get_figure()
+fig.set_size_inches(w=13,h=9.5)
+fig_name = 'CIL_volume_climateindex_FR.png'
 fig.savefig(fig_name, dpi=300)
-os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+
+## ## ---- CIL area for ms_climate index V2 (RED/BLUE) ---- ##
+## vol_stack = pd.concat([std_anom_SI.vol_itp[std_anom_SI.vol_itp<0], std_anom_SI.vol_itp[std_anom_SI.vol_itp>0],
+##                          std_anom_BB.vol_itp[std_anom_BB.vol_itp<0], std_anom_BB.vol_itp[std_anom_BB.vol_itp>0],
+##                          std_anom_FC.vol_itp[std_anom_FC.vol_itp<0], std_anom_FC.vol_itp[std_anom_FC.vol_itp>0]], axis=1) / 3
+
+
+## fig, ax = plt.subplots(nrows=1, ncols=1)
+## n = 5 # xtick every n years
+## sign=vol_stack>0
+## vol_stack.plot(kind='bar', stacked=True, color=['lightcoral', 'skyblue', 'indianred', 'steelblue', 'firebrick', 'royalblue'], width = width, zorder=10, ax=ax, legend=False)
+## ticks = ax.xaxis.get_ticklocs()
+## ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+## ax.xaxis.set_ticks(ticks[::n])
+## ax.xaxis.set_ticklabels(ticklabels[::n])
+## ax.set_ylabel(r'Normalized anomaly')
+## ax.set_title('CIL volume')
+## plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+## plt.grid()
+## plt.ylim([-3.5,3.5])
+## # Custom legend
+## import matplotlib.lines as mlines
+## legend_elements = [mlines.Line2D([],[], marker='s',linestyle='None', color='lightcoral', markersize=12, label='\nSI'),
+##                     mlines.Line2D([],[], marker='s',linestyle='None', color='skyblue', markersize=12, label=' '),
+##                     mlines.Line2D([],[], marker='s',linestyle='None', color='indianred', markersize=12, label='\nBB'),
+##                     mlines.Line2D([],[], marker='s',linestyle='None', color='steelblue', markersize=12, label=' '),
+##                     mlines.Line2D([],[], marker='s',linestyle='None', color='firebrick', markersize=12, label='\nFC'),
+##                     mlines.Line2D([],[], marker='s',linestyle='None', color='royalblue', markersize=12, label=' ')]
+## ax.legend(handles=legend_elements)
+      
+## fig.set_size_inches(w=15,h=7)
+## fig_name = 'CIL_volume_stacked.png'
+## fig.savefig(fig_name, dpi=300)
+## os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
