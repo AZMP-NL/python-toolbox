@@ -128,8 +128,8 @@ def get_nafo_divisions():
     div3Pn = {'lat' : xlat, 'lon' : xlon}
     
     #3Ps
-    xlon = [-57.523, -58.82, -54.5, -54.5, -54.2]
-    xlat = [47.631, 46.843, 43.064, 46, 46.815]
+    xlon = [-57.523, -58.82, -54.5, -54.5, -54.0]
+    xlat = [47.631, 46.843, 43.064, 46, 47.7]
     div3Ps = {'lat' : xlat, 'lon' : xlon}
 
     #4R
@@ -1786,7 +1786,7 @@ def Tbot_to_GIS_ascii(h5file, ascfile):
     np.savetxt(ascfile, Tbot_flip, delimiter=" ", header=header, fmt='%5.2f', comments='')
 
     
-def polygon_temperature_stats(dict, shape):
+def polygon_temperature_stats(dict, shape, nsrf=False):
     """ to compute some stats about temperature in nafo sub-division
     (e.g., to build ResDoc Scorecards)
     
@@ -1828,7 +1828,10 @@ def polygon_temperature_stats(dict, shape):
             else:                
                 pass
 
-    # remove nans            
+    # total area of the polygon (save in pkl)
+    total_polygon_area = data_vec.size*pixel_area
+    
+    # remove nans
     bathy_vec = bathy_vec[~np.isnan(data_vec)]
     data_vec = data_vec[~np.isnan(data_vec)]
     
@@ -1852,7 +1855,17 @@ def polygon_temperature_stats(dict, shape):
     area_colder_2deg = data_vec[data_vec<=2].size*pixel_area
     # % area with temperature < 2 (crab habitat)
     area_colder_2deg_perc = area_colder_2deg/(data_vec.size*pixel_area)*100.0
-          
+
+    # Pandalus Borealis habitat
+    Pbor = data_vec[(bathy_vec>=-460) & (bathy_vec<=-180) &  (data_vec>=-.2) &  (data_vec<=4.7)].size*pixel_area
+    Pbor_perc = Pbor/(data_vec.size*pixel_area)*100.0
+    # Pandalus Montagui habitat
+    Pmon = data_vec[(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec>=-1) &  (data_vec<=3.7)].size*pixel_area    
+    Pmon_perc = Pmon/(data_vec.size*pixel_area)*100.0
+
+    # Measure of the successfulness of the sampling
+    sampled_area= data_vec.size*pixel_area
+    
     # Fill dict for output
     dict = {}
     dict['Tmean'] = Tmean
@@ -1865,7 +1878,45 @@ def polygon_temperature_stats(dict, shape):
     dict['area_shrimp'] = area_shrimp
     dict['area_colder2'] = area_colder_2deg 
     dict['area_colder2_perc'] = area_colder_2deg_perc 
+    dict['area_Pborealis'] = Pbor
+    dict['area_Pborealis_perc'] = Pbor_perc
+    dict['area_Pmontagui'] = Pmon
+    dict['area_Pmontagui_perc'] = Pmon_perc
+    dict['sampled_area'] = sampled_area
+    dict['total_area'] = total_polygon_area
 
+    
+    if nsrf:
+        # Area of NSRF seafloor with conditions within a certain depth and temperature range (project with Wojciech)
+        Pbor_eaz = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.4) &  (data_vec<=4.7)].size*pixel_area
+        Pbor_waz = data_vec[(bathy_vec>=-520) & (bathy_vec<=-210) &  (data_vec>=-.7) &  (data_vec<=4.0)].size*pixel_area
+        Pbor_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.7) &  (data_vec<=4.7)].size*pixel_area
+        Pmon_eaz = data_vec[(bathy_vec>=-600) & (bathy_vec<=-120) &  (data_vec>=-.5) &  (data_vec<=3.7)].size*pixel_area
+        Pmon_waz = data_vec[(bathy_vec>=-530) & (bathy_vec<=-110) &  (data_vec>=-1.2) &  (data_vec<=2.8)].size*pixel_area
+        Pmon_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-140) &  (data_vec>=-0.9) &  (data_vec<=4.0)].size*pixel_area
+        # % of good pixels
+        Pbor_eaz_perc = Pbor_eaz/(data_vec.size*pixel_area)*100.0
+        Pbor_waz_perc = Pbor_waz/(data_vec.size*pixel_area)*100.0
+        Pbor_sfa4_perc = Pbor_sfa4/(data_vec.size*pixel_area)*100.0
+        Pmon_eaz_perc = Pmon_eaz/(data_vec.size*pixel_area)*100.0
+        Pmon_waz_perc = Pmon_waz/(data_vec.size*pixel_area)*100.0
+        Pmon_sfa4_perc = Pmon_sfa4/(data_vec.size*pixel_area)*100.0
+        
+        # Fill dict for output
+        dict['Pbor_eaz_habitat'] = Pbor_eaz
+        dict['Pbor_waz_habitat'] = Pbor_waz
+        dict['Pbor_sfa4_habitat'] = Pbor_sfa4
+        dict['Pmon_eaz_habitat'] = Pmon_eaz
+        dict['Pmon_waz_habitat'] = Pmon_waz
+        dict['Pmon_sfa4_habitat'] = Pmon_sfa4
+        dict['Pbor_eaz_perc'] = Pbor_eaz_perc
+        dict['Pbor_waz_perc'] = Pbor_waz_perc
+        dict['Pbor_sfa4_perc'] = Pbor_sfa4_perc
+        dict['Pmon_eaz_perc'] = Pmon_eaz_perc
+        dict['Pmon_waz_perc'] = Pmon_waz_perc
+        dict['Pmon_sfa4_perc'] = Pmon_sfa4_perc
+
+        
     return dict
 
 def polygon_salinity_stats(dict, shape):
