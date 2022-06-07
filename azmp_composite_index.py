@@ -19,11 +19,11 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 import cmocean as cmo
 
-clim_year = [1981, 2010]
-years = [1980, 2020]
+clim_year = [1991, 2020]
+years = [1980, 2021]
 width = 0.5
 year0 = 1985
-yearf = 2020
+yearf = 2021
 n=5
 
 #### ---- LOAD THE DATA ---- ####
@@ -58,48 +58,73 @@ df_sst = df_sst[df_sst.index<=yearf]
 
 # 5. Bottom temperature
 # 3LNO - Spring
-df_3LNO_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3LNO_spring.pkl')
-df_3LNO_spring.index = pd.to_datetime(df_3LNO_spring.index) # update index to datetime
-df_3LNO_spring.index = df_3LNO_spring.index.year
-df_3LNO_spring = df_3LNO_spring.Tmean
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3LNO_spring.pkl')
+df.index = df.index.astype('int')
+bad_years = np.array([2020, 2021])
+for i in bad_years:
+    df[df.index==i]=np.nan
+df_3LNO_spring = df.Tmean
+del df
+
 # 3Ps - Spring
-df_3Ps_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3Ps_spring.pkl')
-df_3Ps_spring.index = pd.to_datetime(df_3Ps_spring.index) # update index to datetime
-df_3Ps_spring.index = df_3Ps_spring.index.year
-df_3Ps_spring = df_3Ps_spring.Tmean
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3Ps_spring.pkl')
+df.index = df.index.astype('int')
+bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
+for i in bad_years:
+    df[df.index==i]=np.nan
+df_3Ps_spring = df.Tmean
+del df
+
 # 2H - Fall
-df_2H_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_2H_fall.pkl')
-df_2H_fall.index = pd.to_datetime(df_2H_fall.index) # update index to datetime
-df_2H_fall.index = df_2H_fall.index.year
-df_2H_fall = df_2H_fall.Tmean
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_2H_fall.pkl')
+df.index = df.index.astype('int')
+bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
+for i in bad_years:
+    df[df.index==i]=np.nan
+df_2H_fall = df.Tmean
+del df
+
 # 2J - Fall
-df_2J_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_2J_fall.pkl')
-df_2J_fall.index = pd.to_datetime(df_2J_fall.index) # update index to datetime
-df_2J_fall.index = df_2J_fall.index.year
-df_2J_fall = df_2J_fall.Tmean
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_2J_fall.pkl')
+df.index = df.index.astype('int')
+df_2J_fall = df.Tmean
+del df
+
 # 3K - Fall
-df_3K_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3K_fall.pkl')
-df_3K_fall.index = pd.to_datetime(df_3K_fall.index) # update index to datetime
-df_3K_fall.index = df_3K_fall.index.year
-df_3K_fall = df_3K_fall.Tmean
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3K_fall.pkl')
+df.index = df.index.astype('int')
+df_3K_fall = df.Tmean
+del df
+
 # 3LNO - Fall
-df_3LNO_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3LNO_fall.pkl')
-df_3LNO_fall.index = pd.to_datetime(df_3LNO_fall.index) # update index to datetime
-df_3LNO_fall.index = df_3LNO_fall.index.year
-df_3LNO_fall = df_3LNO_fall.Tmean
-# 3M - Summer
-df_3M_summer = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3M_summer.pkl')
-df_3M_summer.index = pd.to_datetime(df_3M_summer.index) # update index to datetime
-df_3M_summer.index = df_3M_summer.index.year
-df_3M_summer = df_3M_summer.Tmean
-# 4VWX - Summer ** shitty to generate,
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3LNO_fall.pkl')
+df.index = df.index.astype('int')
+bad_years = np.array([2021])
+for i in bad_years:
+    df[df.index==i]=np.nan
+df_3LNO_fall = df.Tmean
+del df
+
+# 3M - Summer [potentially, maybe re-do making sure that the Spanish data are considered]
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_3M_summer.pkl')
+df.index = df.index.astype('int')
+bad_years = np.array([1983, 1984, 1994, 2007])
+for i in bad_years:
+    df[df.index==i]=np.nan
+df_3M_summer = df.Tmean
+del df
+
+# 4VWX - Summer ** shitty to generate [ignored starting in 2021]
 # I need to use azrt.bottom_stats(years=np.arange(1980, 2020), season='summer', climato_file='Tbot_climato_SA4_summer_0.10.h5')
 df_4VWX_summer = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/stats_4VWX_summer.pkl')
 df_4VWX_summer.index = pd.to_datetime(df_4VWX_summer.index) # update index to datetime
 df_4VWX_summer.index = df_4VWX_summer.index.year
 df_4VWX_summer = df_4VWX_summer.Tmean
+# calculate anomaly
+## df_4VWX_summer_clim = df_4VWX_summer[(df_4VWX_summer.index>=clim_year[0]) & (df_4VWX_summer.index<=clim_year[1])]
+## df_4VWX_summer_anom = (df_4VWX_summer-df_4VWX_summer_clim.mean(axis=0))/df_4VWX_summer.std(axis=0)
 
-# 4VWX from Hebert (not used for now)
+# 4VWX from Hebert
 ## df_4v = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4v_julyGroundfishBottomT.csv', index_col='year')
 ## df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4vn_julyGroundfishBottomT.csv', index_col='year')
 ## df_4vs = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/4vs_julyGroundfishBottomT.csv', index_col='year')
@@ -110,8 +135,13 @@ df_4vn = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBott
 df_4vs = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4Vs.dat', delimiter=r",", index_col='year', header=10)
 df_4w = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4W.dat', delimiter=r",", index_col='year', header=10)
 df_4x = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/summerGroundfishBottomTemperature_4X.dat', delimiter=r",", index_col='year', header=10)
-
-df_4vwx = pd.concat([df_4v['anomaly'],df_4w['anomaly'],df_4x['anomaly']], axis=1).mean(axis=1)
+# Merge weird formatting.
+df_4vwx = pd.concat([df_4v['temperature'],df_4w['temperature'],df_4x['temperature']], axis=1)
+df_4vwx = df_4vwx.replace(r'\s+', '', regex=True)
+df_4vwx = df_4vwx.replace('NA', np.nan)
+df_4vwx = df_4vwx.astype('float')
+df_4vwx = df_4vwx.mean(axis=1)
+# comparision
 df_4VWX_summer.plot()
 df_4vwx.plot()
 plt.legend(['from NAFC using IGOSS', 'from BIO'])
@@ -156,20 +186,20 @@ df_p5_surf = df_p5_surf[df_p5_surf.index<=yearf]
 #df_p5_90 = df_p5_90.iloc[:,1]
 df_p5_90 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/prince5IntegratedTemperature0-90m.dat', index_col='year', header=10)
 df_p5_90 = df_p5_90.replace(-99.00, np.nan)
-df_p5_90 = df_p5_90.replace('       NA', np.nan)
-df_p5_90 = df_p5_90['anomaly'].astype('float')
+df_p5_90 = df_p5_90.replace(r'\s+', '', regex=True)
+df_p5_90 = df_p5_90.replace('NA', np.nan)
+df_p5_90 = df_p5_90['temperature'].astype('float')
 df_p5_90 = df_p5_90[df_p5_90.index<=yearf]
-# convert anomaly to degC:
-df_p5_90 = (df_p5_90*.53) + 6.86
 
-# 7. Section average Temeprature (should eventually add salinity in these dataFrame, see azmp_CIL_stats.py)
+
+# 7. Section average Temperature (should eventually add salinity in these dataFrame, see azmp_CIL_stats.py)
 df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_SI_meanT_summer.pkl')
 df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_BB_meanT_summer.pkl')
 df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_FC_meanT_summer.pkl')
 df_FC_shelf = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_FC_meanT_shelf_summer.pkl')
 df_FC_cap = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_FC_meanT_cap_summer.pkl')
 
-# 8. Greenland Fylla and Cape Desolation (from IROC)
+# 8. Greenland Fylla and Cape Desolation (from IROC) [NOT UPDATE FOR 2021] 
 df_FB4 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Fylla_0-50_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
 df_CD3_2000 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_2000_Annual.csv', header=14, index_col='Year', encoding = "ISO-8859-1")
 df_CD3_200 = pd.read_csv('/home/cyrf0006/data/IROC_timeseries/Greenland_Desolation_75-200_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
@@ -221,7 +251,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly 3LNO', weight='bold', fontsize=14)
 plt.grid()
@@ -252,7 +282,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly 3M', weight='bold', fontsize=14)
 plt.grid()
@@ -285,7 +315,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly SA01', weight='bold', fontsize=14)
 plt.grid()
@@ -309,7 +339,7 @@ os.system('convert -trim composite_SA01.png composite_SA01.png')
 # Here df_p5_0-90 is missing because anomaly was provided rather than T
 df_comp_SA234 = pd.concat([df_s27_mean, df_p5_90, df_hfx2_surf, df_hfx2_150,
                           df_2H_fall, df_2J_fall,
-                          df_3LNO_spring, df_3LNO_fall, df_3M_summer, df_4VWX_summer,
+                          df_3LNO_spring, df_3LNO_fall, df_3M_summer, df_4vwx,
                           df_SI, df_BB, df_FC_shelf,
                           df_CIL_SI.vol_itp, df_CIL_BB.vol_itp, df_CIL_FC.vol_itp,
                           df_egom, df_nec
@@ -330,7 +360,7 @@ df_comp_SA3 = pd.concat([df_s27_mean,
                          ], axis=1)
 df_comp_SA4 = pd.concat([df_p5_90, df_hfx2_surf, df_hfx2_150,
                          df_sst['4Vn'], df_sst['4Vs'], df_sst['4W'], df_sst['4XSS'],
-                          df_4VWX_summer,                          
+                          df_4vwx,                          
                           df_egom, df_nec
                           ], axis=1)
 
@@ -370,7 +400,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Standardized Anomaly', weight='bold', fontsize=14)
 plt.title('Composite anomaly SA234', weight='bold', fontsize=14)
 plt.grid()
@@ -404,6 +434,7 @@ plt.grid('on')
 ax.set_ylabel(r'Standardized anomaly')
 ax.set_title('NAFO sub-areas 2, 3 & 4')
 plt.legend(['SA-2', 'SA-3', 'SA-4'])
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.xlim()
 fig = ax.get_figure()
 #fig.set_size_inches(w=12,h=8)

@@ -132,8 +132,8 @@ T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m'
 T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
 T_anom = T_anom[T_anom.index.year>=1947]
 T_anom_std = T_anom_std[T_anom_std.index.year>=1947]
-S_anom = pd.concat([Save_anom,Ssurf_anom,Tbot_anom], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
-S_anom_std = pd.concat([Save_anom_std,Ssurf_anom_std,Tbot_anom_std], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
+S_anom = pd.concat([Save_anom,Ssurf_anom,Sbot_anom], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
+S_anom_std = pd.concat([Save_anom_std,Ssurf_anom_std,Sbot_anom_std], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
 S_anom = S_anom[S_anom.index.year>=1947]
 S_anom_std = S_anom_std[S_anom_std.index.year>=1947]
 # Save pkl for climate indices (whole timeseries)

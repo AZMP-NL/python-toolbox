@@ -23,7 +23,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1991, 2020]
-years = [1980, 2021]
+years = [1950, 2021]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -88,7 +88,9 @@ clim_winter = df_winter[(df_winter.index.year>=clim_year[0]) & (df_winter.index.
 std_winter = df_winter[(df_winter.index.year>=clim_year[0]) & (df_winter.index.year<=clim_year[1])].std()
 std_anom_winter = (df_winter - clim_winter)/std_winter
 std_anom_winter.index = std_anom_winter.index.year
-
+# Save winter anom
+std_anom_annual.to_csv('winter_air_std_anom.csv', float_format='%.2f')
+df_winter.to_csv('winter_air_temp.csv', float_format='%.2f')
 
 
 #### ------------- Build the scorecard ---------------- ####

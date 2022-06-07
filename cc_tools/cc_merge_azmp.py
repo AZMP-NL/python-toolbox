@@ -166,34 +166,36 @@ variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitud
 df_MAR = df_MAR.loc[:,variables]
 
 # Drop GSL data > 2014 (in 2014, data processed at BIO, the rest at IML).
-dropGSL = df_MAR[(df_MAR['Region'] == 'GSL') & (df_MAR['timestamp'].dt.year > 2014)].index
-df_MAR.drop(dropGSL, inplace=True)
+#dropGSL = df_MAR[(df_MAR['Region'] == 'GSL') & (df_MAR['timestamp'].dt.year > 2014)].index
 # Attribute CSL to GSL.
 #df_MAR.loc[(df_MAR['StationID'].str.contains('CSL', na=False)), 'Region'] = 'GSL'
+## # rename the IML station ID to match rest of IML dataset using 2014 Dataset
+## # It's a bit complicated because depth does not match when rounded
+## df2014f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2014f.xlsx'), encoding='utf-8')
+## GSL_orig = df_MAR[df_MAR.Region=='GSL']
+## GSL_orig.dropna(subset=['TA', 'TIC', 'pH_25'], axis=0, thresh=2, inplace=True) 
+## GSL_2014 = df2014f[['Station-ID', 'Latitude', 'Longitude']] 
+## GSL_2014 = GSL_2014.rename(columns={'Latitude' : 'latitude'})
+## GSL_2014 = GSL_2014.rename(columns={'Longitude' : 'longitude'})
+## GSL_2014 = GSL_2014.rename(columns={'Station-ID' : 'StationID_new'})
+## GSL_orig.latitude = GSL_orig.latitude.round(4)
+## GSL_orig.longitude = GSL_orig.longitude.round(4)
+## GSL_2014.latitude = GSL_2014.latitude.round(4)
+## GSL_2014.longitude = GSL_2014.longitude.round(4)
+## # Station correspondance
+## stn_corresp = GSL_orig.merge(GSL_2014, on=['latitude', 'longitude'], how='left')
+## stn_corresp = stn_corresp.loc[:,['StationID', 'StationID_new']].drop_duplicates() 
+## # Updated DataFrame
+## GSL_update = GSL_orig.merge(stn_corresp, on='StationID', how='left')
+## GSL_update.drop(columns=['StationID'], inplace=True)   
+## GSL_update = GSL_update.rename(columns={'StationID_new' : 'StationID'})
+## GSL_update.index = GSL_orig.index
+## # Replace in df_MAR
+## df_MAR.iloc[GSL_update.index] = GSL_update
 
-# rename the IML station ID to match rest of IML dataset using 2014 Dataset
-# It's a bit complicated because depth does not match when rounded
-df2014f = pd.read_excel(os.path.join(dataset_path2,'AZMP_OA_IML2014f.xlsx'), encoding='utf-8')
-GSL_orig = df_MAR[df_MAR.Region=='GSL']
-GSL_orig.dropna(subset=['TA', 'TIC', 'pH_25'], axis=0, thresh=2, inplace=True) 
-GSL_2014 = df2014f[['Station-ID', 'Latitude', 'Longitude']] 
-GSL_2014 = GSL_2014.rename(columns={'Latitude' : 'latitude'})
-GSL_2014 = GSL_2014.rename(columns={'Longitude' : 'longitude'})
-GSL_2014 = GSL_2014.rename(columns={'Station-ID' : 'StationID_new'})
-GSL_orig.latitude = GSL_orig.latitude.round(4)
-GSL_orig.longitude = GSL_orig.longitude.round(4)
-GSL_2014.latitude = GSL_2014.latitude.round(4)
-GSL_2014.longitude = GSL_2014.longitude.round(4)
-# Station correspondance
-stn_corresp = GSL_orig.merge(GSL_2014, on=['latitude', 'longitude'], how='left')
-stn_corresp = stn_corresp.loc[:,['StationID', 'StationID_new']].drop_duplicates() 
-# Updated DataFrame
-GSL_update = GSL_orig.merge(stn_corresp, on='StationID', how='left')
-GSL_update.drop(columns=['StationID'], inplace=True)   
-GSL_update = GSL_update.rename(columns={'StationID_new' : 'StationID'})
-GSL_update.index = GSL_orig.index
-# Replace in df_MAR
-df_MAR.iloc[GSL_update.index] = GSL_update
+# Now Drop all GSL data (since we now have 2014 data from Michel)
+dropGSL = df_MAR[(df_MAR['Region'] == 'GSL')].index
+df_MAR.drop(dropGSL, inplace=True)
 
 # Remove the Labrador Sea AR7W Line
 df_MAR=df_MAR[~df_MAR.StationID.str.contains('L3')]
@@ -373,9 +375,9 @@ df_NL = df_NL.loc[:,variables]
 
 # 3.1.2 --- In October 2021, MS provided fresh datasets for all missions (SAME FORMAT!!!)
 # AZMP June Mission
-df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2020_vOct2021(Cyr).xlsx'), encoding='utf-8')
+df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2021_vFev2022(Cyr).xlsx'), encoding='utf-8')
 # Ice forecast Mission
-df_ice = pd.read_excel(os.path.join(dataset_path,'Iceforcast 2014-2020_vOct2021 (Cyr).xlsx'), encoding='utf-8')
+df_ice = pd.read_excel(os.path.join(dataset_path,'Iceforcast 2014-2021_vfev2022 (Cyr).xlsx'), encoding='utf-8')
 # Groundfish Missions (need to read all tabs)
 xls = pd.ExcelFile(os.path.join(dataset_path,'AZMP_OA_IML_Groundfish surveys_2017-2019(MS-3).xlsx'))
 df_gf_2019_2020 = pd.read_excel(xls, 'Groundfish surveys 2019', encoding='utf-8')
@@ -727,6 +729,9 @@ df['TripID'] = df['TripID'].replace('JC001', 'COO001')
 df['TripID'] = df['TripID'].replace('IML2016-015', 'IML2016015')
 
 # Update some StationIDd
+# Remove space
+df['StationID'] = df['StationID'].str.strip()
+# Some renaming
 df['StationID'] = df['StationID'].replace('TESL3    RIKI', 'TESL3')
 df['StationID'] = df['StationID'].replace('TESL3(IML4)RIKI', 'TESL3')
 df['StationID'] = df['StationID'].replace('CM03 (CH12)', 'CMO3/CH12')
@@ -734,7 +739,9 @@ df['StationID'] = df['StationID'].replace('CMO3', 'CMO3/CH12')
 df['StationID'] = df['StationID'].replace('CMO2', 'CMO2/CH9')
 df['StationID'] = df['StationID'].replace('CMO1/CH1', 'CMO1/CH1')
 df['StationID'] = df['StationID'].replace('CMO1', 'CMO1/CH1')
-df['StationID'] = df['StationID'].replace('TIDM7 (6.2)', 'TIDM7')
+df['StationID'] = df['StationID'].replace('TIDM7 (6.4)', 'TIDM6.4')
+df['StationID'] = df['StationID'].replace('TIDM5 (4.5)', 'TIDM4.5')
+df['StationID'] = df['StationID'].replace('TIDM2 (2.2)', 'TIDM2.2')
 df['StationID'] = df['StationID'].replace('TIDM9 Shediac Valley', 'TIDM9')
 df['StationID'] = df['StationID'].replace('TIDM9 (Shédiac)', 'TIDM9')
 df['StationID'] = df['StationID'].replace('Tesl-2', 'TESL2')
@@ -743,6 +750,7 @@ df['StationID'] = df['StationID'].replace('Tesl-6', 'TESL6')
 df['StationID'] = df['StationID'].replace('nan', 'unknown')
 df['StationID'] = df['StationID'].replace('TESL3', 'Rimouski') # latest consensus
 df['StationID'] = df['StationID'].replace('PB-01', 'PB-04')
+
 
 # Capitalize trip name
 df['TripID'] = df['TripID'].str.upper()
@@ -785,15 +793,13 @@ df = df.rename(columns={'pCO2' : 'pCO2_(uatm)'})
 df.set_index('Timestamp', inplace=True)
 df.sort_index(inplace=True)        
 
-## # Save final dataset
-## df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data_with2020.csv'), float_format='%.4f', index=True)
-
-
-## # Some info and ignore 2020
-## print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
-## df = df[df.index.year<2020]  
-## df_missing = df_missing[pd.to_datetime(df_missing.timestamp).dt.year<2020]
-## print('When 2020 ignored: ' + str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
+# Save final dataset
+df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data_with2021.csv'), float_format='%.4f', index=True)
+# Some info and ignore 2021
+print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
+df = df[df.index.year<2021]  
+df_missing = df_missing[pd.to_datetime(df_missing.timestamp).dt.year<2021]
+print('When 2021 ignored: ' + str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
 
 # Some info
 print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )

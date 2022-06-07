@@ -134,7 +134,7 @@ os.system('cp section_CIL_anomaly.png section_CIL_anomaly_FR.png ../2021')
 #azrt.bottom_stats(years=np.arange(1980, 2020), season='summer') # for crab 4R
 azrt.bottom_temperature(season='summer', year='2020') # for crab 4R
 # SFAs
-azrt.sfa_bottom_stats(years=np.arange(2006, 2021), season='summer', plot=True, climato_file='Tbot_climato_NSRFx_summer_2006-2018.h5')
+azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', plot=True, climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5')
 azrt.sfa_bottom_scorecards(years=np.arange(2006, 2021), clim_year=[2006, 2020])
 
 # In ~/research/lobster:

@@ -33,13 +33,19 @@ latLims = [38, 65]
 proj = 'merc'
 decim_scale = 4
 stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
-fig_name = 'map_csas_nlci.png'
 AZMP_airTemp_file = '/home/cyrf0006/github/AZMP-NL/utils/airTemp_sites.xlsx'
 lightdeep = cmocean.tools.lighten(cmocean.cm.deep, .9)
 v = np.linspace(0, 3500, 36)
 #v = np.linspace(-4000, 0, 9)
 v = np.linspace(0, 5400, 55) # Olivia's
-
+LANGUAGE = 'french'
+if LANGUAGE == 'english':
+    print('In English!')
+    fig_name = 'map_csas_nlci.png'
+elif LANGUAGE == 'french':
+    print('In French!')
+    fig_name = 'map_csas_nlci_FR.png'
+    
 ## ---- Bathymetry ---- ##
 print('Load and grid bathymetry')
 # h5 file
@@ -195,10 +201,25 @@ for div in div_toplot:
 
 # Add Ice regions
 reg_toplot = ['NLab', 'SLab', 'Nfld']
+
 for reg in reg_toplot:
     reg_lon, reg_lat = m(ice_region[reg]['lon'], ice_region[reg]['lat'])
-    m.plot(reg_lon, reg_lat, 'magenta', linestyle='--', linewidth=2, zorder=20)
+    m.plot(reg_lon, reg_lat, 'darkmagenta', linestyle='--', linewidth=2, zorder=20)
 
+    if LANGUAGE == 'english':
+        if reg == 'NLab':
+            ax.text(np.max(reg_lon), np.max(reg_lat), 'North. Labrador', horizontalalignment='right', verticalalignment='bottom', fontsize=13, color='darkmagenta', fontweight='bold', zorder=100)
+        elif reg == 'SLab':
+            ax.text(np.max(reg_lon), np.max(reg_lat), 'South. Labrador', horizontalalignment='right', verticalalignment='bottom', fontsize=13, color='darkmagenta', fontweight='bold', zorder=100)
+        elif reg == 'Nfld':
+            ax.text(np.max(reg_lon), np.max(reg_lat), 'Newfoundland', horizontalalignment='right', verticalalignment='bottom', fontsize=13, color='darkmagenta', fontweight='bold', zorder=100)
+    elif LANGUAGE == 'french':
+        if reg == 'NLab':
+            ax.text(np.max(reg_lon), np.max(reg_lat), 'Labrador Nord', horizontalalignment='right', verticalalignment='bottom', fontsize=13, color='darkmagenta', fontweight='bold', zorder=100)
+        elif reg == 'SLab':
+            ax.text(np.max(reg_lon), np.max(reg_lat), 'Labrador Sud', horizontalalignment='right', verticalalignment='bottom', fontsize=13, color='darkmagenta', fontweight='bold', zorder=100)
+        elif reg == 'Nfld':
+            ax.text(np.max(reg_lon), np.max(reg_lat), 'Terre-Neuve', horizontalalignment='right', verticalalignment='bottom', fontsize=13, color='darkmagenta', fontweight='bold', zorder=100)      
 # Add Icebergs regions
 berg_lon, berg_lat = m([-60, -36, -36, -60, -60], [48, 48, 27, 27, 48])
 m.plot(berg_lon, berg_lat, 'cyan', linestyle='--', linewidth=2, zorder=20)

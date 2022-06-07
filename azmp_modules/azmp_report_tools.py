@@ -40,6 +40,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 # For shapefiles
 import shapefile 
+import cmocean as cmo
 
 
 def is_number(s):
@@ -1066,7 +1067,7 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     df_mindex.to_pickle(season + '_bottom_temperature.pkl')
 
     #### bottom_stats
-def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', sfas=[2,3,4], climato_file=''):
+def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', sfas=[2,3,4], climato_file='', clim_fill=False):
 
     '''
         Function sfa_bottom_stats() is based bottom_stats(), but sfa instead of NAFO divs.
@@ -1080,7 +1081,11 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
         azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5')
 
         *** This needs to be improve because at the moment I need to comment the generation of .pkl file to not over-write when I change my map region.        
-                
+
+        April 2022: modified to use climatology to fill missing pixels during a specific year
+        azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5', clim_fill = True)
+
+        
         Frederic.Cyr@dfo-mpo.gc.ca - January 2021
     '''
 
@@ -1168,10 +1173,24 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
         Tbot = Tdict['Tbot']
         lons = Tdict['lons']
         lats = Tdict['lats']
-        anom = Tbot-Tbot_climato
 
+        # Use climatology to fill missing pixels
+        if clim_fill:
+            print('Fill NaNs with climatology')
+            Tbot_orig = Tbot.copy()
+            #Tbot_fill = Tbot_climato[Tbot_orig.isna()]
+            #Tbot[Tbot_orig.isna()] = Tbot_climato[Tbot_orig.isna()]
+            Tbot_fill = Tbot_climato[np.isnan(Tbot_orig)]
+            Tbot[np.isnan(Tbot_orig)] = Tbot_climato[np.isnan(Tbot_orig)]            
+        # Calculation of anomaly
+        anom = Tbot-Tbot_climato
+        
         # NAFO division stats
-        if season == 'summer':    
+        if season == 'summer':
+            # To use different definition for each SFAs
+            ## dict_stats_sfa2[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa2, nsrf=True)
+            ## dict_stats_sfa3[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa3, nsrf=True)
+            ## dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4, nsrf=True)
             dict_stats_sfa2[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa2)
             dict_stats_sfa3[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa3)
             dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4)
@@ -1223,10 +1242,11 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
             cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
             cb = plt.colorbar(c, cax=cax)
             cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+            # plot SFA divisons
             for div in div_toplot:
                 div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
                 m.plot(div_lon, div_lat, 'k', linewidth=2)
-                ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
+                ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
             # Save Figure
             fig.set_size_inches(w=7, h=8)
             fig.set_dpi(200)
@@ -1238,7 +1258,13 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
             m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
             levels = np.linspace(-2, 6, 9)
             xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-            c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
+            if clim_fill:
+                #c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both', alpha=.3)
+                #cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=plt.cm.RdBu_r, extend='both', alpha=1)
+                c = m.contourf(xi, yi, Tbot, levels, cmap=cmo.cm.thermal, extend='both', alpha=.3)
+                cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=cmo.cm.thermal, extend='both', alpha=1)
+            else:
+                cfill = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
             cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
             plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
             if season=='fall':
@@ -1253,22 +1279,26 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
             x, y = m(lons, lats)
             m.scatter(x,y, s=50, marker='.',color='k')
             cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
-            cb = plt.colorbar(c, cax=cax)
+            cb = plt.colorbar(cfill, cax=cax)
             cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
+            # plot SFA divisons
             for div in div_toplot:
-                div_lon, div_lat = m(shrimp_area[div][:,1], shrimp_area[div][:,0])
+                div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
                 m.plot(div_lon, div_lat, 'k', linewidth=2)
-                ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
+                ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
             # Save Figure
             fig.set_size_inches(w=7, h=8)
             fig.set_dpi(200)
-            outfile = 'bottom_temp_' + season + '_' + np.str(year) + '.png'
+            if clim_fill:
+                outfile = 'bottom_temp_filled_' + season + '_' + np.str(year) + '.png'
+            else:
+                outfile = 'bottom_temp_' + season + '_' + np.str(year) + '.png'
             fig.savefig(outfile)
             plt.close('all')
-
+            
             # clear memory
             del Tdict, Tbot, anom
-
+            
     ## df_sfa0 = pd.DataFrame.from_dict(dict_stats_sfa0, orient='index')
     ## df_sfa1 = pd.DataFrame.from_dict(dict_stats_sfa1, orient='index')
     df_sfa2 = pd.DataFrame.from_dict(dict_stats_sfa2, orient='index')

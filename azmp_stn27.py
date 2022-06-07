@@ -198,6 +198,7 @@ os.system('convert -trim ' + outfile_clim + ' ' + outfile_clim)
 
 # Save French Figure
 ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+ax.set_title('Climatologie')
 fig.set_size_inches(w=12, h=6)
 outfile_climFR = 's27_' + variable + '_clim_FR.png'
 fig.savefig(outfile_climFR, dpi=200)
@@ -249,6 +250,7 @@ os.system('convert -trim ' + outfile_year + ' ' + outfile_year)
 
 # Save French Figure
 ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
+ax.set_title('Observations en ' + str(current_year))
 fig.set_size_inches(w=12, h=6)
 outfile_yearFR = 's27_' + variable + '_' + str(current_year) + '_FR.png'
 fig.savefig(outfile_yearFR, dpi=200)
@@ -282,6 +284,7 @@ os.system('convert -trim ' + outfile_anom + ' ' + outfile_anom)
 
 # Save French Figure
 ax.xaxis.set_minor_formatter(DateFormatter('%m'))
+ax.set_title('Anomalie en ' + str(current_year))
 ax.set_ylabel('Profondeur (m)', fontsize=15, fontweight='bold')
 fig.set_size_inches(w=12, h=6)
 outfile_anomFR = 's27_' + variable + '_anom_' + str(current_year) + '_FR.png'

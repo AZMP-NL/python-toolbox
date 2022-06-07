@@ -201,7 +201,7 @@ def get_nafo_divisions():
     dict['3Pn'] = div3Pn
     dict['3O'] = div3O
     dict['4R'] = div4R
-    dict['4S'] = div4R
+    dict['4S'] = div4S
     dict['4T'] = div4T
     dict['4Vn'] = div4Vn
     dict['4Vs'] = div4Vs
