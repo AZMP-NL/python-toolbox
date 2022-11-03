@@ -147,6 +147,23 @@ fig_name = 's27_vert_temp_anomalyFR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+# Plot mean T
+fig = plt.figure(1)
+fig.clf()
+annual_mean.plot()
+plt.plot([-20, 51],[ts_monthly_clim.mean(), ts_monthly_clim.mean()], '--k', linewidth=3)
+plt.fill_between([-20, 51], [ts_monthly_clim.mean()+annual_mean.std(), ts_monthly_clim.mean()+annual_mean.std()], [ts_monthly_clim.mean()-annual_mean.std(), ts_monthly_clim.mean()-annual_mean.std()], facecolor='gray', alpha=.2)
+plt.ylabel(r'Mean Temperature ($^\circ$C)')
+plt.title('Station 27 - Average temperature (0-176m)')
+#plt.xlim(XLIM)
+plt.ylim([-.5, 1.75])
+plt.grid()
+# Save Figure
+fig.set_size_inches(w=7,h=4)
+fig_name = 's27_vert_temp_annual_mean.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
 # UNCORRECTED for missing months (Corrected since March 2020 for 2019 data)
 old_my_ts = my_ts.resample('As').mean()
 clim_vertical = df_temp_clim_period.mean(axis=1)

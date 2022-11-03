@@ -308,7 +308,8 @@ year_index = pd.Series(years)
 year_index.name='year'
 df_mindex = pd.concat(df_list,keys=year_index)
 df_mindex.to_pickle(season + '_bottom_temperature.pkl')
-
+ds = df.stack().to_xarray()
+ds.to_netcdf(season + '_bottom_temperature.nc')
 
 ## import feather
 ## path = '3LNOPs_spring_bottom_temperature.feather'

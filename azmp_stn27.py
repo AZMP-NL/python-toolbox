@@ -48,7 +48,7 @@ XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 # Derived parameter
 if variable == 'temperature':
     V = np.concatenate([np.arange(-1.75, 0.25, .25), np.arange(1, 14, 1)])  
-    #V = np.arange(-1, 14, 1)
+`    #V = np.arange(-1, 14, 1)
     #Vanom = np.linspace(-5.5, 5.5, 12)
     #Vanom = np.array([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
     Vanom = np.linspace(-5.5, 5.5, 23)

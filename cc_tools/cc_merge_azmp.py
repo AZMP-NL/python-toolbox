@@ -592,36 +592,83 @@ df.dropna(subset=['TA', 'TIC', 'pH_25'], axis=0, how='all', inplace=True)
 
 # Calculate missing TA values based on TA-S relationship
 dflinreg = df.copy(deep=True)
-dflinreg = dflinreg[dflinreg['Region'].str.contains("GSL")]
-dflinreg = dflinreg[(dflinreg.timestamp.dt.month>=3) & (dflinreg.timestamp.dt.month<=6)]
+# Keep only <2021 for manuscript [!!]
+dflinreg = dflinreg[dflinreg.timestamp.dt.year<2021]
 dflinreg.dropna(subset=['TA', 'salinity'], inplace=True)
 var_x = 'salinity'
 var_y = 'TA'
-# plot
-linreg = sns.lmplot(var_x, var_y, dflinreg, legend=False, fit_reg=True, ci=95, scatter_kws={'s':20, 'alpha':1}, line_kws={'lw':1}, hue='Region', palette='plasma', height=4, aspect=1.1)
+
+## plot All
+#fig, ax = plt.figure(1) 
+linreg = sns.lmplot(var_x, var_y, dflinreg, legend=False, fit_reg=True, ci=95, scatter_kws={'s':2, 'alpha':.75}, line_kws={'lw':1}, hue='Region', hue_order=['MAR','GSL','NL'], palette='plasma', height=4, aspect=1.1)
 lines = sns.regplot(x=var_x, y=var_y, data=dflinreg, scatter=False, ci=95, color='k', line_kws={'lw': 1})
 linreg.set_xlabels(r'Salinity')
 linreg.set_ylabels(r'TA $(\rm \mu $mol/kg)')
 axes = linreg.axes
-axes[0,0].set_xlim(17, 38)
-axes[0,0].set_ylim(1700, 2500)
-sns.set_style('whitegrid')
+#axes[0,0].set_xlim(17, 38)
+#axes[0,0].set_ylim(1700, 2500)
+#sns.set_style('whitegrid')
 sns.despine(top=False, right=False, left=False, bottom=False)   
 plt.plot([-2,22], [400,400,], 'black', linewidth=2, linestyle='dashed')
+axes[0,0].set_xlim(17, 38)
+axes[0,0].set_ylim(1700, 2500)
+plt.legend()
+plt.grid()
+plt.text(36, 1725, 'a', fontweight='bold')
 # Regression coeff
 x=dflinreg[var_x].values
 y=dflinreg[var_y].values
 slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
 T = stats.t.ppf(1-0.025, len(dflinreg.salinity)-2)
 ci = std_err*T
-print("linear regression line y=",slope, "x +",intercept)
+print("linear regression line all data y=",slope, "x +",intercept)
 print("r squared: ", r_value**2)
 print("p_value: ", p_value)
 print("standard error: ", std_err)
 print("95% confidence interval: ", ci)
 print('')
+#fig.set_size_inches(w=6,h=5)
+fig_name = 'TA-S_scatter_ms_all.png' 
+plt.savefig(fig_name, dpi=200) 
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
-# Replace missing TA for this specify GSL mission
+## plot GSL only
+fig = plt.figure(2) 
+# Keep GSL-Spring only
+dflinreg = dflinreg[dflinreg['Region'].str.contains("GSL")]
+dflinreg = dflinreg[(dflinreg.timestamp.dt.month>=3) & (dflinreg.timestamp.dt.month<=6)]
+linreg = sns.lmplot(var_x, var_y, dflinreg, legend=False, fit_reg=True, ci=95, scatter_kws={'s':2, 'alpha':1}, line_kws={'lw':1}, hue='Region', palette='plasma_r', height=4, aspect=1.1)
+lines = sns.regplot(x=var_x, y=var_y, data=dflinreg, scatter=False, ci=95, color='k', line_kws={'lw': 1})
+linreg.set_xlabels(r'Salinity')
+linreg.set_ylabels(r'TA $(\rm \mu $mol/kg)')
+axes = linreg.axes
+#axes[0,0].set_xlim(17, 38)
+#axes[0,0].set_ylim(1700, 2500)
+#sns.set_style('whitegrid')
+sns.despine(top=False, right=False, left=False, bottom=False)   
+plt.plot([-2,22], [400,400,], 'black', linewidth=2, linestyle='dashed')
+axes[0,0].set_xlim(17, 38)
+axes[0,0].set_ylim(1700, 2500)
+plt.legend()
+plt.grid()
+plt.text(36, 1725, 'b', fontweight='bold')
+# Regression coeff
+x=dflinreg[var_x].values
+y=dflinreg[var_y].values
+slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
+T = stats.t.ppf(1-0.025, len(dflinreg.salinity)-2)
+ci = std_err*T
+print("linear regression line GSL y=",slope, "x +",intercept)
+print("r squared: ", r_value**2)
+print("p_value: ", p_value)
+print("standard error: ", std_err)
+print("95% confidence interval: ", ci)
+print('')
+fig_name = 'TA-S_scatter_ms_gsl.png' 
+plt.savefig(fig_name, dpi=200)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+## Replace missing TA for this specify GSL mission
 # * these will need to be removed from "measured" column at the end
 df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region'].str.contains('GSL')), 'TA'] = ((slope * df.salinity)+ intercept)
 

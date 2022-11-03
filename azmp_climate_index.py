@@ -387,7 +387,6 @@ fig_name = 'NL_climate_index_ms_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
-
 #### ----- Climate index with extended Scorecards [2] ---- ####
 # Build the colormap - Stack
 from matplotlib.colors import from_levels_and_colors
@@ -1129,3 +1128,4 @@ fig.set_size_inches(w=13,h=14)
 fig_name = 'NL_climate_index_correlation.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
+

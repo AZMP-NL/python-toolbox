@@ -945,6 +945,18 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             if Zitp[j,i] > -10: # remove shallower than 10m
                 V[j,i,:] = np.nan
 
+    # Pickle Temperature cube
+    h5_cube_name = 'Tcube_' + season +  year_file.split('/')[-1].strip('.nc')  + '.h5'
+    h5f = h5py.File(h5_cube_name, 'w')
+    h5f.create_dataset('T', data=V)
+    h5f.create_dataset('lon_reg', data=lon_reg)
+    h5f.create_dataset('lat_reg', data=lat_reg)
+    h5f.create_dataset('lon_orig', data=lons)
+    h5f.create_dataset('lat_orig', data=lats)
+    h5f.create_dataset('Zitp', data=Zitp)
+    h5f.create_dataset('z', data=z)
+    h5f.close()
+    
     # getting bottom temperature
     print('Getting bottom Temp.')    
     Tbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
