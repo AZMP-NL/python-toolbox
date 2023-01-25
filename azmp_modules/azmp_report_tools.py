@@ -1067,7 +1067,7 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     df_mindex.to_pickle(season + '_bottom_temperature.pkl')
 
     #### bottom_stats
-def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', sfas=[2,3,4], climato_file='', clim_fill=False):
+def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', sfas=[2,3,4], climato_file='', clim_fill=False, plot_biomass=False):
 
     '''
         Function sfa_bottom_stats() is based bottom_stats(), but sfa instead of NAFO divs.
@@ -1083,7 +1083,10 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
         *** This needs to be improve because at the moment I need to comment the generation of .pkl file to not over-write when I change my map region.        
 
         April 2022: modified to use climatology to fill missing pixels during a specific year
-        azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5', clim_fill = True)
+        azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5', clim_fill=True)
+
+        Nov. 2022: Modified to add Pandalus biomass on plot:
+        azrt.sfa_bottom_stats(years=np.arange(2006, 2022), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5', plot=True, clim_fill=True, plot_biomass=True)
 
         
         Frederic.Cyr@dfo-mpo.gc.ca - January 2021
@@ -1113,14 +1116,20 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
     lonLims = [lon_reg[0], lon_reg[-1]]
     latLims = [lat_reg[0], lat_reg[-1]]
 
-    # HERE, need to swap NAFO by SFAs...
+    ## get Pandalus biomass data
+    df_biomass = pd.read_excel('/home/cyrf0006/research/Pandalus_project/NSRF_PBPM_biomass_standardized.xlsx')
+    df_biomass.set_index('Year', inplace=True)
+    df_biomass = df_biomass[['Latitude', 'Longitude', 'PB TB(kg/km2)', 'PM TB(kg/km2)']]
+    df_biomass = df_biomass.replace(0.0, 1) # replace zeros by ones for log transform
+
+    ## Get SFAs data
     myshp = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp', 'rb')
     mydbf = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf', 'rb')
     r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
     records = r.records()
     shapes = r.shapes()
     
-    # Fill dictionary with NAFO divisions
+    # Fill dictionary with shapes
     shrimp_area = {}
     for idx, rec in enumerate(records):
         if rec[1] == 'Eastern Assessment Zone':
@@ -1247,6 +1256,24 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
                 div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
                 m.plot(div_lon, div_lat, 'k', linewidth=2)
                 ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
+# Add Biomass
+            if plot_biomass:
+                biomass = df_biomass[df_biomass.index==int(year)]
+                xb, yb = m(biomass.Longitude.values, biomass.Latitude.values)
+                for idx, tmp in enumerate(xb):
+                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PB TB(kg/km2)'].iloc[idx])*30, c='orange', alpha=.5, zorder=200)
+                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PM TB(kg/km2)'].iloc[idx])*30, c='slategray', alpha=.5, zorder=200)
+                    m.scatter(xb[idx], yb[idx], s=biomass['PB TB(kg/km2)'].iloc[idx]/50, c='orange', alpha=.5)
+                    m.scatter(xb[idx], yb[idx], s=biomass['PM TB(kg/km2)'].iloc[idx]/50, c='darkgray', alpha=.5)
+                # add legend
+                xbl, ybl = m(-69.5, 66.8)
+                xml, yml = m(-69.5, 66.5)
+                m.scatter(xbl, ybl, s=60, c='orange', alpha=.7, zorder=200)
+                m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
+                #ax.text(xbl, ybl, r'  P. Borealis (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+                #ax.text(xml, yml, r'  P. Montagui (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+                ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+                ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
             # Save Figure
             fig.set_size_inches(w=7, h=8)
             fig.set_dpi(200)
@@ -1262,7 +1289,7 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
                 #c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both', alpha=.3)
                 #cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=plt.cm.RdBu_r, extend='both', alpha=1)
                 c = m.contourf(xi, yi, Tbot, levels, cmap=cmo.cm.thermal, extend='both', alpha=.3)
-                cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=cmo.cm.thermal, extend='both', alpha=1)
+                cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=cmo.cm.thermal, extend='both', alpha=.8)
             else:
                 cfill = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
             cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
@@ -1286,6 +1313,24 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
                 div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
                 m.plot(div_lon, div_lat, 'k', linewidth=2)
                 ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
+            # Add Biomass
+            if plot_biomass:
+                biomass = df_biomass[df_biomass.index==int(year)]
+                xb, yb = m(biomass.Longitude.values, biomass.Latitude.values)
+                for idx, tmp in enumerate(xb):
+                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PB TB(kg/km2)'].iloc[idx])*30, c='red', alpha=.5, zorder=200)
+                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PM TB(kg/km2)'].iloc[idx])*30, c='slategray', alpha=.5, zorder=200)
+                    m.scatter(xb[idx], yb[idx], s=biomass['PB TB(kg/km2)'].iloc[idx]/50, c='red', alpha=.5)
+                    m.scatter(xb[idx], yb[idx], s=biomass['PM TB(kg/km2)'].iloc[idx]/50, c='dimgray', alpha=.5)
+                # add legend
+                xbl, ybl = m(-69.5, 66.8)
+                xml, yml = m(-69.5, 66.5)
+                m.scatter(xbl, ybl, s=60, c='red', alpha=.7, zorder=200)
+                m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
+                #ax.text(xbl, ybl, r'  P. Borealis (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+                #ax.text(xml, yml, r'  P. Montagui (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+                ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+                ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
             # Save Figure
             fig.set_size_inches(w=7, h=8)
             fig.set_dpi(200)
@@ -1297,7 +1342,7 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
             plt.close('all')
             
             # clear memory
-            del Tdict, Tbot, anom
+            del Tdict, Tbot, anom, biomass
             
     ## df_sfa0 = pd.DataFrame.from_dict(dict_stats_sfa0, orient='index')
     ## df_sfa1 = pd.DataFrame.from_dict(dict_stats_sfa1, orient='index')

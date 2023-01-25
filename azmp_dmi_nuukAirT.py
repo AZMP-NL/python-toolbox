@@ -42,8 +42,9 @@ df_18 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2018.csv', delimiter=";")
 df_19 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2019.csv', delimiter=";")
 df_20 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2020.csv', delimiter=";")
 df_21 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2021.csv', delimiter=";")
+df_22 = pd.read_csv('/home/cyrf0006/data/DMI/nuuk-2022.csv', delimiter=";")
 
-df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_18.Middel, df_19.Middel, df_20.Middel, df_21.Middel], axis=1, keys=np.arange(2014, 2022))
+df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_18.Middel, df_19.Middel, df_20.Middel, df_21.Middel, df_22.Middel], axis=1, keys=np.arange(2014, 2023))
 
 df_recent = df_all.T
 df_recent.columns = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']

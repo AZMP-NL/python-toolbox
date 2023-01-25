@@ -56,11 +56,9 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2017'
+year = '2022'
 climato_file = 'Tbot_climato_NSRFx_summer_2006-2021.h5'
 year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
-year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
-
 
 ## ---- Load Climato data ---- ##    
 print('Load ' + climato_file)
@@ -78,6 +76,13 @@ lonLims = [lon_reg[0], lon_reg[-1]]
 latLims = [lat_reg[0], lat_reg[-1]]
 lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
 dc = np.diff(lon_reg[0:2])
+
+## ---- Pandalus biomass data ---- ##
+biomass = pd.read_excel('/home/cyrf0006/research/Pandalus_project/NSRF_PBPM_biomass_standardized.xlsx')
+biomass.set_index('Year', inplace=True)
+biomass = biomass[['Latitude', 'Longitude', 'PB TB(kg/km2)', 'PM TB(kg/km2)']]
+biomass = biomass[biomass.index==int(year)]
+biomass = biomass.replace(0.0, 1) # replace zeros by ones for log transform
 
 ## ---- SFAs ---- ##
 myshp = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp', 'rb')
@@ -150,7 +155,6 @@ lons = np.delete(lons,idx_empty_rows)
 lats = np.delete(lats,idx_empty_rows)
 #df_temp.to_pickle('T_2000-2017.pkl')
 print(' -> Done!')
-
 
 ## --- fill 3D cube --- ##  
 print('Fill regular cube')
@@ -340,6 +344,20 @@ for div in div_toplot:
     div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
     m.plot(div_lon, div_lat, 'k', linewidth=2)
     ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
+# Add Biomass
+xb, yb = m(biomass.Longitude.values, biomass.Latitude.values)
+for idx, tmp in enumerate(xb):
+    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PB TB(kg/km2)'].iloc[idx])*30, c='orange', alpha=.5)
+    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PM TB(kg/km2)'].iloc[idx])*30, c='slategray', alpha=.5)
+    m.scatter(xb[idx], yb[idx], s=biomass['PB TB(kg/km2)'].iloc[idx]/50, c='orange', alpha=.5)
+    m.scatter(xb[idx], yb[idx], s=biomass['PM TB(kg/km2)'].iloc[idx]/50, c='darkgray', alpha=.5)
+# add legend
+xbl, ybl = m(-69.5, 66.8)
+xml, yml = m(-69.5, 66.5)
+m.scatter(xbl, ybl, s=60, c='orange', alpha=.7, zorder=200)
+m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
+ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
 # Save Figure
 fig.set_size_inches(w=6, h=9)
 fig.set_dpi(200)
