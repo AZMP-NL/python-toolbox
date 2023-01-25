@@ -22,10 +22,10 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'SEGB'
-SEASON = 'fall'
-CLIM_YEAR = [1991, 2020]
-#CLIM_YEAR = [1995, 2018]
+SECTION = 'SWSPB'
+SEASON = 'spring'
+#CLIM_YEAR = [1991, 2020]
+CLIM_YEAR = [1991, 2017]
 dlat = 2 # how far from station we search
 dlon = 2
 z1 = 2
@@ -160,8 +160,8 @@ for idx, YEAR in enumerate(years):
     # Remove empty columns.
     idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
-    lons = np.delete(lons,idx_empty_rows)
-    lats = np.delete(lats,idx_empty_rows)
+    lonsT = np.delete(lons,idx_empty_rows)
+    latsT = np.delete(lats,idx_empty_rows)
 
     ## --- fill 3D cube --- ##  
     z = df.columns.values
@@ -170,7 +170,7 @@ for idx, YEAR in enumerate(years):
     # Aggregate on regular grid
     for i, xx in enumerate(lon_reg):
         for j, yy in enumerate(lat_reg):    
-            idx_coords = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
+            idx_coords = np.where((lonsT>=xx-dc/2) & (lonsT<xx+dc/2) & (latsT>=yy-dc/2) & (latsT<yy+dc/2))
             tmp = np.array(df.iloc[idx_coords].mean(axis=0))
             idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
             if np.size(idx_good)==1:
@@ -212,8 +212,8 @@ for idx, YEAR in enumerate(years):
     idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
     if np.size(idx_empty_rows):
-        lons = np.delete(lons,idx_empty_rows)
-        lats = np.delete(lats,idx_empty_rows)
+        lonsS = np.delete(lons,idx_empty_rows)
+        latsS = np.delete(lats,idx_empty_rows)
 
     ## --- fill 3D cube --- ##  
     z = df.columns.values
@@ -222,7 +222,7 @@ for idx, YEAR in enumerate(years):
     # Aggregate on regular grid
     for i, xx in enumerate(lon_reg):
         for j, yy in enumerate(lat_reg):    
-            idx_coords = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
+            idx_coords = np.where((lonsS>=xx-dc/2) & (lonsS<xx+dc/2) & (latsS>=yy-dc/2) & (latsS<yy+dc/2))
             tmp = np.array(df.iloc[idx_coords].mean(axis=0))
             idx_good = np.argwhere((~np.isnan(tmp)))
             if np.size(idx_good)==1:
@@ -264,8 +264,8 @@ for idx, YEAR in enumerate(years):
     idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
     if np.size(idx_empty_rows):
-        lons = np.delete(lons,idx_empty_rows)
-        lats = np.delete(lats,idx_empty_rows)
+        lonsSi = np.delete(lons,idx_empty_rows)
+        latsSi = np.delete(lats,idx_empty_rows)
 
     ## --- fill 3D cube --- ##  
     z = df.columns.values
@@ -274,7 +274,7 @@ for idx, YEAR in enumerate(years):
     # Aggregate on regular grid
     for i, xx in enumerate(lon_reg):
         for j, yy in enumerate(lat_reg):    
-            idx_coords = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
+            idx_coords = np.where((lonsSi>=xx-dc/2) & (lonsSi<xx+dc/2) & (latsSi>=yy-dc/2) & (latsSi<yy+dc/2))
             tmp = np.array(df.iloc[idx_coords].mean(axis=0))
             idx_good = np.argwhere((~np.isnan(tmp)))
             if np.size(idx_good)==1:
@@ -387,12 +387,13 @@ for idx, YEAR in enumerate(years):
         fig, ax = plt.subplots()
         c = plt.contourf(distance_stn, df_section_stn.columns, df_section_stn.T)
         c_cil_stn = plt.contour(distance_stn, df_section_stn.columns, df_section_stn.T, [0,], colors='k', linewidths=2)
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylim([0, 400])
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.set_xlabel('Distance (km)')
         ax.invert_yaxis()
         plt.colorbar(c)
         plt.title(str(YEAR))
-        fig_name = 'temp_section' + SECTION + '_' + SEASON + '_' + '_' + str(YEAR) + '_1.png'
+        fig_name = 'temp_section_' + SECTION + '_' + SEASON + '_' + '_' + str(YEAR) + '_1.png'
         fig.savefig(fig_name, dpi=150)
         #plt.clf()
         plt.close('all')
@@ -412,12 +413,13 @@ for idx, YEAR in enumerate(years):
         fig, ax = plt.subplots()
         c = plt.contourf(distance_itp, df_section_itp.columns, df_section_itp.T)
         c_cil_itp = plt.contour(distance_itp, df_section_itp.columns, df_section_itp.T, [0,], colors='k', linewidths=2)
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylim([0, 400])
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.set_xlabel('Distance (km)')
         ax.invert_yaxis()
         plt.title(str(YEAR))
         plt.colorbar(c)
-        fig_name = 'temp_section' + SECTION + '_' + SEASON + '_' + '_' + str(YEAR) + '_2.png'
+        fig_name = 'temp_section_' + SECTION + '_' + SEASON + '_' + '_' + str(YEAR) + '_2.png'
         fig.savefig(fig_name, dpi=150)
         #plt.close()
         #plt.clf()
@@ -498,30 +500,32 @@ df_CIL.to_pickle(picklename)
 fig, ax = plt.subplots()
 c = plt.contourf(df_clim.index, df_clim.columns, df_clim.T)
 c_cil_itp = plt.contour(df_clim.index, df_clim.columns, df_clim.T, [0,], colors='k', linewidths=2)
-#ax.set_ylim([0, 400])
+ax.set_ylim([0, 400])
 #ax.set_xlim([0,  XLIM])
-ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+ax.set_ylabel('Depth (m)', fontweight = 'bold')
 #ax.set_xlabel('Distance (km)')
 ax.invert_yaxis()
 plt.colorbar(c)
-figname = 'temperature' + SECTION + '_' + SEASON + '_clim.png'
+figname = 'temperature_' + SECTION + '_' + SEASON + '_clim.png'
 
 # plot salinity
 fig.savefig(figname, dpi=150)
 fig, ax = plt.subplots()
 c = plt.contourf(df_clim_S.index, df_clim_S.columns, df_clim_S.T)
-ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+ax.set_ylim([0, 400])
+ax.set_ylabel('Depth (m)', fontweight = 'bold')
 ax.invert_yaxis()
 plt.colorbar(c)
-figname = 'salinity' + SECTION + '_' + SEASON + '_clim.png'
+figname = 'salinity_' + SECTION + '_' + SEASON + '_clim.png'
 fig.savefig(figname, dpi=150)
 
 # plot sigma-t
 fig.savefig(figname, dpi=150)
 fig, ax = plt.subplots()
 c = plt.contourf(df_clim_Si.index, df_clim_Si.columns, df_clim_Si.T)
-ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+ax.set_ylim([0, 400])
+ax.set_ylabel('Depth (m)', fontweight = 'bold')
 ax.invert_yaxis()
 plt.colorbar(c)
-figname = 'sigma-t' + SECTION + '_' + SEASON + '_clim.png'
+figname = 'sigma-t_' + SECTION + '_' + SEASON + '_clim.png'
 fig.savefig(figname, dpi=150)
