@@ -41,8 +41,8 @@ def make_patch_spines_invisible(ax):
 ## ---- Some custom parameters ---- ##
 #year_clim = [1981, 2010]
 year_clim = [1991, 2020]
-current_year = 2021
-XLIM = [datetime.date(1945, 1, 1), datetime.date(2021, 12, 31)]
+current_year = 2022
+XLIM = [datetime.date(1945, 1, 1), datetime.date(2022, 12, 31)]
 french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 years_flag = [1980]
 
@@ -107,8 +107,8 @@ ts_stack = my_ts.groupby([(my_ts.index.year),(my_ts.index.month)]).mean()
 ts_unstack = ts_stack.unstack()
 ts_clim_period = my_ts[(my_ts.index.year>=year_clim[0]) & (my_ts.index.year<=year_clim[1])]
 ts_monthly_stack = ts_clim_period.groupby([(ts_clim_period.index.year),(ts_clim_period.index.month)]).mean()
-ts_monthly_clim = ts_monthly_stack.mean(level=1)
-ts_monthly_std = ts_monthly_stack.std(level=1)
+ts_monthly_clim = ts_monthly_stack.groupby(level=1).mean()
+ts_monthly_std = ts_monthly_stack.groupby(level=1).std()
 monthly_anom = ts_unstack - ts_monthly_clim 
 monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
 anom_std = monthly_stdanom.mean(axis=1)
@@ -117,7 +117,6 @@ anom = monthly_anom.mean(axis=1)
 anom.index = pd.to_datetime(anom.index, format='%Y')
 # Annual mean is given by annual anomaly + monthly clim
 annual_mean = anom + ts_monthly_clim.mean()
-
 # For Iroc:
 iroc_stn27_T = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['T', 'Tanom', 'Tanom_std'])
 
@@ -199,8 +198,8 @@ ts_stack = my_ts.groupby([(my_ts.index.year),(my_ts.index.month)]).mean()
 ts_unstack = ts_stack.unstack()
 ts_clim_period = my_ts[(my_ts.index.year>=year_clim[0]) & (my_ts.index.year<=year_clim[1])]
 ts_monthly_stack = ts_clim_period.groupby([(ts_clim_period.index.year),(ts_clim_period.index.month)]).mean()
-ts_monthly_clim = ts_monthly_stack.mean(level=1)
-ts_monthly_std = ts_monthly_stack.std(level=1)
+ts_monthly_clim = ts_monthly_stack.groupby(level=1).mean()
+ts_monthly_std = ts_monthly_stack.groupby(level=1).std()
 monthly_anom = ts_unstack - ts_monthly_clim 
 monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
 anom_std = monthly_stdanom.mean(axis=1) 
@@ -295,8 +294,8 @@ for idx, YEAR in enumerate(df_temp_summer.index.year):
     # CIL thickness
     CIL_idxs = np.squeeze(np.where(tmp<=0))
     cil_thickness[idx] =  np.size(CIL_idxs)*zbin
-    # CIL temp
-    cil_temp[idx] =  tmp[CIL_idxs].mean()
+    # CIL temp (found a bug Jan 2023. loc was used instead of iloc, introducing a 10m shift)
+    cil_temp[idx] =  tmp.iloc[CIL_idxs].mean()
     
 # Convert to pandas series    
 cil_temp = pd.Series(cil_temp, index=df_temp_summer.index)
@@ -499,8 +498,8 @@ strat_unstack = strat_stack.unstack()
 # compute clim
 strat_clim_period = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
 strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
-strat_monthly_clim = strat_monthly_stack.mean(level=1)
-strat_monthly_std = strat_monthly_stack.std(level=1)
+strat_monthly_clim = strat_monthly_stack.groupby(level=1).mean()
+strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
 monthly_anom = strat_unstack - strat_monthly_clim 
 monthly_stdanom = (strat_unstack - strat_monthly_clim) /  strat_monthly_std
 anom_std = monthly_stdanom.mean(axis=1) 
@@ -590,15 +589,19 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 # C) Monthly bar plot for current year
 strat_clim_period = strat_monthly[(strat_monthly.index.year>=year_clim[0]) & (strat_monthly.index.year<=year_clim[1])]
 strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
-strat_monthly_clim = strat_monthly_stack.mean(level=1)
-strat_monthly_std = strat_monthly_stack.std(level=1)
-strat_current_year = strat_monthly[strat_monthly.index.year==current_year]
+strat_monthly_clim = strat_monthly_stack.groupby(level=1).mean()
+strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
+# fill current year (nee to initalize to make sure I have 12 months)
+year_index = pd.date_range(str(current_year)+"-01-31", periods=12, freq="M")
+strat_current_year = pd.Series(np.nan, index = year_index)
+strat_tmp = strat_monthly[strat_monthly.index.year==current_year]
+strat_current_year.loc[strat_tmp.index] = strat_tmp
+
 # Flag March 2019 (1st measurement on the 30th)
 if current_year==2019:
-    strat_current_year[2]=np.nan
+    strat_current_year[2]=np.nan    
 
-year_index = strat_current_year.index # backup index
-strat_current_year.index=strat_monthly_std.index # reset index
+strat_current_year.index=strat_current_year.index.month # reset index
 monthly_anom = strat_current_year - strat_monthly_clim
 monthly_std_anom = monthly_anom/strat_monthly_std
 monthly_std_anom.index = year_index.strftime('%b') # replace index (by text)
@@ -607,10 +610,8 @@ monthly_anom.index = year_index.strftime('%b') # replace index (by text)
 ind = np.arange(len(monthly_anom.keys()))  # the x locations for the groups
 width = 0.35  # the width of the bars
 fig, ax = plt.subplots()
-rects1 = ax.bar(ind - width/2, strat_monthly_clim.values*1000, width, yerr=strat_monthly_std.values*.5*1000,
-                label='1991-2020', color='lightblue', zorder=1)
-rects2 = ax.bar(ind + width/2, np.squeeze(strat_current_year.values*1000), width, yerr=None,
-                label=str(current_year), color='steelblue', zorder=1)
+rects1 = ax.bar(ind - width/2, strat_monthly_clim.values*1000, width, yerr=strat_monthly_std.values*.5*1000, label='1991-2020', color='lightblue', zorder=1)
+rects2 = ax.bar(ind + width/2, np.squeeze(strat_current_year.values*1000), width, yerr=None, label=str(current_year), color='steelblue', zorder=1)
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel(r'$\rm \frac{\Delta \rho}{\Delta z} (g\,m^{-4})$')
 ax.set_title('Station 27 - Stratification')
@@ -640,8 +641,8 @@ mld_unstack = mld_stack.unstack()
 # compute clim
 mld_clim_period = mld[(mld.index.year>=year_clim[0]) & (mld.index.year<=year_clim[1])]
 mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_clim_period.index.month)]).mean()
-mld_monthly_clim = mld_monthly_stack.mean(level=1)
-mld_monthly_std = mld_monthly_stack.std(level=1)
+mld_monthly_clim = mld_monthly_stack.groupby(level=1).mean()
+mld_monthly_std = mld_monthly_stack.groupby(level=1).std()
 monthly_anom = mld_unstack - mld_monthly_clim 
 monthly_stdanom = (mld_unstack - mld_monthly_clim) /  mld_monthly_std
 anom_std = monthly_stdanom.mean(axis=1) 
@@ -712,14 +713,19 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 # C) Monthly bar plot for current year
 mld_clim_period = mld_monthly[(mld_monthly.index.year>=year_clim[0]) & (mld_monthly.index.year<=year_clim[1])]
 mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_clim_period.index.month)]).mean()
-mld_monthly_clim = mld_monthly_stack.mean(level=1)
-mld_monthly_std = mld_monthly_stack.std(level=1)
+mld_monthly_clim = mld_monthly_stack.groupby(level=1).mean()
+mld_monthly_std = mld_monthly_stack.groupby(level=1).std()
 mld_current_year = mld_monthly[mld_monthly.index.year==current_year]
+# fill current year (nee to initalize to make sure I have 12 months)
+year_index = pd.date_range(str(current_year)+"-01-31", periods=12, freq="M")
+mld_current_year = pd.Series(np.nan, index = year_index)
+mld_tmp = mld_monthly[mld_monthly.index.year==current_year]
+mld_current_year.loc[mld_tmp.index] = mld_tmp
+
 # Flag March 2019 (1st measurement on the 30th)
 if current_year==2019:
     mld_current_year[2]=np.nan
 
-year_index = mld_current_year.index # backup index
 mld_current_year.index=mld_monthly_std.index # reset index
 monthly_anom = mld_current_year - mld_monthly_clim
 monthly_std_anom = monthly_anom/mld_monthly_std

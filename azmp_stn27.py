@@ -40,15 +40,15 @@ dc = .025
 #year_clim = [1981, 2010]
 year_clim = [1991, 2020]
 
-current_year = 2021
+current_year = 2022
 variable = 'temperature'
-use_viking = True
+use_viking = False
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
 # Derived parameter
 if variable == 'temperature':
     V = np.concatenate([np.arange(-1.75, 0.25, .25), np.arange(1, 14, 1)])  
-`    #V = np.arange(-1, 14, 1)
+    #V = np.arange(-1, 14, 1)
     #Vanom = np.linspace(-5.5, 5.5, 12)
     #Vanom = np.array([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
     Vanom = np.linspace(-5.5, 5.5, 23)
@@ -156,7 +156,7 @@ weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear')
 weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
-weekly_clim.index = pd.to_datetime('2021-' +  weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
+weekly_clim.index = pd.to_datetime(str(current_year) + '-' + weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
 #weekly_clim.dropna(how='all', axis=1, inplace=True)
 
 
@@ -306,7 +306,7 @@ df_occu = df_occu[df_occu.index.year>=1945]
 # plot 1 - weekly occupations only
 fig, ax = plt.subplots(nrows=1, ncols=1)
 plt.clf()
-plt.plot(df_occu.index.year.values, df_occu.index.weekofyear.values, '.k')
+plt.plot(df_occu.index.year.values, df_occu.index.isocalendar().week.values, '.k')
 plt.ylabel('Week of year')
 plt.xlabel('Station 27 occupation')
 # Save Figure
@@ -329,7 +329,7 @@ ax1.set_ylabel('No. of weekly occupations')
 plt.title('Station 27 occupation')
 # ax2
 ax2 = plt.subplot2grid((2, 1), (1, 0))
-plt.plot(df_occu.index.year.values, df_occu.index.weekofyear.values, '.k')
+plt.plot(df_occu.index.year.values, df_occu.index.isocalendar().week.values, '.k')
 ax2.set_ylabel('week of year')
 # Save Figure
 fig.set_size_inches(w=6, h=7)

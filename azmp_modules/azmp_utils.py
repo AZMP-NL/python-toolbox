@@ -25,7 +25,10 @@ __version__ = '0.1'
 import h5py
 import os
 import sys
+import h5py
 import netCDF4
+from netCDF4 import date2num,num2date
+import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,6 +40,7 @@ from shapely.geometry.polygon import Polygon
 from shapely.ops import cascaded_union
 from area import area # external fns to compute surface area
 from seawater import extras as swx
+import datetime
 # maps
 os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 from mpl_toolkits.basemap import Basemap
@@ -335,7 +339,7 @@ def get_ice_regions():
     return dict
 
 
-def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[10, 1000], dz=5, h5_outputfile=[]):
+def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], season=[], zlims=[10, 1000], dz=1, h5_outputfile=[]):
     """ Generate and returns the climatological bottom temperature map.
     This script uses GEBCO dada. User should update the path below.
     Maybe this is something I could work on...
@@ -360,6 +364,30 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
 
     Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato2HJ3KLNOPs_spring_0.10.h5')
     
+    OR
+
+    # NSRF area
+    import numpy as np
+    import azmp_utils as azu
+    dc = .10
+    lonLims = [-70, -56] # Lab Sea
+    latLims = [57, 67]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFx_summer_2006-2021.h5')
+
+    OR
+
+    # NSRFxx, down to 53N - overlapping NSRF and AZMP for Normandeau's work
+    import numpy as np
+    import azmp_utils as azu
+    dc = .10
+    lonLims = [-70, -56] # Lab Sea
+    latLims = [53, 67]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFxx_summer_2006-2021.h5')
+
     """
 
     # Because the code is trying to divide by zero
@@ -452,8 +480,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         print('  ---> I Should be improme because I remove good data!!!!')
         ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
         ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
- 
-            
+    
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
@@ -467,7 +494,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         #To Pandas Dataframe
         df_temp = da_temp.to_pandas()
         df_temp.columns = bins[0:-1] #rename columns with 'bins'
-        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        # Remove empty columns
+        idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
         df_temp = df_temp.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
@@ -527,9 +555,6 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
             for j,yy in enumerate(lat_reg):
                 bottom_depth = -Zitp[j,i] # minus to turn positive
                 temp_vec = V[j,i,:]
-                ## idx_no_good = np.argwhere(temp_vec>30)
-                ## if idx_no_good.size:
-                ##     temp_vec[idx_no_good] = np.nan
                 idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
                 if idx_good.size:
                     idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
@@ -567,7 +592,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     return dict
 
 
-def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[10, 1000], dz=5, h5_outputfile=[]):
+def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], season=[], zlims=[10, 1000], dz=1, h5_outputfile=[]):
     """ Generate and returns the climatological bottom salinity map.
     This script uses GEBCO dada. User should update the path below.
     Maybe this is something I could work on...
@@ -577,17 +602,31 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     Usage ex:
     import numpy as np
     import azmp_utils as azu
-    dc = .10
+    dc = .1
     lonLims = [-60, -45] # FC AZMP report region
     latLims = [42, 56]
+    lonLims = [-63, -45] # include 2H in above
+    latLims = [42, 58]
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    Sbot_dict = azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Sbot_climato_fall_0.10.h5')
+    Sbot_dict = azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Sbot_climato_fall_0.10.h5')
 
     OR
 
-    azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Sbot_climato_spring_0.10.h5') 
+    azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Sbot_climato_spring_0.10.h5') 
+
+    OR
     
+    # NSRF area
+    import numpy as np
+    import azmp_utils as azu
+    dc = .10
+    lonLims = [-70, -56] # Lab Sea
+    latLims = [57, 67]
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    Sbot_dict = azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Sbot_climato_NSRFx_summer_2006-2021.h5')
+
     """
 
     # Because the code is trying to divide by zero
@@ -596,7 +635,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
     
     ## ---- Check if H5 file exists ---- ##        
     if os.path.isfile(h5_outputfile):
-        print [h5_outputfile + ' exist! Reading directly']
+        print(h5_outputfile + ' exist! Reading directly')
         h5f = h5py.File(h5_outputfile,'r')
         Sbot = h5f['Sbot'][:]
         lon_reg = h5f['lon_reg'][:]
@@ -695,7 +734,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         df_sal = da_sal.to_pandas()
         df_sal.columns = bins[0:-1] #rename columns with 'bins'
         # Remove empty columns
-        idx_empty_rows = df_sal.isnull().all(1).nonzero()[0]
+        idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
         df_sal = df_sal.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
@@ -715,9 +754,9 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], seas
         ## lats = lats[idx]
         ## df_sal = df_sal[(df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu*5*sigma)]
         # METHOD 2
-        df_sal = df_sal.apply(lambda x: [y if y <= 36.75 else np.nan for y in x])
-        df_sal = df_sal.apply(lambda x: [y if y >= 28 else np.nan for y in x])        
-        print(' -> Done!')        
+        #df_sal = df_sal.apply(lambda x: [y if y <= 36.75 else np.nan for y in x])
+        #df_sal = df_sal.apply(lambda x: [y if y >= 28 else np.nan for y in x])        
+        #print(' -> Done!')        
 
         ## --- fill 3D cube --- ##  
         print('Fill regular cube')
@@ -892,14 +931,13 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     df_temp = da_temp.to_pandas()
     df_temp.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns
-    idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+    idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
     df_temp = df_temp.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     #df_temp.to_pickle('T_2000-2017.pkl')
     del ds
     print(' -> Done!')
-
 
     ## --- fill 3D cube --- ##  
     print('Fill regular cube')
@@ -945,10 +983,10 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             if Zitp[j,i] > -10: # remove shallower than 10m
                 V[j,i,:] = np.nan
 
-    # Pickle Temperature cube
+    ## Save data in h5 for further use
     h5_cube_name = 'Tcube_' + season +  year_file.split('/')[-1].strip('.nc')  + '.h5'
     h5f = h5py.File(h5_cube_name, 'w')
-    h5f.create_dataset('T', data=V)
+    h5f.create_dataset('temperature', data=V)
     h5f.create_dataset('lon_reg', data=lon_reg)
     h5f.create_dataset('lat_reg', data=lat_reg)
     h5f.create_dataset('lon_orig', data=lons)
@@ -1007,9 +1045,8 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             for i, xx in enumerate(lon_reg):
                 for j,yy in enumerate(lat_reg):
                     point = Point(lon_reg[i], lat_reg[j])
-                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
                     if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                        pass #nothing to do but cannot implement negative statement "if not" above
+                        pass #nothing to do
                     else:
                         Tbot[j,i] = np.nan
 
@@ -1017,12 +1054,10 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             for i, xx in enumerate(lon_reg):
                 for j,yy in enumerate(lat_reg):
                     point = Point(lon_reg[i], lat_reg[j])
-                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
                     if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                        pass #nothing to do but cannot implement negative statement "if not" above
+                        pass #nothing to do
                     else:
-                        pass
-                        #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+                        pass # No mask in the fall
 
         else:
             print('no division mask, all data taken')
@@ -1063,7 +1098,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     Sbot_dict = azu.get_bottomS(year_file, 'fall', climato_file)
 
     Dec. 2018: Added a flag for masking or not.
-    
+
     """
 
     ## ---- Load Climato data ---- ##    
@@ -1115,27 +1150,24 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
     ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
-    
-    # Vertical binning (on dataset; slower here as we don't need it)
-    #bins = np.arange(dz/2.0, df_temp.columns.max(), dz)
-    #ds = ds.groupby_bins('level', bins).mean(dim='level')
     # Restrict max depth to zmax defined earlier
     ds = ds.sel(level=ds['level']<zmax)
-    lons = np.array(ds.longitude)
-    lats = np.array(ds.latitude)
     # Vertical binning (on dataArray; more appropriate here
     da_sal = ds['salinity']
+    lons = np.array(ds.longitude)
+    lats = np.array(ds.latitude)
     bins = np.arange(dz/2.0, ds.level.max(), dz)
     da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
     #To Pandas Dataframe
     df_sal = da_sal.to_pandas()
     df_sal.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns & drop coordinates (for cast identification on map)
-    idx_empty_rows = df_sal.isnull().all(1).nonzero()[0]
+    idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
     df_sal = df_sal.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     #df_temp.to_pickle('T_2000-2017.pkl')
+    del ds
     print(' -> Done!')
 
     ## --- fill 3D cube --- ##  
@@ -1152,8 +1184,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             if np.size(idx_good)==1:
                 V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
             elif np.size(idx_good)>1: # vertical interpolation between pts
-                #V[j,i,:] = np.interp((z), np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  <--- this method propagate nans below max depth (extrapolation)
-                interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  # <---------- Pay attention here, this is a bit unusual, but seems to work!
+                interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good])) 
                 idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
                 V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
 
@@ -1165,7 +1196,6 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
         # Meshgrid 1D data (after removing NaNs)
         tmp_grid = V[:,:,k]
         tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-        #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
         # griddata (after removing nans)
         idx_good = np.argwhere(~np.isnan(tmp_vec))
         if idx_good.size>3: # will ignore depth where no data exist
@@ -1184,8 +1214,20 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             if Zitp[j,i] > -10: # remove shallower than 10m
                 V[j,i,:] = np.nan
 
-    # getting bottom temperature
-    print('Getting bottom Temp.')    
+    ## Save data in h5 for further use
+    h5_cube_name = 'Scube_' + season +  year_file.split('/')[-1].strip('.nc')  + '.h5'
+    h5f = h5py.File(h5_cube_name, 'w')
+    h5f.create_dataset('salinity', data=V)
+    h5f.create_dataset('lon_reg', data=lon_reg)
+    h5f.create_dataset('lat_reg', data=lat_reg)
+    h5f.create_dataset('lon_orig', data=lons)
+    h5f.create_dataset('lat_orig', data=lats)
+    h5f.create_dataset('Zitp', data=Zitp)
+    h5f.create_dataset('z', data=z)
+    h5f.close()
+
+    # getting bottom salinity
+    print('Getting bottom Sal.')    
     Sbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
@@ -1195,7 +1237,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             ## if idx_no_good.size:
             ##     temp_vec[idx_no_good] = np.nan
             idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-            if idx_good.size:
+            if idx_good.size>1:
                 idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
             else:
                 continue
@@ -1235,9 +1277,8 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             for i, xx in enumerate(lon_reg):
                 for j,yy in enumerate(lat_reg):
                     point = Point(lon_reg[i], lat_reg[j])
-                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
                     if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                        pass #nothing to do but cannot implement negative statement "if not" above
+                        pass #nothing to do
                     else:
                         Sbot[j,i] = np.nan
 
@@ -1245,12 +1286,10 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             for i, xx in enumerate(lon_reg):
                 for j,yy in enumerate(lat_reg):
                     point = Point(lon_reg[i], lat_reg[j])
-                    #if (~polygon3L.contains(point)) & (~polygon3N.contains(point)) & (~polygon3O.contains(point)) & (~polygon3Ps.contains(point)):
                     if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                        pass #nothing to do but cannot implement negative statement "if not" above
+                        pass #nothing to do
                     else:
-                        pass
-                        #Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+                        pass # No mask in the fall
 
         else:
             print('no division mask, all data taken')
@@ -1268,7 +1307,6 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     dict['lons'] = lons
     dict['lats'] = lats
     
-
     return dict
 
 def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[5, 20], dz=5, h5_outputfile=[]):
@@ -1401,7 +1439,7 @@ def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season
         #To Pandas Dataframe
         df_temp = da_temp.to_pandas()
         df_temp.columns = bins[0:-1] #rename columns with 'bins'
-        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
         df_temp = df_temp.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
@@ -1618,7 +1656,7 @@ def get_cilT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=
         #To Pandas Dataframe
         df_temp = da_temp.to_pandas()
         df_temp.columns = bins[0:-1] #rename columns with 'bins'
-        idx_empty_rows = df_temp.isnull().all(1).nonzero()[0]
+        idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
         df_temp = df_temp.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
@@ -1723,6 +1761,8 @@ def bottomT_quickplot(h5_outputfile, figure_file=[]):
 
     lon_reg = h5f['lon_reg'][:]
     lat_reg = h5f['lat_reg'][:]
+    lons = h5f['lon_orig'][:]
+    lats = h5f['lat_orig'][:]
     #Zitp = h5f['Zitp'][:]
     h5f.close()
 
@@ -1737,21 +1777,22 @@ def bottomT_quickplot(h5_outputfile, figure_file=[]):
     m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution='h')
     levels = np.linspace(0, 15, 16)
     xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-    #lon_casts, lat_casts = m(lons[idx], lats[idx])
     c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
-        #c = m.pcolor(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
+    #c = m.pcolor(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
     #    x,y = m(*np.meshgrid(lon,lat))
     #    cc = m.contour(x, y, -Z, [100, 500, 1000, 4000], colors='grey');
+    lon_casts, lat_casts = m(lons, lats)
+    m.plot(lon_casts, lat_casts, '.', color='k')
     m.fillcontinents(color='tan');
     
     m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
     m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-
+    
     cax = plt.axes([0.85,0.15,0.04,0.7])
     cb = plt.colorbar(c, cax=cax, ticks=levels)
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
     #plt.subplots_adjust(left=.07, bottom=.07, right=.93, top=.9, wspace=.2, hspace=.2)
-
+    
 
     #### ---- Save Figure ---- ####
     if np.size(figure_file):
@@ -1798,7 +1839,7 @@ def Tbot_to_GIS_ascii(h5file, ascfile):
     np.savetxt(ascfile, Tbot_flip, delimiter=" ", header=header, fmt='%5.2f', comments='')
 
     
-def polygon_temperature_stats(dict, shape, nsrf=False):
+def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
     """ to compute some stats about temperature in nafo sub-division
     (e.g., to build ResDoc Scorecards)
     
@@ -1815,11 +1856,16 @@ def polygon_temperature_stats(dict, shape, nsrf=False):
     new_shape = cascaded_union(shape_3LNO)
     dict = azu.polygon_temperature_stats(Tdict, new_shape)
 
-    But the stats can be computed on any polygon (cf. shrimp's SFA aras)    
+    But the stats can be computed on any polygon (cf. shrimp's SFA aras)
+
+    Modified Feb. 2023: Added var option for salinity
     """
 
-    # Output from 
-    map = dict['Tbot']
+    # Output from
+    if var == 'temperature':
+        map = dict['Tbot']
+    elif 'salinity':
+        map = dict['Sbot']    
     bathy = dict['bathy']
     lon_reg = dict['lon_reg']
     lat_reg = dict['lat_reg']
@@ -1880,22 +1926,24 @@ def polygon_temperature_stats(dict, shape, nsrf=False):
     
     # Fill dict for output
     dict = {}
-    dict['Tmean'] = Tmean
+    dict['Tmean'] = Tmean # temperature and salinity
     dict['Tmean_sha100'] = Tmean100
     dict['Tmean_sha200'] = Tmean200
     dict['Tmean_sha300'] = Tmean300
-    dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
-    dict['area_colder1'] = area_colder_1deg 
-    dict['area_warmer2'] = area_warmer_2deg
-    dict['area_shrimp'] = area_shrimp
-    dict['area_colder2'] = area_colder_2deg 
-    dict['area_colder2_perc'] = area_colder_2deg_perc 
-    dict['area_Pborealis'] = Pbor
-    dict['area_Pborealis_perc'] = Pbor_perc
-    dict['area_Pmontagui'] = Pmon
-    dict['area_Pmontagui_perc'] = Pmon_perc
-    dict['sampled_area'] = sampled_area
-    dict['total_area'] = total_polygon_area
+
+    if var == 'temperature': # temperature only
+        dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
+        dict['area_colder1'] = area_colder_1deg 
+        dict['area_warmer2'] = area_warmer_2deg
+        dict['area_shrimp'] = area_shrimp
+        dict['area_colder2'] = area_colder_2deg 
+        dict['area_colder2_perc'] = area_colder_2deg_perc 
+        dict['area_Pborealis'] = Pbor
+        dict['area_Pborealis_perc'] = Pbor_perc
+        dict['area_Pmontagui'] = Pmon
+        dict['area_Pmontagui_perc'] = Pmon_perc
+        dict['sampled_area'] = sampled_area
+        dict['total_area'] = total_polygon_area
 
     
     if nsrf:
@@ -1931,66 +1979,56 @@ def polygon_temperature_stats(dict, shape, nsrf=False):
         
     return dict
 
-def polygon_salinity_stats(dict, shape):
-    """ Almost the same as previous, but for salinity
-    This time, it was no designed for ResDoc, but rather to give average salinity over SFA areas.
-    And unlike previous, only the average is given.
+#def polygon_salinity_stats(dict, shape):
+#    """ Almost the same as previous, but for salinity
+#    This time, it was no designed for ResDoc, but rather to give average salinity over SFA areas.
+#    And unlike previous, only the average is given.
+#
+#    Dec. 2018
+#    """
 
-    Dec. 2018
-    """
+#    # Output from 
+#    map = dict['Sbot']
+#    bathy = dict['bathy']
+#    lon_reg = dict['lon_reg']
+#    lat_reg = dict['lat_reg']
 
-    # Output from 
-    map = dict['Sbot']
-    bathy = dict['bathy']
-    lon_reg = dict['lon_reg']
-    lat_reg = dict['lat_reg']
-
-    # derive mean pixel area
-    obj = {'type':'Polygon','coordinates':[[[lon_reg[0],lat_reg[0]],[lon_reg[0],lat_reg[-1]],[lon_reg[-1],lat_reg[-1]],[lon_reg[-1],lat_reg[0]],[lon_reg[0],lat_reg[0]]]]}
-    pixel_area = area(obj)/1e6/map.size
+#    # derive mean pixel area
+#    obj = {'type':'Polygon','coordinates':[[[lon_reg[0],lat_reg[0]],[lon_reg[0],lat_reg[-1]],[lon_reg[-1],lat_reg[-1]],[lon_reg[-1],lat_reg[0]],[lon_reg[0],lat_reg[0]]]]}
+#    pixel_area = area(obj)/1e6/map.size
     
-    # select data in polygon
-    data_vec = []
-    bathy_vec = []
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            point = Point(lon_reg[i], lat_reg[j])            
-            if shape.contains(point):
-                data_vec = np.append(data_vec, map[j,i])
-                bathy_vec = np.append(bathy_vec, bathy[j,i])
-            else:                
-                pass
+#    # select data in polygon
+#    data_vec = []
+#    bathy_vec = []
+#    for i, xx in enumerate(lon_reg):
+#        for j,yy in enumerate(lat_reg):
+#            point = Point(lon_reg[i], lat_reg[j])            
+#            if shape.contains(point):
+#                data_vec = np.append(data_vec, map[j,i])
+#                bathy_vec = np.append(bathy_vec, bathy[j,i])
+#            else:                
+#                pass
 
-    # remove nans            
-    bathy_vec = bathy_vec[~np.isnan(data_vec)]
-    data_vec = data_vec[~np.isnan(data_vec)]
+#    # remove nans            
+#    bathy_vec = bathy_vec[~np.isnan(data_vec)]
+#    data_vec = data_vec[~np.isnan(data_vec)]
     
-    # mean temperature all polygon
-    Smean = data_vec.mean()
+#    # mean temperature all polygon
+#    Smean = data_vec.mean()
 
-    ## # mean temperature at depth shallower than 100m, 200m, 300m
-    ## Tmean100 = data_vec[bathy_vec>=-100].mean()
-    ## Tmean200 = data_vec[bathy_vec>=-200].mean()
-    ## Tmean300 = data_vec[bathy_vec>=-300].mean()
-    
-    ## # area with temperature < 0
-    ## area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
-    ## # area with temperature < 1
-    ## area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
-    ## # area with temperature > 2
-    ## area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
-    
-    # Fill dict for output
-    dict = {}
-    dict['Smean'] = Smean
-    ## dict['Tmean_sha100'] = Tmean100
-    ## dict['Tmean_sha200'] = Tmean200
-    ## dict['Tmean_sha300'] = Tmean300
-    ## dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
-    ## dict['area_colder1'] = area_colder_1deg # <--- now in km2. They are divisded by 1000 in scorecard.
-    ## dict['area_warmer2'] = area_warmer_2deg
+#    # mean temperature at depth shallower than 100m, 200m, 300m
+#    Smean100 = data_vec[bathy_vec>=-100].mean()
+#    Smean200 = data_vec[bathy_vec>=-200].mean()
+#    Smean300 = data_vec[bathy_vec>=-300].mean()
+#    
+#    # Fill dict for output
+#    dict = {}
+#    dict['Smean'] = Smean
+#    dict['Smean_sha100'] = Smean100
+#    dict['Smean_sha200'] = Smean200
+#    dict['Smean_sha300'] = Smean300
 
-    return dict
+#    return dict
 
 
 def masterfile_section_to_multiindex(section, z_vec):
@@ -2133,3 +2171,82 @@ def masterfile_section_to_multiindex(section, z_vec):
     section_mindex.to_pickle('bottle_data_multiIndex_' + section +'.pkl')
 
     return section_mindex
+
+
+
+def h5cubes_2nc(h5_fileT, h5_fileS, ncfile): 
+    '''
+    Function to convert .h5 TCube and Scube into a netCDF file
+    Adapted from script h52nc_cube.py.
+
+    Option to add T and S, or just T.
+
+    Originally created for a collaboration with S. Rousseau.
+    
+    February 2023
+    Frederic.Cyr@dfo-mpo.gc.ca
+    '''
+
+    h5f = h5py.File(h5_fileT, 'r')
+    T = h5f['temperature'][:]
+    lon_reg = h5f['lon_reg'][:]
+    lat_reg = h5f['lat_reg'][:]
+    z = h5f['z'][:]
+    h5f.close()
+
+    if h5_fileS:
+        h5f = h5py.File(h5_fileS, 'r')
+        S = h5f['salinity'][:]
+        h5f.close()    
+
+    ## Save Climatology in NetCDF (for sharing purposes)
+    print('creating ' + ncfile)
+    # create dimension
+    ds = netCDF4.Dataset(ncfile, 'w', format='NETCDF4')
+    lat_dim = ds.createDimension('lat', len(lat_reg)) # latitude axis
+    lon_dim = ds.createDimension('lon', len(lon_reg)) # longitude axis
+    depth_dim = ds.createDimension('depth', len(z))
+    # title
+    ds.title='3D temperature and salinity [optionnal]'
+    # create variable
+    lat = ds.createVariable('lat', np.float32, ('lat',))
+    lat.units = 'degrees_north'
+    lat.long_name = 'latitude'
+    lon = ds.createVariable('lon', np.float32, ('lon',))
+    lon.units = 'degrees_east'
+    lon.long_name = 'longitude'
+    depth = ds.createVariable('depth', np.float64, ('depth',))
+    depth.units = 'm'
+    depth.long_name = 'depth'
+    temp = ds.createVariable('temp',np.float64,('lat','lon', 'depth')) # note: unlimited dimension is leftmost
+    temp.units = 'degC'
+    temp.standard_name = 'temperature'
+    print(temp)
+    print("-- Some pre-defined attributes for variable temp:")
+    print("temp.dimensions:", temp.dimensions)
+    print("temp.shape:", temp.shape)
+    print("temp.dtype:", temp.dtype)
+    print("temp.ndim:", temp.ndim)
+
+    # writing data
+    lat[:] = lat_reg
+    lon[:] = lon_reg
+    depth[:] = z
+    temp[:,:,:] = T # Appends data along unlimited dimension
+
+    print("-- Wrote data, temp.shape is now ", temp.shape)
+    print("-- Min/Max values:", temp[:,:,:].min(), temp[:,:,:].max())
+
+    # Optional salinity
+    if h5_fileS:
+         sal = ds.createVariable('sal',np.float64,('lat','lon', 'depth')) 
+         sal.units = 'psu'
+         sal.standard_name = 'salinity'
+         sal[:,:,:] = S # Appends data along unlimited dimension        
+    
+    print(ds)
+    # close the Dataset.
+    ds.close(); print('Dataset is closed!')
+
+    return None
+

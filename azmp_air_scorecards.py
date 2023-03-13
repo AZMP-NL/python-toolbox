@@ -23,7 +23,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1991, 2020]
-years = [1950, 2021]
+years = [1980, 2022]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/

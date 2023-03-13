@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-
 To produce AZMP CC SAR figure
-    
+
+**Deprecated**
+try: cc.seasonal_map_NL(variable, year, season, depth)
+
+Frederic.Cyr@dfo-mpo.gc.ca
+Feb. 2023
+
 """
 import os
 import pandas as pd
@@ -20,13 +25,20 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import cc_variable_list_NL as vl
 
 YEAR = 2019
-SEASON = 'summer'
+SEASON = 'fall'
 VARIABLE = 'Omega_Aragonite_(unitless)'
 #VARIABLE = 'pH_Total_(total_scale)'
 #VARIABLE = 'Oxygen_Saturation_(%)'
 #VARIABLE = 'Dissolved_Oxygen_(mL/L)'
 DEPTH='bottom'
-#DEPTH='bottom'
+# English/French station names
+stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
+if SEASON == 'summer':
+    SEC_toplot = ['MB', 'SI', 'BB', 'S27', 'FC']
+    SEC_toplot_french = [' BM', ' IS', ' BB', 'S27', 'BF']
+elif SEASON == 'fall':
+    SEC_toplot = ['BB', 'FC', 'SEGB', 'SPB']
+    SEC_toplot_french = [' BB', 'BF', ' GBSE',' BSP']
 # For colorbar:
 v = vl.variable_parameters(VARIABLE)
 num_levels = v[0]
@@ -47,6 +59,27 @@ elif VARIABLE == 'Oxygen_Saturation_(%)':
     FIG_VAR = 'DO_perc'    
 elif VARIABLE == 'Dissolved_Oxygen_(mL/L)':
     FIG_VAR = 'DO'
+
+
+## ---- Station info ---- ##
+import pandas as pd
+df = pd.read_excel(stationFile)
+sections = df['SECTION'].values
+stations = df['STATION'].values
+stationLat = df['LAT'].values
+stationLon = df['LONG.1'].values
+
+index_BI = df.SECTION[df.SECTION=="BEACH ISLAND"].index.tolist()
+index_MB = df.SECTION[df.SECTION=="MAKKOVIK BANK"].index.tolist()
+index_SI = df.SECTION[df.SECTION=="SEAL ISLAND"].index.tolist()
+index_WB = df.SECTION[df.SECTION=="WHITE BAY"].index.tolist()
+index_BB = df.SECTION[df.SECTION=="BONAVISTA"].index.tolist()
+index_FC = df.SECTION[df.SECTION=="FLEMISH CAP"].index.tolist()
+index_SEGB = df.SECTION[df.SECTION=="SOUTHEAST GRAND BANK"].index.tolist()
+index_SESPB = df.SECTION[df.SECTION=="SOUTHEAST ST PIERRE BANK"].index.tolist()
+index_SPB = df.SECTION[df.SECTION=="SOUTHWEST ST PIERRE BANK"].index.tolist()
+index_S27 = df.SECTION[df.SECTION=="STATION 27"].index.tolist()
+
 
 # Read the entire AZMP dataset
 df = pd.read_csv('/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_carbon_data.csv', delimiter=',')
@@ -171,8 +204,8 @@ ax.set_extent([lonLims[0], lonLims[1], latLims[0], latLims[1]], crs=ccrs.PlateCa
 #ax.set_extent([-72, -41.5, 40.5, 55.1], crs=ccrs.PlateCarree())
 ax.add_feature(cpf.NaturalEarthFeature('physical', 'coastline', '50m', edgecolor='k', alpha=0.7, linewidth=0.6, facecolor='black'), zorder=1)#cpf.COLORS['land']))
 m=ax.gridlines(linewidth=0.5, color='black', draw_labels=True, alpha=0.5)
-m.xlabels_top=False
-m.ylabels_right=False
+#m.xlabels_top=False
+#m.ylabels_right=False
 m.xlocator = mticker.FixedLocator([-75, -70, -60, -50, -40])
 m.ylocator = mticker.FixedLocator([40, 45, 50, 55, 60, 65])
 m.xformatter = LONGITUDE_FORMATTER
@@ -204,21 +237,51 @@ cb.set_label(axis_label, fontsize=12, fontweight='normal')
 if SEASON == 'summer':
     ax.text(-42, 57.8+.05, str(YEAR), horizontalalignment='right', color='black', zorder=200,
             fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
-    ax.text(-42, 57.8, '('+SEASON+')', horizontalalignment='right', color='black', verticalalignment='top', zorder=200,
+    season_text = ax.text(-42, 57.8, '('+SEASON+')', horizontalalignment='right', color='black', verticalalignment='top', zorder=200,
             fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())    
 else:
      ax.text(-42, 52+.05, str(YEAR), horizontalalignment='right', color='black', zorder=200,
             fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())   
-     ax.text(-42, 52, '('+SEASON+')', horizontalalignment='right', color='black', verticalalignment='top', zorder=200,
+     season_text = ax.text(-42, 52, '('+SEASON+')', horizontalalignment='right', color='black', verticalalignment='top', zorder=200,
             fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())   
-        
-fig_name = 'NL_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'.png'
+
+## plot AZMP section names
+ax_text = SEC_toplot.copy()
+for i, sec in enumerate(SEC_toplot):
+    exec('sec_index = index_' + sec)
+    
+    if sec == 'FC':
+        ax_text[i] = ax.text(stationLon[sec_index][-4], stationLat[sec_index][-4], sec, horizontalalignment='left', verticalalignment='top', color='black', zorder=200, fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+    elif sec == 'S27':
+        ax_text[i] = ax.text(stationLon[sec_index][-8], stationLat[sec_index][-8], sec, horizontalalignment='left', color='black', zorder=200, fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+    elif sec == 'SPB':
+        ax_text[i] = ax.text(stationLon[sec_index][4], stationLat[sec_index][4], sec, horizontalalignment='left', color='black', zorder=200, fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+    else:
+        ax_text[i] = ax.text(stationLon[sec_index][-1], stationLat[sec_index][-1], ' '+sec, horizontalalignment="left", color="black", zorder=200, fontsize=12, fontweight="bold", transform=ccrs.PlateCarree())
 
 # Save figure
+fig_name = 'NL_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 #lt.close('all') 
 
+
+## Save in French
+if SEASON == 'summer':
+    season_text.set_text("(été)")
+elif SEASON == 'fall':
+    season_text.set_text("(automne)")
+
+for i, sec in enumerate(SEC_toplot_french):
+    ax_text[i].set_text(SEC_toplot_french[i])
+
+fig_name = 'NL_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'_FR.png'
+fig.savefig(fig_name, dpi=300)
+os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+
+    
 
 
 

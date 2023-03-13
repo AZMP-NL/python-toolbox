@@ -52,6 +52,8 @@ df.rename(columns={'OCT':'Oct', 'NOV':'Nov', 'DEC':'Dec', 'JAN':'Jan', 'FEB':'Fe
 
 # Annual mean
 df_annual = df.sum(axis=1)
+# Temporary:
+df_annual.loc[2022] = 58
 df_annual.to_pickle('bergs_annual.pkl')
 df_annual_clim = df_annual[(df_annual.index>=clim_year[0]) & (df_annual.index<=clim_year[1])]
 df_annual_anom = df_annual - df_annual_clim.mean()

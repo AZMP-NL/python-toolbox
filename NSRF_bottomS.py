@@ -54,7 +54,7 @@ zmin = 10
 dz = 5 # vertical bins
 
 season = 'summer'
-year = '2006'
+year = 2022
 climato_file = 'Sbot_climato_NSRF_summer_2006-2018.h5'
 year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
 

@@ -14,7 +14,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1991, 2020]
-years = [1980, 2021]
+years = [1980, 2023]
 
 
 def is_number(s):
@@ -32,9 +32,13 @@ def is_number(s):
     return False
 
 #### ---- Load the data and compute anomalies ---- ####
-df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl')
-df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
-df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
+#df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl')
+#df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
+#df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
+# EXCEPTION FOR 2022
+df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_fall.pkl')
+df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_fall.pkl')
+df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_fall.pkl')
 
 # Build the colormap
 vmin = -3.49
@@ -113,7 +117,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -183,7 +187,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -257,7 +261,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -327,7 +331,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -405,7 +409,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -475,7 +479,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 

@@ -10,6 +10,9 @@ Instead of running the entire time series (e.g. 1950-2020), this script will onl
 Final update November 2021
 Frederic.Cyr@dfo-mpo.gc.ca
 
+**** Check because it doesn't seem to work... ******
+(note Feb. 2023)
+
 '''
 import os
 import netCDF4
@@ -26,9 +29,9 @@ import sys
 print('BE CAREFUL NOT TO OVERWRITE RESULT FROM azmp_CIL_stats.py')
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'WB'
-SEASON = 'summer'
-YEAR = 2021 # year to update
+SECTION = 'FC'
+SEASON = 'fall'
+YEAR = 2022 # year to update
 dlat = 1 # how far from station we search
 dlon = 1
 dz = 1 # vertical bins
@@ -37,19 +40,37 @@ v = np.arange(-2,13,1)
 FLAG = True # whether or not it is a valid year
 
 if SECTION == 'SI':
-    df_CIL = pd.read_pickle('df_CIL_SI_summer.pkl')
-    df_sectionT = pd.read_pickle('df_SI_meanT_summer.pkl')
+    if SEASON == 'summer' :
+        df_CIL = pd.read_pickle('df_CIL_SI_summer.pkl')
+        df_sectionT = pd.read_pickle('df_SI_meanT_summer.pkl')
+    elif SEASON == 'fall' :
+        df_CIL = pd.read_pickle('df_CIL_SI_fall.pkl')
+        df_sectionT = pd.read_pickle('df_SI_meanT_fall.pkl')
 elif SECTION == 'WB':
-    df_CIL = pd.read_pickle('df_CIL_WB_summer.pkl')
-    df_sectionT = pd.read_pickle('df_WB_meanT_summer.pkl')
+    if SEASON == 'summer' :
+        df_CIL = pd.read_pickle('df_CIL_WB_summer.pkl')
+        df_sectionT = pd.read_pickle('df_WB_meanT_summer.pkl')
+    elif SEASON == 'fall' :
+        df_CIL = pd.read_pickle('df_CIL_WB_fall.pkl')
+        df_sectionT = pd.read_pickle('df_WB_meanT_fall.pkl')
 elif SECTION == 'BB':
-    df_CIL = pd.read_pickle('df_CIL_BB_summer.pkl')    
-    df_sectionT = pd.read_pickle('df_BB_meanT_summer.pkl')
+    if SEASON == 'summer' :
+        df_CIL = pd.read_pickle('df_CIL_BB_summer.pkl')
+        df_sectionT = pd.read_pickle('df_BB_meanT_summer.pkl')
+    elif SEASON == 'fall' :
+        df_CIL = pd.read_pickle('df_CIL_BB_fall.pkl')
+        df_sectionT = pd.read_pickle('df_BB_meanT_fall.pkl')
 elif SECTION == 'FC':
-    df_CIL = pd.read_pickle('df_CIL_FC_summer.pkl')
-    df_sectionT = pd.read_pickle('df_FC_meanT_summer.pkl')
-    df_sectionT_cap = pd.read_pickle('df_FC_meanT_cap_summer.pkl')
-    df_sectionT_shelf = pd.read_pickle('df_FC_meanT_shelf_summer.pkl')
+    if SEASON == 'summer' :
+        df_CIL = pd.read_pickle('df_CIL_FC_summer.pkl')
+        df_sectionT = pd.read_pickle('df_FC_meanT_summer.pkl')
+        df_sectionT_cap = pd.read_pickle('df_FC_meanT_cap_summer.pkl')
+        df_sectionT_shelf = pd.read_pickle('df_FC_meanT_shelf_summer.pkl')
+    elif SEASON == 'fall' :
+        df_CIL = pd.read_pickle('df_CIL_FC_fall.pkl')
+        df_sectionT = pd.read_pickle('df_FC_meanT_fall.pkl')
+        df_sectionT_cap = pd.read_pickle('df_FC_meanT_cap_fall.pkl')
+        df_sectionT_shelf = pd.read_pickle('df_FC_meanT_shelf_fall.pkl')
 else:
     disp('Check section!')
 

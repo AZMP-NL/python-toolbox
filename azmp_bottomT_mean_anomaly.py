@@ -20,7 +20,7 @@ plt.rc('font', **font)
 
 width = 0.7
 clim_year = [1991, 2020]
-years = [1980, 2021]
+years = [1980, 2022]
 
 #### ------------- For fall ---------------- ####
 # 0.
@@ -28,7 +28,7 @@ infile = 'stats_2H_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
-bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
+bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009, 2022])
 for i in bad_years:
     df[df.index==i]=np.nan
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -39,11 +39,11 @@ std_anom2H = std_anom[['Tmean', 'Tmean_sha200']]
 # 1.
 infile = 'stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
+df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
-bad_years = np.array([1995])
+bad_years = np.array([1995, 2022])
 for i in bad_years:
     df[df.index==i]=np.nan
-df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
@@ -62,6 +62,10 @@ std_anom3K = std_anom[['Tmean', 'Tmean_sha300']]
 infile = 'stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
+# Flag bad years (no or weak sampling):
+bad_years = np.array([2021])
+for i in bad_years:
+    df[df.index==i]=np.nan
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
@@ -112,6 +116,10 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 infile = 'stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
+# Flag bad years (no or weak sampling):
+bad_years = np.array([2020, 2021])
+for i in bad_years:
+    df[df.index.year==i]=np.nan
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
@@ -122,7 +130,7 @@ infile = 'stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
-bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
+bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
 for i in bad_years:
     df[df.index.year==i]=np.nan
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -184,7 +192,7 @@ plt.legend(['Spring', 'Fall', '3Y running mean'])
 plt.title('Bottom Temperature')
 ticks = plt.gca().xaxis.get_ticklocs()
 plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
-plt.xlim([1980, 2020])
+plt.xlim([1979.5, 2022.5])
 fig_name = 'bottom_temp_anomaly.png'
 fig.set_size_inches(w=12,h=7)
 fig.savefig(fig_name, dpi=200)
@@ -260,7 +268,7 @@ plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Normalized anomaly')
 ax.set_title('Bottom Temperature')
-plt.ylim([-2,2])
+plt.ylim([-1.5,2.65])
 
 colors = cmap(normal(np.nansum(bottomT_stack_norm.values, axis=1)))
 cell_text = np.nansum(bottomT_stack_norm.values, axis=1).round(1).astype('str')

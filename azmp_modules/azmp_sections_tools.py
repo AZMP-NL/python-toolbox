@@ -190,7 +190,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     df = da.to_pandas()
     df.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns
-    idx_empty_rows = df.isnull().all(1).nonzero()[0]
+    idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
@@ -254,6 +254,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     df_section_itp = pd.DataFrame(index=stn_list, columns=z)
     for stn in stn_list:
         # 1. Section only (by station name)
+        #ds_tmp = ds.where(ds.comments == stn, drop=True)  
         ds_tmp = ds.where(ds.comments == stn, drop=True)  
         section_only.append(ds_tmp)
 
@@ -275,6 +276,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
 
     da = ds_section[var_name]
     df_section_stn = da.to_pandas()
+    #df_section_stn.index = ds_section.comments.values
     df_section_stn.index = ds_section.comments.values
     df_section_stn.index.name = 'station'    
     
@@ -380,8 +382,8 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
     ax.set_ylim([0, 400])
     #ax.set_xlim([0, distance.max()])
     ax.set_xlim([0, 300])
-    ax.set_ylabel('Depth (m)', fontWeight = 'bold')
-    ax.set_xlabel('Distance (km)', fontWeight = 'bold')
+    ax.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax.set_xlabel('Distance (km)', fontweight = 'bold')
     fig_title = 'AZMP_' + survey_name + '_' + section_name + '_' + var_name
     ax.set_title(fig_title)
     ax.invert_yaxis()
@@ -574,7 +576,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
             c_cil_itp = plt.contour(df_section.index.droplevel(0), df_section.columns, df_section.T, [0,], colors='k', linewidths=2)
     ax.set_ylim([0, ZMAX])
     ax.set_xlim([0,  XLIM])
-    ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+    ax.set_ylabel('Depth (m)', fontweight = 'bold')
     ax.invert_yaxis()
     Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
     ax.add_patch(Bgon)
@@ -590,7 +592,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         c_cil_itp = plt.contour(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, [0,], colors='k', linewidths=2)
     ax2.set_ylim([0, ZMAX])
     ax2.set_xlim([0,  XLIM])
-    ax2.set_ylabel('Depth (m)', fontWeight = 'bold')
+    ax2.set_ylabel('Depth (m)', fontweight = 'bold')
     ax2.invert_yaxis()
     Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
     ax2.add_patch(Bgon)
@@ -606,8 +608,8 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         plt.colorbar(c)
     ax3.set_ylim([0, ZMAX])
     ax3.set_xlim([0,  XLIM])
-    ax3.set_ylabel('Depth (m)', fontWeight = 'bold')
-    ax3.set_xlabel('Distance (km)', fontWeight = 'bold')
+    ax3.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax3.set_xlabel('Distance (km)', fontweight = 'bold')
     ax3.invert_yaxis()
     Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
     ax3.add_patch(Bgon)
@@ -624,9 +626,9 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     elif (VAR == 'salinity') & (SEASON == 'summer'):
             ax.set_title('Salinité à la section ' + SECTION + ' - été ' + str(YEAR))    
 
-    ax.set_ylabel('Profondeur (m)', fontWeight = 'bold')    
-    ax2.set_ylabel('Profondeur (m)', fontWeight = 'bold')
-    ax3.set_ylabel('Profondeur (m)', fontWeight = 'bold')
+    ax.set_ylabel('Profondeur (m)', fontweight = 'bold')    
+    ax2.set_ylabel('Profondeur (m)', fontweight = 'bold')
+    ax3.set_ylabel('Profondeur (m)', fontweight = 'bold')
     
     ax2.set_title(r'Climatologie 1991-2020')
     ax3.set_title(r'Anomalie')
@@ -785,7 +787,7 @@ def btl_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400):
         ax.set_ylim([0, ZMAX])
         ax.set_xlim([0, XLIM])
         plt.clabel(c_sig1, inline=1, fontsize=10, colors='gray', fmt='%1.1f')
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.invert_yaxis()
         Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
         ax.add_patch(Bgon)
@@ -803,7 +805,7 @@ def btl_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400):
         ax2.set_ylim([0, ZMAX])
         ax2.set_xlim([0,  XLIM])
         plt.clabel(c_sig2, inline=1, fontsize=10, colors='gray', fmt='%1.1f')
-        ax2.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax2.set_ylabel('Depth (m)', fontweight = 'bold')
         ax2.invert_yaxis()
         Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
         ax2.add_patch(Bgon)
@@ -817,8 +819,8 @@ def btl_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400):
         c = plt.contourf(distance_year, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
         ax3.set_ylim([0, ZMAX])
         ax3.set_xlim([0,  XLIM])
-        ax3.set_ylabel('Depth (m)', fontWeight = 'bold')
-        ax3.set_xlabel('Distance (km)', fontWeight = 'bold')
+        ax3.set_ylabel('Depth (m)', fontweight = 'bold')
+        ax3.set_xlabel('Distance (km)', fontweight = 'bold')
         ax3.invert_yaxis()
         Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
         ax3.add_patch(Bgon)

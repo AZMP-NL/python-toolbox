@@ -21,7 +21,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 year_clim = [1991, 2020]
-years = [1981, 2021]
+years = [1981, 2022]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -77,8 +77,8 @@ df_T_unstack_surf = df_T_stack_surf.unstack()
 df_T_unstack_bot = df_T_stack_bot.unstack()
 T_clim_period = df_T[(df_T.index.year>=year_clim[0]) & (df_T.index.year<=year_clim[1])]
 T_monthly_stack = T_clim_period.groupby([(T_clim_period.index.year),(T_clim_period.index.month)]).mean()
-T_monthly_clim = T_monthly_stack.mean(level=1)
-T_monthly_std = T_monthly_stack.std(level=1)
+T_monthly_clim = T_monthly_stack.groupby(level=1).mean()
+T_monthly_std = T_monthly_stack.groupby(level=1).std()
 Tave_monthly_anom = df_T_unstack_ave - T_monthly_clim['Temp 0-176m']
 Tsurf_monthly_anom = df_T_unstack_surf - T_monthly_clim['Temp 0-50m']
 Tbot_monthly_anom = df_T_unstack_bot - T_monthly_clim['Temp 150-176m']
@@ -107,8 +107,8 @@ df_S_unstack_surf = df_S_stack_surf.unstack()
 df_S_unstack_bot = df_S_stack_bot.unstack()
 S_clim_period = df_S[(df_S.index.year>=year_clim[0]) & (df_S.index.year<=year_clim[1])]
 S_monthly_stack = S_clim_period.groupby([(S_clim_period.index.year),(S_clim_period.index.month)]).mean()
-S_monthly_clim = S_monthly_stack.mean(level=1)
-S_monthly_std = S_monthly_stack.std(level=1)
+S_monthly_clim = S_monthly_stack.groupby(level=1).mean()
+S_monthly_std = S_monthly_stack.groupby(level=1).std()
 Save_monthly_anom = df_S_unstack_ave - S_monthly_clim['Sal 0-176m']
 Ssurf_monthly_anom = df_S_unstack_surf - S_monthly_clim['Sal 0-50m']
 Sbot_monthly_anom = df_S_unstack_bot - S_monthly_clim['Sal 150-176m ${~}$']
@@ -190,8 +190,8 @@ mld_unstack = mld_stack.unstack()
 # compute clim
 mld_clim_period = mld[(mld.index.year>=year_clim[0]) & (mld.index.year<=year_clim[1])]
 mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_clim_period.index.month)]).mean()
-mld_monthly_clim = mld_monthly_stack.mean(level=1)
-mld_monthly_std = mld_monthly_stack.std(level=1)
+mld_monthly_clim = mld_monthly_stack.groupby(level=1).mean()
+mld_monthly_std = mld_monthly_stack.groupby(level=1).std()
 monthly_anom = mld_unstack - mld_monthly_clim 
 monthly_stdanom = (mld_unstack - mld_monthly_clim) /  mld_monthly_std
 # Seasonal and annual anomalies
@@ -244,8 +244,8 @@ strat_unstack = strat_stack.unstack()
 # compute clim
 strat_clim_period = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
 strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
-strat_monthly_clim = strat_monthly_stack.mean(level=1)
-strat_monthly_std = strat_monthly_stack.std(level=1)
+strat_monthly_clim = strat_monthly_stack.groupby(level=1).mean()
+strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
 monthly_anom = strat_unstack - strat_monthly_clim 
 monthly_stdanom = (strat_unstack - strat_monthly_clim) /  strat_monthly_std
 
@@ -359,7 +359,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 #cell_dict = the_table.get_celld()
 #for i in np.arange(1,4):
@@ -372,7 +372,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -394,7 +394,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list_FR,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -404,7 +404,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -445,7 +445,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 #cell_dict = the_table.get_celld()
 #for i in np.arange(1,3):
@@ -458,7 +458,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -480,7 +480,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -490,7 +490,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -532,7 +532,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -542,7 +542,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -566,7 +566,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -576,7 +576,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -615,7 +615,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -625,7 +625,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -649,7 +649,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -659,7 +659,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -703,7 +703,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -713,7 +713,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -737,7 +737,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -747,7 +747,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')

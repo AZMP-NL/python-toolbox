@@ -26,10 +26,10 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'WB'
-SEASON = 'summer'
-YEAR = [1928, 2021] # For IROC
-YEAR = [1950, 2021] # For AZMP reporting
+SECTION = 'FC'
+SEASON = 'fall'
+YEAR = [1928, 2022] # For IROC
+YEAR = [1950, 2022] # For AZMP reporting
 YEAR_MIN = YEAR[0]
 YEAR_MAX = YEAR[1]
 YEAR_CLIM = [1991, 2020]
@@ -47,6 +47,7 @@ flag_WB_summer = np.append(flag_WB_summer, [2011, 2019])
 flag_WB_summer = flag_WB_summer[flag_WB_summer != 1960]
 flag_BB_summer = flag_BB_summer[(flag_BB_summer>=YEAR_MIN) & (flag_BB_summer<=YEAR_MAX)]
 flag_WB_summer = flag_WB_summer[(flag_WB_summer>=YEAR_MIN) & (flag_WB_summer<=YEAR_MAX)]
+flag_BB_fall = np.array([1993])
 
 # CIL surface (Note that there is a bias because )
 def area(vs):
@@ -117,11 +118,11 @@ else:
     print(' -> Done!')
 
 ## --------- Get climatology -------- ####
-clim_file = './df_' + SECTION + '_itp_clim.pkl'
+clim_file = './df_' + SECTION + '_' + SEASON + '_itp_clim.pkl'
 if os.path.isfile(clim_file):
     print('Load saved climatology!')
-    df_section_itp_clim = pd.read_pickle('df_' + SECTION + '_itp_clim.pkl')
-    df_section_stn_clim = pd.read_pickle('df_' + SECTION + '_stn_clim.pkl')
+    df_section_itp_clim = pd.read_pickle('df_' + SECTION + '_' + SEASON + '_itp_clim.pkl')
+    df_section_stn_clim = pd.read_pickle('df_' + SECTION + '_' + SEASON + '_stn_clim.pkl')
 
 else:
     print('Calculate climatology')
@@ -156,7 +157,7 @@ else:
     df = da_temp.to_pandas()
     df.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns
-    idx_empty_rows = df.isnull().all(1).nonzero()[0]
+    idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
@@ -176,7 +177,7 @@ else:
                 V[j,i,:] = np.array(df.iloc[idx].mean(axis=0))
             elif np.size(idx_good)>1: # vertical interpolation between pts
                 interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                idx_interp = np.arange(np.int64(idx_good[0]),np.int64(idx_good[-1]+1))
                 V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate 
 
     # horizontal interpolation at each depth
@@ -252,7 +253,7 @@ else:
         c_cil_stn = plt.contour(distance_stn, df_section_stn_clim.columns, df_section_stn_clim.T, [0,], colors='k', linewidths=2)
         ax.set_ylim([0, 400])
         ax.set_xlim([0,  XLIM])
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.set_xlabel('Distance (km)')
         ax.invert_yaxis()
         plt.colorbar(c)
@@ -273,7 +274,7 @@ else:
         c_cil_itp = plt.contour(distance_itp, df_section_itp_clim.columns, df_section_itp_clim.T, [0,], colors='k', linewidths=2)
         ax.set_ylim([0, 400])
         ax.set_xlim([0,  XLIM])
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.set_xlabel('Distance (km)')
         ax.invert_yaxis()
         plt.colorbar(c)
@@ -292,8 +293,8 @@ else:
     plt.close('all')
 
     # Save pickle
-    df_section_itp_clim.to_pickle('df_' + SECTION + '_itp_clim.pkl')
-    df_section_stn_clim.to_pickle('df_' + SECTION + '_stn_clim.pkl')
+    df_section_itp_clim.to_pickle('df_' + SECTION + '_' + SEASON + '_itp_clim.pkl')
+    df_section_stn_clim.to_pickle('df_' + SECTION + '_' + SEASON + '_stn_clim.pkl')
 
     
 ## --------- Loop on years -------- ####
@@ -364,7 +365,7 @@ for iyear, YEAR in enumerate(years):
                 V[j,i,:] = np.array(df.iloc[idx_coords].mean(axis=0))
             elif np.size(idx_good)>1: # vertical interpolation between pts
                 interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                idx_interp = np.arange(np.int64(idx_good[0]),np.int64(idx_good[-1]+1))
                 V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate
 
     # horizontal interpolation at each depth
@@ -441,13 +442,13 @@ for iyear, YEAR in enumerate(years):
     ## ---- Plot to check the result ---- ##
     XLIM = azst.haversine(df_stn.LON[0], df_stn.LAT[0],df_stn.iloc[-1].LON,df_stn.iloc[-1].LAT)
     # station-based
-    if df_section_stn.index.size > 0:
+    if df_section_stn.index.size > 1:
         fig, ax = plt.subplots()
         c = plt.contourf(distance_stn, df_section_stn.columns, df_section_stn.T, v)
         c_cil_stn = plt.contour(distance_stn, df_section_stn.columns, df_section_stn.T, [0,], colors='k', linewidths=2)
         ax.set_ylim([0, 400])
         ax.set_xlim([0,  XLIM])
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.set_xlabel('Distance (km)')
         ax.invert_yaxis()
         plt.colorbar(c)
@@ -470,7 +471,7 @@ for iyear, YEAR in enumerate(years):
         c_cil_itp = plt.contour(distance_itp, df_section_itp.columns, df_section_itp.T, [0,], colors='k', linewidths=2)
         ax.set_ylim([0, 400])
         ax.set_xlim([0,  XLIM])
-        ax.set_ylabel('Depth (m)', fontWeight = 'bold')
+        ax.set_ylabel('Depth (m)', fontweight = 'bold')
         ax.set_xlabel('Distance (km)')
         ax.invert_yaxis()
         plt.colorbar(c)

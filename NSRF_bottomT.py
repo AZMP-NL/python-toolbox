@@ -352,12 +352,12 @@ for idx, tmp in enumerate(xb):
     m.scatter(xb[idx], yb[idx], s=biomass['PB TB(kg/km2)'].iloc[idx]/50, c='orange', alpha=.5)
     m.scatter(xb[idx], yb[idx], s=biomass['PM TB(kg/km2)'].iloc[idx]/50, c='darkgray', alpha=.5)
 # add legend
-xbl, ybl = m(-69.5, 66.8)
-xml, yml = m(-69.5, 66.5)
-m.scatter(xbl, ybl, s=60, c='orange', alpha=.7, zorder=200)
-m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
-ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+## xbl, ybl = m(-69.5, 66.8)
+## xml, yml = m(-69.5, 66.5)
+## m.scatter(xbl, ybl, s=60, c='orange', alpha=.7, zorder=200)
+## m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
+## ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
+## ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
 # Save Figure
 fig.set_size_inches(w=6, h=9)
 fig.set_dpi(200)

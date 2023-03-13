@@ -28,7 +28,7 @@ plt.rc('font', **font)
 
 
 YEAR_MIN = 1950
-YEAR_MAX = 2021
+YEAR_MAX = 2022
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
 width = 0.7
@@ -42,6 +42,7 @@ nao = nao[nao.index<YEAR_MAX+1]
 # normalize NAO with std.
 #nao_clim = nao[(nao.index>=clim_year[0]) & (nao.index<=clim_year[1])]
 #nao = nao / nao_clim.std()
+nao.index.name = 'Year'
 nao_natural = nao.copy()
 nao = nao*-1
 
@@ -58,7 +59,7 @@ air.name = 'Air Temp'
 if clim_year[0] == 1981:
     ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1981-2010.dat', header=None, sep=' ')
 else:
-    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.dat', header=None, sep=' ')
+    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1991-2020.dat', header=None, sep=' ')
 ice.set_index(0, inplace=True)
 ice.index.name='Year'
 ice.rename(columns={ice.columns[0]: "Sea Ice" }, inplace = True)
@@ -123,6 +124,10 @@ s27_temp = s27_temp['Temp 0-176m']
 s27_sal = s27_sal['Sal 0-176m']
 s27_temp.name = 'S27 T'
 s27_sal.name = 'S27 S'
+# rename index
+s27_temp.index.name='Year'
+s27_sal.index.name='Year'
+# change salinity sign
 s27_sal_natural = s27_sal.copy()
 s27_sal = s27_sal*-1 # assume fresh = warm
 
@@ -160,6 +165,7 @@ s27_cil[s27_cil.index==2020] = np.nan
 #s27_cil = s27_cil[['CIL temp', 'CIL core T']].mean(axis=1) # previous version
 s27_cil = s27_cil[['CIL core T']].mean(axis=1) # new version
 s27_cil.name = 'S27 CIL'
+s27_cil.index.name='Year'
 
 # 7. Section CIL (only area) [.pkl files form azmp_CIL_mean_anomaly.py]
 if clim_year[0] == 1981:
@@ -169,6 +175,7 @@ else:
 # Select volume and/or coreT
 section_cil = section_cil['volume'] # volume and/or core
 section_cil.name = 'CIL area' 
+section_cil.index.name='Year'
 section_cil_natural = section_cil.copy()
 section_cil = section_cil*-1
 
@@ -181,15 +188,18 @@ else:
     bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall.pkl')
 bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
 bottomT.name = 'Bottom T'
+bottomT.index.name = 'Year'
 
 #### ----- Merge the data ---- ####
 climate_index = pd.concat([nao, air, ice, bergs, sst, s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
+climate_index.sort_index(inplace=True)
 climate_index = climate_index[climate_index.index>=YEAR_MIN]
 climate_index_sc = climate_index.copy() # for scorecards at top
 climate_index.loc[1950] = climate_index.loc[1950]*np.nan
 
 # keep a copy with Natural signs
 climate_index_natural = pd.concat([nao_natural, air, ice_natural, bergs_natural, sst, s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
+climate_index_natural.sort_index(inplace=True)
 climate_index_natural = climate_index_natural[climate_index_natural.index>=YEAR_MIN]
 
 ## Save index (in English)

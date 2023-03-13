@@ -17,7 +17,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 width = 0.7
 
-clim_year = [1981, 2010]
+clim_year = [1991, 2020]
 
 #### ------------- For fall ---------------- ####
 # 1.

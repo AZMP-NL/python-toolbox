@@ -22,10 +22,10 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'SWSPB'
-SEASON = 'spring'
+SECTION = 'SI'
+SEASON = 'fall'
 #CLIM_YEAR = [1991, 2020]
-CLIM_YEAR = [1991, 2017]
+CLIM_YEAR = [1991, 2010]
 dlat = 2 # how far from station we search
 dlon = 2
 z1 = 2

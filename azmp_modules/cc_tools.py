@@ -43,7 +43,7 @@ import cartopy. crs as ccrs
 import cartopy.feature as cpf
 import matplotlib.ticker as mticker
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-import cc_variable_list2 as vl
+import cc_variable_list_NL as vl
 
 def HUD2014_to_multiindex(section, z_vec):
     """
@@ -384,3 +384,254 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     fig_name = 'AZMP_OA_'+str(YEAR)+'_'+SEASON+'_'+VARIABLE.replace('/','-per-')+'_'+DEPTH+'.png'
     fig.savefig(fig_name, format='png', dpi=300, bbox_inches='tight')
     
+
+def seasonal_map_NL(VARIABLE, YEAR, SEASON, DEPTH):
+
+    """
+
+    To produce AZMP BGC ResDoc figures
+
+    Frederic.Cyr@dfo-mpo.gc.ca
+    Feb 2023
+
+    """
+
+    # English/French station names
+    stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
+    if SEASON == 'summer':
+        SEC_toplot = ['MB', 'SI', 'BB', 'S27', 'FC']
+        SEC_toplot_french = [' BM', ' IS', ' BB', 'S27', 'BF']
+    elif SEASON == 'fall':
+        SEC_toplot = ['BB', 'FC', 'SEGB', 'SPB']
+        SEC_toplot_french = [' BB', 'BF', ' GBSE',' BSP']
+    # For colorbar:
+    v = vl.variable_parameters(VARIABLE)
+    num_levels = v[0]
+    vmin = v[1]
+    vmax = v[2]
+    midpoint = v[3]
+    colors = v[4]
+    ticks = v[5]
+    axis_label = v[6]
+    extent = v[7]
+
+    # Figure name
+    if VARIABLE == 'Omega_Aragonite_(unitless)':
+        FIG_VAR = 'OmegaA'
+    elif VARIABLE == 'pH_Total_(total_scale)':
+        FIG_VAR = 'pH'
+    elif VARIABLE == 'Oxygen_Saturation_(%)':
+        FIG_VAR = 'DO_perc'    
+    elif VARIABLE == 'Dissolved_Oxygen_(mL/L)':
+        FIG_VAR = 'DO'
+
+
+    ## ---- Station info ---- ##
+    import pandas as pd
+    df = pd.read_excel(stationFile)
+    sections = df['SECTION'].values
+    stations = df['STATION'].values
+    stationLat = df['LAT'].values
+    stationLon = df['LONG.1'].values
+
+    index_BI = df.SECTION[df.SECTION=="BEACH ISLAND"].index.tolist()
+    index_MB = df.SECTION[df.SECTION=="MAKKOVIK BANK"].index.tolist()
+    index_SI = df.SECTION[df.SECTION=="SEAL ISLAND"].index.tolist()
+    index_WB = df.SECTION[df.SECTION=="WHITE BAY"].index.tolist()
+    index_BB = df.SECTION[df.SECTION=="BONAVISTA"].index.tolist()
+    index_FC = df.SECTION[df.SECTION=="FLEMISH CAP"].index.tolist()
+    index_SEGB = df.SECTION[df.SECTION=="SOUTHEAST GRAND BANK"].index.tolist()
+    index_SESPB = df.SECTION[df.SECTION=="SOUTHEAST ST PIERRE BANK"].index.tolist()
+    index_SPB = df.SECTION[df.SECTION=="SOUTHWEST ST PIERRE BANK"].index.tolist()
+    index_S27 = df.SECTION[df.SECTION=="STATION 27"].index.tolist()
+
+
+    # Read the entire AZMP dataset
+    df = pd.read_csv('/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_carbon_data.csv', delimiter=',')
+
+    # Set index
+    df.set_index('Timestamp', inplace=True)
+    df.index = pd.to_datetime(df.index)
+
+    # Only year in review
+    df = df[df.index.year==YEAR]
+
+    # Only NL region
+    df = df[df.Region=='NL']
+
+    # Season
+    if SEASON == 'spring':
+        df = df[(df.index.month>=3) & (df.index.month<=6)]
+    elif SEASON == 'summer':
+        df = df[(df.index.month>=6) & (df.index.month<=10)]
+    elif SEASON == 'fall':
+        df = df[(df.index.month>=10) & (df.index.month<=12)]
+    else:        
+        print('All seasons selected')
+
+
+    if df[VARIABLE].isna().values.all():# or df.size == 0:
+        print ('!!! no data for this season !!!')
+        sys.exit()
+
+    df.dropna(subset=[VARIABLE, 'pH_Total_(total_scale)', 'Omega_Aragonite_(unitless)', 'Station_Name', 'Depth_(dbar)'], axis=0, inplace=True)
+    df = df.reset_index(drop=True)
+    # Set depth as float (had some problem with some data set)
+    df = df.astype({'Depth_(dbar)':'float', VARIABLE:'float'})  
+    #######locates depth -- either surface, bottom, or within a range of depths############
+    if DEPTH == 'surface':
+        df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmin()] #group by station then pull "min or max depth"
+        df = df.loc[df['Depth_(dbar)'] <20] #take all depths >10m (for bottom) to eliminate lone surface samples, all depths <20m (for surface) to eliminate lone deep sample
+    elif DEPTH == 'bottom':
+        df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmax()] #group by station then pull "min or max depth"
+        df = df.loc[df['Depth_(dbar)'] >10] #take all depths >10m (for bottom) to eliminate lone surface samples
+
+    elif DEPTH == 'range':
+        df = df.loc[(df['Depth_(dbar)'] >=135) & (df.depth <=165)]
+        df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmax()] #group by station then pull "min or max depth"
+
+
+    ############create bathymetry################
+    dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc'
+    ###map boundaries###
+    if SEASON == 'summer':
+        lonLims = [-65, -41.5]  
+        latLims = [45, 58.4]
+    else:
+        lonLims = [-58, -41.5]  
+        latLims = [40.5, 52.6]   
+
+    ##### this is the dataset that will be plotted ##########
+    lat_data = np.array(df['Latitude_(degNorth)'])
+    lon_data = np.array(df['Longitude_(degEast)'])
+    data = np.array(df[VARIABLE])
+    lon_data = lon_data[~np.isnan(data)]
+    lat_data = lat_data[~np.isnan(data)]
+    data = data[~np.isnan(data)]
+
+    print('Load and grid bathymetry')
+    # h5 file
+    h5_outputfile = '/home/cyrf0006/AZMP/oa/cc_bathymetry.h5'
+    if os.path.isfile(h5_outputfile):
+         print([h5_outputfile + ' exists! Reading directly'])
+         h5f = h5py.File(h5_outputfile,'r')
+         lon = h5f['lon'][:]
+         lat = h5f['lat'][:]
+         Z = h5f['Z'][:]
+         h5f.close()
+
+    else:
+        # Extract variables
+        dataset = netCDF4.Dataset(dataFile)
+        x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
+        y = [-89-59.75/60, 89+59.75/60]
+        spacing = dataset.variables['spacing']
+
+        # Compute Lat/Lon
+        nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+        ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+        lon = np.linspace(x[0],x[-1],nx)
+        lat = np.linspace(y[0],y[-1],ny)
+        ## interpolate data on regular grid (temperature grid)
+        ## Reshape data
+        zz = dataset.variables['z']
+        Z = zz[:].reshape(ny, nx)
+        Z = np.flipud(Z) # <------------ important!!!
+        # Reduce data according to Region params
+        idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+        idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+        Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+        lon = lon[idx_lon[0]]
+        lat = lat[idx_lat[0]]
+
+        # Save data for later use
+        h5f = h5py.File(h5_outputfile, 'w')
+        h5f.create_dataset('lon', data=lon)
+        h5f.create_dataset('lat', data=lat)
+        h5f.create_dataset('Z', data=Z)
+        h5f.close()
+        print(' -> Done!')
+
+
+    ## ---- plot map ---- ##
+    print('--- Now plot ---')
+    fig = plt.figure(figsize=(7,5))
+    ax = fig.add_subplot(111, projection=ccrs.Mercator())
+    ax.set_extent([lonLims[0], lonLims[1], latLims[0], latLims[1]], crs=ccrs.PlateCarree())
+    #ax.set_extent([-72, -41.5, 40.5, 55.1], crs=ccrs.PlateCarree())
+    ax.add_feature(cpf.NaturalEarthFeature('physical', 'coastline', '50m', edgecolor='k', alpha=0.7, linewidth=0.6, facecolor='black'), zorder=15)#cpf.COLORS['land']))
+    m=ax.gridlines(linewidth=0.5, color='black', draw_labels=True, alpha=0.5)
+    m.top_labels = False
+    m.right_labels = False
+    m.xlocator = mticker.FixedLocator([-75, -70, -60, -50, -40])
+    m.ylocator = mticker.FixedLocator([40, 45, 50, 55, 60, 65])
+    m.xformatter = LONGITUDE_FORMATTER
+    m.yformatter = LATITUDE_FORMATTER
+    m.ylabel_style = {'size': 7, 'color': 'black', 'weight':'bold'}
+    m.xlabel_style = {'size': 7, 'color': 'black', 'weight':'bold'}
+    lightdeep = cmocean.tools.lighten(cmo.deep, 0.5)
+    ls = np.linspace(0, 5500, 20)
+    c = plt.contourf(lon, lat, -Z, ls, transform=ccrs.PlateCarree(), cmap=lightdeep, extend='max', zorder=5)
+    cc = plt.contour(lon, lat, -Z, [100, 500, 1000, 2000, 3000, 4000, 5000], colors='silver', linewidths=.5, transform=ccrs.PlateCarree(), zorder=10)
+    plt.clabel(cc, inline=True, fontsize=7, fmt='%i')
+
+    # adjust the colorbar
+    levels = np.linspace(vmin, vmax, num_levels)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    vals = np.interp(midp, [vmin, midpoint, vmax], [0, 0.5, 1])
+    colors = colors(vals)
+    colors=np.concatenate([[colors[0,:]], colors, [colors[-1,:]]],0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend=extent)
+
+    # plot data onto map
+    s = ax.scatter(lon_data,lat_data, c=data, s=20, lw=0.3, edgecolor='black', vmin=vmin, vmax=vmax, cmap=cmap, transform=ccrs.Geodetic(), zorder=20)
+    cax = plt.axes([0.83,0.125,0.03,0.756])
+    cb = plt.colorbar(s, cax=cax, extend=extent, ticks=ticks)
+    cb.ax.tick_params(labelsize=8)
+    cb.set_label(axis_label, fontsize=12, fontweight='normal')
+
+    # add text
+    if SEASON == 'summer':
+        ax.text(-42, 57.8+.05, str(YEAR), horizontalalignment='right', color='black', zorder=200,
+                fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+        season_text = ax.text(-42, 57.8, '('+SEASON+')', horizontalalignment='right', color='black', verticalalignment='top', zorder=200,
+                fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())    
+    else:
+         ax.text(-42, 52+.05, str(YEAR), horizontalalignment='right', color='black', zorder=200,
+                fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())   
+         season_text = ax.text(-42, 52, '('+SEASON+')', horizontalalignment='right', color='black', verticalalignment='top', zorder=200,
+                fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())   
+
+    ## plot AZMP section names
+    ax_text = SEC_toplot.copy()
+    for i, sec in enumerate(SEC_toplot):
+        sec = SEC_toplot[i]
+        sec_index = eval('index_' + sec)
+        if sec == 'FC':
+            ax_text[i] = ax.text(stationLon[sec_index][-4], stationLat[sec_index][-4], sec, horizontalalignment='left', verticalalignment='top', color='black', zorder=200, fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+        elif sec == 'S27':
+            ax_text[i] = ax.text(stationLon[sec_index][-8], stationLat[sec_index][-8], sec, horizontalalignment='left', color='black', zorder=200, fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+        elif sec == 'SPB':
+            ax_text[i] = ax.text(stationLon[sec_index][4], stationLat[sec_index][4], ' '+sec, horizontalalignment='left', verticalalignment='top', color='black', zorder=200, fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+        else:
+            ax_text[i] = ax.text(stationLon[sec_index][-1], stationLat[sec_index][-1], ' '+sec, horizontalalignment="left", color="black", zorder=200, fontsize=12, fontweight="bold", transform=ccrs.PlateCarree())
+
+    # Save figure
+    fig_name = 'NL_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'.png'
+    fig.savefig(fig_name, dpi=300)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+    ## Save in French
+    if SEASON == 'summer':
+        season_text.set_text("(été)")
+    elif SEASON == 'fall':
+        season_text.set_text("(automne)")
+
+    for i, sec in enumerate(SEC_toplot_french):
+        ax_text[i].set_text(SEC_toplot_french[i])
+
+    fig_name = 'NL_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'_FR.png'
+    fig.savefig(fig_name, dpi=300)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
