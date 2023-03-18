@@ -10,8 +10,11 @@ Station 27 analysis for CSAS/NAFO ResDocs. This scripts compute:
 
 * note that since Sept. 2020, density, MLD and stratification are calculated in azmp_stn27_density.py
 
-Frederic.Cyr@dfo-mpo.gc.ca - July 2019
+Frederic.Cyr@dfo-mpo.gc.ca
+Jonathan.Coyne@dfo-mpo.gc.ca
 
+Creation: July 2019
+Last update: March 2023
 '''
 
 import numpy as np
@@ -25,11 +28,6 @@ from matplotlib.ticker import NullFormatter
 from matplotlib.dates import MonthLocator, DateFormatter
 import cmocean
 import gsw
-
-## font = {'family' : 'normal',
-##         'weight' : 'bold',
-##         'size'   : 14}
-## plt.rc('font', **font)
 
 
 def make_patch_spines_invisible(ax):
@@ -59,66 +57,90 @@ for y in years_flag:
     mld_monthly[mld_monthly.index.year==y] = np.nan
     strat_monthly[strat_monthly.index.year==y] = np.nan
 
+# Limit to 1950 and after
 df_temp = df_temp[df_temp.index.year>=1950]
 df_sal = df_sal[df_sal.index.year>=1950]
+mld_monthly = mld_monthly[mld_monthly.index.year>=1950]
+strat_monthly = strat_monthly[strat_monthly.index.year>=1950]
 # remove 1950
 df_temp[df_temp.index.year==1950] = np.nan
 df_sal[df_sal.index.year==1950] = np.nan
+# BELOW IS A WEAKNESS IN THE CODE THAT NEEDS TO BE FIXED
+# since there is no data in Dec. 2022, create fake one (not classy, but works for now)
+if current_year == 2022:
+    df_temp.loc[pd.to_datetime('2022-12-15 00:00:00')]=df_temp.loc['2022-11-15']*np.nan
+    df_sal.loc[pd.to_datetime('2022-12-15 00:00:00')]=df_sal.loc['2022-11-15']*np.nan
 
-mld_monthly = mld_monthly[mld_monthly.index.year>=1950]
-strat_monthly = strat_monthly[strat_monthly.index.year>=1950]
+# Climatological period
+#df_temp_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
+#df_sal_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
 
-df_temp_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
-df_sal_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
-
-## # Compute density
-## Z = df_temp.columns
-## SP = df_sal.values
-## PT = df_temp.values
-## SA = gsw.SA_from_SP(SP, Z, -50, 47)
-## CT = gsw.CT_from_pt(SA, PT)
-## RHO = gsw.rho(SA, CT, Z)
-## SIG0 = gsw.sigma0(SA, CT)
-## df_rho = pd.DataFrame(RHO, index=df_temp.index, columns=df_temp.columns)
-## df_sig = pd.DataFrame(SIG0, index=df_temp.index, columns=df_temp.columns)
-
-## # Compute N2 and MLD
-## print('Compute N2 and MLD for every index (make take some time...)')
-## N2 = np.full((df_rho.index.size, df_rho.columns.size-1), np.nan)
-## MLD = np.full((df_rho.index.size), np.nan)
-## for i,idx in enumerate(df_rho.index):     
-##         N2_tmp, pmid = gsw.Nsquared(SA[i,:], CT[i,:], Z, 47)
-##         N2[i,:] =  N2_tmp
-##         N2_tmp[np.where((pmid<=10) | (pmid>=100))] = np.nan
-##         if ~np.isnan(N2_tmp).all():
-##                 MLD[i] = pmid[np.nanargmax(N2_tmp)]
-## print('  Done!')
-## df_N2 = pd.DataFrame(N2, index=df_temp.index, columns=pmid)
-## MLD = pd.Series(MLD, index=df_temp.index)
-## MLD.to_pickle('S27_MLD_monthly.pkl')
-
-
-
-## ---- 1.  Vertically averaged conditions ---- ##
+## ---- 1.  Vertically averaged conditions (old) ---- ##
 # Temperature
-my_ts = df_temp.mean(axis=1)
+xmy_ts = df_temp.mean(axis=1)
 # New from March 2020 - Annual anomaly = mean of monthly anomalies
-ts_stack = my_ts.groupby([(my_ts.index.year),(my_ts.index.month)]).mean()
-ts_unstack = ts_stack.unstack()
-ts_clim_period = my_ts[(my_ts.index.year>=year_clim[0]) & (my_ts.index.year<=year_clim[1])]
-ts_monthly_stack = ts_clim_period.groupby([(ts_clim_period.index.year),(ts_clim_period.index.month)]).mean()
-ts_monthly_clim = ts_monthly_stack.groupby(level=1).mean()
-ts_monthly_std = ts_monthly_stack.groupby(level=1).std()
-monthly_anom = ts_unstack - ts_monthly_clim 
-monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
+xts_stack = xmy_ts.groupby([(xmy_ts.index.year),(xmy_ts.index.month)]).mean()
+xts_unstack = xts_stack.unstack()
+xts_clim_period = xmy_ts[(xmy_ts.index.year>=year_clim[0]) & (xmy_ts.index.year<=year_clim[1])]
+xts_monthly_stack = xts_clim_period.groupby([(xts_clim_period.index.year),(xts_clim_period.index.month)]).mean()
+xts_monthly_clim = xts_monthly_stack.groupby(level=1).mean()
+xts_monthly_std = xts_monthly_stack.groupby(level=1).std()
+xmonthly_anom = xts_unstack - xts_monthly_clim 
+xmonthly_stdanom = (xts_unstack - xts_monthly_clim) /  xts_monthly_std
+xanom_std = xmonthly_stdanom.mean(axis=1)
+xanom_std.index = pd.to_datetime(xanom_std.index, format='%Y')
+xanom = xmonthly_anom.mean(axis=1) 
+xanom.index = pd.to_datetime(xanom.index, format='%Y')
+# Annual mean is given by annual anomaly + monthly clim
+xannual_mean = xanom + xts_monthly_clim.mean()
+# For Iroc:
+xiroc_stn27_T = pd.concat([xannual_mean, xanom, xanom_std], axis=1, keys=['T', 'Tanom', 'Tanom_std'])
+
+
+## ---- 1.  Vertically averaged conditions (2023 update) ---- ##
+
+## - Temperature - ##
+# stack year, month
+ts_stack = df_temp.groupby([(df_temp.index.year),(df_temp.index.month)]).mean()
+# rename index
+ts_stack.index = ts_stack.index.set_names(['year', 'month'])
+# Isolate period for climatology
+df_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
+# Calculate Monthly clim
+monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
+monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
+ts_monthly_clim = monthly_clim_mean.mean(axis=1)
+ts_monthly_std = monthly_clim_stdv.mean(axis=1)
+# Tile the climatology for however many years are present
+years = len(df_temp.index.year.unique())
+monthly_clim_mean = pd.concat([monthly_clim_mean] * years) #<-- good job, I like this!
+monthly_clim_stdv = pd.concat([monthly_clim_stdv] * years)
+# Set multi-index to clim (using ts_stack index)
+monthly_clim_mean.set_index(ts_stack.index, inplace=True)
+monthly_clim_stdv.set_index(ts_stack.index, inplace=True)
+# Calculate anomalies (mi = miltiindex)
+anom_mi = ts_stack-monthly_clim_mean
+std_anom_mi = (ts_stack-monthly_clim_mean) / monthly_clim_stdv
+# vertically-averaged anomalies
+anom_monthly = anom_mi.mean(axis=1)
+std_anom_monthly = std_anom_mi.mean(axis=1)
+# Monthly anomalies
+monthly_stdanom = std_anom_monthly.unstack()
+monthly_anom = anom_monthly.unstack()
+# revert monthly anomalies to single index
+anom_monthly.index = df_temp.index
+std_anom_monthly.index = df_temp.index
+# Annual anomalies
 anom_std = monthly_stdanom.mean(axis=1)
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
 anom = monthly_anom.mean(axis=1) 
 anom.index = pd.to_datetime(anom.index, format='%Y')
 # Annual mean is given by annual anomaly + monthly clim
 annual_mean = anom + ts_monthly_clim.mean()
+
 # For Iroc:
 iroc_stn27_T = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['T', 'Tanom', 'Tanom_std'])
+
 
 # Plot anomaly
 df1 = anom_std[anom_std>0]
@@ -132,7 +154,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average temperature (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2.5, 2.5])
+plt.ylim([-1.75, 1.75])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -164,45 +186,65 @@ fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 # UNCORRECTED for missing months (Corrected since March 2020 for 2019 data)
-old_my_ts = my_ts.resample('As').mean()
-clim_vertical = df_temp_clim_period.mean(axis=1)
-clim_vertical = clim_vertical.resample('As').mean()
-clim_mean = clim_vertical.mean()
-clim_std = clim_vertical.std()
-old_anom = (old_my_ts - clim_mean)
-old_anom_std = old_anom / clim_std
-df1 = old_anom_std[old_anom_std>0]
-df2 = old_anom_std[old_anom_std<0]
-fig = plt.figure(1)
-fig.clf()
-width = 200
-p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
-p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
-plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
-plt.ylabel('Normalized anomaly')
-plt.title('Station 27 - Average temperature (0-176m)')
+#old_my_ts = my_ts.resample('As').mean()
+#clim_vertical = df_temp_clim_period.mean(axis=1)
+#clim_vertical = clim_vertical.resample('As').mean()
+#clim_mean = clim_vertical.mean()
+#clim_std = clim_vertical.std()
+#old_anom = (old_my_ts - clim_mean)
+#old_anom_std = old_anom / clim_std
+#df1 = old_anom_std[old_anom_std>0]
+#df2 = old_anom_std[old_anom_std<0]
+#fig = plt.figure(1)
+#fig.clf()
+#width = 200
+#p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
+#p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
+#plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+#plt.ylabel('Normalized anomaly')
+#plt.title('Station 27 - Average temperature (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2.5, 2.5])
-plt.grid()
+#plt.ylim([-2.5, 2.5])
+#plt.grid()
 # Save Figure
-fig.set_size_inches(w=7,h=4)
-fig_name = 's27_vert_temp_anomaly_uncorrected.png'
-fig.savefig(fig_name, dpi=300)
-os.system('convert -trim ' + fig_name + ' ' + fig_name)
+#fig.set_size_inches(w=7,h=4)
+#fig_name = 's27_vert_temp_anomaly_uncorrected.png'
+#fig.savefig(fig_name, dpi=300)
+#os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
-
-# Salinity
-my_ts = df_sal.mean(axis=1)
-# New from March 2020 - Annual anomaly = mean of monthly anomalies
-ts_stack = my_ts.groupby([(my_ts.index.year),(my_ts.index.month)]).mean()
-ts_unstack = ts_stack.unstack()
-ts_clim_period = my_ts[(my_ts.index.year>=year_clim[0]) & (my_ts.index.year<=year_clim[1])]
-ts_monthly_stack = ts_clim_period.groupby([(ts_clim_period.index.year),(ts_clim_period.index.month)]).mean()
-ts_monthly_clim = ts_monthly_stack.groupby(level=1).mean()
-ts_monthly_std = ts_monthly_stack.groupby(level=1).std()
-monthly_anom = ts_unstack - ts_monthly_clim 
-monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
-anom_std = monthly_stdanom.mean(axis=1) 
+## - Salinity - ##
+# stack year, month
+ts_stack = df_sal.groupby([(df_sal.index.year),(df_sal.index.month)]).mean()
+# rename index
+ts_stack.index = ts_stack.index.set_names(['year', 'month'])
+# Isolate period for climatology
+df_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
+# Calculate Monthly clim
+monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
+monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
+ts_monthly_clim = monthly_clim_mean.mean(axis=1)
+ts_monthly_std = monthly_clim_stdv.mean(axis=1)
+# Tile the climatology for however many years are present
+years = len(df_sal.index.year.unique())
+monthly_clim_mean = pd.concat([monthly_clim_mean] * years) #<-- good job, I like this!
+monthly_clim_stdv = pd.concat([monthly_clim_stdv] * years)
+# Set multi-index to clim (using ts_stack index)
+monthly_clim_mean.set_index(ts_stack.index, inplace=True)
+monthly_clim_stdv.set_index(ts_stack.index, inplace=True)
+# Calculate anomalies (mi = miltiindex)
+anom_mi = ts_stack-monthly_clim_mean
+std_anom_mi = (ts_stack-monthly_clim_mean) / monthly_clim_stdv
+# vertically-averaged anomalies
+anom_monthly = anom_mi.mean(axis=1)
+std_anom_monthly = std_anom_mi.mean(axis=1)
+# Monthly anomalies
+monthly_stdanom = std_anom_monthly.unstack()
+monthly_anom = anom_monthly.unstack()
+# revert monthly anomalies to single index
+anom_monthly.index = df_sal.index
+std_anom_monthly.index = df_sal.index
+# Annual anomalies
+anom_std = monthly_stdanom.mean(axis=1)
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
 anom = monthly_anom.mean(axis=1) 
 anom.index = pd.to_datetime(anom.index, format='%Y')
@@ -214,6 +256,31 @@ iroc_stn27_S = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['S', 'Sano
 iroc_stn27 = pd.concat([iroc_stn27_T, iroc_stn27_S], axis=1)
 iroc_stn27.index = iroc_stn27.index.year
 iroc_stn27.to_csv('iroc_stn27.csv', sep=',', float_format='%0.3f')
+
+
+# Salinity
+#my_ts = df_sal.mean(axis=1)
+# New from March 2020 - Annual anomaly = mean of monthly anomalies
+#ts_stack = my_ts.groupby([(my_ts.index.year),(my_ts.index.month)]).mean()
+#ts_unstack = ts_stack.unstack()
+#ts_clim_period = my_ts[(my_ts.index.year>=year_clim[0]) & (my_ts.index.year<=year_clim[1])]
+#ts_monthly_stack = ts_clim_period.groupby([(ts_clim_period.index.year),(ts_clim_period.index.month)]).mean()
+#ts_monthly_clim = ts_monthly_stack.groupby(level=1).mean()
+#ts_monthly_std = ts_monthly_stack.groupby(level=1).std()
+#monthly_anom = ts_unstack - ts_monthly_clim 
+#monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
+#anom_std = monthly_stdanom.mean(axis=1) 
+#anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
+#anom = monthly_anom.mean(axis=1) 
+#anom.index = pd.to_datetime(anom.index, format='%Y')
+# Annual mean is given by annual anomaly + monthly clim
+#annual_mean = anom + ts_monthly_clim.mean()
+
+# For Iroc:
+#iroc_stn27_S = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['S', 'Sanom', 'Sanom_std'])
+#iroc_stn27 = pd.concat([iroc_stn27_T, iroc_stn27_S], axis=1)
+#iroc_stn27.index = iroc_stn27.index.year
+#iroc_stn27.to_csv('iroc_stn27.csv', sep=',', float_format='%0.3f')
 
 # Plot anomaly
 df1 = anom_std[anom_std>0]
@@ -242,31 +309,31 @@ fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 # UNCORRECTED for missing months (Corrected since March 2020 for 2019 data)
-old_my_ts = my_ts.resample('As').mean()
-clim_vertical = df_sal_clim_period.mean(axis=1)
-clim_vertical = clim_vertical.resample('As').mean()
-clim_mean = clim_vertical.mean()
-clim_std = clim_vertical.std()
-old_anom = (old_my_ts - clim_mean)
-old_anom_std = old_anom / clim_std
-df1 = old_anom_std[old_anom_std>0]
-df2 = old_anom_std[old_anom_std<0]
-fig = plt.figure(1)
-fig.clf()
-width = 200
-p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
-p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
-plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
-plt.ylabel('Normalized anomaly')
-plt.title('Station 27 - Average salinity (0-176m)')
+#old_my_ts = my_ts.resample('As').mean()
+#clim_vertical = df_sal_clim_period.mean(axis=1)
+#clim_vertical = clim_vertical.resample('As').mean()
+#clim_mean = clim_vertical.mean()
+#clim_std = clim_vertical.std()
+#old_anom = (old_my_ts - clim_mean)
+#old_anom_std = old_anom / clim_std
+#df1 = old_anom_std[old_anom_std>0]
+#df2 = old_anom_std[old_anom_std<0]
+#fig = plt.figure(1)
+#fig.clf()
+#width = 200
+#p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
+#p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
+#plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+#plt.ylabel('Normalized anomaly')
+#plt.title('Station 27 - Average salinity (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2, 2])
-plt.grid()
+#plt.ylim([-2, 2])
+#plt.grid()
 # Save Figure
-fig.set_size_inches(w=7,h=4)
-fig_name = 's27_vert_sal_anomaly_uncorrected.png'
-fig.savefig(fig_name, dpi=300)
-os.system('convert -trim ' + fig_name + ' ' + fig_name)
+#fig.set_size_inches(w=7,h=4)
+#fig_name = 's27_vert_sal_anomaly_uncorrected.png'
+#fig.savefig(fig_name, dpi=300)
+#os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 
