@@ -154,7 +154,8 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average temperature (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-1.75, 1.75])
+#plt.ylim([-1.75, 1.75])
+plt.ylim([-2.5,2.5])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)

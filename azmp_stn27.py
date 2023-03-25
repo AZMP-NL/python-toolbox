@@ -41,7 +41,7 @@ dc = .025
 year_clim = [1991, 2020]
 
 current_year = 2022
-variable = 'temperature'
+variable = 'temerature'
 use_viking = False
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 

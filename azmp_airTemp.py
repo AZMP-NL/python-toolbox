@@ -238,8 +238,8 @@ df.columns = ['Nuuk', 'Iqaluit', 'Cartwright', 'Bonavista', 'StJohns']
 ## ---- Monthly anomalies for current year ---- ##
 df_clim_period = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 df_monthly_stack = df_clim_period.groupby([(df_clim_period.index.year),(df_clim_period.index.month)]).mean()
-df_monthly_clim = df_monthly_stack.mean(level=1)
-df_monthly_std = df_monthly_stack.std(level=1)
+df_monthly_clim = df_monthly_stack.groupby(level=1).mean()
+df_monthly_std = df_monthly_stack.groupby(level=1).std()
 
 df_current_year = df[df.index.year==current_year]
 year_index = df_current_year.index # backup index

@@ -162,7 +162,7 @@ df_MAR['sample_id'] = df_MAR['collector_event_id'] +"_"+ df_MAR['collector_sampl
 df_MAR = df_MAR.merge(bio_flags, on='sample_id', how='left')
 
 # Only select desired columns
-variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'NO3', 'O2', 'O2sat_perc', 'TA', 'temp_pH', 'pH_25', 'PO4', 'salinity', 'SiO', 'temperature', 'TIC', 'TAflag', 'pHflag', 'TICflag']
+variables = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'NO3', 'O2', 'TA', 'temp_pH', 'pH_25', 'PO4', 'salinity', 'SiO', 'temperature', 'TIC', 'TAflag', 'pHflag', 'TICflag']
 df_MAR = df_MAR.loc[:,variables]
 
 # Drop GSL data > 2014 (in 2014, data processed at BIO, the rest at IML).
@@ -247,7 +247,7 @@ df_nut.to_csv('nuts_file_example.csv', float_format='%.4f', index=False)
 MAR_index = MAR2019.index
 MAR2019 = MAR2019.merge(df_nut, on='sample_id', how='left')
 MAR2019.index = MAR_index
-
+ 
 # Rename columns
 MAR2019 = MAR2019.rename(columns={'Station' : 'StationID'})
 MAR2019 = MAR2019.rename(columns={'PrDM' : 'depth'})
@@ -261,8 +261,11 @@ MAR2019 = MAR2019.rename(columns={'O2_Concentration(ml/l)' : 'O2'})
 MAR2019 = MAR2019.rename(columns={'cruise_number' : 'TripID'})
  
 # select columns
-MAR2019 = MAR2019.loc[:,variables]
 MAR2019['Region'] ='MAR'
+MAR2019['pHflag'] = np.NaN
+MAR2019['temp_pH'] = np.NaN
+MAR2019['pH_25'] = np.NaN
+MAR2019 = MAR2019.loc[:,variables]
 # append to df_MAR
 df_MAR = df_MAR.append(MAR2019, ignore_index=True)
 
@@ -308,10 +311,45 @@ MAR2020 = MAR2020.rename(columns={'TIC flag' : 'TICflag'})
 MAR2020 = MAR2020.rename(columns={'O2_Concentration(ml/l)' : 'O2'})
 MAR2020 = MAR2020.rename(columns={'cruise_number' : 'TripID'})
 # select columns
-MAR2020 = MAR2020.loc[:,variables]
 MAR2020['Region'] ='MAR'
+MAR2020['pHflag'] = np.NaN
+MAR2020['temp_pH'] = np.NaN
+MAR2020['pH_25'] = np.NaN
+MAR2020 = MAR2020.loc[:,variables]
 # append to df_MAR
 df_MAR = df_MAR.append(MAR2020, ignore_index=True)
+
+## 1.5 --- BIO's 2022
+# Not there yet
+
+## 1.6 --- BIO's 2022
+# Load data (no nutrients, no oxygen)
+MAR2022 = pd.read_csv(os.path.join(dataset_path, '2022_AZMP_spring_allchemdata_forFrederic_formatted.csv'), parse_dates = {'timestamp' : [8, 9]}, encoding='utf-8')
+# swap weird flags
+MAR2022 = MAR2022.replace('I23', 3)
+MAR2022 = MAR2022.replace('I22', 3)
+MAR2022 = MAR2022.replace('I03', 3)
+# Remove "" from timestamp
+MAR2022['timestamp'] = MAR2022['timestamp'].replace({'"':''}, regex=True)
+MAR2022['timestamp'] = pd.to_datetime(MAR2022['timestamp'])
+
+# Rename columns
+MAR2022 = MAR2022.rename(columns={'Station' : 'StationID'})
+MAR2022 = MAR2022.rename(columns={'PrDM' : 'depth'})
+MAR2022 = MAR2022.rename(columns={'T068C' : 'temperature'})
+MAR2022 = MAR2022.rename(columns={'Sal00' : 'salinity'})
+MAR2022 = MAR2022.rename(columns={'TA (umol/kg) ' : 'TA'}) # <-- YES! there's a space in TA!!
+MAR2022 = MAR2022.rename(columns={'TA flag' : 'TAflag'})
+MAR2022 = MAR2022.rename(columns={'TIC (umol/kg)' : 'TIC'})
+MAR2022 = MAR2022.rename(columns={'TIC flag' : 'TICflag'})
+MAR2022 = MAR2022.rename(columns={'O2_Concentration(ml/l)' : 'O2'})
+MAR2022 = MAR2022.rename(columns={'cruise_number' : 'TripID'})
+# select columns
+variables_nonuts = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'TA', 'salinity', 'temperature', 'TIC', 'TAflag', 'TICflag']
+MAR2022['Region'] ='MAR'
+MAR2022 = MAR2022.loc[:,variables_nonuts]
+# append to df_MAR
+df_MAR = df_MAR.append(MAR2022, ignore_index=True)
 
 ## 2. --- NL data (main NL file. Olivia may have changed the headers)
 # *This is not the call originally done by Olivia (Fred changed it for updated dataset)
@@ -345,6 +383,7 @@ df_NL = df_NL.rename(columns={'TCO2 Data Flag' : 'TICflag'})
 df_NL['Region'] = 'NL'
 df_NL['temp_pH']= np.NaN
 df_NL['pHflag']= np.NaN
+df_NL['pH_25']= np.NaN
 
 # Only select subset variables
 # *might raise an error in the future since not all variables are present*
@@ -375,17 +414,19 @@ df_NL = df_NL.loc[:,variables]
 
 # 3.1.2 --- In October 2021, MS provided fresh datasets for all missions (SAME FORMAT!!!)
 # AZMP June Mission
-df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2021_vFev2022(Cyr).xlsx'), encoding='utf-8')
+#df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2021_vFev2022(Cyr).xlsx'), encoding='utf-8')
+df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2022_vmar2023(Cyr).xlsx'))
 # Ice forecast Mission
-df_ice = pd.read_excel(os.path.join(dataset_path,'Iceforcast 2014-2021_vfev2022 (Cyr).xlsx'), encoding='utf-8')
+df_ice = pd.read_excel(os.path.join(dataset_path,'Iceforcast 2014-2022_vfmar2023 (Cyr).xlsx'))
 # Groundfish Missions (need to read all tabs)
+df_gf_2022 = pd.read_excel(os.path.join(dataset_path,'Groundfish surveys_2022_vmar2023(Cyr).xlsx'))
 xls = pd.ExcelFile(os.path.join(dataset_path,'AZMP_OA_IML_Groundfish surveys_2017-2019(MS-3).xlsx'))
-df_gf_2019_2020 = pd.read_excel(xls, 'Groundfish surveys 2019', encoding='utf-8')
-df_gf_2018 = pd.read_excel(xls, 'Groundfish surveys 2018', encoding='utf-8')
-df_gf_2017 = pd.read_excel(xls, 'Groundfish surveys 2017', encoding='utf-8')
+df_gf_2019_2020 = pd.read_excel(xls, 'Groundfish surveys 2019')
+df_gf_2018 = pd.read_excel(xls, 'Groundfish surveys 2018')
+df_gf_2017 = pd.read_excel(xls, 'Groundfish surveys 2017')
 df_gf = pd.concat([df_gf_2019_2020, df_gf_2018, df_gf_2017], axis=0, sort=False)
 # Rimouski Station
-df_riki = pd.read_excel(os.path.join(dataset_path,'StationRimouski (2014-2020)vNov21(Cyr).xlsx'), encoding='utf-8')
+df_riki = pd.read_excel(os.path.join(dataset_path,'StationRimouski (2014-2022)vmar2023(Cyr).xlsx'))
 df_riki['CTD Station (nom/no)'] = 'Rimouski'
 # merge all IML
 df_IML = pd.concat([df_june, df_ice, df_gf, df_riki], axis=0, sort=False)
@@ -510,6 +551,7 @@ df_IML = df_IML.rename(columns={'CTD_DOXY_(ml/l)' : 'oxyCTD'})
 df_IML = df_IML.rename(columns={'labo_LABT_01_(deg_C)' : 'temp_pH'})
 df_IML = df_IML.rename(columns={'Flag_At_' : 'TAflag'})
 df_IML = df_IML.rename(columns={'Flag_pH_total_in_situ' : 'pHflag'})
+df_IML = df_IML.rename(columns={'Flag_pH_Labo_(total_scale)' : 'pHflag'})
 
 # Rename StationIDs (to be consistent)
 df_IML['StationID'] = df_IML['StationID'].replace('CMO3 (CH12)', 'CMO3/CH12')
@@ -550,6 +592,8 @@ idx_missing_depth = df_IML.loc[df_IML.depth.isna()].index
 df_IML.loc[idx_missing_depth, 'depth'] = df_IML.loc[idx_missing_depth, 'CTD_zbouteille_(dbar)']
 
 # Only select subset variables 
+df_IML['pHflag']= np.NaN
+df_IML['TICflag']= np.NaN
 df_IML = df_IML.loc[:,variables]
 
 ## 3.3 --- Station Riki
@@ -841,12 +885,12 @@ df.set_index('Timestamp', inplace=True)
 df.sort_index(inplace=True)        
 
 # Save final dataset
-df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data_with2021.csv'), float_format='%.4f', index=True)
+#df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data_with2021.csv'), float_format='%.4f', index=True)
 # Some info and ignore 2021
-print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
-df = df[df.index.year<2021]  
-df_missing = df_missing[pd.to_datetime(df_missing.timestamp).dt.year<2021]
-print('When 2021 ignored: ' + str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
+#print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
+#df = df[df.index.year<2021]  
+#df_missing = df_missing[pd.to_datetime(df_missing.timestamp).dt.year<2021]
+#print('When 2021 ignored: ' + str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
 
 # Some info
 print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missing.shape[0]) + ' complete suite of parameters' )
