@@ -158,7 +158,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -196,7 +196,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -249,7 +249,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -281,7 +281,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()
@@ -332,7 +332,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text() 
@@ -364,7 +364,7 @@ the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
 table_props = the_table.properties()
-table_cells = table_props['child_artists']
+#table_cells = table_props['child_artists']
 last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
 for key, cell in the_table.get_celld().items():
     cell_text = cell.get_text().get_text()

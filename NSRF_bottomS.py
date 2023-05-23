@@ -56,7 +56,7 @@ dz = 5 # vertical bins
 season = 'summer'
 year = 2022
 climato_file = 'Sbot_climato_NSRF_summer_2006-2018.h5'
-year_file = '/home/cyrf0006/data/dev_database/netCDF/' + year + '.nc'
+year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(year) + '.nc'
 
 
 ## ---- Load Climato data ---- ##    
@@ -337,7 +337,7 @@ outfile = 'NSRF_bottom_sal_climato_' + season + '_' + year + '.png'
 fig.savefig(outfile)
 os.system('convert -trim ' + outfile + ' ' + outfile)
 
-
+keyboard
 # Convert to a subplot
 os.system('montage NSRF_bottom_sal_climato_' + season + '_' + year + '.png NSRF_bottom_sal_' + season + '_' + year + '.png NSRF_bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  NSRF_bottomS_' + season + year + '.png') 
 os.system('rm NSRF_bottom_sal_climato_' + season + '_' + year + '.png NSRF_bottom_sal_' + season + '_' + year + '.png NSRF_bottom_sal_anomaly_' + season + '_' + year + '.png')

@@ -56,7 +56,7 @@ plt.rc('font', **font)
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
 current_year = 2022
-use_climate_summaries = True
+use_climate_summaries = False
 
 
 ## ---- If climate summaries are needed ---- ##
@@ -138,7 +138,7 @@ df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.
 # Transform series to numeric
 df = pd.to_numeric(df)
 # Replace missing value by NaNs
-df = df.replace(df[df<-9999], np.nan)
+df = df.replace(-9999.9, np.nan)
 df_BB = df.copy()
 del df
 # Append climate summaries if needed
@@ -166,7 +166,7 @@ df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.
 # Transform series to numeric
 df = pd.to_numeric(df)
 # Replace missing value by NaNs
-df = df.replace(df[df<-9999], np.nan)
+df = df.replace(-9999.9, np.nan)
 df_SJ = df.copy()
 del df
 # Append climate summaries if needed
@@ -193,7 +193,7 @@ df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.
 # Transform series to numeric
 df = pd.to_numeric(df)
 # Replace missing value by NaNs
-df = df.replace(df[df<-9999], np.nan)
+df = df.replace(-9999.9, np.nan)
 df_CA = df.copy()
 del df
 # Append climate summaries if needed
@@ -220,7 +220,7 @@ df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.
 # Transform series to numeric
 df = pd.to_numeric(df)
 # Replace missing value by NaNs
-df = df.replace(df[df<-9999], np.nan)
+df = df.replace(-9999.9, np.nan)
 df_IQ = df.copy()
 del df
 # Append climate summaries if needed

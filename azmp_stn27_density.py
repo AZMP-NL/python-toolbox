@@ -39,6 +39,10 @@ QC_SD = 4
 # to append a new year to stn27_all_casts.nc
 APPEND = False
 APPEND_YEAR = 2022
+# apply a moving average?
+binning=True
+move_ave = True
+zbin = 5
 
 ## ---- Open data and select ---- ##
 if os.path.isfile('stn27_all_casts.nc'):
@@ -115,11 +119,24 @@ else:
     df_temp = df_hydroT.copy()
     df_sal = df_hydroS.copy()
 
+## ---- Vertical binning or moving average to smooth the data ---- ##
+if binning:
+    old_z = df_temp.columns
+    new_z = np.arange((old_z[0]+zbin)/2,old_z[-1],zbin)
+    # temperature
+    df_temp = df_temp.loc[:,0:new_z[-1]+1] # remove "unnecesary" columns
+    dfT = df_temp.groupby(np.arange(len(df_temp.columns))//zbin, axis=1).mean()
+    dfT.columns=new_z
+    df_temp = dfT
+    # salinty
+    df_sal = df_sal.loc[:,0:new_z[-1]+1]
+    dfS = df_sal.groupby(np.arange(len(df_sal.columns))//zbin, axis=1).mean()
+    dfS.columns=new_z
+    df_sal = dfS    
+elif move_ave:
+    df_temp = df_temp.rolling(zrolling, center=True, min_periods=1, axis=1).mean()
+    df_sal = df_sal.rolling(zrolling, center=True, min_periods=1, axis=1).mean()
 
-## ---- TEMPORARY!!!!!!! ---- ##
-df_temp.drop_duplicates(keep='first')
-df_sal.drop_duplicates(keep='first')
-    
 ## ---- Compute density ---- ##
 Z = df_temp.columns
 SP = df_sal.values
@@ -200,17 +217,23 @@ df_N2.to_pickle('S27_N2_raw.pkl')
 MLD = pd.Series(MLD, index=df_CT.index)
 MLD.to_pickle('S27_MLD_raw.pkl')
     
-## ---- Compute Stratification (now 8m-50m) ---- ##
+## ---- Compute Stratification (now 8m-50m) ---- ## PREVIOUS
+#rho_5m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==8)))]
+#rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==50)))]
+#strat = (rho_50m-rho_5m)/42
+#strat.to_pickle('S27_stratif_raw.pkl')
+
+## ---- Compute Stratification (now 5m-150m) ---- ## SINCE 2023 (copy wu)
 rho_5m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==8)))]
-rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==50)))]
-strat = (rho_50m-rho_5m)/42
+rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==148)))]
+strat = (rho_50m-rho_5m)/140
 strat.to_pickle('S27_stratif_raw.pkl')
 
 # Alternate method for Wu et al. revisited
-rho_1 = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==5)))]
-rho_2 = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==175)))]
-strat_wu = (rho_2-rho_1)/170
-strat_wu.to_pickle('S27_stratif_5-175_raw.pkl')
+rho_1 = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==8)))]
+rho_2 = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==148)))]
+strat_wu = (rho_2-rho_1)/140
+strat_wu.to_pickle('S27_stratif_5-150_raw.pkl')
 
 ## ---- Save monthly averages ---- ##
 df_rho.resample('M').mean().to_pickle('S27_rho_monthly.pkl')

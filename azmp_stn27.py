@@ -39,9 +39,13 @@ s27 = [47.54667,-52.58667]
 dc = .025
 #year_clim = [1981, 2010]
 year_clim = [1991, 2020]
+# apply a moving average?
+binning=True
+move_ave = True
+zbin = 3
 
 current_year = 2022
-variable = 'temerature'
+variable = 'salinity'
 use_viking = False
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
@@ -77,9 +81,9 @@ if os.path.isfile('stn27_all_casts.nc'):
     
 else:
     ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/netCDF/*.nc')
-    # Remome GTS datasets
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
+    # Remome GTS datasets (not needed with CASTS)
+    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
+    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
     # Select a depth range
     ds = ds.sel(level=ds['level']<180)
     ds = ds.sel(level=ds['level']>0)
@@ -128,6 +132,17 @@ if use_viking:
     df = df.interpolate(axis=1).where(df.bfill(axis=1).notnull()) # here interpolate and leave NaNs.
 else:
     df = df_hydro.copy()
+
+## ---- Vertical binning or moving average to smooth the data ---- ##
+if binning:
+    old_z = df.columns
+    new_z = np.arange((old_z[0]+zbin)/2,old_z[-1],zbin)
+    dfT = df.groupby(np.arange(len(df.columns))//zbin, axis=1).mean()
+    dfT.columns=new_z
+    df = dfT
+elif move_ave:
+    df = df.rolling(zbin, center=True, min_periods=1, axis=1).mean()
+
     
 ## ---- 1. Climatologies ---- ##
 # Weekly average (weekly average before monthly average)

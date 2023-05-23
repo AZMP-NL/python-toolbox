@@ -144,10 +144,10 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, proj='merc', netcd
     ds = xr.open_dataset(year_file)
 
     # Remome problematic datasets
-    print('!!Remove MEDBA data!!')
-    print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
+    #print('!!Remove MEDBA data!!')
+    #print('  ---> I Should be improme because I remove good data!!!!')
+    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
+    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)

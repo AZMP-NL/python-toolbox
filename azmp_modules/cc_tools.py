@@ -222,6 +222,7 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     September 2022
     '''
 
+
     # For colorbar:
     v = vl.variable_parameters(VARIABLE)
     num_levels = v[0]
@@ -233,6 +234,17 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     axis_label = v[6]
     extent = v[7]
 
+    # Figure name (to avoid parenthesis, etc.)
+    if VARIABLE == 'Omega_Aragonite_(unitless)':
+        FIG_VAR = 'OmegaA'
+    elif VARIABLE == 'pH_Total_(total_scale)':
+        FIG_VAR = 'pH'
+    elif VARIABLE == 'Oxygen_Saturation_(%)':
+        FIG_VAR = 'DO_perc'    
+    elif VARIABLE == 'Dissolved_Oxygen_(mL/L)':
+        FIG_VAR = 'DO'
+
+    
     # Read the entire AZMP dataset
     df = pd.read_csv('/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_carbon_data.csv', delimiter=',')
 
@@ -267,10 +279,12 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     df = df.astype({'Depth_(dbar)':'float', VARIABLE:'float'})  
     # locate depth -- either surface, bottom, or within a range of depths
     if DEPTH == 'surface':
-        df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmin()] #group by station then pull "min or max depth"
+        #df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmin()] #group by station then pull "min or max depth"
+        df = df.loc[df.groupby('Longitude_(degEast)')['Depth_(dbar)'].idxmin()] #group by station then pull "min or max depth"
         df = df.loc[df['Depth_(dbar)'] <20] #take all depths >10m (for bottom) to eliminate lone surface samples, all depths <20m (for surface) to eliminate lone deep sample
     if DEPTH == 'bottom':
-        df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmax()] #group by station then pull "min or max depth"
+        #df = df.loc[df.groupby('Station_Name')['Depth_(dbar)'].idxmax()] #group by station then pull "min or max depth"
+        df = df.loc[df.groupby('Longitude_(degEast)')['Depth_(dbar)'].idxmax()] #group by station then pull "min or max depth"
         df = df.loc[df['Depth_(dbar)'] >10] #take all depths >10m (for bottom) to eliminate lone surface samples
         if YEAR == 2019: # Some stations to be flagged (deep bottle not bottom)
             df.drop(df[df.Station_Name=='GULD_04'].index, inplace=True)
@@ -345,8 +359,8 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     ax.set_extent([-72, -41.5, 40.5, 58.4], crs=ccrs.PlateCarree())
     ax.add_feature(cpf.NaturalEarthFeature('physical', 'coastline', '50m', edgecolor='k', alpha=0.7, linewidth=0.6, facecolor='black'), zorder=1)#cpf.COLORS['land']))
     m=ax.gridlines(linewidth=0.5, color='black', draw_labels=True, alpha=0.5)
-    m.xlabels_top=False
-    m.ylabels_right=False
+    m.right_labels=False
+    m.top_labels=False
     m.xlocator = mticker.FixedLocator([-75, -70, -60, -50, -40])
     m.ylocator = mticker.FixedLocator([40, 45, 50, 55, 60, 65])
     m.xformatter = LONGITUDE_FORMATTER
@@ -375,15 +389,33 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     cb.set_label(axis_label, fontsize=12, fontweight='normal')
 
     # add text
-    ax.text(-72, 56, ' ' + SEASON + ' ' +  str(YEAR), horizontalalignment='left', verticalAlignment = 'bottom', color='white',
+    SEASON_TEXT = ax.text(-72, 56, SEASON + ' ' +  str(YEAR), horizontalalignment='left', verticalalignment = 'top', color='white',
         fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
-    ax.text(-72, 56, ' ' + DEPTH, horizontalalignment='left', verticalAlignment = 'top', color='white',
+    DEPTH_TEXT = ax.text(-72, 56, DEPTH, horizontalalignment='left', verticalalignment = 'bottom', color='white',
         fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
 
+         
     # Save figure
-    fig_name = 'AZMP_OA_'+str(YEAR)+'_'+SEASON+'_'+VARIABLE.replace('/','-per-')+'_'+DEPTH+'.png'
-    fig.savefig(fig_name, format='png', dpi=300, bbox_inches='tight')
-    
+    fig_name = 'AZMP_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'.png'
+    fig.savefig(fig_name, dpi=300)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+
+    ## Save in French
+    if SEASON == 'summer':
+        SEASON_TEXT.set_text('été ' +  str(YEAR))
+    elif SEASON == 'fall':
+         SEASON_TEXT.set_text('automne ' +  str(YEAR))
+    elif SEASON == 'spring':
+         SEASON_TEXT.set_text('printemps ' +  str(YEAR))
+         
+    if DEPTH == 'bottom':
+        DEPTH_TEXT.set_text('fond')
+
+    fig_name = 'AZMP_OA_'+str(YEAR)+'_'+SEASON+'_'+FIG_VAR+'_'+DEPTH+'_FR.png'
+    fig.savefig(fig_name, dpi=300)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
 
 def seasonal_map_NL(VARIABLE, YEAR, SEASON, DEPTH):
 

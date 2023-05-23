@@ -267,7 +267,8 @@ MAR2019['temp_pH'] = np.NaN
 MAR2019['pH_25'] = np.NaN
 MAR2019 = MAR2019.loc[:,variables]
 # append to df_MAR
-df_MAR = df_MAR.append(MAR2019, ignore_index=True)
+#df_MAR = df_MAR.append(MAR2019, ignore_index=True)
+df_MAR = pd.concat([df_MAR, MAR2019], ignore_index=True)
 
 ## 1.4 --- BIO's 2020
 # Load data (no nutrients, no oxygen)
@@ -317,10 +318,39 @@ MAR2020['temp_pH'] = np.NaN
 MAR2020['pH_25'] = np.NaN
 MAR2020 = MAR2020.loc[:,variables]
 # append to df_MAR
-df_MAR = df_MAR.append(MAR2020, ignore_index=True)
+#df_MAR = df_MAR.append(MAR2020, ignore_index=True)
+df_MAR = pd.concat([df_MAR, MAR2020], ignore_index=True)
 
-## 1.5 --- BIO's 2022
-# Not there yet
+## 1.5 --- BIO's 2021 - Flags edited.
+# Load data (no nutrients, no oxygen)
+MAR2021 = pd.read_csv(os.path.join(dataset_path, '2021_HUD2021185_chem_data_forFrederic.csv'), parse_dates = {'timestamp' : [8, 9]}, encoding='utf-8')
+# swap weird flags
+MAR2021 = MAR2021.replace('I23', 3)
+MAR2021 = MAR2021.replace('I22', 3)
+MAR2021 = MAR2021.replace('I03', 3)
+MAR2021 = MAR2021.replace('L01', 3)
+# Remove "" from timestamp
+MAR2021['timestamp'] = MAR2021['timestamp'].replace({'"':''}, regex=True)
+MAR2021['timestamp'] = pd.to_datetime(MAR2021['timestamp'])
+
+# Rename columns
+MAR2021 = MAR2021.rename(columns={'Station' : 'StationID'})
+MAR2021 = MAR2021.rename(columns={'PrDM' : 'depth'})
+MAR2021 = MAR2021.rename(columns={'T068C' : 'temperature'})
+MAR2021 = MAR2021.rename(columns={'Sal00' : 'salinity'})
+MAR2021 = MAR2021.rename(columns={'TA (umol/kg) ' : 'TA'}) # <-- YES! there's a space in TA!!
+MAR2021 = MAR2021.rename(columns={'TA flag' : 'TAflag'})
+MAR2021 = MAR2021.rename(columns={'TIC (umol/kg)' : 'TIC'})
+MAR2021 = MAR2021.rename(columns={'TIC flag' : 'TICflag'})
+MAR2021 = MAR2021.rename(columns={'O2_Concentration(ml/l)' : 'O2'})
+MAR2021 = MAR2021.rename(columns={'cruise_number' : 'TripID'})
+# select columns
+variables_nonuts = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'TA', 'salinity', 'temperature', 'TIC', 'TAflag', 'TICflag']
+MAR2021['Region'] ='MAR'
+MAR2021 = MAR2021.loc[:,variables_nonuts]
+# append to df_MAR
+#df_MAR = df_MAR.append(MAR2021, ignore_index=True)
+df_MAR = pd.concat([df_MAR, MAR2021], ignore_index=True)
 
 ## 1.6 --- BIO's 2022
 # Load data (no nutrients, no oxygen)
@@ -349,7 +379,8 @@ variables_nonuts = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'l
 MAR2022['Region'] ='MAR'
 MAR2022 = MAR2022.loc[:,variables_nonuts]
 # append to df_MAR
-df_MAR = df_MAR.append(MAR2022, ignore_index=True)
+#df_MAR = df_MAR.append(MAR2022, ignore_index=True)
+df_MAR = pd.concat([df_MAR, MAR2022], ignore_index=True)
 
 ## 2. --- NL data (main NL file. Olivia may have changed the headers)
 # *This is not the call originally done by Olivia (Fred changed it for updated dataset)
@@ -415,7 +446,7 @@ df_NL = df_NL.loc[:,variables]
 # 3.1.2 --- In October 2021, MS provided fresh datasets for all missions (SAME FORMAT!!!)
 # AZMP June Mission
 #df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2021_vFev2022(Cyr).xlsx'), encoding='utf-8')
-df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2022_vmar2023(Cyr).xlsx'))
+df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2022_v24mar2023(Cyr).xlsx'))
 # Ice forecast Mission
 df_ice = pd.read_excel(os.path.join(dataset_path,'Iceforcast 2014-2022_vfmar2023 (Cyr).xlsx'))
 # Groundfish Missions (need to read all tabs)
@@ -792,7 +823,8 @@ df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region
 df_missing = dforig.drop(df.index)
 df_missing = df_missing
 df_missing.drop(['TAflag', 'pHflag', 'TICflag'], axis=1, inplace=True)
-df = df.append(df_missing, sort=False)
+#df = df.append(df_missing, sort=False)
+df = pd.concat([df, df_missing], sort=False)
 
 ################################################
 ## -------- Final Cleaning and Saving ------- ##

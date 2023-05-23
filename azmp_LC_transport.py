@@ -22,7 +22,7 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 
 ## ----  Read data ---- ## (I just drop column that was there)
-df = pd.read_csv('/home/cyrf0006/data/AZMP/LC_transport/Lc_index_1993_2021.txt', header=None, delimiter='\s+', names=['year', 'NL', 'SS'])
+df = pd.read_csv('/home/cyrf0006/data/AZMP/LC_transport/lc_index_1993_2022.txt', header=None, delimiter='\s+', names=['year', 'NL', 'SS'])
 df = df.set_index('year')
 df.to_csv('LC_index.csv', float_format='%.2f')
 
@@ -36,7 +36,7 @@ df.SS = df.SS*std_ss + ave_ss
 
 df.to_csv('LC_transport.csv', float_format='%.2f')
 
-XLIMS = [1990, 2022]
+XLIMS = [1990, 2023]
 
 ## ---- plot ---- ##
 fig = plt.figure(1)
@@ -69,7 +69,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 ### ---- Anomalies plot ---- ##
-df = pd.read_csv('/home/cyrf0006/data/AZMP/LC_transport/Lc_index_1993_2021.txt', header=None, delimiter='\s+', names=['year', 'NL', 'SS'])
+df = pd.read_csv('/home/cyrf0006/data/AZMP/LC_transport/lc_index_1993_2022.txt', header=None, delimiter='\s+', names=['year', 'NL', 'SS'])
 df = df.set_index('year')
 df_SS = df.SS
 df_NL = df.NL

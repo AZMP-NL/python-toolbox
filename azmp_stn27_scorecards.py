@@ -178,11 +178,13 @@ CIL_anom_std = CIL_anom / CIL_clim_period.std()
 #### ------------- MLD ---------------- ####
 # Load pickled data
 mld_monthly = pd.read_pickle('S27_MLD_monthly.pkl')
-mld = mld = mld_monthly
+mld = mld_monthly
 # flag some data:
 mld[mld.index=='2019-03-15']=np.nan
 mld[mld.index=='1980-03-15']=np.nan
 mld = mld[mld.index.year>=years[0]]
+# limit to after 1990
+#mld[mld.index<'1990-01-01']=np.nan
 # Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
 #stack months
 mld_stack = mld.groupby([(mld.index.year),(mld.index.month)]).mean()
@@ -237,6 +239,8 @@ strat = strat = strat_monthly
 strat[strat.index=='2019-03-15']=np.nan
 strat[strat.index=='1980-03-15']=np.nan
 strat = strat[strat.index.year>=years[0]]
+# limit to after 1990
+#strat[strat.index<'1990-01-01']=np.nan
 # Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
 #stack months
 strat_stack = strat.groupby([(strat.index.year),(strat.index.month)]).mean()

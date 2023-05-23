@@ -155,7 +155,7 @@ plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average temperature (0-176m)')
 #plt.xlim(XLIM)
 #plt.ylim([-1.75, 1.75])
-plt.ylim([-2.5,2.5])
+plt.ylim([-2, 2])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -295,7 +295,7 @@ plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], 
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - Average salinity (0-176m)')
 #plt.xlim(XLIM)
-plt.ylim([-2, 2])
+plt.ylim([-3, 3])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -393,7 +393,7 @@ p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, colo
 plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - CIL mean temperature')
-plt.ylim([-5, 5])
+plt.ylim([-3.3, 3.3])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -427,7 +427,7 @@ p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, colo
 plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Normalized anomaly')
 plt.title('Station 27 - CIL core temperature')
-plt.ylim([-5, 5])
+plt.ylim([-3.75, 3.75])
 plt.grid()
 # Save Figure
 fig.set_size_inches(w=7,h=4)
@@ -574,6 +574,9 @@ anom_std = monthly_stdanom.mean(axis=1)
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
 anom = monthly_anom.mean(axis=1)*1000 
 anom.index = pd.to_datetime(anom.index, format='%Y')
+# limit to after 1990
+anom = anom[anom.index>='1990-01-01']
+anom_std = anom_std[anom_std.index>='1990-01-01']
 
 # old version:
 old_strat = strat_monthly.resample('As').mean()
@@ -717,6 +720,9 @@ anom_std = monthly_stdanom.mean(axis=1)
 anom_std.index = pd.to_datetime(anom_std.index, format='%Y')
 anom = monthly_anom.mean(axis=1)
 anom.index = pd.to_datetime(anom.index, format='%Y')
+# limit to after 1990
+anom = anom[anom.index>='1990-01-01']
+anom_std = anom_std[anom_std.index>='1990-01-01']
 # save for capelin
 anom_std_mld = anom_std.copy()
 anom_std_mld.index = anom_std_mld.index.year
