@@ -416,6 +416,18 @@ df_NL['temp_pH']= np.NaN
 df_NL['pHflag']= np.NaN
 df_NL['pH_25']= np.NaN
 
+## 2.1 Add 2014 pH measurements
+xsl_hud14 = pd.ExcelFile(os.path.join(dataset_main_path,'HUDSON2014_surveys_with_ancillary_data_31Aug2015.xlsx'))
+NL14 = pd.read_excel(xsl_hud14, 'NL sites')
+NL14 = NL14[['Sticker #', 'pH_25 ', 'pH_25 Flag']]
+NL14.rename(columns={'Sticker #':'Sample ID','pH_25 ':'pH_25', 'pH_25 Flag':'pHflag'}, inplace=True)
+NL14.set_index('Sample ID', inplace=True)
+# Combine NL14 on df_NL (using SampleID as Index)
+df_NL.set_index('Sample ID', inplace=True)
+df_NL = NL14.combine_first(df_NL)
+df_NL.reset_index(inplace=True)
+df_NL.set_index('timestamp', inplace=True, drop=False)
+
 # Only select subset variables
 # *might raise an error in the future since not all variables are present*
 df_NL = df_NL.loc[:,variables]

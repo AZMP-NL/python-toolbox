@@ -24,13 +24,13 @@ import matplotlib.ticker as mticker
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import cc_variable_list_NL as vl
 
-YEAR = 2019
+YEAR = 2017
 SEASON = 'fall'
-VARIABLE = 'Omega_Aragonite_(unitless)'
-#VARIABLE = 'pH_Total_(total_scale)'
+#VARIABLE = 'Omega_Aragonite_(unitless)'
+VARIABLE = 'pH_Total_(total_scale)'
 #VARIABLE = 'Oxygen_Saturation_(%)'
 #VARIABLE = 'Dissolved_Oxygen_(mL/L)'
-DEPTH='bottom'
+DEPTH='surface'
 # English/French station names
 stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
 if SEASON == 'summer':

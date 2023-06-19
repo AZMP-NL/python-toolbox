@@ -77,7 +77,7 @@ def section_bathymetry(section_name):
     return bathymetry
 
 
-def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=5, zmin=2):
+def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=5, zmin=-1, zmax=500):
     """
     To get a transect plot of a certain variable along a certain section and for a defined year and season.
 
@@ -160,12 +160,6 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
 
-    # Remame problematic datasets
-    print('!!Remove MEDBA & MEDTE data!!')
-    print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
-
     # Select Region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
@@ -184,18 +178,19 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     da = ds[var_name]
     lons = np.array(ds.longitude)
     lats = np.array(ds.latitude)
-    bins = np.arange(zmin, 500, dz)
+    # Bin average (not super proud of this one... should use climatology zbin instead)
+    bins = np.arange(zmin, zmax, dz)
+    zbins = np.arange((zmin+dz)/2,zmax,dz)
     da = da.groupby_bins('level', bins).mean(dim='level')
+    da['level_bins'] = zbins
     #To Pandas Dataframe
     df = da.to_pandas()
-    df.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns
     idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
     df = df.dropna(axis=0,how='all')
     lons = np.delete(lons,idx_empty_rows)
     lats = np.delete(lats,idx_empty_rows)
     print(' -> Done!')
-
 
     ## --- fill 3D cube --- ##  
     print('Fill regular cube')
@@ -254,8 +249,8 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     df_section_itp = pd.DataFrame(index=stn_list, columns=z)
     for stn in stn_list:
         # 1. Section only (by station name)
-        #ds_tmp = ds.where(ds.comments == stn, drop=True)  
-        ds_tmp = ds.where(ds.comments == stn, drop=True)  
+        keyboard
+        ds_tmp = ds.where(ds.station_ID == stn, drop=True)  
         section_only.append(ds_tmp)
 
         #2.  From interpolated field (closest to station)
@@ -276,8 +271,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
 
     da = ds_section[var_name]
     df_section_stn = da.to_pandas()
-    #df_section_stn.index = ds_section.comments.values
-    df_section_stn.index = ds_section.comments.values
+    df_section_stn.index = ds_section.station_ID.values.astype('str')
     df_section_stn.index.name = 'station'    
     
     # Compute distance vector for option #1 - exact station
@@ -295,11 +289,10 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
                                     df_stn[df_stn.STATION==df_section_itp.index[i]].LAT)
 
     # Add a second index with distance
-    df_section_stn['distance'] = np.round(distance_stn, 1)
-    df_section_stn.set_index('distance', append=True, inplace=True)
-    df_section_itp['distance'] = np.round(distance_itp, 1)
-    df_section_itp.set_index('distance', append=True, inplace=True)
+    df_section_stn.set_index([df_section_stn.index, pd.Index(np.round(distance_stn, 1), name='distance')], inplace=True)
+    df_section_itp.set_index([df_section_itp.index, pd.Index(np.round(distance_itp, 1), name='distance')], inplace=True)
     
+    keyboard
     return df_section_stn, df_section_itp
 
 def standard_section_plot(nc_file, survey_name, section_name, var_name):
@@ -336,11 +329,11 @@ def standard_section_plot(nc_file, survey_name, section_name, var_name):
 
     ## ----  plot FC-line ---- ##
     df_section =  df[df['trip_ID'].str.contains(survey_name)] # Restrict for survey-name
-    df_section =  df_section[df_section['comments'].str.contains(section_name + '-')] # restrict for section name
+    df_section =  df_section[df_section['station_ID'].str.contains(section_name + '-')] # restrict for section name
     sr_var = df_section[var_name]
     sr_lon = df_section['longitude']
     sr_lat = df_section['latitude']
-    sr_stn = df_section['comments']
+    sr_stn = df_section['station_ID']
 
     df_stn = sr_stn.unstack()
     df_var = sr_var.unstack()
@@ -450,7 +443,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
         # loop on stations and append datasets in a list
         datasets = []
         for stn in stn_list:
-            ds_section = ds.where(ds.comments == stn, drop=True)  
+            ds_section = ds.where(ds.station_ID == stn, drop=True)  
             datasets.append(ds_section)
             
         # concatenate the list of datasets
@@ -536,8 +529,6 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     ## ---- Get this year's section ---- ## 
     df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR)
 
-    #if df_section_itp.dropna(how='all', axis=0).size == 0: # Not sure why this is needed...
-    #    return
     # Use itp or station-based definition
     if STATION_BASED:
         df_section = df_section_stn.copy()
@@ -558,12 +549,13 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
     
     ## ---- Retrieve bathymetry using function ---- ##
     bathymetry = section_bathymetry(SECTION_BATHY)
-
+    keyboard
     ## ---  ---- ## 
     df_anom =  df_section - df_clim
     df_anom = df_anom.reset_index(level=0, drop=True)
      # drop empty columns (NAKE SURE I AM NOT INTRODUCING ERRROS)
     df_anom.dropna(how='all', inplace=True)
+
     ## ---- plot Figure ---- ##
     XLIM = df_section_itp.index[-1][1]
     fig = plt.figure()
