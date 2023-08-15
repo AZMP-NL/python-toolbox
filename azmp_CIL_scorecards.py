@@ -13,9 +13,15 @@ import os
 import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
-clim_year = [1991, 2020]
+clim_year = [1990, 2020]
 years = [1980, 2023]
 
+badstn_SI = [1983,1989,1998,2000,2003,2004,2022]
+baditp_SI = [1983,1989,1998,2022]
+badstn_BB = [1997,1999,2000,2001,2002,2022]
+baditp_BB = []
+badstn_FC = [1997,2000,2001,2002,2006,2007,2022]
+baditp_FC = []
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -36,9 +42,25 @@ def is_number(s):
 #df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
 #df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
 # EXCEPTION FOR 2022
-df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_fall.pkl')
-df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_fall.pkl')
-df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_fall.pkl')
+df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_SI_summer.pkl')
+df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_BB_summer.pkl')
+df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_FC_summer.pkl')
+
+# Set problem years equal to nan
+df_SI['vol_stn'].loc[badstn_SI] = np.nan
+df_SI['core_stn'].loc[badstn_SI] = np.nan
+df_SI['vol_itp'].loc[baditp_SI] = np.nan
+df_SI['core_itp'].loc[baditp_SI] = np.nan
+df_BB['vol_stn'].loc[badstn_BB] = np.nan
+df_BB['core_stn'].loc[badstn_BB] = np.nan
+df_BB['vol_itp'].loc[baditp_BB] = np.nan
+df_BB['core_itp'].loc[baditp_BB] = np.nan
+df_FC['vol_stn'].loc[badstn_FC] = np.nan
+df_FC['core_stn'].loc[badstn_FC] = np.nan
+df_FC['vol_itp'].loc[baditp_FC] = np.nan
+df_FC['core_itp'].loc[baditp_FC] = np.nan
+
+
 
 # Build the colormap
 vmin = -3.49
@@ -69,16 +91,22 @@ std_anom_FR = std_anom.copy()
 my_df = std_anom.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
+#my_df.rename(index={
+#    'vol_itp' : r'CIL area ($\rm km^2$)',
+#    'core_itp':r'CIL core ($\rm ^{\circ}C$)',
+#    'core_depth_itp':'core depth (m)'
+#    }, inplace=True)
 my_df.rename(index={
-    'vol_itp' : r'CIL area ($\rm km^2$)',
-    'core_itp':r'CIL core ($\rm ^{\circ}C$)',
-    'core_depth_itp':'core depth (m)'
+    'vol_stn' : r'CIL stn area ($\rm km^2$)',
+    'core_stn':r'CIL stn core ($\rm ^{\circ}C$)',
+    'vol_itp' : r'CIL itp area ($\rm km^2$)',
+    'core_itp':r'CIL itp core ($\rm ^{\circ}C$)',
     }, inplace=True)
-
 my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'sd'
     }, inplace=True)
+
 
 year_list = std_anom.index.astype('str')
 year_list = [i[2:4] for i in year_list] # 2-digit year
@@ -97,7 +125,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[2,:] = -vals_color[2,:]
+vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size+1, my_df.columns.size # <--------- +1 because years
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -127,7 +155,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -140,9 +168,10 @@ my_df = std_anom_FR.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
 my_df.rename(index={
-    'vol_itp' : r'surface CIF ($\rm km^2$)',
-    'core_itp':r'coeur CIF ($\rm ^{\circ}C$)',
-    'core_depth_itp':'coeur prof. (m)'
+    'vol_stn' : r'surface stn CIF ($\rm km^2$)',
+    'core_stn':r'coeur stn CIF ($\rm ^{\circ}C$)',
+    'vol_itp' : r'surface itp CIF ($\rm km^2$)',
+    'core_itp':r'coeur itp CIF ($\rm ^{\circ}C$)',    
     }, inplace=True)
 
 my_df.rename(columns={
@@ -167,7 +196,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[2,:] = -vals_color[2,:]
+vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size+1, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -197,7 +226,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -217,12 +246,17 @@ std_anom_FR = std_anom.copy()
 my_df = std_anom.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
+#my_df.rename(index={
+#    'vol_itp' : r'CIL area ($\rm km^2$)',
+#    'core_itp':r'CIL core ($\rm ^{\circ}C$)',
+#    'core_depth_itp':'core depth (m)'
+#    }, inplace=True)
 my_df.rename(index={
-    'vol_itp' : r'CIL area ($\rm km^2$)',
-    'core_itp':r'CIL core ($\rm ^{\circ}C$)',
-    'core_depth_itp':'core depth (m)'
+    'vol_stn' : r'CIL stn area ($\rm km^2$)',
+    'core_stn':r'CIL stn core ($\rm ^{\circ}C$)',
+    'vol_itp' : r'CIL itp area ($\rm km^2$)',
+    'core_itp':r'CIL itp core ($\rm ^{\circ}C$)',
     }, inplace=True)
-
 my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'sd'
@@ -241,7 +275,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[2,:] = -vals_color[2,:]
+vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size # <--------- remove +1 because no year
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -271,7 +305,7 @@ for key, cell in the_table.get_celld().items():
     #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -283,10 +317,16 @@ os.system('convert -trim scorecards_CIL_BB.png scorecards_CIL_BB.png')
 my_df = std_anom_FR.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
+#my_df.rename(index={
+#    'vol_itp' : r'surface CIF ($\rm km^2$)',
+#    'core_itp':r'coeur CIF ($\rm ^{\circ}C$)',
+#    'core_depth_itp':'coeur prof. (m)'
+#    }, inplace=True)
 my_df.rename(index={
-    'vol_itp' : r'surface CIF ($\rm km^2$)',
-    'core_itp':r'coeur CIF ($\rm ^{\circ}C$)',
-    'core_depth_itp':'coeur prof. (m)'
+    'vol_stn' : r'surface stn CIF ($\rm km^2$)',
+    'core_stn':r'coeur stn CIF ($\rm ^{\circ}C$)',
+    'vol_itp' : r'surface itp CIF ($\rm km^2$)',
+    'core_itp':r'coeur itp CIF ($\rm ^{\circ}C$)',    
     }, inplace=True)
 
 my_df.rename(columns={
@@ -311,7 +351,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[2,:] = -vals_color[2,:]
+vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -341,7 +381,7 @@ for key, cell in the_table.get_celld().items():
     #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -361,16 +401,23 @@ std_anom_FR = std_anom.copy()
 my_df = std_anom.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
+#my_df.rename(index={
+#    'vol_itp' : r'CIL area ($\rm km^2$)',
+#    'core_itp':r'CIL core ($\rm ^{\circ}C$)',
+#    'core_depth_itp':'core depth (m)'
+#    }, inplace=True)
 my_df.rename(index={
-    'vol_itp' : r'CIL area ($\rm km^2$)',
-    'core_itp':r'CIL core ($\rm ^{\circ}C$)',
-    'core_depth_itp':'core depth (m)'
+    'vol_stn' : r'CIL stn area ($\rm km^2$)',
+    'core_stn':r'CIL stn core ($\rm ^{\circ}C$)',
+    'vol_itp' : r'CIL itp area ($\rm km^2$)',
+    'core_itp':r'CIL itp core ($\rm ^{\circ}C$)',
     }, inplace=True)
 
 my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'sd'
     }, inplace=True)
+
 
 year_list = std_anom.index.astype('str')
 year_list = [i[2:4] for i in year_list] # 2-digit year
@@ -389,7 +436,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[2,:] = -vals_color[2,:]
+vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -419,7 +466,7 @@ for key, cell in the_table.get_celld().items():
     #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
@@ -431,16 +478,23 @@ os.system('convert -trim scorecards_CIL_FC.png scorecards_CIL_FC.png')
 my_df = std_anom_FR.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
+#my_df.rename(index={
+#    'vol_itp' : r'surface CIF ($\rm km^2$)',
+#    'core_itp':r'coeur CIF ($\rm ^{\circ}C$)',
+#    'core_depth_itp':'coeur prof. (m)'
+#    }, inplace=True)
 my_df.rename(index={
-    'vol_itp' : r'surface CIF ($\rm km^2$)',
-    'core_itp':r'coeur CIF ($\rm ^{\circ}C$)',
-    'core_depth_itp':'coeur prof. (m)'
+    'vol_stn' : r'surface stn CIF ($\rm km^2$)',
+    'core_stn':r'coeur stn CIF ($\rm ^{\circ}C$)',
+    'vol_itp' : r'surface itp CIF ($\rm km^2$)',
+    'core_itp':r'coeur itp CIF ($\rm ^{\circ}C$)',    
     }, inplace=True)
 
 my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'e-t'
     }, inplace=True)
+
 
 year_list = std_anom.index.astype('str')
 year_list = [i[2:4] for i in year_list] # 2-digit year
@@ -459,7 +513,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[2,:] = -vals_color[2,:]
+vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -489,7 +543,7 @@ for key, cell in the_table.get_celld().items():
     #    pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')

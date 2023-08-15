@@ -21,12 +21,24 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-years = [1950, 2021]
+years = [1950, 2022]
+
+baditp_SI = [1983,1989,1998,2022]
+baditp_BB = []
+baditp_FC = []
 
 #### ---- Load the data and compute anomalies ---- ####
-df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl').astype('float')
-df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl').astype('float')
-df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl').astype('float')
+df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2021/operation_files/df_CIL_SI_summer.pkl').astype('float')
+df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2021/operation_files/df_CIL_BB_summer.pkl').astype('float')
+df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2021/operation_files/df_CIL_FC_summer.pkl').astype('float')
+
+# Set problem years equal to nan
+df_SI['vol_itp'].loc[baditp_SI] = np.nan
+df_SI['core_itp'].loc[baditp_SI] = np.nan
+df_BB['vol_itp'].loc[baditp_BB] = np.nan
+df_BB['core_itp'].loc[baditp_BB] = np.nan
+df_FC['vol_itp'].loc[baditp_FC] = np.nan
+df_FC['core_itp'].loc[baditp_FC] = np.nan
 
 #
 df_years = df_SI[(df_SI.index>=years[0]) & (df_SI.index<=years[1])]

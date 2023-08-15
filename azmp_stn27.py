@@ -41,10 +41,10 @@ dc = .025
 year_clim = [1991, 2020]
 # apply a moving average?
 binning=True
-move_ave = True
-zbin = 3
+move_ave = False
+zbin = 5
 
-current_year = 2022
+current_year = 2021
 variable = 'salinity'
 use_viking = False
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
@@ -72,27 +72,33 @@ else:
     Vanom_ticks = np.linspace(-1, 1, 11) 
     CMAP = cmocean.cm.thermal
 
-## months = mdates.MonthLocator()  # every month
-## month_fmt = mdates.DateFormatter('%b')
-
 ## ---- Open data and select ---- ##
 if os.path.isfile('stn27_all_casts.nc'):
     ds = xr.open_dataset('stn27_all_casts.nc') 
     
 else:
-    ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/netCDF/*.nc')
+    ds = xr.open_mfdataset('/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc')
     # Remome GTS datasets (not needed with CASTS)
-    #ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
-    #ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
+        
     # Select a depth range
     ds = ds.sel(level=ds['level']<180)
-    ds = ds.sel(level=ds['level']>0)
+    #ds = ds.sel(level=ds['level']>=0)
     # Select stn27 data according to lat-lon in a box [47.55,-52.59]
     ds = ds.where((ds.longitude>s27[1]-dc/2) & (ds.longitude<s27[1]+dc/2), drop=True) # original one
     ds = ds.where((ds.latitude>s27[0]-dc/2) & (ds.latitude<s27[0]+dc/2), drop=True)
     ds = ds.sortby('time')
+    #Remove problem casts
+    problem_casts = ['1988_10073164.nc','1990_02183115.nc','1991_11229001.nc']
+    ds = ds.isel(time = ~np.isin(ds.file_names,problem_casts))
+    #Re-state string variables as strings before saving
+    for i in ds.variables.keys():
+        if ds[i].dtype == 'O':
+            ds[i] = ds[i].astype('U40')
     # Save data
     ds.to_netcdf('stn27_all_casts.nc')
+    ds = xr.open_dataset('stn27_all_casts.nc')
 
 # select variable
 da = ds[variable]
@@ -100,21 +106,6 @@ df_hydro = da.to_pandas()
 # Drop when all NaNs... but will still be in netCDF...
 df_hydro.dropna(axis=0, how='all', inplace=True)
 
-## ---- Visual QA/QC ---- ##
-## for i in np.arange(1,13):
-##     fig = plt.figure()
-##     df_tmp = df_hydro[df_hydro.index.month == i]
-##     ax = df_tmp.mean(axis=0).reset_index().plot(x=0, y='level', color='k', lw=3)
-##     for idx, iddx in enumerate(df_tmp.index):        
-##         df_tmp.iloc[idx].reset_index().plot(ax = ax, x=iddx, y='level', alpha=0.5)
-##     df_tmp.mean(axis=0).reset_index().plot(ax = ax, x=0, y='level', color='k', lw=3)
-##     plt.gca().invert_yaxis()
-##     ax.get_legend().remove()
-##     plt.xlabel(variable)
-##     plt.ylabel('Depth (m)')
-##     fig_name = 'stn27_all_' + variable + '_' + str(i) + '.png'
-##     fig.savefig(fig_name, dpi=150)
-    
 ## ---- Open Viking data and concatenate ---- ##
 if use_viking:
     # open dataset
@@ -138,23 +129,27 @@ if binning:
     old_z = df.columns
     new_z = np.arange((old_z[0]+zbin)/2,old_z[-1],zbin)
     dfT = df.groupby(np.arange(len(df.columns))//zbin, axis=1).mean()
-    dfT.columns=new_z
+    dfT.columns=new_z[:]
     df = dfT
 elif move_ave:
     df = df.rolling(zbin, center=True, min_periods=1, axis=1).mean()
 
-    
+
 ## ---- 1. Climatologies ---- ##
 # Weekly average (weekly average before monthly average)
 #df_weekly = df.resample('W').mean()
 
 # Monthly average (15th of the month) +  pickle for further analysis
-df_monthly = df.resample('MS', loffset=pd.Timedelta(14, 'd')).mean()
+df_monthly = df.resample('MS').mean()
+df_monthly.index = df_monthly.index + pd.tseries.frequencies.to_offset('14d')
 df_monthly.to_pickle('S27_' + variable + '_monthly.pkl')
-# Select years for climato
+
+# Select years for climatology
 df_clim_period = df_monthly[(df_monthly.index.year>=year_clim[0]) & (df_monthly.index.year<=year_clim[1])]
+
 # Monthly clim
 monthly_clim = df_clim_period.groupby(df_clim_period.index.month).mean()
+
 # set index (year 1900)
 monthly_clim.index = pd.to_datetime(monthly_clim.index.values, format='%m')
 monthly_clim.to_pickle('S27_' + variable + '_monthly_clim.pkl')
@@ -171,8 +166,11 @@ weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear')
 weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
-weekly_clim.index = pd.to_datetime(str(current_year) + '-' + weekly_clim.index.month.astype(np.str) + '-' + weekly_clim.index.day.astype(np.str))
+weekly_clim.index = pd.to_datetime(str(current_year) + '-' + weekly_clim.index.month.astype(str) + '-' + weekly_clim.index.day.astype(str))
 #weekly_clim.dropna(how='all', axis=1, inplace=True)
+
+
+
 
 
 # plot
@@ -353,7 +351,6 @@ fig.savefig(outfile_occu, dpi=200)
 os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
 
 # plot 3 - monthly occupations
-fig = plt.figure()
 M = df_occu.resample('M').count()
 M = M[M>0]  
 M = M.resample('Y').count()

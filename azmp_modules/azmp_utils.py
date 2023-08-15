@@ -25,7 +25,6 @@ __version__ = '0.1'
 import h5py
 import os
 import sys
-import h5py
 import netCDF4
 from netCDF4 import date2num,num2date
 import datetime
@@ -35,15 +34,21 @@ import matplotlib.pyplot as plt
 import xarray as xr
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
+from scipy.interpolate.interpnd import _ndim_coords_from_arrays
+from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from shapely.ops import cascaded_union
 from area import area # external fns to compute surface area
-from seawater import extras as swx
+#from seawater import extras as swx
 import datetime
 # maps
-os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
-from mpl_toolkits.basemap import Basemap
+#os.environ['PROJ_LIB'] = '/home/jcoyne/anaconda3/envs/jcoyne_general/share/proj'
+#from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
+
     
 def get_nafo_divisions():
     """ Will generate a dict with NAFO division shapes.
@@ -218,48 +223,80 @@ def get_nafo_divisions():
     return dict
 
 
-def build_NLshelf_definition():
+def build_NLshelf_definition(dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc' ):
     """ Will generate a dict with NL shelf 1000m limit shape.
 
     Example to access info:
     >> dict['lat']
 
     """
+
+    #REMOVE AFTER
+    dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc'
+
+
     ## ---- Get Bathymetry ---- ####
     dc = .1
     lonLims = [-60, -45] # FC AZMP report region
     latLims = [42, 56]
     lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
     lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
     # Load data
-    dataset = netCDF4.Dataset(dataFile)
+    ##dataset = netCDF4.Dataset(dataFile)
+    dataset = xr.open_dataset(dataFile)
     x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
     y = [-89-59.75/60, 89+59.75/60]
-    spacing = dataset.variables['spacing']
+    ##spacing = dataset.variables['spacing']
+
+
     # Compute Lat/Lon
-    nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-    ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-    lon = np.linspace(x[0],x[-1],nx)
-    lat = np.linspace(y[0],y[-1],ny)
+    ##nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
+    ##ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
+    ##lon = np.linspace(x[0],x[-1],nx)
+    ##lat = np.linspace(y[0],y[-1],ny)
     # interpolate data on regular grid (temperature grid)
     # Reshape data
-    zz = dataset.variables['z']
-    Z = zz[:].reshape(ny, nx)
-    Z = np.flipud(Z) # <------------ important!!!
+    ##zz = dataset.variables['z']
+    ##zz = dataset.variables['elevation']
+
+    ##Z = zz[:].reshape(ny, nx)
+    ##Z = np.flipud(Z) # <------------ important!!!
+    
+
+    #Gather lat/lon
+    lon = dataset.lon.values
+    lat = dataset.lat.values
+    nx = lon.size
+    ny = lat.size
+
+
     # Reduce data according to Region params
-    idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-    idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-    Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-    lon = lon[idx_lon[0]]
-    lat = lat[idx_lat[0]]
+    ##idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
+    ##idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
+
+
+    dataset = dataset.isel(lon=(lon>=lonLims[0])*(lon<=lonLims[1]), lat=(lat>=latLims[0])*(lat<=latLims[1]))
+    Z = dataset.elevation.values
+    lon = lon[(lon>=lonLims[0])*(lon<=lonLims[1])]
+    lat = lat[(lat>=latLims[0])*(lat<=latLims[1])]
+
+    #See if there's a way to index instead of interpolate
+    #lon[11::24]
+    #lat[11::24]
+    Zitp = Z[11::24,11::24]
+    lon_grid,lat_grid = np.meshgrid(lon[11::24],lat[11::24])
+
+
+    ##Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
+    ##lon = lon[idx_lon[0]]
+    ##lat = lat[idx_lat[0]]
     # interpolate data on regular grid (temperature grid)
-    lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-    lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-    lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-    z_vec = np.reshape(Z, Z.size)
-    Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+    ##lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
+    ##lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
+    ##lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
+    ##z_vec = np.reshape(Z, Z.size)
+    ##Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
 
     # Use matplotlib contour to extract 1000m isobath
     cc = plt.contour(lon_reg, lat_reg, -Zitp, [1000])
@@ -384,8 +421,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
     dc = .10
     lonLims = [-70, -56] # Lab Sea
     latLims = [53, 67]
-    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    LON_REG = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    LAT_REG = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
     Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFxx_summer_2006-2021.h5')
 
     """
@@ -393,6 +430,21 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
     # Because the code is trying to divide by zero
     # (https://stackoverflow.com/questions/14861891/runtimewarning-invalid-value-encountered-in-divide)
     np.seterr(divide='ignore', invalid='ignore')
+
+    '''
+    ##REMOVE THIS AFTER, THIS IS FOR TESTING PURPOSES
+    dc = 0.1
+    lonLims = [-63, -45]
+    latLims = [42, 58]
+    LON_REG = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    LAT_REG = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    INFILES = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
+    season = 'fall'
+    year_lims = [1991, 2020]
+    zlims = [10, 1000]
+    dz = 1
+    h5_outputfile='Tbot_climato_NSRF_'+season+'_0.10.h5'
+    '''
 
     ## ---- Check if H5 file exists ---- ##        
     if os.path.isfile(h5_outputfile):
@@ -409,8 +461,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
     else:
 
         ## ---- Region parameters ---- ##
-        #    add_path('/home/cyrf0006/data/GEBCO/')
-        dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+        dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc'
+
         lonLims = [LON_REG[0], LON_REG[-1]]
         latLims = [LAT_REG[0], LAT_REG[-1]]
         zmin = zlims[0] # do try to compute bottom temp above that depth
@@ -422,37 +474,24 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
 
         ## ---- Bathymetry ---- ####
         print('Load and grid bathymetry')
-        # Load data
-        dataset = netCDF4.Dataset(dataFile)
-        # Extract variables
-        #x = dataset.variables['x_range'] 
-        #y = dataset.variables['y_range']
-        x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
-        y = [-89-59.75/60, 89+59.75/60]
-        spacing = dataset.variables['spacing']
-        # Compute Lat/Lon
-        nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-        ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-        lon = np.linspace(x[0],x[-1],nx)
-        lat = np.linspace(y[0],y[-1],ny)
-        # interpolate data on regular grid (temperature grid)
-        # Reshape data
-        zz = dataset.variables['z']
-        Z = zz[:].reshape(ny, nx)
-        Z = np.flipud(Z) # <------------ important!!!
-        del zz, dataset
-        # Reduce data according to Region params
-        idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-        idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-        Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-        lon = lon[idx_lon[0]]
-        lat = lat[idx_lat[0]]
-        # interpolate data on regular grid (temperature grid)
+        # Load data and isolate for the region of interest
+        dataset = xr.open_dataset(dataFile)
+        dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
+        dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
+
+        # Extract latitude and longitude
+        lon = dataset.lon.values
+        lat = dataset.lat.values
+
+        # Extract the elevation
+        Z = dataset.elevation.values
+        
+        # Interpolate data on regular grid (temperature grid), uses nearest neighbour (much more efficient)
         lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
         lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
         lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
         z_vec = np.reshape(Z, Z.size)
-        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='nearest')
         del Z, lon, lat
         print(' -> Done!')
 
@@ -475,12 +514,6 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
         else:
             print('!! no season specified, used them all! !!')
 
-        # Remome problematic datasets
-        print('!!Remove MEDBA data!!')
-        print('  ---> I Should be improme because I remove good data!!!!')
-        ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-        ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
-    
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
@@ -489,11 +522,8 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
         da_temp = ds['temperature']
         lons = np.array(ds.longitude)
         lats = np.array(ds.latitude)
-        bins = np.arange(dz/2.0, ds.level.max(), dz)
-        da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
         #To Pandas Dataframe
         df_temp = da_temp.to_pandas()
-        df_temp.columns = bins[0:-1] #rename columns with 'bins'
         # Remove empty columns
         idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
         df_temp = df_temp.dropna(axis=0,how='all')
@@ -517,7 +547,7 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
                     V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
                 elif np.size(idx_good)>1: # vertical interpolation between pts
                     interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                    idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                    idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
                     V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
 
 
@@ -537,10 +567,18 @@ def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
                 LT = np.squeeze(lat_vec[idx_good])
                 TT = np.squeeze(tmp_vec[idx_good])
                 zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+
+                #Mask the array where the max interpolation distance is exceeded
+                THRESHOLD = 2
+                tree = cKDTree(np.array([LN,LT]).T)
+                xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
+                dists, indexes = tree.query(xi)
+                zi[dists > THRESHOLD] = np.nan
+
                 V[:,:,k] = zi
             else:
                 continue
-        print(' -> Done!')    
+        print(' -> Done!')
 
         # mask using bathymetry
         for i, xx in enumerate(lon_reg):
@@ -629,6 +667,22 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
 
     """
 
+
+    '''
+    ##REMOVE THIS AFTER, THIS IS FOR TESTING PURPOSES
+    dc = 0.1
+    lonLims = [-63, -45]
+    latLims = [42, 58]
+    LON_REG = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    LAT_REG = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    INFILES = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
+    season = 'fall'
+    year_lims = [1991, 2020]
+    zlims = [10, 1000]
+    dz = 1
+    h5_outputfile='Sbot_climato_NSRF_'+season+'_0.10.h5'
+    '''
+
     # Because the code is trying to divide by zero
     # (https://stackoverflow.com/questions/14861891/runtimewarning-invalid-value-encountered-in-divide)
     np.seterr(divide='ignore', invalid='ignore')
@@ -648,8 +702,8 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
     else:
 
         ## ---- Region parameters ---- ##
-        #    add_path('/home/cyrf0006/data/GEBCO/')
-        dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+        dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc'
+
         lonLims = [LON_REG[0], LON_REG[-1]]
         latLims = [LAT_REG[0], LAT_REG[-1]]
         zmin = zlims[0] # do try to compute bottom temp above that depth
@@ -661,37 +715,24 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
 
         ## ---- Bathymetry ---- ####
         print('Load and grid bathymetry')
-        # Load data
-        dataset = netCDF4.Dataset(dataFile)
-        # Extract variables
-        #x = dataset.variables['x_range'] 
-        #y = dataset.variables['y_range']
-        x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
-        y = [-89-59.75/60, 89+59.75/60]
-        spacing = dataset.variables['spacing']
-        # Compute Lat/Lon
-        nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-        ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-        lon = np.linspace(x[0],x[-1],nx)
-        lat = np.linspace(y[0],y[-1],ny)
-        # interpolate data on regular grid (temperature grid)
-        # Reshape data
-        zz = dataset.variables['z']
-        Z = zz[:].reshape(ny, nx)
-        Z = np.flipud(Z) # <------------ important!!!
-        del zz, dataset
-        # Reduce data according to Region params
-        idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-        idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-        Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-        lon = lon[idx_lon[0]]
-        lat = lat[idx_lat[0]]
-        # interpolate data on regular grid (temperature grid)
+        # Load data and isolate for the region of interest
+        dataset = xr.open_dataset(dataFile)
+        dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
+        dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
+
+        # Extract latitude and longitude
+        lon = dataset.lon.values
+        lat = dataset.lat.values
+
+        # Extract the elevation
+        Z = dataset.elevation.values
+        
+        # Interpolate data on regular grid (temperature grid), uses nearest neighbour (much more efficient)
         lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
         lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
         lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
         z_vec = np.reshape(Z, Z.size)
-        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='nearest')
         del Z, lon, lat
         print(' -> Done!')
 
@@ -714,12 +755,6 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
         else:
             print('!! no season specified, used them all! !!')
 
-        # Remome problematic datasets
-        print('!!Remove MEDBA data!!')
-        print('  ---> I Should be improme because I remove good data!!!!')
-        ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-        ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
-
         # Time period for climatology
         ds = ds.sel(time=ds['time.year']>=year_lims[0])
         ds = ds.sel(time=ds['time.year']<=year_lims[1])
@@ -728,35 +763,15 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
         da_sal = ds['salinity']
         lons = np.array(ds.longitude)
         lats = np.array(ds.latitude)
-        bins = np.arange(dz/2.0, ds.level.max(), dz)
-        da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
         #To Pandas Dataframe
         df_sal = da_sal.to_pandas()
-        df_sal.columns = bins[0:-1] #rename columns with 'bins'
         # Remove empty columns
         idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
         df_sal = df_sal.dropna(axis=0,how='all')
         lons = np.delete(lons,idx_empty_rows)
         lats = np.delete(lats,idx_empty_rows)
         del ds, da_sal      
-        print(' -> Done!')
-
-        ## ---- Try to remove outliers ---- ##
-        # METHOD 1
-        ## print('For climato, keep only profile with average salinity in [28,38]')
-        ## df_sal_vert_ave = df_sal.mean(axis=1)
-        ## mu =  df_sal_vert_ave.mean()
-        ## sigma = df_sal_vert_ave.std()
-        ## print mu, sigma
-        ## idx = np.where((df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu+5*sigma))
-        ## idx = np.where((df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu+5*sigma))
-        ## lons = lons[idx]
-        ## lats = lats[idx]
-        ## df_sal = df_sal[(df_sal_vert_ave>=mu-5*sigma) & (df_sal_vert_ave<=mu*5*sigma)]
-        # METHOD 2
-        #df_sal = df_sal.apply(lambda x: [y if y <= 36.75 else np.nan for y in x])
-        #df_sal = df_sal.apply(lambda x: [y if y >= 28 else np.nan for y in x])        
-        #print(' -> Done!')        
+        print(' -> Done!')    
 
         ## --- fill 3D cube --- ##  
         print('Fill regular cube')
@@ -773,7 +788,7 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
                     V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
                 elif np.size(idx_good)>1: # vertical interpolation between pts
                     interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                    idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                    idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
                     V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
 
 
@@ -793,6 +808,14 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
                 LT = np.squeeze(lat_vec[idx_good])
                 TT = np.squeeze(tmp_vec[idx_good])
                 zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+
+                #Mask the array where the max interpolation distance is exceeded
+                THRESHOLD = 2
+                tree = cKDTree(np.array([LN,LT]).T)
+                xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
+                dists, indexes = tree.query(xi)
+                zi[dists > THRESHOLD] = np.nan
+
                 V[:,:,k] = zi
             else:
                 continue
@@ -871,6 +894,16 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
       Dec. 2018: Added a flag for masking or not.
 
     """
+
+    #TEMPORARY, REMOVE AFTER
+    '''
+    year_file='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/1980.nc'
+    season='fall'
+    climato_file='Tbot_climato_fall_0.10.h5'
+    nafo_mask=True
+    lab_mask=True
+    '''
+
     ## ---- Load Climato data ---- ##    
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
@@ -913,23 +946,13 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     else:
         print('!! no season specified, used them all! !!')
 
-    # Remome problematic datasets
-    print('!!Remove MEDBA data!!')
-    print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)        
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
-    
     # Restrict max depth to zmax defined earlier
     ds = ds.sel(level=ds['level']<zmax)
-    # Vertical binning (on dataArray; more appropriate here
     da_temp = ds['temperature']
     lons = np.array(ds.longitude)
     lats = np.array(ds.latitude)
-    bins = np.arange(dz/2.0, ds.level.max(), dz)
-    da_temp = da_temp.groupby_bins('level', bins).mean(dim='level')
     #To Pandas Dataframe
     df_temp = da_temp.to_pandas()
-    df_temp.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns
     idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
     df_temp = df_temp.dropna(axis=0,how='all')
@@ -954,7 +977,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
                 V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
             elif np.size(idx_good)>1: # vertical interpolation between pts
                 interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
                 V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
     
     # horizontal interpolation at each depth
@@ -972,6 +995,14 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             LT = np.squeeze(lat_vec[idx_good])
             TT = np.squeeze(tmp_vec[idx_good])
             zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+
+            #Mask the array where the max interpolation distance is exceeded
+            THRESHOLD = 2
+            tree = cKDTree(np.array([LN,LT]).T)
+            xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
+            dists, indexes = tree.query(xi)
+            zi[dists > THRESHOLD] = np.nan
+
             V[:,:,k] = zi
         else:
             continue
@@ -1022,7 +1053,7 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     # Mask data on coastal Labrador
     if lab_mask == True:
         print('Mask coastal labrador')
-        contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+        contour_mask = np.load('operation_files/100m_contour_labrador.npy')
         polygon_mask = Polygon(contour_mask)
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
@@ -1143,24 +1174,13 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     else:
         print('!! no season specified, used them all! !!')
 
-
-    # Remome problematic datasets
-    print('!!Remove MEDBA data!!')
-    print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
-
     # Restrict max depth to zmax defined earlier
     ds = ds.sel(level=ds['level']<zmax)
-    # Vertical binning (on dataArray; more appropriate here
     da_sal = ds['salinity']
     lons = np.array(ds.longitude)
     lats = np.array(ds.latitude)
-    bins = np.arange(dz/2.0, ds.level.max(), dz)
-    da_sal = da_sal.groupby_bins('level', bins).mean(dim='level')
     #To Pandas Dataframe
     df_sal = da_sal.to_pandas()
-    df_sal.columns = bins[0:-1] #rename columns with 'bins'
     # Remove empty columns & drop coordinates (for cast identification on map)
     idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
     df_sal = df_sal.dropna(axis=0,how='all')
@@ -1185,7 +1205,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
                 V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
             elif np.size(idx_good)>1: # vertical interpolation between pts
                 interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good])) 
-                idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
                 V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
 
     # horizontal interpolation at each depth
@@ -1203,6 +1223,14 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
             LT = np.squeeze(lat_vec[idx_good])
             TT = np.squeeze(tmp_vec[idx_good])
             zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
+
+            #Mask the array where the max interpolation distance is exceeded
+            THRESHOLD = 2
+            tree = cKDTree(np.array([LN,LT]).T)
+            xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
+            dists, indexes = tree.query(xi)
+            zi[dists > THRESHOLD] = np.nan
+
             V[:,:,k] = zi
         else:
             continue
@@ -1254,7 +1282,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     # Mask data on coastal Labrador
     if lab_mask == True:
         print('Mask coastal labrador')
-        contour_mask = np.load('/home/cyrf0006/AZMP/state_reports/bottomT/100m_contour_labrador.npy')
+        contour_mask = np.load('/home/jcoyne/Documents/CASH/Combined_Data/bottom-var_output/bottom_temp_v03/100m_contour_labrador.npy')
         polygon_mask = Polygon(contour_mask)
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):

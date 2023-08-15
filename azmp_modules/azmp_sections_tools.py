@@ -64,7 +64,7 @@ def section_bathymetry(section_name):
     bathy_dict = dict(zip(standard_sections, bathy_files))
 
     # This is my personal path, maybe find a way to generelize this.
-    bathy_file = '/home/cyrf0006/github/AZMP-NL/bathymetry/bottom_profiles/' + bathy_dict[section_name]
+    bathy_file = '../bathymetry/' + bathy_dict[section_name]
     
     bathy = np.loadtxt(bathy_file, delimiter=",", unpack=False)
     bathy_x = bathy[:,0]/1000.0
@@ -99,8 +99,20 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     df_stn, df_itp = azst.get_section('BB', 2018, 'summer', 'temperature')
     
     """
+    '''
+    section_name = 'SI'
+    year=2021
+    season='summer'
+    var_name='temperature'
+    dlat=2
+    dlon=2
+    dc=0.2
+    dz=5
+    zmin=2
+    '''
+
     ## ---- Get Stations ---- ## 
-    df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+    df_stn = pd.read_excel('operation_files/STANDARD_SECTIONS.xlsx')
     df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
     df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
     df_stn = df_stn.dropna()
@@ -115,60 +127,44 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
     ## --------- Get Bathymetry -------- ####
-    bathy_file = './' + section_name + '_bathy.npy'
+    bathy_file = 'AZMP_lines/' + section_name + '_bathy.npy'
     if os.path.isfile(bathy_file):
             print('Load saved bathymetry!')
             Zitp = np.load(bathy_file)
 
     else:
             print('Get bathy...')
-            dataFile = '/home/cyrf0006/data/GEBCO/GEBCO_2014_1D.nc' # Maybe find a better way to handle this file
+            dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc' # Maybe find a better way to handle this file
+
+            dataset = xr.open_dataset(dataFile)
+            dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
+            dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
+
+            # Extract latitude and longitude
+            lon = dataset.lon.values
+            lat = dataset.lat.values
+
+            # Extract the elevation
+            Z = dataset.elevation.values
+
+            #Set up the lats and lons
             lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-            # Load data
-            dataset = netCDF4.Dataset(dataFile)
-            x = [-179-59.75/60, 179+59.75/60] # to correct bug in 30'' dataset?
-            y = [-89-59.75/60, 89+59.75/60]
-            spacing = dataset.variables['spacing']
-            # Compute Lat/Lon
-            nx = int((x[-1]-x[0])/spacing[0]) + 1  # num pts in x-dir
-            ny = int((y[-1]-y[0])/spacing[1]) + 1  # num pts in y-dir
-            lon = np.linspace(x[0],x[-1],nx)
-            lat = np.linspace(y[0],y[-1],ny)
-            # interpolate data on regular grid 
-            # Reshape data
-            zz = dataset.variables['z']
-            Z = zz[:].reshape(ny, nx)
-            Z = np.flipud(Z) # <------------ important!!!
-            # Reduce data according to Region params
-            idx_lon = np.where((lon>=lonLims[0]) & (lon<=lonLims[1]))
-            idx_lat = np.where((lat>=latLims[0]) & (lat<=latLims[1]))
-            Z = Z[idx_lat[0][0]:idx_lat[0][-1]+1, idx_lon[0][0]:idx_lon[0][-1]+1]
-            lon = lon[idx_lon[0]]
-            lat = lat[idx_lat[0]]
-            # interpolate data on regular grid 
             lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-            lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-            lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-            z_vec = np.reshape(Z, Z.size)
-            Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='linear')
+
+            #Interpolate
+            Zitp = griddata((lon_grid_bathy.flatten(),lat_grid_bathy.flatten()), Z.flatten(), (lon_grid,lat_grid), method='linear')
             np.save(bathy_file, Zitp)
             print(' -> Done!')
 
-
     ## -------- Get CTD data -------- ##
-    year_file = '/home/cyrf0006/data/dev_database/netCDF/' + str(year) + '.nc'
+    year_file = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/' + str(year) + '.nc'
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
-
-    # Remame problematic datasets
-    print('!!Remove MEDBA & MEDTE data!!')
-    print('  ---> I Should be improme because I remove good data!!!!')
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True)
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True)
 
     # Select Region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
+    ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
 
     # Select time (save several options here)
     if season == 'summer':
@@ -213,7 +209,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
                 V[j,i,:] = np.array(df.iloc[idx].mean(axis=0))
             elif np.size(idx_good)>1: # vertical interpolation between pts
                 interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))  # <---- Attention: strange syntax but works
-                idx_interp = np.arange(np.int(idx_good[0]),np.int(idx_good[-1]+1))
+                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
                 V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
 
     # horizontal interpolation at each depth
@@ -255,7 +251,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     for stn in stn_list:
         # 1. Section only (by station name)
         #ds_tmp = ds.where(ds.comments == stn, drop=True)  
-        ds_tmp = ds.where(ds.comments == stn, drop=True)  
+        ds_tmp = ds.where(ds.station_ID == stn, drop=True)  
         section_only.append(ds_tmp)
 
         #2.  From interpolated field (closest to station)
@@ -269,16 +265,18 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
         # store in dataframe
         df_section_itp.loc[stn] = Tprofile
 
-    df_section_itp.index.name = 'station'    
+    df_section_itp.index.name = 'station'
    
     # convert option #1 to dataframe    
     ds_section = xr.concat(section_only, dim='time')
-
-    da = ds_section[var_name]
+    station_ID = ds_section.station_ID.values.astype(str)
+    ds_section = ds_section.groupby_bins('level', bins).mean(dim='level')
+    da = ds_section[var_name].T
     df_section_stn = da.to_pandas()
+    df_section_stn.columns = bins[0:-1]
     #df_section_stn.index = ds_section.comments.values
-    df_section_stn.index = ds_section.comments.values
-    df_section_stn.index.name = 'station'    
+    df_section_stn.index = station_ID
+    df_section_stn.index.name = 'station'
     
     # Compute distance vector for option #1 - exact station
     distance_stn = np.full((df_section_stn.index.shape), np.nan)
@@ -551,7 +549,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         return None
 
     ## ---- Get climatology ---- ## 
-    clim_name = 'df_' + VAR + '_' + SECTION + '_' + SEASON + '_clim.pkl' 
+    clim_name = 'operation_files/df_' + VAR + '_' + SECTION + '_' + SEASON + '_clim.pkl' 
     df_clim = pd.read_pickle(clim_name)
     # Update index to add distance (in addition to existing station name)    
     df_clim.index = df_section_itp.loc[df_clim.index].index

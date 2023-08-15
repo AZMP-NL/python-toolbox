@@ -43,7 +43,8 @@ import cartopy. crs as ccrs
 import cartopy.feature as cpf
 import matplotlib.ticker as mticker
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-import cc_variable_list_NL as vl
+sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/cc_tools')
+import cc_variable_list as vl
 
 def HUD2014_to_multiindex(section, z_vec):
     """

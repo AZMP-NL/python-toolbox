@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 #from seawater import extras as swx
 # maps
 os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 
     
 def nao(YEAR):

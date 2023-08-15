@@ -21,7 +21,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 year_clim = [1991, 2020]
-years = [1981, 2022]
+years = [1981, 2021]
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -231,9 +231,9 @@ mld_anom_std = pd.concat([mld_winter_anom, mld_spring_anom, mld_summer_anom, mld
 ## MLD_std_anom_annual = (MLD_annual - MLD_annual_clim.mean()) / MLD_annual_clim.std()
 
 
-#### ------------- Stratification ---------------- ####
+#### ------------- Stratification (0-50m)---------------- ####
 # Load pickled data
-strat_monthly = pd.read_pickle('S27_stratif_monthly.pkl')
+strat_monthly = pd.read_pickle('S27_stratif_0-50_monthly.pkl')
 strat = strat = strat_monthly
 # flag some data:
 strat[strat.index=='2019-03-15']=np.nan
@@ -266,42 +266,49 @@ strat_summer_clim = strat_monthly_clim[[7,8,9]]
 strat_fall_clim = strat_monthly_clim[[10,11,12]]
 strat_annual_clim = strat_monthly_clim
 # concat clim and anomaly
-strat_clim = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
-strat_anom_std = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+strat_clim_0to50 = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+strat_anom_std_0to50 = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
 
 
-## # Annual and seasonal anomalies (old way)
-## # Load pickled data
-## df_strat = pd.read_pickle('S27_stratif_monthly.pkl')
-## # flag some data:
-## df_strat[df_strat.index=='2019-03-15']=np.nan
-## df_strat = df_strat[df_strat.index.year>=years[0]]
-## strat_clim_period = df_strat[(df_strat.index.year>=year_clim[0]) & (df_strat.index.year<=year_clim[1])]
-## # Monthly clim
-## strat_monthly_stack = df_strat.groupby([(df_strat.index.year),(df_strat.index.month)]).mean()
-## strat_monthly_clim_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
-## strat_monthly_clim = strat_monthly_clim_stack.mean(level=1)
-## strat_monthly_std = strat_monthly_clim_stack.std(level=1)
-## # Monthly anomaly
-## strat_anom = strat_monthly_stack.sub(strat_monthly_clim, level=1)
-## strat_std_anom = strat_anom.div(strat_monthly_std, level=1)
-## strat_std_anom.index = pd.to_datetime(strat_std_anom.index.get_level_values(0).astype(str) + '-' + strat_std_anom.index.get_level_values(1).astype(str) + '-1', format="%Y-%m-%d")
-## strat_std_anom.dropna(inplace=True) # dropna
-## # Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
-## strat_winter_anom = strat_std_anom[(strat_std_anom.index.month>=1) & (strat_std_anom.index.month<=3)].resample('As').mean()
-## strat_spring_anom = strat_std_anom[(strat_std_anom.index.month>=4) & (strat_std_anom.index.month<=6)].resample('As').mean()
-## strat_summer_anom = strat_std_anom[(strat_std_anom.index.month>=7) & (strat_std_anom.index.month<=9)].resample('As').mean()
-## strat_fall_anom = strat_std_anom[(strat_std_anom.index.month>=10) & (strat_std_anom.index.month<=12)].resample('As').mean()
-## strat_annual_anom = strat_std_anom.resample('As').mean()
-## # Mean values for climatology period (for last columns)
-## strat_winter_clim = strat_clim_period[(strat_clim_period.index.month>=1) & (strat_clim_period.index.month<=3)].resample('As').mean()
-## strat_spring_clim = strat_clim_period[(strat_clim_period.index.month>=4) & (strat_clim_period.index.month<=6)].resample('As').mean()
-## strat_summer_clim = strat_clim_period[(strat_clim_period.index.month>=7) & (strat_clim_period.index.month<=9)].resample('As').mean()
-## strat_fall_clim = strat_clim_period[(strat_clim_period.index.month>=10) & (strat_clim_period.index.month<=12)].resample('As').mean()
-## strat_annual_clim = strat_clim_period.resample('As').mean()
-## # concat clim and anomaly
-## strat_clim = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
-## strat_anom_std = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+
+#### ------------- Stratification (10-150m)---------------- ####
+# Load pickled data
+strat_monthly = pd.read_pickle('S27_stratif_10-150_monthly.pkl')
+strat = strat = strat_monthly
+# flag some data:
+strat[strat.index=='2019-03-15']=np.nan
+strat[strat.index=='1980-03-15']=np.nan
+strat = strat[strat.index.year>=years[0]]
+# limit to after 1990
+#strat[strat.index<'1990-01-01']=np.nan
+# Annual and seasonal anomalies (average of monthly anomalies rather than anomalies of monthly values))
+#stack months
+strat_stack = strat.groupby([(strat.index.year),(strat.index.month)]).mean()
+strat_unstack = strat_stack.unstack()
+# compute clim
+strat_clim_period = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
+strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
+strat_monthly_clim = strat_monthly_stack.groupby(level=1).mean()
+strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
+monthly_anom = strat_unstack - strat_monthly_clim 
+monthly_stdanom = (strat_unstack - strat_monthly_clim) /  strat_monthly_std
+
+# Seasonal and annual anomalies
+strat_winter_anom = monthly_stdanom[[1,2,3]].mean(axis=1)
+strat_spring_anom = monthly_stdanom[[4,5,6]].mean(axis=1)
+strat_summer_anom = monthly_stdanom[[7,8,9]].mean(axis=1)
+strat_fall_anom = monthly_stdanom[[10,11,12]].mean(axis=1)
+strat_annual_anom = monthly_stdanom.mean(axis=1)
+# Mean values for climatology period (for last columns)
+strat_winter_clim = strat_monthly_clim[[1,2,3]]
+strat_spring_clim = strat_monthly_clim[[4,5,6]]
+strat_summer_clim = strat_monthly_clim[[7,8,9]]
+strat_fall_clim = strat_monthly_clim[[10,11,12]]
+strat_annual_clim = strat_monthly_clim
+# concat clim and anomaly
+strat_clim_10to150 = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+strat_anom_std_10to150 = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+
 
 
 #### ------------- Build the scorecard ---------------- ####
@@ -504,7 +511,10 @@ os.system('convert -trim scorecards_s27_S_FR.png scorecards_s27_S_FR.png')
 
 
 ### 3. CIL
-my_df = CIL_anom_std.T
+
+#Remove CIL core depth for now
+my_df = CIL_anom_std.drop('CIL core depth', axis=1).T
+#my_df = CIL_anom_std.T
 my_df['MEAN'] = CIL_clim_period.mean()
 my_df['SD'] =  CIL_clim_period.std()
 
@@ -516,7 +526,8 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse some CIL values for colormap (thickness & core depth)
 vals_color[2,:] = vals_color[2,:]*-1
-vals_color[3,:] = vals_color[3,:]*-1
+#Add back if you're doing depth
+#vals_color[3,:] = vals_color[3,:]*-1
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -555,7 +566,9 @@ plt.savefig("scorecards_s27_CIL.png", dpi=300)
 os.system('convert -trim scorecards_s27_CIL.png scorecards_s27_CIL.png')
 
 # French table
-my_df.index = [u'CIF temp', u'CIF T coeur', u'CIF prof coeur', u'CIF épaisseur']
+my_df.index = [u'CIF temp', u'CIF T coeur', u'CIF épaisseur']
+#Add back if you're doing depth
+#my_df.index = [u'CIF temp', u'CIF T coeur', u'CIF prof coeur', u'CIF épaisseur']
 
 header = ax.table(cellText=[['']],
                       colLabels=[u'-- Propriétés de la couche intermédiaire froide (CIF) --'],
@@ -672,10 +685,10 @@ plt.savefig("scorecards_s27_MLD_FR.png", dpi=300)
 os.system('convert -trim scorecards_s27_MLD_FR.png scorecards_s27_MLD_FR.png')
 
 
-### 5. strat
-my_df = strat_anom_std.T
-my_df['MEAN'] = strat_clim.mean()
-my_df['SD'] =  strat_clim.std()
+### 5. strat (0-50m)
+my_df = strat_anom_std_0to50.T
+my_df['MEAN'] = strat_clim_0to50.mean()
+my_df['SD'] =  strat_clim_0to50.std()
 
 # Get text values +  cell color
 vals = np.around(my_df.values,1)
@@ -695,7 +708,7 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 #do the table
 header = ax.table(cellText=[['']],
-                      colLabels=['-- Stratification --'],
+                      colLabels=['-- Stratification (0-50m) --'],
                       loc='center'
                       )
 header.set_fontsize(13)
@@ -722,14 +735,14 @@ for key, cell in the_table.get_celld().items():
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
         cell._text.set_color('darkgray')
-plt.savefig("scorecards_s27_strat.png", dpi=300)
-os.system('convert -trim scorecards_s27_strat.png scorecards_s27_strat.png')
+plt.savefig("scorecards_s27_strat_0-50m.png", dpi=300)
+os.system('convert -trim scorecards_s27_strat_0-50m.png scorecards_s27_strat_0-50m.png')
 
 # French table
 my_df.index = [u'strat. hiver', u'strat. printemps', u'strat. été', u'strat. automne', u'strat. annuel']
 
 header = ax.table(cellText=[['']],
-                      colLabels=[u'-- Stratification --'],
+                      colLabels=[u'-- Stratification (0-50m) --'],
                       loc='center'
                       )
 header.set_fontsize(13)
@@ -756,18 +769,107 @@ for key, cell in the_table.get_celld().items():
     elif (cell_text=='nan'):
         cell._set_facecolor('darkgray')
         cell._text.set_color('darkgray')
-plt.savefig("scorecards_s27_strat_FR.png", dpi=300)
-os.system('convert -trim scorecards_s27_strat_FR.png scorecards_s27_strat_FR.png')
+plt.savefig("scorecards_s27_strat_0-50m_FR.png", dpi=300)
+os.system('convert -trim scorecards_s27_strat_0-50m_FR.png scorecards_s27_strat_0-50m_FR.png')
+
+
+### 6. strat (10-150m)
+my_df = strat_anom_std_10to150.T
+my_df['MEAN'] = strat_clim_10to150.mean()
+my_df['SD'] =  strat_clim_10to150.std()
+
+# Get text values +  cell color
+vals = np.around(my_df.values,1)
+vals[vals==-0.] = 0.
+vals_color = vals.copy()
+vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+vals_color[:,-2] = 0
+# scietnific notation for mean and std
+for i in np.arange(0,5):
+    vals[i,-1] = np.around(my_df.values[i,-1],3)
+    vals[i,-2] = np.around(my_df.values[i,-2],3)
+  
+
+nrows, ncols = my_df.index.size, my_df.columns.size
+fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+ax = fig.add_subplot(111)
+ax.axis('off')
+#do the table
+header = ax.table(cellText=[['']],
+                      colLabels=['-- Stratification (10-150m) --'],
+                      loc='center'
+                      )
+header.set_fontsize(13)
+the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
+                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1, 0.5]
+                    )
+# change font color to white where needed:
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(13)
+table_props = the_table.properties()
+#table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text() 
+    if is_number(cell_text) == False:
+        pass
+    ## elif key[0] == 0: #year's row = no color
+    ##     pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
+        cell._text.set_color('white')
+    elif (cell_text=='nan'):
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+plt.savefig("scorecards_s27_strat_10-150m.png", dpi=300)
+os.system('convert -trim scorecards_s27_strat_10-150m.png scorecards_s27_strat_10-150m.png')
+
+# French table
+my_df.index = [u'strat. hiver', u'strat. printemps', u'strat. été', u'strat. automne', u'strat. annuel']
+
+header = ax.table(cellText=[['']],
+                      colLabels=[u'-- Stratification (10-150m) --'],
+                      loc='center'
+                      )
+header.set_fontsize(13)
+the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
+                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+                    bbox=[0, 0, 1, 0.5]
+                    )
+# change font color to white where needed:
+the_table.auto_set_font_size(False)
+the_table.set_fontsize(13)
+table_props = the_table.properties()
+#table_cells = table_props['child_artists']
+last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+for key, cell in the_table.get_celld().items():
+    cell_text = cell.get_text().get_text()
+    if is_number(cell_text) == False:
+        pass
+    ## elif key[0] == 0: #year's row = no color
+    ##     pass
+    elif key[1] in last_columns:
+         cell._text.set_color('darkslategray')
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
+        cell._text.set_color('white')
+    elif (cell_text=='nan'):
+        cell._set_facecolor('darkgray')
+        cell._text.set_color('darkgray')
+plt.savefig("scorecards_s27_strat_10-150m_FR.png", dpi=300)
+os.system('convert -trim scorecards_s27_strat_10-150m_FR.png scorecards_s27_strat_10-150m_FR.png')
+
 
 
 #6. Merge all together
 # English
 #os.system('montage  -gravity west scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat.png -tile 1x5 -geometry +1+1  -background white scorecards_s27.png') 
-os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat.png  -gravity East -append -geometry +1+1 scorecards_s27.png')
+os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat_0-50m.png scorecards_s27_strat_10-150m.png  -gravity East -append -geometry +1+1 scorecards_s27.png')
 
 # French
 #os.system('montage   -gravity east scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_FR.png -tile 1x5 -geometry +1+1  -background white scorecards_s27_FR.png') 
-os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
+os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_0-50m_FR.png scorecards_s27_strat_10-150m_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
 
 # remove some images
 os.system('rm scorecards_s27_T* scorecards_s27_S* scorecards_s27_CIL* scorecards_s27_MLD* scorecards_s27_strat*')

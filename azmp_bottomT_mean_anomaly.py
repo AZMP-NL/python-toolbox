@@ -24,7 +24,7 @@ years = [1980, 2022]
 
 #### ------------- For fall ---------------- ####
 # 0.
-infile = 'stats_2H_fall.pkl'
+infile = 'bottom_temp_stats/stats_2H_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
@@ -37,7 +37,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom2H = std_anom[['Tmean', 'Tmean_sha200']]
 
 # 1.
-infile = 'stats_2J_fall.pkl'
+infile = 'bottom_temp_stats/stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
@@ -50,7 +50,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom2J = std_anom[['Tmean', 'Tmean_sha200']]
 
 # 2.
-infile = 'stats_3K_fall.pkl'
+infile = 'bottom_temp_stats/stats_3K_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -59,7 +59,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3K = std_anom[['Tmean', 'Tmean_sha300']]
 
 # 3.
-infile = 'stats_3LNO_fall.pkl'
+infile = 'bottom_temp_stats/stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
@@ -113,7 +113,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 #### ------------- For Spring ---------------- ####
 # 1.
-infile = 'stats_3LNO_spring.pkl'
+infile = 'bottom_temp_stats/stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
@@ -126,7 +126,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3LNO = std_anom[['Tmean', 'Tmean_sha100']]
 
 # 2.
-infile = 'stats_3Ps_spring.pkl'
+infile = 'bottom_temp_stats/stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
@@ -178,8 +178,8 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 
 #### ------------- Merge spring and bottom ---------------- ####
-bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring.pkl')
-bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall.pkl')
+bottomT_spring = pd.read_pickle('bottomT_index_spring.pkl')
+bottomT_fall = pd.read_pickle('bottomT_index_fall.pkl')
 bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
 
 fig = plt.figure()
@@ -268,7 +268,7 @@ plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Normalized anomaly')
 ax.set_title('Bottom Temperature')
-plt.ylim([-1.5,2.65])
+plt.ylim([-2,3])
 
 colors = cmap(normal(np.nansum(bottomT_stack_norm.values, axis=1)))
 cell_text = np.nansum(bottomT_stack_norm.values, axis=1).round(1).astype('str')
@@ -309,7 +309,7 @@ plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Anomalie Normalisée')
 ax.set_title('Température fond')
-plt.ylim([-2,2])
+plt.ylim([-2,3])
 
 colors = cmap(normal(np.nansum(bottomT_stack_normFR.values, axis=1)))
 cell_text = np.nansum(bottomT_stack_normFR.values, axis=1).round(1).astype('str')

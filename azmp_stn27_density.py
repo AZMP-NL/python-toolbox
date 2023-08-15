@@ -17,6 +17,7 @@ import pandas as pd
 import xarray as xr
 import datetime
 import os
+import warnings
 import matplotlib.dates as mdates
 from matplotlib.ticker import NullFormatter
 from matplotlib.dates import MonthLocator, DateFormatter
@@ -41,14 +42,14 @@ APPEND = False
 APPEND_YEAR = 2022
 # apply a moving average?
 binning=True
-move_ave = True
+move_ave = False
 zbin = 5
 
 ## ---- Open data and select ---- ##
 if os.path.isfile('stn27_all_casts.nc'):
     ds = xr.open_dataset('stn27_all_casts.nc') 
     if APPEND == True:
-        ds2 = xr.open_dataset('/home/cyrf0006/data/dev_database/netCDF/' + str(APPEND_YEAR) + '.nc')
+        ds2 = xr.open_dataset('/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/' + str(APPEND_YEAR) + '.nc')
         ds2 = ds2.where(ds2.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
         ds2 = ds2.where(ds2.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
         # Select a depth range
@@ -60,7 +61,7 @@ if os.path.isfile('stn27_all_casts.nc'):
         ds2 = ds2.sortby('time')
         ds = xr.concat([ds, ds2]) # to be tested!
 else:
-    ds = xr.open_mfdataset('/home/cyrf0006/data/dev_database/netCDF/*.nc', combine='by_coords')
+    ds = xr.open_mfdataset('/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc')
     # Remome GTS datasets
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
     ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
@@ -152,9 +153,9 @@ df_sig = pd.DataFrame(SIG0, index=df_temp.index, columns=df_temp.columns)
 
 ## ---- QA/QC check ---- ##
 idx_to_remove = []
-plt.close('all')
+#plt.close('all')
 for i in np.arange(1,13):
-    fig = plt.figure()
+    #fig = plt.figure()
     df_tmp = df_rho[df_rho.index.month == i]
 
     for idx in df_tmp.index:
@@ -167,6 +168,7 @@ for i in np.arange(1,13):
         else: 
             continue
 
+    '''
     # compute clim for second check
     df_tmp = df_tmp.groupby('time').mean()    
     df_tmp = df_tmp.T   
@@ -187,12 +189,22 @@ for i in np.arange(1,13):
         
     #input()
     #plt.close('all')
-    
+plt.close('all')    
+'''
+
 ## Remove idx_to_remove.
 df_rho.drop(idx_to_remove, inplace=True)
 df_sig.drop(idx_to_remove, inplace=True)
 df_SA.drop(idx_to_remove, inplace=True)
 df_CT.drop(idx_to_remove, inplace=True)
+ds = ds.isel(time = ~np.isin(ds.time, np.array(idx_to_remove, dtype='datetime64')))
+
+## ---- Vertically interpolate density ---- ##
+df_SA = df_SA.interpolate(method='linear',axis=1).where(df_SA.bfill(axis=1).notnull())
+df_CT = df_CT.interpolate(method='linear',axis=1).where(df_CT.bfill(axis=1).notnull())
+df_rho = df_rho.interpolate(method='linear',axis=1).where(df_rho.bfill(axis=1).notnull())
+df_sig = df_sig.interpolate(method='linear',axis=1).where(df_sig.bfill(axis=1).notnull())
+
 df_rho.to_pickle('S27_rho_raw.pkl')
 df_sig.to_pickle('S27_sig_raw.pkl')
 df_SA.to_pickle('S27_SA_raw.pkl')
@@ -216,27 +228,70 @@ df_N2 = pd.DataFrame(N2, index=df_CT.index, columns=pmid)
 df_N2.to_pickle('S27_N2_raw.pkl')
 MLD = pd.Series(MLD, index=df_CT.index)
 MLD.to_pickle('S27_MLD_raw.pkl')
-    
-## ---- Compute Stratification (now 8m-50m) ---- ## PREVIOUS
-#rho_5m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==8)))]
-#rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==50)))]
-#strat = (rho_50m-rho_5m)/42
-#strat.to_pickle('S27_stratif_raw.pkl')
 
-## ---- Compute Stratification (now 5m-150m) ---- ## SINCE 2023 (copy wu)
-rho_5m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==8)))]
-rho_50m = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==148)))]
-strat = (rho_50m-rho_5m)/140
-strat.to_pickle('S27_stratif_raw.pkl')
-
-# Alternate method for Wu et al. revisited
-rho_1 = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==8)))]
-rho_2 = df_rho.iloc[:,int(np.squeeze(np.where(df_rho.columns==148)))]
-strat_wu = (rho_2-rho_1)/140
-strat_wu.to_pickle('S27_stratif_5-150_raw.pkl')
 
 ## ---- Save monthly averages ---- ##
 df_rho.resample('M').mean().to_pickle('S27_rho_monthly.pkl')
 MLD.resample('M').mean().to_pickle('S27_MLD_monthly.pkl')
-strat.resample('M').mean().to_pickle('S27_stratif_monthly.pkl')
+
+## ---- Compute Stratification (now 5m-150m) ---- ## SINCE 2023 (copy wu)
+
+#Determine density straight from NetCDF
+Z = ds.level.values
+SP = ds.salinity.values
+PT = ds.temperature.values
+SA = gsw.SA_from_SP(SP, Z, -50, 47)
+CT = gsw.CT_from_pt(SA, PT)
+RHO = gsw.rho(SA, CT, Z)
+
+#Remove surface non-bottle measurements
+bottles = np.isin(ds.instrument_ID.values, ['BO','FAPBO'])
+RHO[~bottles,:2] = np.nan
+
+#Record the relevant data
+rho = pd.DataFrame(RHO,index=ds.time, columns=ds.level)
+
+#Define the limits (range or individual level)
+lower_limit = [0,5]
+upper_limit = [48,53]
+
+#Isolate for the relevant depths
+warnings.simplefilter("ignore", category=RuntimeWarning)
+indx = [np.nanargmin(np.abs(ds.level - ii)) for ii in lower_limit]
+rho_top = np.nanmean(rho.iloc[:,indx[0]:indx[1]], axis=1)
+indx = [np.nanargmin(np.abs(ds.level - ii)) for ii in upper_limit]
+rho_bottom = np.nanmean(rho.iloc[:,indx[0]:indx[1]], axis=1)
+
+#Remove values where top density is higher than bottom density
+unstable_filt = rho_bottom <= rho_top
+rho_top[unstable_filt] = np.nan
+rho_bottom[unstable_filt] = np.nan
+
+#Calculate the stratification
+depth_range = np.mean(upper_limit) - np.mean(lower_limit)
+strat = pd.Series((rho_bottom - rho_top)/depth_range, index=ds.time).resample('M').mean()
+strat.to_pickle('S27_stratif_0-50_raw.pkl')
+strat.resample('M').mean().to_pickle('S27_stratif_0-50_monthly.pkl')
+
+#Define the limits (range or individual level)
+lower_limit = [8,13]
+upper_limit = [148,153]
+
+#Isolate for the relevant depths
+warnings.simplefilter("ignore", category=RuntimeWarning)
+indx = [np.nanargmin(np.abs(ds.level - ii)) for ii in lower_limit]
+rho_top = np.nanmean(rho.iloc[:,indx[0]:indx[1]], axis=1)
+indx = [np.nanargmin(np.abs(ds.level - ii)) for ii in upper_limit]
+rho_bottom = np.nanmean(rho.iloc[:,indx[0]:indx[1]], axis=1)
+
+#Remove values where top density is higher than bottom density
+unstable_filt = rho_bottom <= rho_top
+rho_top[unstable_filt] = np.nan
+rho_bottom[unstable_filt] = np.nan
+
+#Calculate the stratification
+depth_range = np.mean(upper_limit) - np.mean(lower_limit)
+strat = pd.Series((rho_bottom - rho_top)/depth_range, index=ds.time).resample('M').mean()
+strat.to_pickle('S27_stratif_10-150_raw.pkl')
+strat.resample('M').mean().to_pickle('S27_stratif_10-150_monthly.pkl')
 
