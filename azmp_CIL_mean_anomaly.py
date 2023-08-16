@@ -28,9 +28,9 @@ baditp_BB = []
 baditp_FC = []
 
 #### ---- Load the data and compute anomalies ---- ####
-df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2021/operation_files/df_CIL_SI_summer.pkl').astype('float')
-df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2021/operation_files/df_CIL_BB_summer.pkl').astype('float')
-df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2021/operation_files/df_CIL_FC_summer.pkl').astype('float')
+df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_SI_summer.pkl').astype('float')
+df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_BB_summer.pkl').astype('float')
+df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_FC_summer.pkl').astype('float')
 
 # Set problem years equal to nan
 df_SI['vol_itp'].loc[baditp_SI] = np.nan

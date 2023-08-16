@@ -24,7 +24,7 @@ import azmp_sections_tools as azst
 
 
 ## ---- Region parameters ---- ## <-------------------------------Would be nice to pass this in a config file '2017.report'
-SECTION = 'SI'
+SECTION = 'BB'
 SEASON = 'summer'
 CLIM_YEAR = [1950, 2022]
 #CLIM_YEAR = [1991, 2010]
@@ -410,6 +410,119 @@ df_CIL.index = years_series
 df_CIL.columns = ['vol_stn', 'vol_itp', 'core_stn', 'core_itp']
 picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
 df_CIL.to_pickle(picklename)
+
+
+
+
+
+## TESTING AREA - Add climatology to blank areas for each year
+
+#This part adds values to nans for stations that are covered
+place1 = []
+stn_years = np.unique(df_stn_mindex.index.get_level_values('year').values)
+itp_years = np.unique(df_itp_mindex.index.get_level_values('year').values)
+
+
+for YEAR in years:
+
+    if np.isin(YEAR,stn_years):
+        stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+        stn_orig = df_stn_mindex.T[[YEAR]].copy()
+        stn_orig = stn_orig.T.droplevel('year').T
+        stn_orig = stn_orig.reindex(columns=stn_clim.columns,fill_value=np.nan)
+
+        stn_merged = stn_orig.copy()
+        stn_merged[np.isnan(stn_orig)] = stn_clim[np.isnan(stn_orig)]
+        place1.append(stn_merged.T)
+
+
+        ## CIL Calculation
+        # Compute distance vector for option #1 - exact station
+        distance_stn = np.full((df_clim.index.shape), np.nan)
+        for i, stn in enumerate(df_clim.index):
+            distance_stn[i] = azst.haversine(df_stn.LON[0], df_stn.LAT[0], df_stn[df_stn.STATION==df_clim.index[i]].LON, df_stn[df_stn.STATION==df_clim.index[i]].LAT)    
+
+        levels = np.arange(-2,10)
+        c = plt.contourf(distance_stn, stn_merged.T.columns, stn_merged,levels)
+        c_cil_stn = plt.contour(distance_stn, stn_merged.T.columns, stn_merged, [0,], colors='k', linewidths=2)
+        plt.clf()
+        #fig.clf()
+        # CIL area
+        cil_vol_stn = 0
+        CIL = c_cil_stn.collections[0]
+        for path in CIL.get_paths()[:]:
+            vs = path.vertices
+            cil_vol_stn = cil_vol_stn + np.abs(area(vs))/1000
+
+
+        #if df_section_stn.index.size/df_stn.index.size >= 0.75:
+        cil_vol_stn_clim[np.where(YEAR == years)[0][0]] = cil_vol_stn 
+        # CIL core
+        cil_core_stn_clim[np.where(YEAR == years)[0][0]] = np.nanmin(stn_merged.values)
+
+    if np.isin(YEAR,itp_years):
+        #Same, but for interpolation method
+        stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+        stn_orig = df_itp_mindex.T[[YEAR]].copy()
+        stn_orig = stn_orig.T.droplevel('year').T
+        stn_orig = stn_orig.reindex(columns=stn_clim.columns,fill_value=np.nan)
+
+        stn_merged = stn_orig.copy()
+        stn_merged[np.isnan(stn_orig)] = stn_clim[np.isnan(stn_orig)]
+        place1.append(stn_merged.T)
+
+
+        ## CIL Calculation
+        # Compute distance vector for option #1 - exact station
+        distance_stn = np.full((df_clim.index.shape), np.nan)
+        for i, stn in enumerate(df_clim.index):
+            distance_stn[i] = azst.haversine(df_stn.LON[0], df_stn.LAT[0], df_stn[df_stn.STATION==df_clim.index[i]].LON, df_stn[df_stn.STATION==df_clim.index[i]].LAT)    
+
+        levels = np.arange(-2,10)
+        c = plt.contourf(distance_stn, stn_merged.T.columns, stn_merged,levels)
+        c_cil_itp = plt.contour(distance_stn, stn_merged.T.columns, stn_merged, [0,], colors='k', linewidths=2)
+        plt.clf()
+        #fig.clf()
+        # CIL area
+        cil_vol_itp = 0
+        CIL = c_cil_itp.collections[0]
+        for path in CIL.get_paths()[:]:
+            vs = path.vertices
+            cil_vol_itp = cil_vol_itp + np.abs(area(vs))/1000
+
+
+        #if df_section_stn.index.size/df_stn.index.size >= 0.75:
+        cil_vol_itp_clim[np.where(YEAR == years)[0][0]] = cil_vol_itp 
+        # CIL core
+        cil_core_itp_clim[np.where(YEAR == years)[0][0]] = np.nanmin(stn_merged.values)
+
+#place2 = pd.concat(place1,keys=stn_years)
+plt.close('all')
+
+# Save CIL timseries
+df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_itp_clim]).T
+df_CIL.index = years_series
+df_CIL.columns = ['vol_stn', 'vol_itp', 'core_stn', 'core_itp']
+picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
+df_CIL.to_pickle(picklename)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # plot temperature
 fig, ax = plt.subplots()
