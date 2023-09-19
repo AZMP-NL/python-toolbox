@@ -45,6 +45,109 @@ df_sal = pd.read_pickle('S27_salinity_monthly.pkl')
 #df_temp = df_temp[df_temp.index.year>=years[0]]
 #df_sal = df_sal[df_sal.index.year>=years[0]]
 
+#Set the year after the beginning of 1950
+df_temp = df_temp[df_temp.index.year>=1950]
+
+## - Temperature - ##
+# stack year, month
+ts_stack = df_temp.groupby([(df_temp.index.year),(df_temp.index.month)]).mean()
+# rename index
+ts_stack.index = ts_stack.index.set_names(['year', 'month'])
+# Isolate period for climatology
+df_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
+# Calculate Monthly clim
+monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
+monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
+ts_monthly_clim = monthly_clim_mean.mean(axis=1)
+ts_monthly_std = monthly_clim_stdv.mean(axis=1)
+# Tile the climatology for however many years are present
+ts_years = len(df_temp.index.year.unique())
+monthly_clim_mean = pd.concat([monthly_clim_mean] * ts_years) #<-- good job, I like this!
+monthly_clim_stdv = pd.concat([monthly_clim_stdv] * ts_years)
+monthly_clim_mean = monthly_clim_mean.iloc[:ts_stack.index.size,:]
+monthly_clim_stdv = monthly_clim_stdv.iloc[:ts_stack.index.size,:]
+# Set multi-index to clim (using ts_stack index)
+monthly_clim_mean.set_index(ts_stack.index, inplace=True)
+monthly_clim_stdv.set_index(ts_stack.index, inplace=True)
+# Calculate anomalies (mi = miltiindex)
+anom_mi = ts_stack-monthly_clim_mean
+std_anom_mi = (ts_stack-monthly_clim_mean) / monthly_clim_stdv
+
+# vertically-averaged anomalies to three different groups
+T_0_btm_anom_monthly = anom_mi.mean(axis=1)
+T_0_btm_std_anom_monthly = std_anom_mi.mean(axis=1)
+T_0_50_anom_monthly = anom_mi[anom_mi.columns[(anom_mi.columns<=50)]]
+T_0_50_std_anom_monthly = std_anom_mi[std_anom_mi.columns[(std_anom_mi.columns<=50)]]
+T_150_btm_anom_monthly = anom_mi[anom_mi.columns[(anom_mi.columns>=150)]]
+T_150_btm_std_anom_monthly = std_anom_mi[std_anom_mi.columns[(std_anom_mi.columns>=150)]]
+
+#Convert to yearly
+Tave_anom = T_0_btm_anom_monthly.unstack().mean(axis=1)
+Tave_anom_std = T_0_btm_std_anom_monthly.unstack().mean(axis=1)
+Tsurf_anom = T_0_50_anom_monthly.unstack().mean(axis=1)
+Tsurf_anom_std = T_0_50_std_anom_monthly.unstack().mean(axis=1)
+Tbot_anom = T_150_btm_anom_monthly.unstack().mean(axis=1)
+Tbot_anom_std = T_150_btm_std_anom_monthly.unstack().mean(axis=1)
+Tave_anom.index = pd.to_datetime(Tave_anom.index, format='%Y')
+Tsurf_anom.index = pd.to_datetime(Tsurf_anom.index, format='%Y')
+Tbot_anom.index = pd.to_datetime(Tbot_anom.index, format='%Y')
+Tave_anom_std.index = pd.to_datetime(Tave_anom_std.index, format='%Y')
+Tsurf_anom_std.index = pd.to_datetime(Tsurf_anom_std.index, format='%Y')
+Tbot_anom_std.index = pd.to_datetime(Tbot_anom_std.index, format='%Y')
+
+#Set the year after the beginning of 1950
+df_sal = df_sal[df_sal.index.year>=1950]
+
+## - Salinity - ##
+# stack year, month
+ts_stack = df_sal.groupby([(df_sal.index.year),(df_sal.index.month)]).mean()
+# rename index
+ts_stack.index = ts_stack.index.set_names(['year', 'month'])
+# Isolate period for climatology
+df_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
+# Calculate Monthly clim
+monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
+monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
+ts_monthly_clim = monthly_clim_mean.mean(axis=1)
+ts_monthly_std = monthly_clim_stdv.mean(axis=1)
+# Tile the climatology for however many years are present
+ts_years = len(df_sal.index.year.unique())
+monthly_clim_mean = pd.concat([monthly_clim_mean] * ts_years) #<-- good job, I like this!
+monthly_clim_stdv = pd.concat([monthly_clim_stdv] * ts_years)
+monthly_clim_mean = monthly_clim_mean.iloc[:ts_stack.index.size,:]
+monthly_clim_stdv = monthly_clim_stdv.iloc[:ts_stack.index.size,:]
+# Set multi-index to clim (using ts_stack index)
+monthly_clim_mean.set_index(ts_stack.index, inplace=True)
+monthly_clim_stdv.set_index(ts_stack.index, inplace=True)
+# Calculate anomalies (mi = miltiindex)
+anom_mi = ts_stack-monthly_clim_mean
+std_anom_mi = (ts_stack-monthly_clim_mean) / monthly_clim_stdv
+
+# vertically-averaged anomalies to three different groups
+S_0_btm_anom_monthly = anom_mi.mean(axis=1)
+S_0_btm_std_anom_monthly = std_anom_mi.mean(axis=1)
+S_0_50_anom_monthly = anom_mi[anom_mi.columns[(anom_mi.columns<=50)]]
+S_0_50_std_anom_monthly = std_anom_mi[std_anom_mi.columns[(std_anom_mi.columns<=50)]]
+S_150_btm_anom_monthly = anom_mi[anom_mi.columns[(anom_mi.columns>=150)]]
+S_150_btm_std_anom_monthly = std_anom_mi[std_anom_mi.columns[(std_anom_mi.columns>=150)]]
+
+#Convert to yearly
+Save_anom = S_0_btm_anom_monthly.unstack().mean(axis=1)
+Save_anom_std = S_0_btm_std_anom_monthly.unstack().mean(axis=1)
+Ssurf_anom = S_0_50_anom_monthly.unstack().mean(axis=1)
+Ssurf_anom_std = S_0_50_std_anom_monthly.unstack().mean(axis=1)
+Sbot_anom = S_150_btm_anom_monthly.unstack().mean(axis=1)
+Sbot_anom_std = S_150_btm_std_anom_monthly.unstack().mean(axis=1)
+Save_anom.index = pd.to_datetime(Save_anom.index, format='%Y')
+Ssurf_anom.index = pd.to_datetime(Ssurf_anom.index, format='%Y')
+Sbot_anom.index = pd.to_datetime(Sbot_anom.index, format='%Y')
+Save_anom_std.index = pd.to_datetime(Save_anom_std.index, format='%Y')
+Ssurf_anom_std.index = pd.to_datetime(Ssurf_anom_std.index, format='%Y')
+Sbot_anom_std.index = pd.to_datetime(Sbot_anom_std.index, format='%Y')
+
+
+
+'''
 # Temperature
 #df_temp = df_temp.resample('As').mean() # *
 T_0_btm = df_temp.mean(axis=1)
@@ -66,67 +169,7 @@ df_T.to_csv('stn27_monthly_T.csv', float_format='%.3f')
 df_T_nico.to_csv('stn27_monthly_T_nico.csv', float_format='%.3f')
 df_T_nico.resample('As').mean().to_csv('stn27_annual_T_nico.csv', float_format='%.3f')
 df_S.to_csv('stn27_monthly_S.csv', float_format='%.3f')
-# **New from 2020 - annual anomaly is mean of monthly anomalies**
-# Temperature anomalies
-df_T_stack = df_T.groupby([(df_T.index.year),(df_T.index.month)]).mean()
-df_T_stack_ave = df_T_stack['Temp 0-176m']
-df_T_stack_surf = df_T_stack['Temp 0-50m']
-df_T_stack_bot = df_T_stack['Temp 150-176m']
-df_T_unstack_ave = df_T_stack_ave.unstack()
-df_T_unstack_surf = df_T_stack_surf.unstack()
-df_T_unstack_bot = df_T_stack_bot.unstack()
-T_clim_period = df_T[(df_T.index.year>=year_clim[0]) & (df_T.index.year<=year_clim[1])]
-T_monthly_stack = T_clim_period.groupby([(T_clim_period.index.year),(T_clim_period.index.month)]).mean()
-T_monthly_clim = T_monthly_stack.groupby(level=1).mean()
-T_monthly_std = T_monthly_stack.groupby(level=1).std()
-Tave_monthly_anom = df_T_unstack_ave - T_monthly_clim['Temp 0-176m']
-Tsurf_monthly_anom = df_T_unstack_surf - T_monthly_clim['Temp 0-50m']
-Tbot_monthly_anom = df_T_unstack_bot - T_monthly_clim['Temp 150-176m']
-Tave_monthly_stdanom = Tave_monthly_anom / T_monthly_std['Temp 0-176m']
-Tsurf_monthly_stdanom = Tsurf_monthly_anom / T_monthly_std['Temp 0-50m']
-Tbot_monthly_stdanom = Tbot_monthly_anom / T_monthly_std['Temp 150-176m']
-Tave_anom = Tave_monthly_anom.mean(axis=1) 
-Tsurf_anom = Tsurf_monthly_anom.mean(axis=1) 
-Tbot_anom = Tbot_monthly_anom.mean(axis=1) 
-Tave_anom.index = pd.to_datetime(Tave_anom.index, format='%Y')
-Tsurf_anom.index = pd.to_datetime(Tsurf_anom.index, format='%Y')
-Tbot_anom.index = pd.to_datetime(Tbot_anom.index, format='%Y')
-Tave_anom_std = Tave_monthly_stdanom.mean(axis=1) 
-Tsurf_anom_std = Tsurf_monthly_stdanom.mean(axis=1) 
-Tbot_anom_std = Tbot_monthly_stdanom.mean(axis=1) 
-Tave_anom_std.index = pd.to_datetime(Tave_anom_std.index, format='%Y')
-Tsurf_anom_std.index = pd.to_datetime(Tsurf_anom_std.index, format='%Y')
-Tbot_anom_std.index = pd.to_datetime(Tbot_anom_std.index, format='%Y')
-# Salinity anomalies
-df_S_stack = df_S.groupby([(df_S.index.year),(df_S.index.month)]).mean()
-df_S_stack_ave = df_S_stack['Sal 0-176m']
-df_S_stack_surf = df_S_stack['Sal 0-50m']
-df_S_stack_bot = df_S_stack['Sal 150-176m ${~}$']
-df_S_unstack_ave = df_S_stack_ave.unstack()
-df_S_unstack_surf = df_S_stack_surf.unstack()
-df_S_unstack_bot = df_S_stack_bot.unstack()
-S_clim_period = df_S[(df_S.index.year>=year_clim[0]) & (df_S.index.year<=year_clim[1])]
-S_monthly_stack = S_clim_period.groupby([(S_clim_period.index.year),(S_clim_period.index.month)]).mean()
-S_monthly_clim = S_monthly_stack.groupby(level=1).mean()
-S_monthly_std = S_monthly_stack.groupby(level=1).std()
-Save_monthly_anom = df_S_unstack_ave - S_monthly_clim['Sal 0-176m']
-Ssurf_monthly_anom = df_S_unstack_surf - S_monthly_clim['Sal 0-50m']
-Sbot_monthly_anom = df_S_unstack_bot - S_monthly_clim['Sal 150-176m ${~}$']
-Save_monthly_stdanom = Save_monthly_anom / S_monthly_std['Sal 0-176m']
-Ssurf_monthly_stdanom = Ssurf_monthly_anom / S_monthly_std['Sal 0-50m']
-Sbot_monthly_stdanom = Sbot_monthly_anom / S_monthly_std['Sal 150-176m ${~}$']
-Save_anom = Save_monthly_anom.mean(axis=1) 
-Ssurf_anom = Ssurf_monthly_anom.mean(axis=1) 
-Sbot_anom = Sbot_monthly_anom.mean(axis=1) 
-Save_anom.index = pd.to_datetime(Save_anom.index, format='%Y')
-Ssurf_anom.index = pd.to_datetime(Ssurf_anom.index, format='%Y')
-Sbot_anom.index = pd.to_datetime(Sbot_anom.index, format='%Y')
-Save_anom_std = Save_monthly_stdanom.mean(axis=1) 
-Ssurf_anom_std = Ssurf_monthly_stdanom.mean(axis=1) 
-Sbot_anom_std = Sbot_monthly_stdanom.mean(axis=1) 
-Save_anom_std.index = pd.to_datetime(Save_anom_std.index, format='%Y')
-Ssurf_anom_std.index = pd.to_datetime(Ssurf_anom_std.index, format='%Y')
-Sbot_anom_std.index = pd.to_datetime(Sbot_anom_std.index, format='%Y')
+'''
 # merge anomalies
 T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
 T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])

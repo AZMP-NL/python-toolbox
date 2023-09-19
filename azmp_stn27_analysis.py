@@ -563,13 +563,14 @@ for i in ['shallow','deep']:
     strat_virtual[i].rolling(5, min_periods=3).mean().plot(color='k', linewidth=3, linestyle=markers[i][0], label=titles[i])
     for ii in np.arange(np.size(year_start)):
         mean = strat_virtual[i][(strat_virtual[i].index.year>=year_start[ii]) & (strat_virtual[i].index.year<=year_end[ii])].mean()
+        stdv = strat_virtual[i][(strat_virtual[i].index.year>=year_start[ii]) & (strat_virtual[i].index.year<=year_end[ii])].std()
         plt.hlines(mean,
             xmin=np.datetime64(str(year_start[ii])+'-01','M'),
             xmax=np.datetime64(str(year_end[ii])+'-01','M'),
             color='tab:red', linewidth=1.5)
         plt.text(np.datetime64(str(np.mean([year_start[ii],year_end[ii]]).astype(int))+'-01','M'),
             mean+1,
-            str(np.round(mean,2))+' (gm$^{-4}$)',
+            str(np.round(mean,2))+'$\pm$'+str(np.round(stdv,2))+' (gm$^{-4}$)',
             color='tab:red', fontweight='bold', horizontalalignment='center')
     plt.ylabel(r'$\frac{\Delta \sigma}{\Delta z}$ $\rm (g\,m^{-4})$')
     plt.ylim(y_range[i])
@@ -579,7 +580,8 @@ for i in ['shallow','deep']:
 
 # Save Figure
 fig.set_size_inches(w=7,h=4)
-fig_name = 's27_stratif_plot_means.png'
+#fig_name = 's27_stratif_plot_means.png'
+fig_name = 's27_stratif_plot_means_nolines.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
