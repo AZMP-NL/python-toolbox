@@ -17,11 +17,14 @@ clim_year = [1990, 2020]
 years = [1980, 2023]
 
 badstn_SI = [1983,1989,1998,2000,2003,2004,2022]
-baditp_SI = [1983,1989,1998,2022]
 badstn_BB = [1997,1999,2000,2001,2002,2022]
-baditp_BB = []
 badstn_FC = [1997,2000,2001,2002,2006,2007,2022]
-baditp_FC = []
+
+#Mark years where stn will be replaced with stn_man
+rplstn_SI = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1998,2000,2003,2004]
+rplstn_BB = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1997,1998,1999,2000,2001,2002]
+rplstn_FC = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1997,1998,2000,2001,2002,2006,2007]
+
 
 def is_number(s):
     #https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
@@ -42,6 +45,7 @@ def is_number(s):
 #df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
 #df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
 # EXCEPTION FOR 2022
+#Files come from azmp_section_clim.py
 df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_SI_summer.pkl')
 df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_BB_summer.pkl')
 df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_FC_summer.pkl')
@@ -49,16 +53,18 @@ df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_out
 # Set problem years equal to nan
 df_SI['vol_stn'].loc[badstn_SI] = np.nan
 df_SI['core_stn'].loc[badstn_SI] = np.nan
-df_SI['vol_itp'].loc[baditp_SI] = np.nan
-df_SI['core_itp'].loc[baditp_SI] = np.nan
 df_BB['vol_stn'].loc[badstn_BB] = np.nan
 df_BB['core_stn'].loc[badstn_BB] = np.nan
-df_BB['vol_itp'].loc[baditp_BB] = np.nan
-df_BB['core_itp'].loc[baditp_BB] = np.nan
 df_FC['vol_stn'].loc[badstn_FC] = np.nan
 df_FC['core_stn'].loc[badstn_FC] = np.nan
-df_FC['vol_itp'].loc[baditp_FC] = np.nan
-df_FC['core_itp'].loc[baditp_FC] = np.nan
+
+# Set replace yeras to stn_man
+df_SI['vol_stn'].loc[rplstn_SI] = df_SI['vol_stn_man'].loc[rplstn_SI]
+df_SI['core_stn'].loc[rplstn_SI] = df_SI['core_stn_man'].loc[rplstn_SI]
+df_BB['vol_stn'].loc[rplstn_BB] = df_BB['vol_stn_man'].loc[rplstn_BB]
+df_BB['core_stn'].loc[rplstn_BB] = df_BB['core_stn_man'].loc[rplstn_BB]
+df_FC['vol_stn'].loc[rplstn_FC] = df_FC['vol_stn_man'].loc[rplstn_FC]
+df_FC['core_stn'].loc[rplstn_FC] = df_FC['core_stn_man'].loc[rplstn_FC]
 
 
 
@@ -97,8 +103,8 @@ my_df['SD'] = df_clim.std()
 #    'core_depth_itp':'core depth (m)'
 #    }, inplace=True)
 my_df.rename(index={
-    'vol_stn' : r'CIL stn area ($\rm km^2$)',
-    'core_stn':r'CIL stn core ($\rm ^{\circ}C$)',
+    'vol_stn' : r'CIL area ($\rm km^2$)',
+    'core_stn':r'CIL core ($\rm ^{\circ}C$)',
     'vol_itp' : r'CIL itp area ($\rm km^2$)',
     'core_itp':r'CIL itp core ($\rm ^{\circ}C$)',
     }, inplace=True)
@@ -106,6 +112,9 @@ my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'sd'
     }, inplace=True)
+#Drop the interpolated values, keep the stn_id ones
+my_df = my_df.drop([r'CIL itp area ($\rm km^2$)',r'CIL itp core ($\rm ^{\circ}C$)','vol_stn_man','core_stn_man'])
+
 
 
 year_list = std_anom.index.astype('str')
@@ -125,7 +134,8 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[1,:] = -vals_color[1,:]
+#vals_color[1,:] = -vals_color[1,:]
+
 
 nrows, ncols = my_df.index.size+1, my_df.columns.size # <--------- +1 because years
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -137,10 +147,22 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.set_fontsize(13)
-the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
-                    bbox=[0, 0, 1, 0.5]
-                    )
+
+
+#Set up the last row
+method = np.full(vals.shape[1],'         ')
+method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_SI)] = r'$\bullet$'
+
+the_table = ax.table(
+    cellText = np.vstack([vals,method]),
+    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    colLabels = year_list,
+    cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
+    loc = 'center',
+    cellLoc = 'center',
+    bbox = [0,0,1,0.5]
+    )
+
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
@@ -168,8 +190,8 @@ my_df = std_anom_FR.T
 my_df['MEAN'] = df_clim.mean()
 my_df['SD'] = df_clim.std()
 my_df.rename(index={
-    'vol_stn' : r'surface stn CIF ($\rm km^2$)',
-    'core_stn':r'coeur stn CIF ($\rm ^{\circ}C$)',
+    'vol_stn' : r'surface CIF ($\rm km^2$)',
+    'core_stn':r'coeur CIF ($\rm ^{\circ}C$)',
     'vol_itp' : r'surface itp CIF ($\rm km^2$)',
     'core_itp':r'coeur itp CIF ($\rm ^{\circ}C$)',    
     }, inplace=True)
@@ -178,6 +200,9 @@ my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'e-t'
     }, inplace=True)
+#Drop the interpolated values, keep the stn_id ones
+my_df = my_df.drop([r'surface itp CIF ($\rm km^2$)',r'coeur itp CIF ($\rm ^{\circ}C$)','vol_stn_man','core_stn_man'])
+
 
 year_list = std_anom.index.astype('str')
 year_list = [i[2:4] for i in year_list] # 2-digit year
@@ -196,7 +221,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[1,:] = -vals_color[1,:]
+#vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size+1, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -208,10 +233,23 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.set_fontsize(13)
-the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
-                    bbox=[0, 0, 1, 0.5]
-                    )
+
+
+#Set up the last row
+method = np.full(vals.shape[1],'         ')
+method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_SI)] = r'$\bullet$'
+
+the_table = ax.table(
+    cellText = np.vstack([vals,method]),
+    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    colLabels = year_list,
+    cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
+    loc = 'center',
+    cellLoc = 'center',
+    bbox = [0,0,1,0.5]
+    )
+
+
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
@@ -252,8 +290,8 @@ my_df['SD'] = df_clim.std()
 #    'core_depth_itp':'core depth (m)'
 #    }, inplace=True)
 my_df.rename(index={
-    'vol_stn' : r'CIL stn area ($\rm km^2$)',
-    'core_stn':r'CIL stn core ($\rm ^{\circ}C$)',
+    'vol_stn' : r'CIL area ($\rm km^2$)',
+    'core_stn':r'CIL core ($\rm ^{\circ}C$)',
     'vol_itp' : r'CIL itp area ($\rm km^2$)',
     'core_itp':r'CIL itp core ($\rm ^{\circ}C$)',
     }, inplace=True)
@@ -261,6 +299,8 @@ my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'sd'
     }, inplace=True)
+#Drop the interpolated values, keep the stn_id ones
+my_df = my_df.drop([r'CIL itp area ($\rm km^2$)',r'CIL itp core ($\rm ^{\circ}C$)','core_stn_man','vol_stn_man'])
 
 
 # Cell parameters
@@ -275,7 +315,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[1,:] = -vals_color[1,:]
+#vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size # <--------- remove +1 because no year
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -287,10 +327,19 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.set_fontsize(13)
-the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
-                    bbox=[0, 0, 1, 0.5]
-                    )
+#Set up the last row
+method = np.full(vals.shape[1],'         ')
+method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_BB)] = r'$\bullet$'
+
+the_table = ax.table(
+    cellText = np.vstack([vals,method]),
+    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    colLabels = year_list,
+    cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
+    loc = 'center',
+    cellLoc = 'center',
+    bbox = [0,0,1,0.5]
+    )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
@@ -323,8 +372,8 @@ my_df['SD'] = df_clim.std()
 #    'core_depth_itp':'coeur prof. (m)'
 #    }, inplace=True)
 my_df.rename(index={
-    'vol_stn' : r'surface stn CIF ($\rm km^2$)',
-    'core_stn':r'coeur stn CIF ($\rm ^{\circ}C$)',
+    'vol_stn' : r'surface CIF ($\rm km^2$)',
+    'core_stn':r'coeur CIF ($\rm ^{\circ}C$)',
     'vol_itp' : r'surface itp CIF ($\rm km^2$)',
     'core_itp':r'coeur itp CIF ($\rm ^{\circ}C$)',    
     }, inplace=True)
@@ -333,6 +382,8 @@ my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'e-t'
     }, inplace=True)
+#Drop the interpolated values, keep the stn_id ones
+my_df = my_df.drop([r'surface itp CIF ($\rm km^2$)',r'coeur itp CIF ($\rm ^{\circ}C$)','core_stn_man','vol_stn_man'])
 
 year_list = std_anom.index.astype('str')
 year_list = [i[2:4] for i in year_list] # 2-digit year
@@ -351,7 +402,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[1,:] = -vals_color[1,:]
+#vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -363,10 +414,19 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.set_fontsize(13)
-the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
-                    bbox=[0, 0, 1, 0.5]
-                    )
+#Set up the last row
+method = np.full(vals.shape[1],'         ')
+method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_BB)] = r'$\bullet$'
+
+the_table = ax.table(
+    cellText = np.vstack([vals,method]),
+    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    colLabels = year_list,
+    cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
+    loc = 'center',
+    cellLoc = 'center',
+    bbox = [0,0,1,0.5]
+    )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
@@ -407,8 +467,8 @@ my_df['SD'] = df_clim.std()
 #    'core_depth_itp':'core depth (m)'
 #    }, inplace=True)
 my_df.rename(index={
-    'vol_stn' : r'CIL stn area ($\rm km^2$)',
-    'core_stn':r'CIL stn core ($\rm ^{\circ}C$)',
+    'vol_stn' : r'CIL area ($\rm km^2$)',
+    'core_stn':r'CIL core ($\rm ^{\circ}C$)',
     'vol_itp' : r'CIL itp area ($\rm km^2$)',
     'core_itp':r'CIL itp core ($\rm ^{\circ}C$)',
     }, inplace=True)
@@ -417,6 +477,8 @@ my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'sd'
     }, inplace=True)
+#Drop the interpolated values, keep the stn_id ones
+my_df = my_df.drop([r'CIL itp area ($\rm km^2$)',r'CIL itp core ($\rm ^{\circ}C$)','core_stn_man','vol_stn_man'])
 
 
 year_list = std_anom.index.astype('str')
@@ -436,7 +498,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[1,:] = -vals_color[1,:]
+#vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -448,10 +510,19 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.set_fontsize(13)
-the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
-                    bbox=[0, 0, 1, 0.5]
-                    )
+#Set up the last row
+method = np.full(vals.shape[1],'         ')
+method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_FC)] = r'$\bullet$'
+
+the_table = ax.table(
+    cellText = np.vstack([vals,method]),
+    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    colLabels = year_list,
+    cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
+    loc = 'center',
+    cellLoc = 'center',
+    bbox = [0,0,1,0.5]
+    )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
@@ -484,8 +555,8 @@ my_df['SD'] = df_clim.std()
 #    'core_depth_itp':'coeur prof. (m)'
 #    }, inplace=True)
 my_df.rename(index={
-    'vol_stn' : r'surface stn CIF ($\rm km^2$)',
-    'core_stn':r'coeur stn CIF ($\rm ^{\circ}C$)',
+    'vol_stn' : r'surface CIF ($\rm km^2$)',
+    'core_stn':r'coeur CIF ($\rm ^{\circ}C$)',
     'vol_itp' : r'surface itp CIF ($\rm km^2$)',
     'core_itp':r'coeur itp CIF ($\rm ^{\circ}C$)',    
     }, inplace=True)
@@ -494,6 +565,8 @@ my_df.rename(columns={
     'MEAN' : r'$\rm \overline{x}$',
     'SD':u'e-t'
     }, inplace=True)
+#Drop the interpolated values, keep the stn_id ones
+my_df = my_df.drop([r'surface itp CIF ($\rm km^2$)',r'coeur itp CIF ($\rm ^{\circ}C$)','core_stn_man','vol_stn_man'])
 
 
 year_list = std_anom.index.astype('str')
@@ -513,7 +586,7 @@ vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
 vals_color[:,-2] = 0
 # Reverse colorbar for Area and Depth
 vals_color[0,:] = -vals_color[0,:]
-vals_color[1,:] = -vals_color[1,:]
+#vals_color[1,:] = -vals_color[1,:]
 
 nrows, ncols = my_df.index.size, my_df.columns.size
 fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -525,10 +598,19 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.set_fontsize(13)
-the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
-                    loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
-                    bbox=[0, 0, 1, 0.5]
-                    )
+#Set up the last row
+method = np.full(vals.shape[1],'         ')
+method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_FC)] = r'$\bullet$'
+
+the_table = ax.table(
+    cellText = np.vstack([vals,method]),
+    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    colLabels = year_list,
+    cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
+    loc = 'center',
+    cellLoc = 'center',
+    bbox = [0,0,1,0.5]
+    )
 # change font color to white where needed:
 the_table.auto_set_font_size(False)
 the_table.set_fontsize(13)
