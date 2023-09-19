@@ -17,7 +17,6 @@ import pandas as pd
 import os
 import unicodedata
 from matplotlib.colors import from_levels_and_colors
-import seaborn as sn
 import cmocean as cmo
 
 # Adjust fontsize/weight
@@ -36,7 +35,7 @@ width = 0.7
 
 #### ---- LOAD THE DATA (and prepare) ---- ####
 # 1. NAO
-nao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter.pkl')
+nao = pd.read_pickle('operation_files/NAO_winter.pkl')
 nao.name = 'Wint. NAO'
 nao = nao[nao.index<YEAR_MAX+1]
 # normalize NAO with std.
@@ -48,18 +47,18 @@ nao = nao*-1
 
 # 2. Air temp
 if clim_year[0] == 1981:
-    air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_std_81anom.pkl')
+    air = pd.read_pickle('operation_files/airT_std_81anom.pkl')
 else:
-    air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_std_anom.pkl')
+    air = pd.read_pickle('operation_files/airT_std_anom.pkl')
 air.index.name='Year'
 air = air.mean(axis=1)
 air.name = 'Air Temp'
 
 # 3. Sea Ice (And icebergs)
 if clim_year[0] == 1981:
-    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1981-2010.dat', header=None, sep=' ')
+    ice = pd.read_csv('operation_files/ice-area-thick.NL.ClimateIndex.1981-2010.dat', header=None, sep=' ')
 else:
-    ice = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/ice-area-thick.NL.ClimateIndex.1991-2020.dat', header=None, sep=' ')
+    ice = pd.read_csv('operation_files/ice-area-thick.NL.ClimateIndex.1991-2020.dat', header=None, sep=' ')
 ice.set_index(0, inplace=True)
 ice.index.name='Year'
 ice.rename(columns={ice.columns[0]: "Sea Ice" }, inplace = True)
@@ -74,9 +73,9 @@ ice = ice*-1
 
 # 4. Icebergs
 if clim_year[0] == 1981:
-    bergs = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bergs/bergs_std_anom_1981clim.pkl')
+    bergs = pd.read_pickle('operation_files/bergs_std_anom_1981clim.pkl')
 else:
-    bergs = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bergs/bergs_std_anom.pkl')
+    bergs = pd.read_pickle('operation_files/bergs_std_anom.pkl')
 bergs.index.name='Year'
 bergs.name = 'Icebergs'
 bergs_natural = bergs.copy()
@@ -84,9 +83,9 @@ bergs = bergs*-1
 
 # 5. SSTs
 if clim_year[0] == 1981:
-    sst = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/NL_ClimateIndex_SST.1981-2010.dat', header=None, sep=' ')
+    sst = pd.read_csv('operation_files/NL_ClimateIndex_SST.1981-2010.dat', header=None, sep=' ')
 else:
-    sst = pd.read_csv('/home/cyrf0006/data/AZMP/Galbraith_data/NL_ClimateIndex_SST.1991-2020.dat', header=None, sep=' ')
+    sst = pd.read_csv('operation_files/NL_ClimateIndex_SST.1991-2020.dat', header=None, sep=' ')
 sst.set_index(0, inplace=True)
 sst.index.name='Year'
 sst.rename(columns={sst.columns[0]: "SST" }, inplace = True)
@@ -97,11 +96,11 @@ sst = sst[['SST']]
 
 # 6. Stn27 (0-176m, 0-50m, 150-176m)
 if clim_year[0] == 1981:
-    s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/1981clim/s27_temp_std_anom.pkl')
-    s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/1981clim/s27_sal_std_anom.pkl')    
+    s27_temp = pd.read_pickle('stn27/s27_temp_std_anom.pkl')
+    s27_sal = pd.read_pickle('stn27/s27_sal_std_anom.pkl')
 else:
-    s27_temp = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_temp_std_anom.pkl')
-    s27_sal = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/s27_sal_std_anom.pkl')
+    s27_temp = pd.read_pickle('stn27/s27_temp_std_anom.pkl')
+    s27_sal = pd.read_pickle('stn27/s27_sal_std_anom.pkl')
 
 # Flag years with less than 8 months (!!!Should be in pkl object!!!)
 s27_temp[s27_temp.index.year==1950] = np.nan
@@ -146,7 +145,7 @@ s27_sal = s27_sal*-1 # assume fresh = warm
 ## plt.legend(['prelim (all 3 depths)', 'new (0-176m)'])
 
 # s27_cil not std_anom yet
-s27_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/stn27/S27_CIL_summer_stats.pkl')
+s27_cil = pd.read_pickle('stn27/S27_CIL_summer_stats.pkl')
 s27_cil.index = s27_cil.index.year
 s27_cil_clim = s27_cil[(s27_cil.index>=clim_year[0]) & (s27_cil.index<=clim_year[1])]
 s27_cil = (s27_cil-s27_cil_clim.mean(axis=0))/s27_cil_clim.std(axis=0)
@@ -156,6 +155,7 @@ s27_cil[s27_cil.index==1950] = np.nan
 s27_cil[s27_cil.index==1980] = np.nan
 s27_cil[s27_cil.index==1981] = np.nan
 s27_cil[s27_cil.index==2020] = np.nan
+
 
 #  compa previous and new CIL index
 ## C = pd.concat([s27_cil[['CIL temp', 'CIL core T']].mean(axis=1), s27_cil[['CIL core T']].mean(axis=1)], axis=1)  
@@ -169,29 +169,31 @@ s27_cil.index.name='Year'
 
 # 7. Section CIL (only area) [.pkl files form azmp_CIL_mean_anomaly.py]
 if clim_year[0] == 1981:
-    section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/section_cil_index_1981clim.pkl')
+    section_cil = pd.read_pickle('operation_files/section_cil_index_1981clim.pkl')
 else:
-    section_cil = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/section_cil_index.pkl')
+    section_cil = pd.read_pickle('operation_files/section_cil_index.pkl')
 # Select volume and/or coreT
 section_cil = section_cil['volume'] # volume and/or core
 section_cil.name = 'CIL area' 
 section_cil.index.name='Year'
 section_cil_natural = section_cil.copy()
 section_cil = section_cil*-1
+section_cil[section_cil.index==2022] = np.nan
 
 # 8. bottomT [.pkl files from azmp_bottomT_mean_anomaly.py]
 if clim_year[0] == 1981:
-    bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring_1981clim.pkl')
-    bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall_1981clim.pkl')
+    bottomT_spring = pd.read_pickle('bottom_temp_stats/bottomT_index_spring_1981clim.pkl')
+    bottomT_fall = pd.read_pickle('bottom_temp_stats/bottomT_index_fall_1981clim.pkl')
 else:
-    bottomT_spring = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_spring.pkl')
-    bottomT_fall = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/bottomT/bottomT_index_fall.pkl')
+    bottomT_spring = pd.read_pickle('bottom_temp_stats/bottomT_index_spring.pkl')
+    bottomT_fall = pd.read_pickle('bottom_temp_stats/bottomT_index_fall.pkl')
 bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
 bottomT.name = 'Bottom T'
 bottomT.index.name = 'Year'
 
 #### ----- Merge the data ---- ####
 climate_index = pd.concat([nao, air, ice, bergs, sst, s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
+#climate_index = pd.concat([s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
 climate_index.sort_index(inplace=True)
 climate_index = climate_index[climate_index.index>=YEAR_MIN]
 climate_index_sc = climate_index.copy() # for scorecards at top
@@ -199,6 +201,7 @@ climate_index.loc[1950] = climate_index.loc[1950]*np.nan
 
 # keep a copy with Natural signs
 climate_index_natural = pd.concat([nao_natural, air, ice_natural, bergs_natural, sst, s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
+#climate_index_natural = pd.concat([s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
 climate_index_natural.sort_index(inplace=True)
 climate_index_natural = climate_index_natural[climate_index_natural.index>=YEAR_MIN]
 
@@ -706,6 +709,7 @@ fig = ax.get_figure()
 fig.set_size_inches(w=15.5,h=12)
 fig_name = 'NL_climate_index_ms_scorecards.png'
 fig.savefig(fig_name, dpi=300, bbox_extra_artists=(nao_table,nlci_table,leg), bbox_inches='tight')
+#fig.savefig(fig_name, dpi=300, bbox_extra_artists=(nlci_table,leg), bbox_inches='tight')
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
 
