@@ -55,7 +55,7 @@ plt.rc('font', **font)
    
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
-current_year = 2022
+current_year = 2023
 use_climate_summaries = False
 
 
@@ -267,6 +267,10 @@ std_anom_annual = anom_annual/std
 anom_annual.to_pickle('airT_anom.pkl') # for IROC
 std_anom_annual.to_pickle('airT_std_anom.pkl')
 df.to_pickle('airT_monthly.pkl')
+
+#Load back in if starting here!
+std_anom_annual = pd.read_pickle('operation_files/airT_std_anom.pkl')
+
 # restrict time for following
 std_anom_annual = std_anom_annual[std_anom_annual.index>=1950]
 

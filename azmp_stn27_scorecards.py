@@ -42,8 +42,6 @@ def is_number(s):
 # Load pickled data
 df_temp = pd.read_pickle('S27_temperature_monthly.pkl')
 df_sal = pd.read_pickle('S27_salinity_monthly.pkl')
-#df_temp = df_temp[df_temp.index.year>=years[0]]
-#df_sal = df_sal[df_sal.index.year>=years[0]]
 
 #Set the year after the beginning of 1950
 df_temp = df_temp[df_temp.index.year>=1950]
@@ -54,10 +52,10 @@ ts_stack = df_temp.groupby([(df_temp.index.year),(df_temp.index.month)]).mean()
 # rename index
 ts_stack.index = ts_stack.index.set_names(['year', 'month'])
 # Isolate period for climatology
-df_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
+T_clim_period = df_temp[(df_temp.index.year>=year_clim[0]) & (df_temp.index.year<=year_clim[1])]
 # Calculate Monthly clim
-monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
-monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
+monthly_clim_mean = T_clim_period.groupby(T_clim_period.index.month).mean()
+monthly_clim_stdv = T_clim_period.groupby(T_clim_period.index.month).std()
 ts_monthly_clim = monthly_clim_mean.mean(axis=1)
 ts_monthly_std = monthly_clim_stdv.mean(axis=1)
 # Tile the climatology for however many years are present
@@ -104,10 +102,10 @@ ts_stack = df_sal.groupby([(df_sal.index.year),(df_sal.index.month)]).mean()
 # rename index
 ts_stack.index = ts_stack.index.set_names(['year', 'month'])
 # Isolate period for climatology
-df_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
+S_clim_period = df_sal[(df_sal.index.year>=year_clim[0]) & (df_sal.index.year<=year_clim[1])]
 # Calculate Monthly clim
-monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
-monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
+monthly_clim_mean = S_clim_period.groupby(S_clim_period.index.month).mean()
+monthly_clim_stdv = S_clim_period.groupby(S_clim_period.index.month).std()
 ts_monthly_clim = monthly_clim_mean.mean(axis=1)
 ts_monthly_std = monthly_clim_stdv.mean(axis=1)
 # Tile the climatology for however many years are present
@@ -147,29 +145,6 @@ Sbot_anom_std.index = pd.to_datetime(Sbot_anom_std.index, format='%Y')
 
 
 
-'''
-# Temperature
-#df_temp = df_temp.resample('As').mean() # *
-T_0_btm = df_temp.mean(axis=1)
-T_0_50 = df_temp[df_temp.columns[(df_temp.columns<=50)]].mean(axis=1)
-T_0_20 = df_temp[df_temp.columns[(df_temp.columns<=20)]].mean(axis=1)
-T_150_btm = df_temp[df_temp.columns[(df_temp.columns>=150)]].mean(axis=1)
-# Salinity
-#df_sal = df_sal.resample('As').mean() # *
-S_0_btm = df_sal.mean(axis=1)
-S_0_50 = df_sal[df_sal.columns[(df_sal.columns<=50)]].mean(axis=1)
-S_150_btm = df_sal[df_sal.columns[(df_sal.columns>=150)]].mean(axis=1)
-# Merge and compute anomalies 
-df_T = pd.concat([T_0_btm, T_0_50, T_150_btm], axis=1, keys=['Temp 0-176m', 'Temp 0-50m', 'Temp 150-176m'])
-df_S = pd.concat([S_0_btm, S_0_50, S_150_btm], axis=1, keys=['Sal 0-176m', 'Sal 0-50m', r'Sal 150-176m ${~}$'])
-df_T_nico = pd.concat([T_0_btm, T_0_20, T_150_btm], axis=1, keys=['Temp 0-176m', 'Temp 0-20m', 'Temp 150-176m'])
-
-# Save csv (for Guoqi)
-df_T.to_csv('stn27_monthly_T.csv', float_format='%.3f')
-df_T_nico.to_csv('stn27_monthly_T_nico.csv', float_format='%.3f')
-df_T_nico.resample('As').mean().to_csv('stn27_annual_T_nico.csv', float_format='%.3f')
-df_S.to_csv('stn27_monthly_S.csv', float_format='%.3f')
-'''
 # merge anomalies
 T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
 T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
@@ -186,26 +161,8 @@ S_anom_std.to_pickle('s27_sal_std_anom.pkl')
 T_anom_std = T_anom_std[T_anom_std.index.year>=years[0]]
 S_anom_std = S_anom_std[S_anom_std.index.year>=years[0]]
 # annual clims (for inclusion)
-T_clim_period_annual = T_clim_period.resample('As').mean()    
-S_clim_period_annual = S_clim_period.resample('As').mean()    
-
-# old way
-old_df_T = df_T.resample('As').mean() # ** there is a slight different if annual averages are made before
-old_df_S = df_S.resample('As').mean() # ** there is a slight different if annual averages are made before
-# clim
-old_T_clim_period = old_df_T[(old_df_T.index.year>=year_clim[0]) & (old_df_T.index.year<=year_clim[1])]
-old_S_clim_period = old_df_S[(old_df_S.index.year>=year_clim[0]) & (old_df_S.index.year<=year_clim[1])]
-# Anomaly
-old_T_anom = (old_df_T - old_T_clim_period.mean())
-old_T_anom_std = old_T_anom / old_T_clim_period.std()
-old_S_anom = (old_df_S - old_S_clim_period.mean())
-old_S_anom_std = old_S_anom / old_S_clim_period.std()
-# Save pkl for climate indices (whole timeseries)
-#old_T_anom_std.to_pickle('s27_temp_stn_anom.pkl')
-#old_S_anom_std.to_pickle('s27_sal_stn_anom.pkl')
-# Reduce series (for scorecards)
-old_T_anom_std = old_T_anom_std[old_T_anom_std.index.year>=years[0]]
-old_S_anom_std = old_S_anom_std[old_S_anom_std.index.year>=years[0]]
+T_clim_period_annual = T_clim_period.resample('As').mean()
+S_clim_period_annual = S_clim_period.resample('As').mean()
 
 #### ------------- CIL ---------------- ####
 # Load pickled data

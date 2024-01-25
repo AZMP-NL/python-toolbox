@@ -27,7 +27,7 @@ plt.rc('font', **font)
 
 
 YEAR_MIN = 1950
-YEAR_MAX = 2022
+YEAR_MAX = 2023
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
 width = 0.7
@@ -178,22 +178,22 @@ section_cil.name = 'CIL area'
 section_cil.index.name='Year'
 section_cil_natural = section_cil.copy()
 section_cil = section_cil*-1
-section_cil[section_cil.index==2022] = np.nan
+#section_cil[section_cil.index==2022] = np.nan
 
 # 8. bottomT [.pkl files from azmp_bottomT_mean_anomaly.py]
 if clim_year[0] == 1981:
     bottomT_spring = pd.read_pickle('bottom_temp_stats/bottomT_index_spring_1981clim.pkl')
     bottomT_fall = pd.read_pickle('bottom_temp_stats/bottomT_index_fall_1981clim.pkl')
 else:
-    bottomT_spring = pd.read_pickle('bottom_temp_stats/bottomT_index_spring.pkl')
-    bottomT_fall = pd.read_pickle('bottom_temp_stats/bottomT_index_fall.pkl')
+    bottomT_spring = pd.read_pickle('operation_files/bottomT_index_spring.pkl')
+    bottomT_fall = pd.read_pickle('operation_files/bottomT_index_fall.pkl')
 bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
 bottomT.name = 'Bottom T'
 bottomT.index.name = 'Year'
 
 #### ----- Merge the data ---- ####
 climate_index = pd.concat([nao, air, ice, bergs, sst, s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
-#climate_index = pd.concat([s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
+#climate_index = pd.concat([nao, s27_temp,  s27_sal, s27_cil, section_cil, bottomT], axis=1)
 climate_index.sort_index(inplace=True)
 climate_index = climate_index[climate_index.index>=YEAR_MIN]
 climate_index_sc = climate_index.copy() # for scorecards at top
@@ -201,7 +201,7 @@ climate_index.loc[1950] = climate_index.loc[1950]*np.nan
 
 # keep a copy with Natural signs
 climate_index_natural = pd.concat([nao_natural, air, ice_natural, bergs_natural, sst, s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
-#climate_index_natural = pd.concat([s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
+#climate_index_natural = pd.concat([nao_natural, s27_temp,  s27_sal_natural, s27_cil, section_cil_natural, bottomT], axis=1)
 climate_index_natural.sort_index(inplace=True)
 climate_index_natural = climate_index_natural[climate_index_natural.index>=YEAR_MIN]
 

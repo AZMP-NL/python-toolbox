@@ -23,6 +23,7 @@ __author__ = 'Frederic.Cyr@dfo-mpo.gc.ca'
 __version__ = '0.1'
 
 import os
+import re
 import numpy as np
 import pandas as pd
 import sys
@@ -44,7 +45,7 @@ os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 #from mpl_toolkits.basemap import Basemap
 
     
-def nao(YEAR):
+def nao(YEAR,nao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.nao.monthly.b5001.current.ascii.table'):
     '''
     Update the winter North Atlantic Oscillation
     run in /home/cyrf0006/AZMP/state_reports/airTemp
@@ -69,32 +70,25 @@ def nao(YEAR):
 
     # Download and save up-to-date  NAO index from NOAA (data.csv) if needed
     #url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv' (until 2020...)
-    url = 'https://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.nao.monthly.b5001.current.ascii.table'
-    nao_file = '/home/cyrf0006/data/AZMP/indices/data.csv'
-    if os.path.exists(nao_file):
-        py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
-        response_isnt_good = True
-        while response_isnt_good:
-            if py3:
-                response = input('Do you what to update '  + nao_file + '? [y/n]')
-            else:
-                response = raw_input('Do you what to update '  + nao_file + '? [y/n]')
+    url = url_loc
+    nao_file = nao_file_loc
+    import urllib3
+    http = urllib3.PoolManager()
+    r = http.request('GET', url)
 
-            if response == 'y':
-                import urllib3
-                http = urllib3.PoolManager()
-                r = http.request('GET', url)
-                open('/home/cyrf0006/data/AZMP/indices/data.csv', 'wb').write(r.data)
-                response_isnt_good = False
-            elif response == 'n':
-                response_isnt_good = False
-            else:
-                print(' -> Please answer "y" or "n"')
+    #Split the data
+    r_data = str(r.data)[2:-1].split('\\n')
+    months = re.split(r'\s{2,}', r_data[0])
+    data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
+    years = data[:,0]
+    data = data[:,1:].astype(float)
+    pd_data = pd.DataFrame(data, columns=months[1:], index=years)
+    pd_data.to_csv(nao_file_loc)
 
     # Reload using pandas
     col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    df = pd.read_csv(nao_file, header=None, delimiter=r"\s+", error_bad_lines=False)
-    df.set_axis(col_names, axis=1, inplace=True)                              
+    df = pd.read_csv(nao_file, header=0)
+    df.set_axis(col_names, axis=1, inplace=True)
 
     # Set index
     df = df.set_index('Year')
@@ -136,6 +130,11 @@ def nao(YEAR):
     df_winter.to_pickle('NAO_winter.pkl')
     df_summer.to_pickle('NAO_summer.pkl')
 
+
+    #nao_clim = df_winter[(df_winter.index>=1981) & (df_winter.index<=2010)]
+    #df_winter = (df_winter - df_winter.mean()) / nao_clim.std()
+
+
     ## ---- plot winter NAO bar plots ---- ##
     #df_winter[df_winter.index==2021]=np.nan # Remove 2021 for 2020 ResDoc
     df1 = df_winter[df_winter>0]
@@ -172,13 +171,13 @@ def nao(YEAR):
     plt.grid()
     fig.set_size_inches(w=15,h=9)
     fig_name = 'NAO_winter_1950-' + str(YEAR) + '_FR.png'
-    plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+    plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, fontsize=12)
     fig.savefig(fig_name, dpi=300)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
     return None
 
-def ao(YEAR):
+def ao(YEAR,ao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii.table'):
     '''
     Update the Arctic Oscillation
     run in /home/cyrf0006/AZMP/state_reports/airTemp
@@ -199,8 +198,8 @@ def ao(YEAR):
 
     # Download and save up-to-date  AO index from NOAA (data.csv) if needed
     # url = 'https://www.ncdc.noaa.gov/teleconnections/ao/data.csv'
-    url = 'https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii.table'
-    ao_file = '/home/cyrf0006/data/AZMP/indices/ao_data.csv'
+    url = url_loc
+    ao_file = ao_file_loc
     if os.path.exists(ao_file):
         py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
         response_isnt_good = True
@@ -214,7 +213,7 @@ def ao(YEAR):
                 import urllib3
                 http = urllib3.PoolManager()
                 r = http.request('GET', url)
-                open('/home/cyrf0006/data/AZMP/indices/ao_data.csv', 'wb').write(r.data)
+                open(ao_file_loc, 'wb').write(r.data)
                 response_isnt_good = False
             elif response == 'n':
                 response_isnt_good = False
@@ -263,7 +262,7 @@ def ao(YEAR):
 
 
 
-def amo(YEAR):
+def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlation/amon.us.data'):
     '''
     Update the Atlantic Multidecadal Oscillation
     run in /home/cyrf0006/AZMP/state_reports/airTemp
@@ -286,8 +285,8 @@ def amo(YEAR):
     plt.rc('font', **font)
 
     # Download and save up-to-date  AMO index from NOAA (data.csv) if needed
-    url = 'https://www.esrl.noaa.gov/psd/data/correlation/amon.us.data'
-    amo_file = '/home/cyrf0006/data/AZMP/indices/amon.us.data'
+    url = url_loc
+    amo_file = amo_file_loc
     if os.path.exists(amo_file):
         py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
         response_isnt_good = True
@@ -301,7 +300,7 @@ def amo(YEAR):
                 import urllib3
                 http = urllib3.PoolManager()
                 r = http.request('GET', url)
-                open('/home/cyrf0006/data/AZMP/indices/amon.us.data', 'wb').write(r.data)
+                open(amo_file_loc, 'wb').write(r.data)
                 response_isnt_good = False
             elif response == 'n':
                 response_isnt_good = False

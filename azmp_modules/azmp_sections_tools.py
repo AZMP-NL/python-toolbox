@@ -21,6 +21,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #import pfiles_basics
 import numpy as np
+import warnings
 #import time as tt
 import xarray as xr
 import netCDF4
@@ -64,7 +65,7 @@ def section_bathymetry(section_name):
     bathy_dict = dict(zip(standard_sections, bathy_files))
 
     # This is my personal path, maybe find a way to generelize this.
-    bathy_file = '../bathymetry/' + bathy_dict[section_name]
+    bathy_file = 'operation_files/' + bathy_dict[section_name]
     
     bathy = np.loadtxt(bathy_file, delimiter=",", unpack=False)
     bathy_x = bathy[:,0]/1000.0
@@ -77,7 +78,7 @@ def section_bathymetry(section_name):
     return bathymetry
 
 
-def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=5, zmin=2):
+def get_section(section_name, year, season, var_name, bath_path, CASTS_path, dlat=2, dlon=2, dc=.2, dz=5, zmin=2):
     """
     To get a transect plot of a certain variable along a certain section and for a defined year and season.
 
@@ -100,8 +101,8 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     
     """
     '''
-    section_name = 'SI'
-    year=2021
+    section_name = 'FC'
+    year=2023
     season='summer'
     var_name='temperature'
     dlat=2
@@ -127,14 +128,14 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
     ## --------- Get Bathymetry -------- ####
-    bathy_file = 'AZMP_lines/' + section_name + '_bathy.npy'
+    bathy_file = 'operation_files/' + section_name + '_bathy.npy'
     if os.path.isfile(bathy_file):
             print('Load saved bathymetry!')
             Zitp = np.load(bathy_file)
 
     else:
             print('Get bathy...')
-            dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc' # Maybe find a better way to handle this file
+            dataFile = bath_path # Maybe find a better way to handle this file
 
             dataset = xr.open_dataset(dataFile)
             dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
@@ -157,11 +158,12 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
             print(' -> Done!')
 
     ## -------- Get CTD data -------- ##
-    year_file = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/' + str(year) + '.nc'
+    year_file = CASTS_path + str(year) + '.nc'
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
 
     # Select Region
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
     ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
@@ -233,7 +235,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
             V[:,:,k] = zi
         else:
             continue
-    print(' -> Done!')    
+    print(' -> Done!')
 
     # mask using bathymetry (I don't think it is necessary, but make nice figures)
     for i, xx in enumerate(lon_reg):
@@ -269,7 +271,7 @@ def get_section(section_name, year, season, var_name, dlat=2, dlon=2, dc=.2, dz=
    
     # convert option #1 to dataframe    
     ds_section = xr.concat(section_only, dim='time')
-    station_ID = ds_section.station_ID.values.astype(str)
+    station_ID = [i.strip() for i in ds_section.station_ID.values.astype(str)]
     ds_section = ds_section.groupby_bins('level', bins).mean(dim='level')
     da = ds_section[var_name].T
     df_section_stn = da.to_pandas()
@@ -438,7 +440,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
     if STATION_BASED:
         print('Station-based search (will only work since year ~2000)')
         # Read unique station names from section file
-        df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+        df_stn = pd.read_excel('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/STANDARD_SECTIONS.xlsx')
         df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
         df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
         df_stn = df_stn.dropna()
@@ -448,7 +450,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
         # loop on stations and append datasets in a list
         datasets = []
         for stn in stn_list:
-            ds_section = ds.where(ds.comments == stn, drop=True)  
+            ds_section = ds.where(ds.station_ID == stn, drop=True)
             datasets.append(ds_section)
             
         # concatenate the list of datasets
@@ -460,7 +462,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
         print('non station-based search (based on lat/lon near section)')
         
         # Get Stations
-        df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+        df_stn = pd.read_excel('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/STANDARD_SECTIONS.xlsx')
         df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
         df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
         df_stn = df_stn.dropna()
@@ -479,7 +481,7 @@ def extract_section_casts(nc_file, section_name, year_lims=[], survey_name=[], n
     
     return None
 
-def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=False):
+def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, bath_path, CASTS_path, ZMAX=400, STATION_BASED=False):
     """
     Contour plot on standard AZMP-NL sections for a certain year (specified with nc_file), season (specified as survey), section and variable.
     This is a function version of script "azmp_section_report_plot.py" used for ResDocs figures.
@@ -532,7 +534,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, ZMAX=400, STATION_BASED=Fa
         return a
 
     ## ---- Get this year's section ---- ## 
-    df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR)
+    df_section_stn, df_section_itp = get_section(SECTION, YEAR, SEASON, VAR, bath_path, CASTS_path)
 
     #if df_section_itp.dropna(how='all', axis=0).size == 0: # Not sure why this is needed...
     #    return

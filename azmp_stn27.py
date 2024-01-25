@@ -27,27 +27,20 @@ from matplotlib.ticker import NullFormatter
 from matplotlib.dates import MonthLocator, DateFormatter
 import cmocean
 
-## font = {'family' : 'normal',
-##         'weight' : 'bold',
-##         'size'   : 14}
-## plt.rc('font', **font)
-
 ## ---- Some custom parameters ---- ##
-#s27 = [47.55,-52.59]
-#dc = .1
 s27 = [47.54667,-52.58667]
 dc = .025
-#year_clim = [1981, 2010]
 year_clim = [1991, 2020]
-# apply a moving average?
 binning=True
 move_ave = False
 zbin = 5
 
-current_year = 2021
-variable = 'salinity'
+#Set up variables, be sure to run temperature and salinity! 
+current_year = 2023
+variable = 'temperature'
 use_viking = False
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
+CASTS_path = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
 
 # Derived parameter
 if variable == 'temperature':
@@ -73,20 +66,19 @@ else:
     CMAP = cmocean.cm.thermal
 
 ## ---- Open data and select ---- ##
-if os.path.isfile('stn27_all_casts.nc'):
-    ds = xr.open_dataset('stn27_all_casts.nc') 
-    
+if os.path.isfile('operation_files/stn27_all_casts.nc'):
+    ds = xr.open_dataset('operation_files/stn27_all_casts.nc')
 else:
-    ds = xr.open_mfdataset('/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc')
-    # Remome GTS datasets (not needed with CASTS)
-    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
-    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
-        
+    #If data is not available, isolate STN-27
+    ds = xr.open_mfdataset(CASTS_path)
+    # Remove GTS datasets (not needed with CASTS)
+    ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message
+    ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message
+
     # Select a depth range
     ds = ds.sel(level=ds['level']<180)
-    #ds = ds.sel(level=ds['level']>=0)
     # Select stn27 data according to lat-lon in a box [47.55,-52.59]
-    ds = ds.where((ds.longitude>s27[1]-dc/2) & (ds.longitude<s27[1]+dc/2), drop=True) # original one
+    ds = ds.where((ds.longitude>s27[1]-dc/2) & (ds.longitude<s27[1]+dc/2), drop=True)
     ds = ds.where((ds.latitude>s27[0]-dc/2) & (ds.latitude<s27[0]+dc/2), drop=True)
     ds = ds.sortby('time')
     #Remove problem casts
@@ -96,11 +88,11 @@ else:
     for i in ds.variables.keys():
         if ds[i].dtype == 'O':
             ds[i] = ds[i].astype('U40')
-    # Save data
-    ds.to_netcdf('stn27_all_casts.nc')
-    ds = xr.open_dataset('stn27_all_casts.nc')
+    #Save data
+    ds.to_netcdf('operation_files/stn27_all_casts.nc')
+    ds = xr.open_dataset('operation_files/stn27_all_casts.nc')
 
-# select variable
+#Select variable
 da = ds[variable]
 df_hydro = da.to_pandas()
 # Drop when all NaNs... but will still be in netCDF...
@@ -134,10 +126,7 @@ if binning:
 elif move_ave:
     df = df.rolling(zbin, center=True, min_periods=1, axis=1).mean()
 
-
 ## ---- 1. Climatologies ---- ##
-# Weekly average (weekly average before monthly average)
-#df_weekly = df.resample('W').mean()
 
 # Monthly average (15th of the month) +  pickle for further analysis
 df_monthly = df.resample('MS').mean()
@@ -154,20 +143,12 @@ monthly_clim = df_clim_period.groupby(df_clim_period.index.month).mean()
 monthly_clim.index = pd.to_datetime(monthly_clim.index.values, format='%m')
 monthly_clim.to_pickle('S27_' + variable + '_monthly_clim.pkl')
 
-# Weekly average (previous version of climatology)
-#df_weekly = df.resample('W').mean()
-# Monthly clim
-#weekly_clim_raw = df_weekly.groupby(df_weekly.index.week).mean()
-# set index (year 1900)
-#weekly_clim.index = pd.to_datetime(weekly_clim.index.values, format='%W')
-
 # Weekly clim (upsample monthly clim to weekly)
 weekly_clim = monthly_clim.resample('W').mean().interpolate(method='linear') 
 weekly_clim.to_pickle('S27_' + variable + '_weekly_clim.pkl')
 
 # Update climatology index to current year
 weekly_clim.index = pd.to_datetime(str(current_year) + '-' + weekly_clim.index.month.astype(str) + '-' + weekly_clim.index.day.astype(str))
-#weekly_clim.dropna(how='all', axis=1, inplace=True)
 
 
 

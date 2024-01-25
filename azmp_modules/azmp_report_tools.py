@@ -81,7 +81,7 @@ def add_path(PATH):
     sys.path.append(PATH)  # or .insert(0, YOUR_PATH) may give higher priority
 
 
-def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, clim_fill=True, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file=''):
+def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/', CASTS_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/', climato_file=''):
     """
     Bottom temperature maps for AZMP ResDoc
 
@@ -127,131 +127,40 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, clim_fill=True, ne
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
     Tbot_climato = h5f['Tbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
+    lon_reg = h5f['lon_reg'][:][0,:]
+    lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
     h5f.close()
 
-    ## ---- Derive some parameters ---- ##
-    lon_0 = np.round(np.mean(lon_reg))
-    lat_0 = np.round(np.mean(lat_reg))
-    lonLims = [lon_reg[0], lon_reg[-1]]
-    latLims = [lat_reg[0], lat_reg[-1]]
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    dc = np.diff(lon_reg[0:2])
-
-    ## ---- NAFO divisions ---- ##
-    nafo_div = azu.get_nafo_divisions()
-
-    ## ---- Get CTD data --- ##
-    print('Get ' + year_file)
-    ds = xr.open_dataset(year_file)
-
+    #Load in the CASTS data for cast locations
+    ds = xr.open_dataset(CASTS_path+str(year)+'.nc')
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
     # Select time (save several options here)
     if season == 'summer':
-        #ds = ds.sel(time=ds['time.season']=='JJA')
         ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
     elif season == 'spring':
-        #ds = ds.sel(time=ds['time.season']=='MAM')
         ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
     elif season == 'fall':
-        #ds = ds.sel(time=ds['time.season']=='SON')
         ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
     else:
         print('!! no season specified, used them all! !!')
+    lons = ds.longitude.values
+    lats = ds.latitude.values
 
-    # Isolate for temperatures of interest
-    ds = ds.sel(level=ds['level']<zmax)
-    da_temp = ds['temperature']
-    lons = np.array(ds.longitude)
-    lats = np.array(ds.latitude)
-    #To Pandas Dataframe
-    df_temp = da_temp.to_pandas()
-    # Remove empty columns
-    idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
-    df_temp = df_temp.dropna(axis=0,how='all')
-    lons = np.delete(lons,idx_empty_rows)
-    lats = np.delete(lats,idx_empty_rows)
-    print(' -> Done!')
+    ## ---- NAFO divisions ---- ##
+    nafo_div = azu.get_nafo_divisions()
 
-    ## --- fill 3D cube --- ##
-    print('Fill regular cube')
-    z = df_temp.columns.values
-    V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
+    ## ---- Get bottom_temperature data --- ##
+    print('Get ' + year_file)
+    ds = xr.open_dataset(year_file)
+    ds = ds.mean('time')
 
-    # Aggregate on regular grid
-    for i, xx in enumerate(lon_reg):
-        for j, yy in enumerate(lat_reg):
-            idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
-            tmp = np.array(df_temp.iloc[idx].mean(axis=0))
-            idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
-            if np.size(idx_good)==1:
-                V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
-            elif np.size(idx_good)>1: # vertical interpolation between pts
-                interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
-                V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
-
-    # horizontal interpolation at each depth
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    lon_vec = np.reshape(lon_grid, lon_grid.size)
-    lat_vec = np.reshape(lat_grid, lat_grid.size)
-    for k, zz in enumerate(z):
-        # Meshgrid 1D data (after removing NaNs)
-        tmp_grid = V[:,:,k]
-        tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-        # griddata (after removing nans)
-        idx_good = np.argwhere(~np.isnan(tmp_vec))
-        if idx_good.size > 5: # will ignore depth where no data exist
-            LN = np.squeeze(lon_vec[idx_good])
-            LT = np.squeeze(lat_vec[idx_good])
-            TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
-
-            #Mask the array where the max interpolation distance is exceeded
-            THRESHOLD = 2
-            tree = cKDTree(np.array([LN,LT]).T)
-            xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
-            dists, indexes = tree.query(xi)
-            zi[dists > THRESHOLD] = np.nan
-
-            V[:,:,k] = zi
-            
-        else:
-            continue
-    print(' -> Done!')
-
-    # mask using bathymetry (I don't think it is necessary, but make nice figures)
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            if Zitp[j,i] > -10: # remove shallower than 10m
-                V[j,i,:] = np.nan
-
-
-    # getting bottom temperature
-    print('Getting bottom Temp.')    
-    Tbot = np.full([lat_reg.size,lon_reg.size], np.nan)
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            bottom_depth = -Zitp[j,i] # minus to turn positive
-            temp_vec = V[j,i,:]
-            idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-            if idx_good.size:
-                idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
-            else:
-                continue
-
-            if np.abs([idx_closest] - bottom_depth) <= 20:
-                Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-            elif np.abs(z[idx_closest] - bottom_depth) <= 50:
-                #print('used data located [30,50]m from bottom')
-                Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-
-    print(' -> Done!')
-
+    # Selection of a subset region
+    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
+    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+    Tbot = ds.bottom_temperature.values
 
     # Use climatology to fill missing pixels
     if clim_fill:
@@ -276,10 +185,6 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, clim_fill=True, ne
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
     polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
 
-    # Contour of data to mask
-    contour_mask = np.load('operation_files/100m_contour_labrador.npy')
-    polygon_mask = Polygon(contour_mask)
-
     if season == 'spring':
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
@@ -301,18 +206,11 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, clim_fill=True, ne
                     Tbot_orig[j,i] = np.nan
                     #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
 
-                if polygon_mask.contains(point): # mask data near Labrador in fall
-                    Tbot[j,i] = np.nan 
-                    Tbot_orig[j,i] = np.nan
-
     elif season == 'summer':
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
-                # Just mask labrador
-                if polygon_mask.contains(point): # mask data near Labrador in fall
-                    Tbot[j,i] = np.nan 
-                    Tbot_orig[j,i] = np.nan
+
 
     else:
         print('no division mask, all data taken')
@@ -541,7 +439,7 @@ def bottom_temperature(season, year, zmin=0, zmax=1000, dz=5, clim_fill=True, ne
 
 
 #### bottom_salinity
-def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', clim_fill=True, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file=''):
+def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/', CASTS_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/', climato_file=''):
     '''
     Bottom salinity maps for AZMP ResDoc
 
@@ -555,19 +453,6 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', clim_fil
 
     Frederic.Cyr@dfo-mpo.gc.ca - January 2020
 
-    '''
-
-    '''
-    #TEMPORARY, FOR TESTING PURPOSES ONLY
-    season='fall' 
-    year='2018'
-    zmin=0
-    zmax=1000
-    clim_fill=True
-    dz=5
-    proj='merc'
-    climato_file='Sbot_climato_'+season+'_0.10.h5'
-    netcdf_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/'
     '''
 
     if len(climato_file) == 0:
@@ -585,25 +470,13 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', clim_fil
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
     Sbot_climato = h5f['Sbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
+    lon_reg = h5f['lon_reg'][:][0,:]
+    lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
     h5f.close()
 
-    ## ---- Derive some parameters ---- ##    
-    lon_0 = np.round(np.mean(lon_reg))
-    lat_0 = np.round(np.mean(lat_reg))
-    lonLims = [lon_reg[0], lon_reg[-1]]
-    latLims = [lat_reg[0], lat_reg[-1]]
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    dc = np.diff(lon_reg[0:2])
-
-    ## ---- NAFO divisions ---- ##
-    nafo_div = azu.get_nafo_divisions()
-
-    ## ---- Get CTD data --- ##
-    print('Get ' + year_file)
-    ds = xr.open_mfdataset(year_file)
+    #Load in the CASTS data for cast locations
+    ds = xr.open_dataset(CASTS_path+str(year)+'.nc')
     # Selection of a subset region
     ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
     ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
@@ -616,103 +489,29 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', clim_fil
         ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
     else:
         print('!! no season specified, used them all! !!')
+    lons = ds.longitude.values
+    lats = ds.latitude.values
 
-    # Restrict max depth to zmax defined earlier
-    ds = ds.sel(level=ds['level']<zmax)
-    lons = np.array(ds.longitude)
-    lats = np.array(ds.latitude)
-    da_sal = ds['salinity']
-    #To Pandas Dataframe
-    df_sal = da_sal.to_pandas()
-    # Remove empty columns & drop coordinates (for cast identification on map)
-    idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
-    df_sal = df_sal.dropna(axis=0,how='all')
-    lons = np.delete(lons,idx_empty_rows)
-    lats = np.delete(lats,idx_empty_rows)
-    print(' -> Done!')
+    ## ---- NAFO divisions ---- ##
+    nafo_div = azu.get_nafo_divisions()
 
-    ## --- fill 3D cube --- ##  
-    print('Fill regular cube')
-    z = df_sal.columns.values
-    V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
+    ## ---- Get bottom_salinity data --- ##
+    print('Get ' + year_file)
+    ds = xr.open_dataset(year_file)
+    ds = ds.mean('time')
 
-    # Aggregate on regular grid
-    for i, xx in enumerate(lon_reg):
-        for j, yy in enumerate(lat_reg):    
-            idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
-            tmp = np.array(df_sal.iloc[idx].mean(axis=0))
-            idx_good = np.argwhere(~np.isnan(tmp))
-            if np.size(idx_good)==1:
-                V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
-            elif np.size(idx_good)>1: # vertical interpolation between pts
-                interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
-                V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
-
-    # horizontal interpolation at each depth
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    lon_vec = np.reshape(lon_grid, lon_grid.size)
-    lat_vec = np.reshape(lat_grid, lat_grid.size)
-    for k, zz in enumerate(z):
-        # Meshgrid 1D data (after removing NaNs)
-        tmp_grid = V[:,:,k]
-        tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-        # griddata (after removing nans)
-        idx_good = np.argwhere(~np.isnan(tmp_vec))
-        if idx_good.size>5: # will ignore depth where no data exist
-            LN = np.squeeze(lon_vec[idx_good])
-            LT = np.squeeze(lat_vec[idx_good])
-            TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
-
-            #Mask the array where the max interpolation distance is exceeded
-            THRESHOLD = 2
-            tree = cKDTree(np.array([LN,LT]).T)
-            xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
-            dists, indexes = tree.query(xi)
-            zi[dists > THRESHOLD] = np.nan
-
-            V[:,:,k] = zi
-        else:
-            continue
-    print(' -> Done!')
-
-
-    # mask using bathymetry (I don't think it is necessary, but make nice figures)
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            if Zitp[j,i] > -10: # remove shallower than 10m
-                V[j,i,:] = np.nan
-
-    # getting bottom temperature
-    print('Getting bottom Temp.')    
-    Sbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            bottom_depth = -Zitp[j,i] # minus to turn positive
-            temp_vec = V[j,i,:]
-            idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-            if idx_good.size:
-                idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
-            else:
-                continue
-
-            if np.abs([idx_closest] - bottom_depth) <= 20:
-                Sbot[j,i] = temp_vec[idx_good[idx_closest]]
-            elif np.abs(z[idx_closest] - bottom_depth) <= 50:
-                #print('used data located [30,50]m from bottom')
-                Sbot[j,i] = temp_vec[idx_good[idx_closest]]
-
-    print(' -> Done!')    
+    # Selection of a subset region
+    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
+    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+    Sbot = ds.bottom_salinity.values
 
     # Use climatology to fill missing pixels
     if clim_fill:
         print('Fill NaNs with climatology')
         Sbot_orig = Sbot.copy()
-        #Tbot_fill = Tbot_climato[Tbot_orig.isna()]
-        #Tbot[Tbot_orig.isna()] = Tbot_climato[Tbot_orig.isna()]
         Sbot_fill = Sbot_climato[np.isnan(Sbot_orig)]
-        Sbot[np.isnan(Sbot_orig)] = Sbot_climato[np.isnan(Sbot_orig)]            
+        Sbot[np.isnan(Sbot_orig)] = Sbot_climato[np.isnan(Sbot_orig)]
+
 
 
     # Mask data outside Nafo div.
@@ -726,10 +525,6 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', clim_fil
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
     polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
-
-    # Contour of data to mask
-    contour_mask = np.load('operation_files/100m_contour_labrador.npy')
-    polygon_mask = Polygon(contour_mask)
 
     if season == 'spring':
         for i, xx in enumerate(lon_reg):
@@ -748,21 +543,25 @@ def bottom_salinity(season, year, zmin=0, zmax=1000, dz=5, proj='merc', clim_fil
                 if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
                     pass #nothing to do but cannot implement negative statement "if not" above
                 else:
-                    Sbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+                    Sbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
                     Sbot_orig[j,i] = np.nan
+                    #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
 
-                if polygon_mask.contains(point): # mask data near Labrador in fall
-                    Sbot[j,i] = np.nan 
-                    Sbot_orig[j,i] = np.nan
+    elif season == 'summer':
+        for i, xx in enumerate(lon_reg):
+            for j,yy in enumerate(lat_reg):
+                point = Point(lon_reg[i], lat_reg[j])
+
+
+
     else:
         print('no division mask, all data taken')
 
-    print(' -> Done!')    
+    print(' -> Done!')
 
     # Salinity anomaly:
     anom = Sbot-Sbot_climato
     div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
-
     #Set up the map
     land_10m = cfeature.NaturalEarthFeature('physical','land','10m',
     facecolor='tan')
@@ -1003,16 +802,6 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
         Frederic.Cyr@dfo-mpo.gc.ca - January 2020
     '''
 
-    '''
-    #FOR TESTING PURPOSES ONLY
-    years=np.arange(1980,2023)
-    season='fall'
-    proj='merc'
-    plot=False
-    climato_file=''
-    netcdf_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/'
-    '''
-
     #Finding the mean of an empty slice or double scalar errorys
     np.seterr(divide='ignore', invalid='ignore')
     warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -1027,11 +816,11 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
             climato_file='operation_files/Tbot_climato_summer_0.10.h6'
     else:
         print('Climato file provided')
-               
+
     h5f = h5py.File(climato_file, 'r')
     Tbot_climato = h5f['Tbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
+    lon_reg = h5f['lon_reg'][:][0,:]
+    lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
     h5f.close()
 
@@ -1100,11 +889,18 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     for year in years:
         print(' ---- ' + str(year) + ' ---- ')
         year_file = netcdf_path + str(year) + '.nc'
-        Tdict = azu.get_bottomT(year_file, season, climato_file)    
+        Tdict = azu.get_bottomT(year_file, season, climato_file, lab_mask=False)
+        Tdict['Tbot_orig'] = Tdict['Tbot']
         Tbot = Tdict['Tbot']
-        lons = Tdict['lons']
-        lats = Tdict['lats']
+        lons = Tdict['lon_reg']
+        lats = Tdict['lat_reg']
         anom = Tbot-Tbot_climato
+
+        #Fill the Tbot with Tbot_climato when nan is present
+        place1 = Tbot_climato.copy()
+        place1[~np.isnan(Tbot)] = Tbot[~np.isnan(Tbot)]
+        Tbot = place1
+        Tdict['Tbot'] = Tbot
 
 
         # NAFO division stats    
@@ -1686,12 +1482,14 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     #### ------------- For fall ---------------- ####
     # 0.
-    infile = 'stats_2H_fall.pkl'
+    infile = 'operation_files/stats_2H_fall.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009, 2022])
+    #bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009, 2022])
+    bad_years = np.array([1982, 1984, 1985, 1986, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     year_list = df.index.year.astype('str')
@@ -1707,19 +1505,24 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     
+    #Re-fill the percent coverage
+    std_anom.iloc[4][:-2] = percent_coverage
+    std_anom.iloc[4][-2:] = np.nan
+
     # Get text values +  cell color
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
     year_list.append(r'sd')   
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
+    vals_color[-2,] = vals_color[-2,]*-1 # Reverse last row colorscale
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
+    vals_color[4,:] = 0
     #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
 
     # Build the colormap
@@ -1774,6 +1577,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         elif key[0] == 0: #year's row = no color
             pass
+        elif key[0] == 5: #last row, percentages
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -1786,7 +1595,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_2H.png scorecards_fall_2H.png')
 
     # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$', '% Coverage': '% Cov'})
     year_list[-1] = u'ET'
 
     header = ax.table(cellText=[['']],
@@ -1811,6 +1620,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         elif key[0] == 0: #year's row = no color
             pass
+        elif key[0] == 5:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -1823,12 +1638,14 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_2H_FR.png scorecards_fall_2H_FR.png')
 
  # 1.
-    infile = 'stats_2J_fall.pkl'
+    infile = 'operation_files/stats_2J_fall.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy()
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([1995, 2022])
+    #bad_years = np.array([1995, 2022])
+    bad_years = np.array([1995])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -1842,16 +1659,21 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    #Re-fill the percent coverage
+    std_anom.iloc[4][:-2] = percent_coverage
+    std_anom.iloc[4][-2:] = np.nan
 
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[-2,] = vals_color[-2,]*-1
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0 
+    vals_color[4,:] = 0
     #normal = plt.Normalize(-4.49, 4.49)
     #cmap = plt.cm.get_cmap('seismic', 9) 
     nrows, ncols = std_anom.index.size, std_anom.columns.size
@@ -1880,6 +1702,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -1892,7 +1720,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_2J.png scorecards_fall_2J.png')
 
     # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$', '% Coverage': '% Cov'})
     header = ax.table(cellText=[['']],
                           colLabels=['-- Division 2J de l\'OPANO --'],
                           loc='center'
@@ -1915,6 +1743,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -1929,10 +1763,11 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     
     # 2.
-    infile = 'stats_3K_fall.pkl'
+    infile = 'operation_files/stats_3K_fall.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy()
     # Flag bad years (no or weak sampling):
     ## bad_years = np.array([2003])
     ## for i in bad_years:
@@ -1948,16 +1783,21 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1','percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    #Re-fill the percent coverage
+    std_anom.iloc[4][:-2] = percent_coverage
+    std_anom.iloc[4][-2:] = np.nan
 
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[-2,] = vals_color[-2,]*-1
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0 
+    vals_color[4,:] = 0
     #normal = plt.Normalize(-4.49, 4.49)
     #cmap = plt.cm.get_cmap('seismic', 9) 
     nrows, ncols = std_anom.index.size, std_anom.columns.size
@@ -1987,6 +1827,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -1999,7 +1845,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_3K.png scorecards_fall_3K.png')
 
     # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$', '% Coverage': '% Cov'})
     header = ax.table(cellText=[['']],
                           colLabels=['-- Division 3K de l\'OPANO --'],
                           loc='center'
@@ -2022,6 +1868,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2034,10 +1886,11 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_3K_FR.png scorecards_fall_3K_FR.png')
 
     # 3.
-    infile = 'stats_3LNO_fall.pkl'
+    infile = 'operation_files/stats_3LNO_fall.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy()
     # Flag bad years (no or weak sampling):
     bad_years = np.array([2021])
     for i in bad_years:
@@ -2053,16 +1906,21 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0','percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    #Re-fill the percent coverage
+    std_anom.iloc[4][:-2] = percent_coverage
+    std_anom.iloc[4][-2:] = np.nan
 
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[-2,] = vals_color[-2,]*-1
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
+    vals_color[4,:] = 0
     #normal = plt.Normalize(-4.49, 4.49)
     #cmap = plt.cm.get_cmap('seismic', 9) 
     fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
@@ -2092,6 +1950,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2104,7 +1968,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_3LNO.png scorecards_fall_3LNO.png')
 
     # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$', '% Coverage': '% Cov'})
     header = ax.table(cellText=[['']],
                           colLabels=['-- Divisions 3LNO de l\'OPANO --'],
                           loc='center'
@@ -2128,6 +1992,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2141,21 +2011,23 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     plt.close('all')
     # English
-    os.system('montage  scorecards_fall_2H.png scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall.png') 
+    os.system('montage  scorecards_fall_2H.png scorecards_fall_2J.png scorecards_fall_3K.png scorecards_fall_3LNO.png -tile 1x4 -geometry +1+10  -background white  scorecards_botT_fall.png') 
     # French
-    os.system('montage  scorecards_fall_2H_FR.png scorecards_fall_2J.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_fall_FR.png') 
+    os.system('montage  scorecards_fall_2H_FR.png scorecards_fall_2J_FR.png scorecards_fall_3K_FR.png scorecards_fall_3LNO_FR.png -tile 1x4 -geometry +1+10  -background white  scorecards_botT_fall_FR.png') 
 
 
 
 
     #### ------------- For Spring ---------------- ####
     # 1.
-    infile = 'stats_3LNO_spring.pkl'
+    infile = 'operation_files/stats_3LNO_spring.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy()
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([2020, 2021])
+    #bad_years = np.array([2020, 2021])
+    bad_years = np.array([2020])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     year_list = df.index.year.astype('str')
@@ -2173,18 +2045,23 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    #Re-fill the percent coverage
+    std_anom.iloc[4][:-2] = percent_coverage
+    std_anom.iloc[4][-2:] = np.nan
 
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
     year_list.append(r'sd')
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[-2,] = vals_color[-2,]*-1
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0
+    vals_color[4,:] = 0
     #normal = plt.Normalize(-4.49, 4.49)
     #cmap = plt.cm.get_cmap('seismic', 9) 
     nrows, ncols = std_anom.index.size, std_anom.columns.size
@@ -2215,6 +2092,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         elif key[0] == 0:
             pass
+        elif key[0] == 5:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2227,7 +2110,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_spring_3LNO.png scorecards_spring_3LNO.png')
 
     # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$', '% Coverage': '% Cov'})
     year_list[-1] = u'ET'
 
     header = ax.table(cellText=[['']],
@@ -2252,6 +2135,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         elif key[0] == 0: #year's row = no color
             pass
+        elif key[0] == 5:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2265,12 +2154,14 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
 
     # 2.
-    infile = 'stats_3Ps_spring.pkl'
+    infile = 'operation_files/stats_3Ps_spring.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy()
     # Flag bad years (no or weak sampling):
-    bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
+    #bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
+    bad_years = np.array([1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2020])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km
@@ -2284,16 +2175,21 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$'})
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder0', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder0': r'$\rm Area_{<0^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+
+    #Re-fill the percent coverage
+    std_anom.iloc[4][:-2] = percent_coverage
+    std_anom.iloc[4][-2:] = np.nan
 
     vals = np.around(std_anom.values,1)
     vals[vals==-0.] = 0.
     vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
+    vals_color[-2,] = vals_color[-2,]*-1
     vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
     vals_color[:,-2] = 0 
+    vals_color[4,:] = 0
     #normal = plt.Normalize(-4.49, 4.49)
     #cmap = plt.cm.get_cmap('seismic', 9) 
     nrows, ncols = std_anom.index.size, std_anom.columns.size
@@ -2323,6 +2219,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0: # <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2335,7 +2237,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_spring_3Ps.png scorecards_spring_3Ps.png')
 
     # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$', '% Coverage': '% Cov'})
     header = ax.table(cellText=[['']],
                           colLabels=['-- Division 3Ps de l\'OPANO --'],
                           loc='center'
@@ -2359,6 +2261,12 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         #elif key[0] == 0:# <--- remove when no years
         #    pass
+        elif key[0] == 4:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
         elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
@@ -2372,9 +2280,9 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     plt.close('all')
     # English montage
-    os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring.png')
+    os.system('montage  scorecards_spring_3LNO.png scorecards_spring_3Ps.png -tile 1x3 -geometry +1+10  -background white  scorecards_botT_spring.png')
     # French montage
-    os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_spring_FR.png')
+    os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+10  -background white  scorecards_botT_spring_FR.png')
 
     
 def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):

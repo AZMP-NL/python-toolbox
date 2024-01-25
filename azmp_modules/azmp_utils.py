@@ -376,311 +376,102 @@ def get_ice_regions():
     return dict
 
 
-def get_bottomT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], season=[], zlims=[10, 1000], dz=1, h5_outputfile=[]):
-    """ Generate and returns the climatological bottom temperature map.
-    This script uses GEBCO dada. User should update the path below.
-    Maybe this is something I could work on...
+def get_bottomT_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2020], season=[], h5_outputfile=[]):
+    '''
+    Generates and returns the bottom temperature climatology.
+    This script uses GEBCO data, path needs to be provided.
+    If file already exists, it will be read and the output will come from that file.
 
-    If the pickled filename exists, the function will by-pass the processing and return only saved climatology.
-    
-    Usage ex:
-    dc = .1
-    import numpy as np
-    import azmp_utils as azu
-    lonLims = [-60, -43] # fish_hab region
-    latLims = [39, 56]
-    lonLims = [-60, -45] # FC AZMP report region
-    latLims = [42, 56]
-    lonLims = [-63, -45] # include 2H in above
-    latLims = [42, 58]
-    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Tbot_climato_fall_0.10.h5') 
+    INFILES: Path location of bottom temperature .nc files. 
+    lonLims (list): Longitude restraints [longitude min, longitude max]
+    latLims (list): Latitude restraints [latitude min, latitude max]
+    years_lim (list): Climatology years, default is [1991,2020]
+    season: The season of interest; spring, summer, fall
+    h5_outputfile: Location of output file, type .10.h5
+    bath_file: Path location of GEBCO bathymetry data, including file name.
 
-    OR
+    Examples.
+    #fish_hab region: lonLims = [-60, -43], latLims = [39, 56], h5_outputfile='Tbot_climato_fall_0.10.h5'
+    #FC AZMP report region: lonLims = [-60, -45], latLims = [42, 56], h5_outputfile='Tbot_climato_fall_0.10.h5'
+    #Include 2H in above: lonLims = [-63, -45], latLims = [42, 58], h5_outputfile='Tbot_climato_fall_0.10.h5'
+    #NSRF area: lonLims = [-70, -56], latLims = [57, 67], year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFx_summer_2006-2021.h5'
+    # NSRFxx, down to 53N (for Normandeau's work): lonLims = [-70, -56], latLims = [53, 67]
+    '''
 
-    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Tbot_climato2HJ3KLNOPs_spring_0.10.h5')
-    
-    OR
-
-    # NSRF area
-    import numpy as np
-    import azmp_utils as azu
-    dc = .10
-    lonLims = [-70, -56] # Lab Sea
-    latLims = [57, 67]
-    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFx_summer_2006-2021.h5')
-
-    OR
-
-    # NSRFxx, down to 53N - overlapping NSRF and AZMP for Normandeau's work
-    import numpy as np
-    import azmp_utils as azu
-    dc = .10
-    lonLims = [-70, -56] # Lab Sea
-    latLims = [53, 67]
-    LON_REG = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    LAT_REG = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    Tbot_dict = azu.get_bottomT_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFxx_summer_2006-2021.h5')
-
-    """
 
     # Because the code is trying to divide by zero
     # (https://stackoverflow.com/questions/14861891/runtimewarning-invalid-value-encountered-in-divide)
     np.seterr(divide='ignore', invalid='ignore')
 
-    '''
-    ##REMOVE THIS AFTER, THIS IS FOR TESTING PURPOSES
-    dc = 0.1
-    lonLims = [-63, -45]
-    latLims = [42, 58]
-    LON_REG = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    LAT_REG = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    INFILES = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
-    season = 'fall'
-    year_lims = [1991, 2020]
-    zlims = [10, 1000]
-    dz = 1
-    h5_outputfile='Tbot_climato_NSRF_'+season+'_0.10.h5'
-    '''
-
     ## ---- Check if H5 file exists ---- ##        
     if os.path.isfile(h5_outputfile):
         print(h5_outputfile + ' exist! Reading directly')
         h5f = h5py.File(h5_outputfile,'r')
-        Tbot = h5f['Tbot'][:]
-        lon_reg = h5f['lon_reg'][:]
-        lat_reg = h5f['lat_reg'][:]
-        lon_orig = h5f['lon_orig'][:]
-        lat_orig = h5f['lat_orig'][:]
+        ds_temp = h5f['Tbot'][:]
+        lons = h5f['lon_reg'][:]
+        lats = h5f['lat_reg'][:]
         Zitp = h5f['Zitp'][:]
         h5f.close()
 
     else:
 
+        #Load in the bottom temperature data
+        ds = xr.open_mfdataset([INFILES+str(year)+'.nc' for year in np.arange(year_lims[0],year_lims[1]+1)])
+        ds = ds.mean('time')
+
+        #Isolate for the region of interest
+        ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
+        ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+
+        #Record the temperature, latitude, longitude
+        ds_temp = ds.bottom_temperature.values
+        lons = ds.longitude.values
+        lats = ds.latitude.values
+
         ## ---- Region parameters ---- ##
-        dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc'
+        ds_bath = xr.open_dataset(bath_file)
+        ds_bath = ds_bath.isel(lon=(ds_bath.lon>=lonLims[0])*(ds_bath.lon<=lonLims[1]))
+        ds_bath = ds_bath.isel(lat=(ds_bath.lat>=latLims[0])*(ds_bath.lat<=latLims[1]))
+        Zitp = ds_bath.elevation[::10,::10].values
 
-        lonLims = [LON_REG[0], LON_REG[-1]]
-        latLims = [LAT_REG[0], LAT_REG[-1]]
-        zmin = zlims[0] # do try to compute bottom temp above that depth
-        zmax = zlims[1] # do try to compute bottom temp below that depth
-        lon_reg = LON_REG
-        lat_reg = LAT_REG
-        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-        dc = np.round(np.diff(lon_reg[0:2]), 3)[0]
+        #Save the climatology
+        h5f = h5py.File(h5_outputfile, 'w')
+        h5f.create_dataset('Tbot', data=ds_temp)
+        h5f.create_dataset('lon_reg', data=lons)
+        h5f.create_dataset('lat_reg', data=lats)
+        h5f.create_dataset('Zitp', data=Zitp)
+        h5f.close()
 
-        ## ---- Bathymetry ---- ####
-        print('Load and grid bathymetry')
-        # Load data and isolate for the region of interest
-        dataset = xr.open_dataset(dataFile)
-        dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
-        dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
-
-        # Extract latitude and longitude
-        lon = dataset.lon.values
-        lat = dataset.lat.values
-
-        # Extract the elevation
-        Z = dataset.elevation.values
-        
-        # Interpolate data on regular grid (temperature grid), uses nearest neighbour (much more efficient)
-        lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-        lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-        lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-        z_vec = np.reshape(Z, Z.size)
-        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='nearest')
-        del Z, lon, lat
-        print(' -> Done!')
-
-        ## ---- Get CTD data --- ##
-        print('Get historical data')
-        ds = xr.open_mfdataset(INFILES)
-        # Selection of a subset region
-        ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
-        ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
-        # Select time (save several options here)
-        if season == 'summer':
-            #ds = ds.sel(time=ds['time.season']=='JJA')
-            ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
-        elif season == 'spring':
-            #ds = ds.sel(time=ds['time.season']=='MAM')
-            ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
-        elif season == 'fall':
-            #ds = ds.sel(time=ds['time.season']=='SON')
-            ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
-        else:
-            print('!! no season specified, used them all! !!')
-
-        # Time period for climatology
-        ds = ds.sel(time=ds['time.year']>=year_lims[0])
-        ds = ds.sel(time=ds['time.year']<=year_lims[1])
-        ds = ds.sel(level=ds['level']<zmax)
-        # Vertical binning (on dataArray; more appropriate here
-        da_temp = ds['temperature']
-        lons = np.array(ds.longitude)
-        lats = np.array(ds.latitude)
-        #To Pandas Dataframe
-        df_temp = da_temp.to_pandas()
-        # Remove empty columns
-        idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
-        df_temp = df_temp.dropna(axis=0,how='all')
-        lons = np.delete(lons,idx_empty_rows)
-        lats = np.delete(lats,idx_empty_rows)
-        del ds, da_temp
-        print(' -> Done!')        
-
-        ## --- fill 3D cube --- ##  
-        print('Fill regular cube')
-        z = df_temp.columns.values
-        V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
-
-        # Aggregate on regular grid
-        for i, xx in enumerate(lon_reg):
-            for j, yy in enumerate(lat_reg):    
-                idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
-                tmp = np.array(df_temp.iloc[idx].mean(axis=0))
-                idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
-                if np.size(idx_good)==1:
-                    V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
-                elif np.size(idx_good)>1: # vertical interpolation between pts
-                    interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                    idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
-                    V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
-
-
-        # horiozntal interpolation at each depth
-        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-        lon_vec = np.reshape(lon_grid, lon_grid.size)
-        lat_vec = np.reshape(lat_grid, lat_grid.size)
-        for k, zz in enumerate(z):
-            # Meshgrid 1D data (after removing NaNs)
-            tmp_grid = V[:,:,k]
-            tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-            #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
-            # griddata (after removing nans)
-            idx_good = np.argwhere(~np.isnan(tmp_vec))
-            if idx_good.size>10: # will ignore depth where no data exist
-                LN = np.squeeze(lon_vec[idx_good])
-                LT = np.squeeze(lat_vec[idx_good])
-                TT = np.squeeze(tmp_vec[idx_good])
-                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
-
-                #Mask the array where the max interpolation distance is exceeded
-                THRESHOLD = 2
-                tree = cKDTree(np.array([LN,LT]).T)
-                xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
-                dists, indexes = tree.query(xi)
-                zi[dists > THRESHOLD] = np.nan
-
-                V[:,:,k] = zi
-            else:
-                continue
-        print(' -> Done!')
-
-        # mask using bathymetry
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                if Zitp[j,i] > -10: # remove shallower than 10m
-                    V[j,i,:] = np.nan
-
-        # getting bottom temperature
-        print('Getting bottom Temp.')    
-        Tbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                bottom_depth = -Zitp[j,i] # minus to turn positive
-                temp_vec = V[j,i,:]
-                idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-                if idx_good.size:
-                    idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
-                else:
-                    continue
-
-                if np.abs([idx_closest] - bottom_depth) <= 20:
-                    Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-                elif np.abs(z[idx_closest] - bottom_depth) <= 50:
-                    #print('used data located [30,50]m from bottom')
-                    Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-        print(' -> Done!')    
-
-        # Save data for further use
-        if np.size(h5_outputfile):
-            h5f = h5py.File(h5_outputfile, 'w')
-            h5f.create_dataset('Tbot', data=Tbot)
-            h5f.create_dataset('lon_reg', data=lon_reg)
-            h5f.create_dataset('lat_reg', data=lat_reg)
-            h5f.create_dataset('lon_orig', data=lons)
-            h5f.create_dataset('lat_orig', data=lats)
-            h5f.create_dataset('Zitp', data=Zitp)
-            h5f.create_dataset('z', data=z)
-            h5f.close()
-
-    # Fill dict for output
+    #Fill dict for output
     dict = {}
-    dict['Tbot'] = Tbot
+    dict['Tbot'] = ds_temp
     dict['bathy'] = Zitp
-    dict['lon_reg'] = lon_reg
-    dict['lat_reg'] = lat_reg
-    dict['lon_orig'] = lons
-    dict['lat_orig'] = lats
+    dict['lon_reg'] = lons
+    dict['lat_reg'] = lats
     
     return dict
 
 
-def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], season=[], zlims=[10, 1000], dz=1, h5_outputfile=[]):
-    """ Generate and returns the climatological bottom salinity map.
-    This script uses GEBCO dada. User should update the path below.
-    Maybe this is something I could work on...
-
-    If the pickled filename exists, the function will by-pass the processing and return only saved climatology.
-    
-    Usage ex:
-    import numpy as np
-    import azmp_utils as azu
-    dc = .1
-    lonLims = [-60, -45] # FC AZMP report region
-    latLims = [42, 56]
-    lonLims = [-63, -45] # include 2H in above
-    latLims = [42, 58]
-    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    Sbot_dict = azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='fall', h5_outputfile='Sbot_climato_fall_0.10.h5')
-
-    OR
-
-    azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, season='spring', h5_outputfile='Sbot_climato_spring_0.10.h5') 
-
-    OR
-    
-    # NSRF area
-    import numpy as np
-    import azmp_utils as azu
-    dc = .10
-    lonLims = [-70, -56] # Lab Sea
-    latLims = [57, 67]
-    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    Sbot_dict = azu.get_bottomS_climato('/home/cyrf0006/data/dev_database/netCDF/*.nc', lon_reg, lat_reg, year_lims=[2006, 2021], season='summer', h5_outputfile='Sbot_climato_NSRFx_summer_2006-2021.h5')
-
-    """
-
-
+def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2020], season=[], h5_outputfile=[]):
     '''
-    ##REMOVE THIS AFTER, THIS IS FOR TESTING PURPOSES
-    dc = 0.1
-    lonLims = [-63, -45]
-    latLims = [42, 58]
-    LON_REG = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-    LAT_REG = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
-    INFILES = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
-    season = 'fall'
-    year_lims = [1991, 2020]
-    zlims = [10, 1000]
-    dz = 1
-    h5_outputfile='Sbot_climato_NSRF_'+season+'_0.10.h5'
+    Generates and returns the bottom salinity climatology.
+    This script uses GEBCO data, path needs to be provided.
+    If file already exists, it will be read and the output will come from that file.
+
+    INFILES: Path location of bottom salinity .nc files. 
+    lonLims (list): Longitude restraints [longitude min, longitude max]
+    latLims (list): Latitude restraints [latitude min, latitude max]
+    years_lim (list): Climatology years, default is [1991,2020]
+    season: The season of interest; spring, summer, fall
+    h5_outputfile: Location of output file, type .10.h5
+    bath_file: Path location of GEBCO bathymetry data, including file name.
+
+    Examples.
+    #fish_hab region: lonLims = [-60, -43], latLims = [39, 56], h5_outputfile='Tbot_climato_'+season+'_0.10.h5'
+    #FC AZMP report region: lonLims = [-60, -45], latLims = [42, 56], h5_outputfile='Tbot_climato_'+season+'_0.10.h5'
+    #Include 2H in above: lonLims = [-63, -45], latLims = [42, 58], h5_outputfile='Tbot_climato_'+season+'_0.10.h5'
+    #NSRF area: lonLims = [-70, -56], latLims = [57, 67], year_lims=[2006, 2021], season='summer', h5_outputfile='Tbot_climato_NSRFx_'+season+'_2006-2021.h5'
+    # NSRFxx, down to 53N (for Normandeau's work): lonLims = [-70, -56], latLims = [53, 67]
     '''
 
     # Because the code is trying to divide by zero
@@ -691,364 +482,98 @@ def get_bottomS_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1991, 2020], seas
     if os.path.isfile(h5_outputfile):
         print(h5_outputfile + ' exist! Reading directly')
         h5f = h5py.File(h5_outputfile,'r')
-        Sbot = h5f['Sbot'][:]
+        ds_saln = h5f['Sbot'][:]
         lon_reg = h5f['lon_reg'][:]
         lat_reg = h5f['lat_reg'][:]
-        lon_orig = h5f['lon_orig'][:]
-        lat_orig = h5f['lat_orig'][:]
         Zitp = h5f['Zitp'][:]
         h5f.close()
 
     else:
 
+        #Load in the bottom temperature data
+        ds = xr.open_mfdataset([INFILES+str(year)+'.nc' for year in np.arange(year_lims[0],year_lims[1]+1)])
+        ds = ds.mean('time')
+
+        #Isolate for the region of interest
+        ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
+        ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+
+        #Record the temperature, latitude, longitude
+        ds_saln = ds.bottom_salinity.values
+        lons = ds.longitude.values
+        lats = ds.latitude.values
+
         ## ---- Region parameters ---- ##
-        dataFile = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc'
+        ds_bath = xr.open_dataset(bath_file)
+        ds_bath = ds_bath.isel(lon=(ds_bath.lon>=lonLims[0])*(ds_bath.lon<=lonLims[1]))
+        ds_bath = ds_bath.isel(lat=(ds_bath.lat>=latLims[0])*(ds_bath.lat<=latLims[1]))
+        Zitp = ds_bath.elevation[::10,::10].values
 
-        lonLims = [LON_REG[0], LON_REG[-1]]
-        latLims = [LAT_REG[0], LAT_REG[-1]]
-        zmin = zlims[0] # do try to compute bottom temp above that depth
-        zmax = zlims[1] # do try to compute bottom temp below that depth
-        lon_reg = LON_REG
-        lat_reg = LAT_REG
-        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-        dc = np.round(np.diff(lon_reg[0:2]), 3)[0]
+        #Save the climatology
+        h5f = h5py.File(h5_outputfile, 'w')
+        h5f.create_dataset('Sbot', data=ds_saln)
+        h5f.create_dataset('lon_reg', data=lons)
+        h5f.create_dataset('lat_reg', data=lats)
+        h5f.create_dataset('Zitp', data=Zitp)
+        h5f.close()
 
-        ## ---- Bathymetry ---- ####
-        print('Load and grid bathymetry')
-        # Load data and isolate for the region of interest
-        dataset = xr.open_dataset(dataFile)
-        dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
-        dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
-
-        # Extract latitude and longitude
-        lon = dataset.lon.values
-        lat = dataset.lat.values
-
-        # Extract the elevation
-        Z = dataset.elevation.values
-        
-        # Interpolate data on regular grid (temperature grid), uses nearest neighbour (much more efficient)
-        lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-        lon_vec_bathy = np.reshape(lon_grid_bathy, lon_grid_bathy.size)
-        lat_vec_bathy = np.reshape(lat_grid_bathy, lat_grid_bathy.size)
-        z_vec = np.reshape(Z, Z.size)
-        Zitp = griddata((lon_vec_bathy, lat_vec_bathy), z_vec, (lon_grid, lat_grid), method='nearest')
-        del Z, lon, lat
-        print(' -> Done!')
-
-        ## ---- Get CTD data --- ##
-        print('Get historical data')
-        ds = xr.open_mfdataset(INFILES)
-        # Selection of a subset region
-        ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
-        ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
-        # Select time (save several options here)
-        if season == 'summer':
-            #ds = ds.sel(time=ds['time.season']=='JJA')
-            ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
-        elif season == 'spring':
-            #ds = ds.sel(time=ds['time.season']=='MAM')
-            ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
-        elif season == 'fall':
-            #ds = ds.sel(time=ds['time.season']=='SON')
-            ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
-        else:
-            print('!! no season specified, used them all! !!')
-
-        # Time period for climatology
-        ds = ds.sel(time=ds['time.year']>=year_lims[0])
-        ds = ds.sel(time=ds['time.year']<=year_lims[1])
-        ds = ds.sel(level=ds['level']<zmax)
-        # Vertical binning (on dataArray; more appropriate here
-        da_sal = ds['salinity']
-        lons = np.array(ds.longitude)
-        lats = np.array(ds.latitude)
-        #To Pandas Dataframe
-        df_sal = da_sal.to_pandas()
-        # Remove empty columns
-        idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
-        df_sal = df_sal.dropna(axis=0,how='all')
-        lons = np.delete(lons,idx_empty_rows)
-        lats = np.delete(lats,idx_empty_rows)
-        del ds, da_sal      
-        print(' -> Done!')    
-
-        ## --- fill 3D cube --- ##  
-        print('Fill regular cube')
-        z = df_sal.columns.values
-        V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
-
-        # Aggregate on regular grid
-        for i, xx in enumerate(lon_reg):
-            for j, yy in enumerate(lat_reg):    
-                idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
-                tmp = np.array(df_sal.iloc[idx].mean(axis=0))
-                idx_good = np.argwhere((~np.isnan(tmp)))
-                if np.size(idx_good)==1:
-                    V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
-                elif np.size(idx_good)>1: # vertical interpolation between pts
-                    interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                    idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
-                    V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
-
-
-        # horizontal interpolation at each depth
-        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-        lon_vec = np.reshape(lon_grid, lon_grid.size)
-        lat_vec = np.reshape(lat_grid, lat_grid.size)
-        for k, zz in enumerate(z):
-            # Meshgrid 1D data (after removing NaNs)
-            tmp_grid = V[:,:,k]
-            tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-            #print 'interpolate depth layer ' + np.str(k) + ' / ' + np.str(z.size) 
-            # griddata (after removing nans)
-            idx_good = np.argwhere(~np.isnan(tmp_vec))
-            if idx_good.size>10: # will ignore depth where no data exist
-                LN = np.squeeze(lon_vec[idx_good])
-                LT = np.squeeze(lat_vec[idx_good])
-                TT = np.squeeze(tmp_vec[idx_good])
-                zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
-
-                #Mask the array where the max interpolation distance is exceeded
-                THRESHOLD = 2
-                tree = cKDTree(np.array([LN,LT]).T)
-                xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
-                dists, indexes = tree.query(xi)
-                zi[dists > THRESHOLD] = np.nan
-
-                V[:,:,k] = zi
-            else:
-                continue
-        print(' -> Done!')    
-
-        # mask using bathymetry
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                if Zitp[j,i] > -10: # remove shallower than 10m
-                    V[j,i,:] = np.nan
-
-        # getting bottom salinity
-        print('Getting bottom Sal.')    
-        Sbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                bottom_depth = -Zitp[j,i] # minus to turn positive
-                sal_vec = V[j,i,:]
-                idx_good = np.squeeze(np.where(~np.isnan(sal_vec)))
-                if idx_good.size:
-                    idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
-                else:
-                    continue
-
-                if np.abs([idx_closest] - bottom_depth) <= 20:
-                    Sbot[j,i] = sal_vec[idx_good[idx_closest]]
-                elif np.abs(z[idx_closest] - bottom_depth) <= 50:
-                    #print('used data located [30,50]m from bottom')
-                    Sbot[j,i] = sal_vec[idx_good[idx_closest]]
-        print(' -> Done!')    
-
-        # Save data for further use
-        if np.size(h5_outputfile):
-            h5f = h5py.File(h5_outputfile, 'w')
-            h5f.create_dataset('Sbot', data=Sbot)
-            h5f.create_dataset('lon_reg', data=lon_reg)
-            h5f.create_dataset('lat_reg', data=lat_reg)
-            h5f.create_dataset('lon_orig', data=lons)
-            h5f.create_dataset('lat_orig', data=lats)
-            h5f.create_dataset('Zitp', data=Zitp)
-            h5f.create_dataset('z', data=z)
-            h5f.close()
-
-    # Fill dict for output
+    #Fill dict for output
     dict = {}
-    dict['Sbot'] = Sbot
+    dict['Sbot'] = ds_saln
     dict['bathy'] = Zitp
-    dict['lon_reg'] = lon_reg
-    dict['lat_reg'] = lat_reg
-    dict['lon_orig'] = lons
-    dict['lat_orig'] = lats
+    dict['lon_reg'] = lons
+    dict['lat_reg'] = lats
     
     return dict
-    
+
+
 
 def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
-    """ Generate and returns bottom temperature data corresponding to a certain climatology map
-    (previously generated with get_bottomT_climato)
-    Function returns:
-    - Tbot:  gridded bottom temperature
-    - lons, lats: coordinates of good casts used to generate the grid
-    *Note: they are not regular coordinates of the grid that can be obtained with get_bottomT_climato
-       
-    Usage ex (suppose climato file already exist):
-    import azmp_utils as azu
-    climato_file = 'Tbot_climato_spring_0.25.h5'
-    year_file = '/home/cyrf0006/data/dev_database/2017.nc'
-    h5f = h5py.File(climato_file, 'r')
-    Tbot_climato = h5f['Tbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
-    Zitp = h5f['Zitp'][:]
-    h5f.close()
-    Tbot_dict = azu.get_bottomT(year_file, 'fall', climato_file)
-
-      Dec. 2018: Added a flag for masking or not.
-
-    """
-
-    #TEMPORARY, REMOVE AFTER
     '''
-    year_file='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/1980.nc'
-    season='fall'
-    climato_file='Tbot_climato_fall_0.10.h5'
-    nafo_mask=True
-    lab_mask=True
+    Generate and return bottom temperature data corresponding to a certain climatology map.
+    Returns a dictionary.
+    Returns a file of bottom temperature for the year (.h5), before masking.
+
+    year_file: Path location of bottom temperature year of interest, file name included.
+    season: Season of interest.
+    climato_file: Location of climatology file.
+    nafo_mask (bool): Whether or not regions not of interest are masked.
+    lab_mask (bool): Whether or not the Labrador 100m contour is masked.
     '''
 
     ## ---- Load Climato data ---- ##    
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
     Tbot_climato = h5f['Tbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
+    lon_reg = h5f['lon_reg'][:][0,:]
+    lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
-    z = h5f['z'][:]
     h5f.close()
-    zmax = z.max()
-    dz = z[1]-z[0]
-    
+
     ## ---- Derive some parameters ---- ##    
-    lon_0 = np.round(np.mean(lon_reg))
-    lat_0 = np.round(np.mean(lat_reg))
     lonLims = [lon_reg[0], lon_reg[-1]]
     latLims = [lat_reg[0], lat_reg[-1]]
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    dc = np.diff(lon_reg[0:2])
-    
+
     ## ---- NAFO divisions ---- ##
     nafo_div = get_nafo_divisions()
 
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
+    ds = ds.mean('time')
     # Selection of a subset region
-    ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
-    ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
-    # Select time (save several options here)
-    if season == 'summer':
-        #ds = ds.sel(time=ds['time.season']=='JJA')
-        ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
-    elif season == 'spring':
-        #ds = ds.sel(time=ds['time.season']=='MAM')
-        ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
-    elif season == 'fall':
-        #ds = ds.sel(time=ds['time.season']=='SON')
-        ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
-    else:
-        print('!! no season specified, used them all! !!')
-
-    # Restrict max depth to zmax defined earlier
-    ds = ds.sel(level=ds['level']<zmax)
-    da_temp = ds['temperature']
-    lons = np.array(ds.longitude)
-    lats = np.array(ds.latitude)
-    #To Pandas Dataframe
-    df_temp = da_temp.to_pandas()
-    # Remove empty columns
-    idx_empty_rows = df_temp.isnull().all(1).values.nonzero()[0]
-    df_temp = df_temp.dropna(axis=0,how='all')
-    lons = np.delete(lons,idx_empty_rows)
-    lats = np.delete(lats,idx_empty_rows)
-    #df_temp.to_pickle('T_2000-2017.pkl')
-    del ds
-    print(' -> Done!')
-
-    ## --- fill 3D cube --- ##  
-    print('Fill regular cube')
-    z = df_temp.columns.values
-    V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
-
-    # Aggregate on regular grid
-    for i, xx in enumerate(lon_reg):
-        for j, yy in enumerate(lat_reg):    
-            idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
-            tmp = np.array(df_temp.iloc[idx].mean(axis=0))
-            idx_good = np.argwhere((~np.isnan(tmp)) & (tmp<30))
-            if np.size(idx_good)==1:
-                V[j,i,:] = np.array(df_temp.iloc[idx].mean(axis=0))
-            elif np.size(idx_good)>1: # vertical interpolation between pts
-                interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good]))
-                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
-                V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
-    
-    # horizontal interpolation at each depth
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    lon_vec = np.reshape(lon_grid, lon_grid.size)
-    lat_vec = np.reshape(lat_grid, lat_grid.size)
-    for k, zz in enumerate(z):
-        # Meshgrid 1D data (after removing NaNs)
-        tmp_grid = V[:,:,k]
-        tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-        # griddata (after removing nans)
-        idx_good = np.argwhere(~np.isnan(tmp_vec))
-        if idx_good.size>5: # will ignore depth where no data exist
-            LN = np.squeeze(lon_vec[idx_good])
-            LT = np.squeeze(lat_vec[idx_good])
-            TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
-
-            #Mask the array where the max interpolation distance is exceeded
-            THRESHOLD = 2
-            tree = cKDTree(np.array([LN,LT]).T)
-            xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
-            dists, indexes = tree.query(xi)
-            zi[dists > THRESHOLD] = np.nan
-
-            V[:,:,k] = zi
-        else:
-            continue
-    print(' -> Done!')    
-
-    # mask using bathymetry (I don't think it is necessary, but make nice figures)
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            if Zitp[j,i] > -10: # remove shallower than 10m
-                V[j,i,:] = np.nan
+    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
+    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+    Tbot = ds.bottom_temperature.values
 
     ## Save data in h5 for further use
-    h5_cube_name = 'Tcube_' + season +  year_file.split('/')[-1].strip('.nc')  + '.h5'
+    h5_cube_name = 'operation_files/Tcube_' + season + year_file.split('/')[-1].strip('.nc')  + '.h5'
     h5f = h5py.File(h5_cube_name, 'w')
-    h5f.create_dataset('temperature', data=V)
+    h5f.create_dataset('temperature', data=Tbot)
     h5f.create_dataset('lon_reg', data=lon_reg)
     h5f.create_dataset('lat_reg', data=lat_reg)
-    h5f.create_dataset('lon_orig', data=lons)
-    h5f.create_dataset('lat_orig', data=lats)
     h5f.create_dataset('Zitp', data=Zitp)
-    h5f.create_dataset('z', data=z)
     h5f.close()
-    
-    # getting bottom temperature
-    print('Getting bottom Temp.')    
-    Tbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            bottom_depth = -Zitp[j,i] # minus to turn positive
-            temp_vec = V[j,i,:]
-            ## idx_no_good = np.argwhere(temp_vec>30)
-            ## if idx_no_good.size:
-            ##     temp_vec[idx_no_good] = np.nan
-            idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-            if idx_good.size>1:
-                idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
-            else:
-                continue
-
-            if np.abs([idx_closest] - bottom_depth) <= 20:
-                Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-            elif np.abs(z[idx_closest] - bottom_depth) <= 50:
-                #print('used data located [30,50]m from bottom')
-                Tbot[j,i] = temp_vec[idx_good[idx_closest]]
-
-    print(' -> Done!')
 
     # Mask data on coastal Labrador
     if lab_mask == True:
@@ -1103,12 +628,24 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     dict['bathy'] = Zitp
     dict['lon_reg'] = lon_reg
     dict['lat_reg'] = lat_reg
-    dict['lons'] = lons
-    dict['lats'] = lats
-    
+
     return dict
 
 def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):    
+    '''
+    Generate and return bottom salinity data corresponding to a certain climatology map.
+    Returns a dictionary.
+    Returns a file of bottom salinity for the year (.h5), before masking.
+
+    year_file: Path location of bottom salinity year of interest, file name included.
+    season: Season of interest.
+    climato_file: Location of climatology file.
+    nafo_mask (bool): Whether or not regions not of interest are masked.
+    lab_mask (bool): Whether or not the Labrador 100m contour is masked.
+    '''
+
+
+
     """ Generate and returns bottom temperature data corresponding to a certain climatology map
     (previously generated with get_bottomS_climato)
     Function returns:
@@ -1136,21 +673,14 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
     Sbot_climato = h5f['Sbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
+    lon_reg = h5f['lon_reg'][:][0,:]
+    lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
-    z = h5f['z'][:]
     h5f.close()
-    zmax = z.max()
-    dz = z[1]-z[0]
 
     ## ---- Derive some parameters ---- ##    
-    lon_0 = np.round(np.mean(lon_reg))
-    lat_0 = np.round(np.mean(lat_reg))
     lonLims = [lon_reg[0], lon_reg[-1]]
     latLims = [lat_reg[0], lat_reg[-1]]
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    dc = np.diff(lon_reg[0:2])
     
     ## ---- NAFO divisions ---- ##
     nafo_div = get_nafo_divisions()
@@ -1158,138 +688,32 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
+    ds = ds.mean('time')
     # Selection of a subset region
-    ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
-    ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
-    # Select time (save several options here)
-    if season == 'summer':
-        #ds = ds.sel(time=ds['time.season']=='JJA')
-        ds = ds.sel(time=((ds['time.month']>=7)) & ((ds['time.month']<=9)))
-    elif season == 'spring':
-        #ds = ds.sel(time=ds['time.season']=='MAM')
-        ds = ds.sel(time=((ds['time.month']>=4)) & ((ds['time.month']<=6)))
-    elif season == 'fall':
-        #ds = ds.sel(time=ds['time.season']=='SON')
-        ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
-    else:
-        print('!! no season specified, used them all! !!')
-
-    # Restrict max depth to zmax defined earlier
-    ds = ds.sel(level=ds['level']<zmax)
-    da_sal = ds['salinity']
-    lons = np.array(ds.longitude)
-    lats = np.array(ds.latitude)
-    #To Pandas Dataframe
-    df_sal = da_sal.to_pandas()
-    # Remove empty columns & drop coordinates (for cast identification on map)
-    idx_empty_rows = df_sal.isnull().all(1).values.nonzero()[0]
-    df_sal = df_sal.dropna(axis=0,how='all')
-    lons = np.delete(lons,idx_empty_rows)
-    lats = np.delete(lats,idx_empty_rows)
-    #df_temp.to_pickle('T_2000-2017.pkl')
-    del ds
-    print(' -> Done!')
-
-    ## --- fill 3D cube --- ##  
-    print('Fill regular cube')
-    z = df_sal.columns.values
-    V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
-
-    # Aggregate on regular grid
-    for i, xx in enumerate(lon_reg):
-        for j, yy in enumerate(lat_reg):    
-            idx = np.where((lons>=xx-dc/2) & (lons<xx+dc/2) & (lats>=yy-dc/2) & (lats<yy+dc/2))
-            tmp = np.array(df_sal.iloc[idx].mean(axis=0))
-            idx_good = np.argwhere(~np.isnan(tmp))
-            if np.size(idx_good)==1:
-                V[j,i,:] = np.array(df_sal.iloc[idx].mean(axis=0))
-            elif np.size(idx_good)>1: # vertical interpolation between pts
-                interp = interp1d(np.squeeze(z[idx_good]), np.squeeze(tmp[idx_good])) 
-                idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
-                V[j,i,idx_interp] = interp(z[idx_interp]) # interpolate only where possible (1st to last good idx)
-
-    # horizontal interpolation at each depth
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    lon_vec = np.reshape(lon_grid, lon_grid.size)
-    lat_vec = np.reshape(lat_grid, lat_grid.size)
-    for k, zz in enumerate(z):
-        # Meshgrid 1D data (after removing NaNs)
-        tmp_grid = V[:,:,k]
-        tmp_vec = np.reshape(tmp_grid, tmp_grid.size)
-        # griddata (after removing nans)
-        idx_good = np.argwhere(~np.isnan(tmp_vec))
-        if idx_good.size>3: # will ignore depth where no data exist
-            LN = np.squeeze(lon_vec[idx_good])
-            LT = np.squeeze(lat_vec[idx_good])
-            TT = np.squeeze(tmp_vec[idx_good])
-            zi = griddata((LN, LT), TT, (lon_grid, lat_grid), method='linear')
-
-            #Mask the array where the max interpolation distance is exceeded
-            THRESHOLD = 2
-            tree = cKDTree(np.array([LN,LT]).T)
-            xi = _ndim_coords_from_arrays(tuple([lon_grid,lat_grid]))
-            dists, indexes = tree.query(xi)
-            zi[dists > THRESHOLD] = np.nan
-
-            V[:,:,k] = zi
-        else:
-            continue
-    print(' -> Done!')    
-
-    # mask using bathymetry (I don't think it is necessary, but make nice figures)
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            if Zitp[j,i] > -10: # remove shallower than 10m
-                V[j,i,:] = np.nan
+    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
+    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+    Sbot = ds.bottom_salinity.values
 
     ## Save data in h5 for further use
     h5_cube_name = 'Scube_' + season +  year_file.split('/')[-1].strip('.nc')  + '.h5'
     h5f = h5py.File(h5_cube_name, 'w')
-    h5f.create_dataset('salinity', data=V)
+    h5f.create_dataset('salinity', data=Sbot)
     h5f.create_dataset('lon_reg', data=lon_reg)
     h5f.create_dataset('lat_reg', data=lat_reg)
-    h5f.create_dataset('lon_orig', data=lons)
-    h5f.create_dataset('lat_orig', data=lats)
     h5f.create_dataset('Zitp', data=Zitp)
-    h5f.create_dataset('z', data=z)
     h5f.close()
 
-    # getting bottom salinity
-    print('Getting bottom Sal.')    
-    Sbot = np.full([lat_reg.size,lon_reg.size], np.nan) 
-    for i, xx in enumerate(lon_reg):
-        for j,yy in enumerate(lat_reg):
-            bottom_depth = -Zitp[j,i] # minus to turn positive
-            temp_vec = V[j,i,:]
-            ## idx_no_good = np.argwhere(temp_vec>30)
-            ## if idx_no_good.size:
-            ##     temp_vec[idx_no_good] = np.nan
-            idx_good = np.squeeze(np.where(~np.isnan(temp_vec)))
-            if idx_good.size>1:
-                idx_closest = np.argmin(np.abs(bottom_depth-z[idx_good]))
-            else:
-                continue
-
-            if np.abs([idx_closest] - bottom_depth) <= 20:
-                Sbot[j,i] = temp_vec[idx_good[idx_closest]]
-            elif np.abs(z[idx_closest] - bottom_depth) <= 50:
-                #print('used data located [30,50]m from bottom')
-                Sbot[j,i] = temp_vec[idx_good[idx_closest]]
-
-    print(' -> Done!')    
-
-    
     # Mask data on coastal Labrador
     if lab_mask == True:
         print('Mask coastal labrador')
-        contour_mask = np.load('/home/jcoyne/Documents/CASH/Combined_Data/bottom-var_output/bottom_temp_v03/100m_contour_labrador.npy')
+        contour_mask = np.load('operation_files/100m_contour_labrador.npy')
         polygon_mask = Polygon(contour_mask)
         for i, xx in enumerate(lon_reg):
             for j,yy in enumerate(lat_reg):
                 point = Point(lon_reg[i], lat_reg[j])
                 if polygon_mask.contains(point): # mask data near Labrador in fall
                     Sbot[j,i] = np.nan 
-            
+
     # Mask data outside Nafo div.
     if nafo_mask == True:
         print('Mask according to NAFO division for ' + season)
@@ -1332,9 +756,7 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     dict['bathy'] = Zitp
     dict['lon_reg'] = lon_reg
     dict['lat_reg'] = lat_reg
-    dict['lons'] = lons
-    dict['lats'] = lats
-    
+
     return dict
 
 def get_surfT_climato(INFILES, LON_REG,  LAT_REG, year_lims=[1981, 2010], season=[], zlims=[5, 20], dz=5, h5_outputfile=[]):
@@ -1892,8 +1314,10 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
     # Output from
     if var == 'temperature':
         map = dict['Tbot']
+        map_org = dict['Tbot_orig']
     elif 'salinity':
-        map = dict['Sbot']    
+        map = dict['Sbot']
+        map_org = dict['Sbot_orig']
     bathy = dict['bathy']
     lon_reg = dict['lon_reg']
     lat_reg = dict['lat_reg']
@@ -1901,110 +1325,145 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
     # derive mean pixel area
     obj = {'type':'Polygon','coordinates':[[[lon_reg[0],lat_reg[0]],[lon_reg[0],lat_reg[-1]],[lon_reg[-1],lat_reg[-1]],[lon_reg[-1],lat_reg[0]],[lon_reg[0],lat_reg[0]]]]}
     pixel_area = area(obj)/1e6/map.size
-    
+
+    #Isolate the bathymetry (remove land pixels)
+    bath_mask = bathy.astype(float)*-1
+    bath_mask[bath_mask <= 10] = np.nan
+    bath_mask[bath_mask > 1000] = np.nan
+
     # select data in polygon
     data_vec = []
     bathy_vec = []
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
-            point = Point(lon_reg[i], lat_reg[j])            
+            point = Point(lon_reg[i], lat_reg[j])
             if shape.contains(point):
                 data_vec = np.append(data_vec, map[j,i])
                 bathy_vec = np.append(bathy_vec, bathy[j,i])
-            else:                
-                pass
+            else:
+                bath_mask[j,i] = np.nan
 
-    # total area of the polygon (save in pkl)
-    total_polygon_area = data_vec.size*pixel_area
-    
-    # remove nans
-    bathy_vec = bathy_vec[~np.isnan(data_vec)]
-    data_vec = data_vec[~np.isnan(data_vec)]
-    
-    # mean temperature all polygon
-    Tmean = data_vec.mean()
+    #Determine if any data is present
+    if np.size(data_vec) != 0:
 
-    # mean temperature at depth shallower than 100m, 200m, 300m
-    Tmean100 = data_vec[bathy_vec>=-100].mean()
-    Tmean200 = data_vec[bathy_vec>=-200].mean()
-    Tmean300 = data_vec[bathy_vec>=-300].mean()
-    
-    # area with temperature < 0
-    area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
-    # area with temperature < 1
-    area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
-    # area with temperature > 2
-    area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
-    # area with temperature > 2 & < 4 (shrimp habitat)
-    area_shrimp = data_vec[(data_vec>=2) & (data_vec<=4)].size*pixel_area
-    # area with temperature < 2 (crab habitat)
-    area_colder_2deg = data_vec[data_vec<=2].size*pixel_area
-    # % area with temperature < 2 (crab habitat)
-    area_colder_2deg_perc = area_colder_2deg/(data_vec.size*pixel_area)*100.0
+        # total area of the polygon (save in pkl)
+        total_polygon_area = np.size(data_vec)*pixel_area
 
-    # Pandalus Borealis habitat
-    Pbor = data_vec[(bathy_vec>=-460) & (bathy_vec<=-180) &  (data_vec>=-.2) &  (data_vec<=4.7)].size*pixel_area
-    Pbor_perc = Pbor/(data_vec.size*pixel_area)*100.0
-    # Pandalus Montagui habitat
-    Pmon = data_vec[(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec>=-1) &  (data_vec<=3.7)].size*pixel_area    
-    Pmon_perc = Pmon/(data_vec.size*pixel_area)*100.0
-
-    # Measure of the successfulness of the sampling
-    sampled_area= data_vec.size*pixel_area
-    
-    # Fill dict for output
-    dict = {}
-    dict['Tmean'] = Tmean # temperature and salinity
-    dict['Tmean_sha100'] = Tmean100
-    dict['Tmean_sha200'] = Tmean200
-    dict['Tmean_sha300'] = Tmean300
-
-    if var == 'temperature': # temperature only
-        dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
-        dict['area_colder1'] = area_colder_1deg 
-        dict['area_warmer2'] = area_warmer_2deg
-        dict['area_shrimp'] = area_shrimp
-        dict['area_colder2'] = area_colder_2deg 
-        dict['area_colder2_perc'] = area_colder_2deg_perc 
-        dict['area_Pborealis'] = Pbor
-        dict['area_Pborealis_perc'] = Pbor_perc
-        dict['area_Pmontagui'] = Pmon
-        dict['area_Pmontagui_perc'] = Pmon_perc
-        dict['sampled_area'] = sampled_area
-        dict['total_area'] = total_polygon_area
-
-    
-    if nsrf:
-        # Area of NSRF seafloor with conditions within a certain depth and temperature range (project with Wojciech)
-        Pbor_eaz = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.4) &  (data_vec<=4.7)].size*pixel_area
-        Pbor_waz = data_vec[(bathy_vec>=-520) & (bathy_vec<=-210) &  (data_vec>=-.7) &  (data_vec<=4.0)].size*pixel_area
-        Pbor_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.7) &  (data_vec<=4.7)].size*pixel_area
-        Pmon_eaz = data_vec[(bathy_vec>=-600) & (bathy_vec<=-120) &  (data_vec>=-.5) &  (data_vec<=3.7)].size*pixel_area
-        Pmon_waz = data_vec[(bathy_vec>=-530) & (bathy_vec<=-110) &  (data_vec>=-1.2) &  (data_vec<=2.8)].size*pixel_area
-        Pmon_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-140) &  (data_vec>=-0.9) &  (data_vec<=4.0)].size*pixel_area
-        # % of good pixels
-        Pbor_eaz_perc = Pbor_eaz/(data_vec.size*pixel_area)*100.0
-        Pbor_waz_perc = Pbor_waz/(data_vec.size*pixel_area)*100.0
-        Pbor_sfa4_perc = Pbor_sfa4/(data_vec.size*pixel_area)*100.0
-        Pmon_eaz_perc = Pmon_eaz/(data_vec.size*pixel_area)*100.0
-        Pmon_waz_perc = Pmon_waz/(data_vec.size*pixel_area)*100.0
-        Pmon_sfa4_perc = Pmon_sfa4/(data_vec.size*pixel_area)*100.0
+        # remove nans
+        bathy_vec = bathy_vec[~np.isnan(data_vec)]
+        data_vec = data_vec[~np.isnan(data_vec)]
         
+        # mean temperature all polygon
+        Tmean = data_vec.mean()
+
+        # mean temperature at depth shallower than 100m, 200m, 300m
+        Tmean100 = data_vec[bathy_vec>=-100].mean()
+        Tmean200 = data_vec[bathy_vec>=-200].mean()
+        Tmean300 = data_vec[bathy_vec>=-300].mean()
+        
+        # area with temperature < 0
+        area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
+        # area with temperature < 1
+        area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
+        # area with temperature > 2
+        area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
+        # area with temperature > 2 & < 4 (shrimp habitat)
+        area_shrimp = data_vec[(data_vec>=2) & (data_vec<=4)].size*pixel_area
+        # area with temperature < 2 (crab habitat)
+        area_colder_2deg = data_vec[data_vec<=2].size*pixel_area
+        # % area with temperature < 2 (crab habitat)
+        area_colder_2deg_perc = area_colder_2deg/(data_vec.size*pixel_area)*100.0
+
+        # Pandalus Borealis habitat
+        Pbor = data_vec[(bathy_vec>=-460) & (bathy_vec<=-180) &  (data_vec>=-.2) &  (data_vec<=4.7)].size*pixel_area
+        Pbor_perc = Pbor/(data_vec.size*pixel_area)*100.0
+        # Pandalus Montagui habitat
+        Pmon = data_vec[(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec>=-1) &  (data_vec<=3.7)].size*pixel_area    
+        Pmon_perc = Pmon/(data_vec.size*pixel_area)*100.0
+
+        # Measure of the successfulness of the sampling
+        sampled_area= data_vec.size*pixel_area
+
+        #Determine the percentage of missing area
+        percent_coverage = np.sum(~np.isnan(map_org*bath_mask))/np.sum(~np.isnan(bath_mask))
+        percent_coverage = percent_coverage*100
+
+
         # Fill dict for output
-        dict['Pbor_eaz_habitat'] = Pbor_eaz
-        dict['Pbor_waz_habitat'] = Pbor_waz
-        dict['Pbor_sfa4_habitat'] = Pbor_sfa4
-        dict['Pmon_eaz_habitat'] = Pmon_eaz
-        dict['Pmon_waz_habitat'] = Pmon_waz
-        dict['Pmon_sfa4_habitat'] = Pmon_sfa4
-        dict['Pbor_eaz_perc'] = Pbor_eaz_perc
-        dict['Pbor_waz_perc'] = Pbor_waz_perc
-        dict['Pbor_sfa4_perc'] = Pbor_sfa4_perc
-        dict['Pmon_eaz_perc'] = Pmon_eaz_perc
-        dict['Pmon_waz_perc'] = Pmon_waz_perc
-        dict['Pmon_sfa4_perc'] = Pmon_sfa4_perc
+        dict = {}
+        dict['Tmean'] = Tmean # temperature and salinity
+        dict['Tmean_sha100'] = Tmean100
+        dict['Tmean_sha200'] = Tmean200
+        dict['Tmean_sha300'] = Tmean300
+
+        if var == 'temperature': # temperature only
+            dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
+            dict['area_colder1'] = area_colder_1deg 
+            dict['area_warmer2'] = area_warmer_2deg
+            dict['area_shrimp'] = area_shrimp
+            dict['area_colder2'] = area_colder_2deg 
+            dict['area_colder2_perc'] = area_colder_2deg_perc 
+            dict['area_Pborealis'] = Pbor
+            dict['area_Pborealis_perc'] = Pbor_perc
+            dict['area_Pmontagui'] = Pmon
+            dict['area_Pmontagui_perc'] = Pmon_perc
+            dict['sampled_area'] = sampled_area
+            dict['total_area'] = total_polygon_area
+            dict['percent_coverage'] = percent_coverage
 
         
+        if nsrf:
+            # Area of NSRF seafloor with conditions within a certain depth and temperature range (project with Wojciech)
+            Pbor_eaz = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.4) &  (data_vec<=4.7)].size*pixel_area
+            Pbor_waz = data_vec[(bathy_vec>=-520) & (bathy_vec<=-210) &  (data_vec>=-.7) &  (data_vec<=4.0)].size*pixel_area
+            Pbor_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.7) &  (data_vec<=4.7)].size*pixel_area
+            Pmon_eaz = data_vec[(bathy_vec>=-600) & (bathy_vec<=-120) &  (data_vec>=-.5) &  (data_vec<=3.7)].size*pixel_area
+            Pmon_waz = data_vec[(bathy_vec>=-530) & (bathy_vec<=-110) &  (data_vec>=-1.2) &  (data_vec<=2.8)].size*pixel_area
+            Pmon_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-140) &  (data_vec>=-0.9) &  (data_vec<=4.0)].size*pixel_area
+            # % of good pixels
+            Pbor_eaz_perc = Pbor_eaz/(data_vec.size*pixel_area)*100.0
+            Pbor_waz_perc = Pbor_waz/(data_vec.size*pixel_area)*100.0
+            Pbor_sfa4_perc = Pbor_sfa4/(data_vec.size*pixel_area)*100.0
+            Pmon_eaz_perc = Pmon_eaz/(data_vec.size*pixel_area)*100.0
+            Pmon_waz_perc = Pmon_waz/(data_vec.size*pixel_area)*100.0
+            Pmon_sfa4_perc = Pmon_sfa4/(data_vec.size*pixel_area)*100.0
+            
+            # Fill dict for output
+            dict['Pbor_eaz_habitat'] = Pbor_eaz
+            dict['Pbor_waz_habitat'] = Pbor_waz
+            dict['Pbor_sfa4_habitat'] = Pbor_sfa4
+            dict['Pmon_eaz_habitat'] = Pmon_eaz
+            dict['Pmon_waz_habitat'] = Pmon_waz
+            dict['Pmon_sfa4_habitat'] = Pmon_sfa4
+            dict['Pbor_eaz_perc'] = Pbor_eaz_perc
+            dict['Pbor_waz_perc'] = Pbor_waz_perc
+            dict['Pbor_sfa4_perc'] = Pbor_sfa4_perc
+            dict['Pmon_eaz_perc'] = Pmon_eaz_perc
+            dict['Pmon_waz_perc'] = Pmon_waz_perc
+            dict['Pmon_sfa4_perc'] = Pmon_sfa4_perc
+
+    else:
+        # Fill dict for output
+        dict={}
+        dict['Tmean'] = np.nan
+        dict['Tmean_sha100'] = np.nan
+        dict['Tmean_sha200'] = np.nan
+        dict['Tmean_sha300'] = np.nan
+        dict['area_colder0'] = np.nan
+        dict['area_colder1'] = np.nan 
+        dict['area_warmer2'] = np.nan
+        dict['area_shrimp'] = np.nan
+        dict['area_colder2'] = np.nan 
+        dict['area_colder2_perc'] = np.nan 
+        dict['area_Pborealis'] = np.nan
+        dict['area_Pborealis_perc'] = np.nan
+        dict['area_Pmontagui'] = np.nan
+        dict['area_Pmontagui_perc'] = np.nan
+        dict['sampled_area'] = np.nan
+        dict['total_area'] = np.nan
+        dict['percent_coverage'] = np.nan
+
+
     return dict
 
 #def polygon_salinity_stats(dict, shape):

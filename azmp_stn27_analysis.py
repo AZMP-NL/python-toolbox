@@ -39,8 +39,8 @@ def make_patch_spines_invisible(ax):
 ## ---- Some custom parameters ---- ##
 #year_clim = [1981, 2010]
 year_clim = [1991, 2020]
-current_year = 2022
-XLIM = [datetime.date(1945, 1, 1), datetime.date(2022, 12, 31)]
+current_year = 2023
+XLIM = [datetime.date(1945, 1, 1), datetime.date(2023, 12, 31)]
 french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 years_flag = [1980]
 
@@ -76,8 +76,9 @@ df_sal[df_sal.index.year==1950] = np.nan
 # BELOW IS A WEAKNESS IN THE CODE THAT NEEDS TO BE FIXED
 # since there is no data in Dec. 2022, create fake one (not classy, but works for now)
 if df_temp.index.size%12 != 0:
-    df_temp.loc[pd.to_datetime('2022-12-15 00:00:00')]=df_temp.loc['2022-11-15']*np.nan
-    df_sal.loc[pd.to_datetime('2022-12-15 00:00:00')]=df_sal.loc['2022-11-15']*np.nan
+    for i in np.arange(df_temp.index.size%12+1, 12+1):
+        df_temp.loc[pd.to_datetime(str(current_year)+'-'+"%.2d" % i+'-15 00:00:00')]=df_temp.loc[str(current_year)+'-01-15']*np.nan
+        df_sal.loc[pd.to_datetime(str(current_year)+'-'+"%.2d" % i+'-15 00:00:00')]=df_sal.loc[str(current_year)+'-01-15']*np.nan
 
 ## ---- 1.  Vertically averaged conditions (2023 update) ---- ##
 

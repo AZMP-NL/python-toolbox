@@ -39,17 +39,19 @@ use_viking = False
 QC_SD = 4
 # to append a new year to stn27_all_casts.nc
 APPEND = False
-APPEND_YEAR = 2022
+APPEND_YEAR = 2023
 # apply a moving average?
 binning=True
 move_ave = False
 zbin = 5
+CASTS_path = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/'
+
 
 ## ---- Open data and select ---- ##
-if os.path.isfile('stn27_all_casts.nc'):
-    ds = xr.open_dataset('stn27_all_casts.nc') 
+if os.path.isfile('operation_files/stn27_all_casts.nc'):
+    ds = xr.open_dataset('operation_files/stn27_all_casts.nc') 
     if APPEND == True:
-        ds2 = xr.open_dataset('/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/' + str(APPEND_YEAR) + '.nc')
+        ds2 = xr.open_dataset(CASTS_path + str(APPEND_YEAR) + '.nc')
         ds2 = ds2.where(ds2.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
         ds2 = ds2.where(ds2.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
         # Select a depth range
@@ -61,7 +63,7 @@ if os.path.isfile('stn27_all_casts.nc'):
         ds2 = ds2.sortby('time')
         ds = xr.concat([ds, ds2]) # to be tested!
 else:
-    ds = xr.open_mfdataset('/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc')
+    ds = xr.open_mfdataset(CASTS_path+'*.nc')
     # Remome GTS datasets
     ds = ds.where(ds.instrument_ID!='MEDBA', drop=True) # BATHY GTS message 
     ds = ds.where(ds.instrument_ID!='MEDTE', drop=True) # TESAC GTS message 
@@ -167,30 +169,6 @@ for i in np.arange(1,13):
             df_tmp = df_tmp.drop(idx) 
         else: 
             continue
-
-    '''
-    # compute clim for second check
-    df_tmp = df_tmp.groupby('time').mean()    
-    df_tmp = df_tmp.T   
-    clim = df_tmp.mean(axis=1)
-    std = df_tmp.std(axis=1)
-    plt.fill_betweenx(clim.index, np.squeeze(clim.values+QC_SD*std.values), np.squeeze(clim.values-QC_SD*std.values), facecolor='steelblue', interpolate=True , alpha=.3)
-    for idx in df_tmp.columns:
-        plt.plot(df_tmp[[idx]].values.squeeze(), df_tmp[[idx]].index.values)
-        if ((df_tmp[[idx]].squeeze()>clim.values+QC_SD*std.values).sum() + (df_tmp[[idx]].squeeze()<clim.values-QC_SD*std.values).sum()) > 1: # if exceed X times SD
-            plt.plot(df_tmp[[idx]].values.squeeze(), df_tmp[[idx]].index.values, linewidth=3)
-            idx_to_remove.append(idx)
-
-    plt.gca().invert_yaxis()
-    plt.xlabel('rho')
-    plt.ylabel('Depth (m)')
-    title = 'Month is ' + str(i)
-    plt.title(title)
-        
-    #input()
-    #plt.close('all')
-plt.close('all')    
-'''
 
 ## Remove idx_to_remove.
 df_rho.drop(idx_to_remove, inplace=True)

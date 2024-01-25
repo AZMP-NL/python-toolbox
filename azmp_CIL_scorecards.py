@@ -21,9 +21,9 @@ badstn_BB = [1997,1999,2000,2001,2002,2022]
 badstn_FC = [1997,2000,2001,2002,2006,2007,2022]
 
 #Mark years where stn will be replaced with stn_man
-rplstn_SI = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1998,2000,2003,2004]
-rplstn_BB = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1997,1998,1999,2000,2001,2002]
-rplstn_FC = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1997,1998,2000,2001,2002,2006,2007]
+rplstn_SI = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,2000,2003,2004]
+rplstn_BB = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1997,1998,1999,2000,2001,2002,2022]
+rplstn_FC = [1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1997,1998,2000,2001,2002,2006,2007,2022]
 
 
 def is_number(s):
@@ -46,9 +46,9 @@ def is_number(s):
 #df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
 # EXCEPTION FOR 2022
 #Files come from azmp_section_clim.py
-df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_SI_summer.pkl')
-df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_BB_summer.pkl')
-df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_FC_summer.pkl')
+df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/df_CIL_SI_summer.pkl')
+df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/df_CIL_BB_summer.pkl')
+df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/df_CIL_FC_summer.pkl')
 
 # Set problem years equal to nan
 df_SI['vol_stn'].loc[badstn_SI] = np.nan
@@ -59,12 +59,12 @@ df_FC['vol_stn'].loc[badstn_FC] = np.nan
 df_FC['core_stn'].loc[badstn_FC] = np.nan
 
 # Set replace yeras to stn_man
-df_SI['vol_stn'].loc[rplstn_SI] = df_SI['vol_stn_man'].loc[rplstn_SI]
-df_SI['core_stn'].loc[rplstn_SI] = df_SI['core_stn_man'].loc[rplstn_SI]
-df_BB['vol_stn'].loc[rplstn_BB] = df_BB['vol_stn_man'].loc[rplstn_BB]
-df_BB['core_stn'].loc[rplstn_BB] = df_BB['core_stn_man'].loc[rplstn_BB]
-df_FC['vol_stn'].loc[rplstn_FC] = df_FC['vol_stn_man'].loc[rplstn_FC]
-df_FC['core_stn'].loc[rplstn_FC] = df_FC['core_stn_man'].loc[rplstn_FC]
+df_SI['vol_stn'].loc[rplstn_SI] = df_SI['vol_itp'].loc[rplstn_SI]
+#df_SI['core_stn'].loc[rplstn_SI] = df_SI['core_itp'].loc[rplstn_SI]
+df_BB['vol_stn'].loc[rplstn_BB] = df_BB['vol_itp'].loc[rplstn_BB]
+#df_BB['core_stn'].loc[rplstn_BB] = df_BB['core_itp'].loc[rplstn_BB]
+df_FC['vol_stn'].loc[rplstn_FC] = df_FC['vol_itp'].loc[rplstn_FC]
+#df_FC['core_stn'].loc[rplstn_FC] = df_FC['core_itp'].loc[rplstn_FC]
 
 
 
@@ -151,11 +151,11 @@ header.set_fontsize(13)
 
 #Set up the last row
 method = np.full(vals.shape[1],'         ')
-method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_SI)] = r'$\bullet$'
+method[:-2][np.isin(np.arange(years[0],years[1]+1),rplstn_SI)] = r'$\bullet$'
 
 the_table = ax.table(
     cellText = np.vstack([vals,method]),
-    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    rowLabels = list(my_df.index) + ['June-Aug. ave.'],
     colLabels = year_list,
     cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
     loc = 'center',
@@ -237,11 +237,11 @@ header.set_fontsize(13)
 
 #Set up the last row
 method = np.full(vals.shape[1],'         ')
-method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_SI)] = r'$\bullet$'
+method[:-2][np.isin(np.arange(years[0],years[1]+1),rplstn_SI)] = r'$\bullet$'
 
 the_table = ax.table(
     cellText = np.vstack([vals,method]),
-    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
+    rowLabels = list(my_df.index) + ['Moy. juin-août'],
     colLabels = year_list,
     cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
     loc = 'center',
@@ -329,12 +329,12 @@ header = ax.table(cellText=[['']],
 header.set_fontsize(13)
 #Set up the last row
 method = np.full(vals.shape[1],'         ')
-method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_BB)] = r'$\bullet$'
+method[:-2][np.isin(np.arange(years[0],years[1]+1),rplstn_BB)] = r'$\bullet$'
 
 the_table = ax.table(
     cellText = np.vstack([vals,method]),
-    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
-    colLabels = year_list,
+    rowLabels = list(my_df.index) + ['June-Aug. ave.'],
+    colLabels = None,
     cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
     loc = 'center',
     cellLoc = 'center',
@@ -416,12 +416,12 @@ header = ax.table(cellText=[['']],
 header.set_fontsize(13)
 #Set up the last row
 method = np.full(vals.shape[1],'         ')
-method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_BB)] = r'$\bullet$'
+method[:-2][np.isin(np.arange(years[0],years[1]+1),rplstn_BB)] = r'$\bullet$'
 
 the_table = ax.table(
     cellText = np.vstack([vals,method]),
-    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
-    colLabels = year_list,
+    rowLabels = list(my_df.index) + ['Moy. juin-août'],
+    colLabels = None,
     cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
     loc = 'center',
     cellLoc = 'center',
@@ -512,12 +512,12 @@ header = ax.table(cellText=[['']],
 header.set_fontsize(13)
 #Set up the last row
 method = np.full(vals.shape[1],'         ')
-method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_FC)] = r'$\bullet$'
+method[:-2][np.isin(np.arange(years[0],years[1]+1),rplstn_FC)] = r'$\bullet$'
 
 the_table = ax.table(
     cellText = np.vstack([vals,method]),
-    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
-    colLabels = year_list,
+    rowLabels = list(my_df.index) + ['June-Aug. ave.'],
+    colLabels = None,
     cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
     loc = 'center',
     cellLoc = 'center',
@@ -600,12 +600,12 @@ header = ax.table(cellText=[['']],
 header.set_fontsize(13)
 #Set up the last row
 method = np.full(vals.shape[1],'         ')
-method[:-2][np.isin(np.arange(years[0],years[1]),rplstn_FC)] = r'$\bullet$'
+method[:-2][np.isin(np.arange(years[0],years[1]+1),rplstn_FC)] = r'$\bullet$'
 
 the_table = ax.table(
     cellText = np.vstack([vals,method]),
-    rowLabels = list(my_df.index) + ['Station Lat/Lon'],
-    colLabels = year_list,
+    rowLabels = list(my_df.index) + ['Moy. juin-août'],
+    colLabels = None,
     cellColours=cmap(norm(np.vstack([vals_color,np.full(vals.shape[1],0)]))),
     loc = 'center',
     cellLoc = 'center',
