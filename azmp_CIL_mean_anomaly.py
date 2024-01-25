@@ -21,24 +21,40 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-years = [1950, 2022]
+years = [1950, 2023]
 
-baditp_SI = [1983,1989,1998,2022]
+baditp_SI = [1998,2022]
 baditp_BB = []
 baditp_FC = []
 
+
+#Mark years where stn will be replaced with stn_man
+rplstn_SI = np.concatenate((np.arange(1950,1992),np.array([1992,2000,2003,2004])))
+rplstn_BB = np.concatenate((np.arange(1950,1992),np.array([1992,1997,1998,1999,2000,2001,2002,2022])))
+rplstn_FC = np.concatenate((np.arange(1950,1992),np.array([1992,1997,1998,2000,2001,2002,2006,2007,2022])))
+
 #### ---- Load the data and compute anomalies ---- ####
-df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_SI_summer.pkl').astype('float')
-df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_BB_summer.pkl').astype('float')
-df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2022/operation_files/df_CIL_FC_summer.pkl').astype('float')
+df_SI = pd.read_pickle('operation_files/df_CIL_SI_summer.pkl').astype('float')
+df_BB = pd.read_pickle('operation_files/df_CIL_BB_summer.pkl').astype('float')
+df_FC = pd.read_pickle('operation_files/df_CIL_FC_summer.pkl').astype('float')
 
 # Set problem years equal to nan
-df_SI['vol_itp'].loc[baditp_SI] = np.nan
-df_SI['core_itp'].loc[baditp_SI] = np.nan
-df_BB['vol_itp'].loc[baditp_BB] = np.nan
-df_BB['core_itp'].loc[baditp_BB] = np.nan
-df_FC['vol_itp'].loc[baditp_FC] = np.nan
-df_FC['core_itp'].loc[baditp_FC] = np.nan
+df_SI['vol_stn'].loc[baditp_SI] = np.nan
+df_SI['core_stn'].loc[baditp_SI] = np.nan
+df_BB['vol_stn'].loc[baditp_BB] = np.nan
+df_BB['core_stn'].loc[baditp_BB] = np.nan
+df_FC['vol_stn'].loc[baditp_FC] = np.nan
+df_FC['core_stn'].loc[baditp_FC] = np.nan
+
+
+# Set replace years to interpolate
+df_SI['vol_stn'].loc[rplstn_SI] = df_SI['vol_itp'].loc[rplstn_SI]
+#df_SI['core_stn'].loc[rplstn_SI] = df_SI['core_itp'].loc[rplstn_SI]
+df_BB['vol_stn'].loc[rplstn_BB] = df_BB['vol_itp'].loc[rplstn_BB]
+#df_BB['core_stn'].loc[rplstn_BB] = df_BB['core_itp'].loc[rplstn_BB]
+df_FC['vol_stn'].loc[rplstn_FC] = df_FC['vol_itp'].loc[rplstn_FC]
+#df_FC['core_stn'].loc[rplstn_FC] = df_FC['core_itp'].loc[rplstn_FC]
+
 
 #
 df_years = df_SI[(df_SI.index>=years[0]) & (df_SI.index<=years[1])]
@@ -54,8 +70,8 @@ df_clim = df_FC[(df_FC.index>=clim_year[0]) & (df_FC.index<=clim_year[1])]
 std_anom_FC = (df_years - df_clim.mean()) / df_clim.std()
 
 # average quatities
-std_core = pd.concat([std_anom_SI.core_itp, std_anom_BB.core_itp, std_anom_FC.core_itp], axis=1).mean(axis=1)
-std_vol = pd.concat([std_anom_SI.vol_itp, std_anom_BB.vol_itp, std_anom_FC.vol_itp], axis=1).mean(axis=1)
+std_core = pd.concat([std_anom_SI.core_stn, std_anom_BB.core_stn, std_anom_FC.core_stn], axis=1).mean(axis=1)
+std_vol = pd.concat([std_anom_SI.vol_stn, std_anom_BB.vol_stn, std_anom_FC.vol_stn], axis=1).mean(axis=1)
 #std_core.index = pd.to_datetime(std_core.index, format='%Y')
 #std_vol.index = pd.to_datetime(std_vol.index, format='%Y')
 
@@ -152,7 +168,7 @@ YlGn = plt.cm.YlGn(np.linspace(0,1, num=12))
 YlGn = YlGn[1:,]
 cmap, norm = from_levels_and_colors(np.arange(0,10), YlGn, extend='both') 
 
-std_vol_std = pd.concat([std_anom_SI.vol_itp, std_anom_BB.vol_itp, std_anom_FC.vol_itp], axis=1) / 3
+std_vol_std = pd.concat([std_anom_SI.vol_stn, std_anom_BB.vol_stn, std_anom_FC.vol_stn], axis=1) / 3
 std_vol_std.columns = ['SI', 'BB', 'FC']
 n = 5 # xtick every n years
 #ax = std_vol_std.plot(kind='bar', stacked=True, cmap='tab10')
@@ -202,7 +218,7 @@ cmap, norm = from_levels_and_colors(levels, colors, extend='both')
 cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
 
 # Concat and normalize
-std_vol = pd.concat([std_anom_SI.vol_itp, std_anom_BB.vol_itp, std_anom_FC.vol_itp], axis=1)
+std_vol = pd.concat([std_anom_SI.vol_stn, std_anom_BB.vol_stn, std_anom_FC.vol_stn], axis=1)
 #std_vol_std = pd.concat([std_anom_SI.vol_itp, std_anom_BB.vol_itp, std_anom_FC.vol_itp], axis=1) / 3
 std_vol_norm = std_vol.divide((3 - std_vol.isna().sum(axis=1)).values, axis=0)
 std_vol_norm.columns = ['SI', 'BB', 'FC']
