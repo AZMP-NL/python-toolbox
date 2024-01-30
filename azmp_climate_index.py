@@ -1139,3 +1139,9 @@ fig_name = 'NL_climate_index_correlation.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + fig_name)
 
+
+## Nov. 2023 bergs vs s27
+A = pd.concat([bergs, s27_temp], axis=1)
+A.plot()
+plt.grid()
+plt.ylabel('std anom.')

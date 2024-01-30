@@ -160,7 +160,7 @@ hpad, wpad = 0, 0
 fig, ax = plt.subplots() 
 ax.bar(df_annual.index, df_annual.values, width)
 ax.set_ylabel('Counts')
-plt.xlim([1899.5, 2021.5])
+plt.xlim([1899.5, 2022.5])
 plt.grid()
 ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
 
@@ -194,7 +194,7 @@ os.system('convert -trim -bordercolor White -border 10x10 ' + fig_name + ' ' + f
 fig, ax = plt.subplots() 
 ax.bar(df_annual.index, df_annual.values, width)
 ax.set_ylabel("Nombre d'icebergs")
-plt.xlim([1899.5, 2021.5])
+plt.xlim([1899.5, 2022.5])
 plt.grid()
 ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
 

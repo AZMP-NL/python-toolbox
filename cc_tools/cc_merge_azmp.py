@@ -354,7 +354,8 @@ df_MAR = pd.concat([df_MAR, MAR2021], ignore_index=True)
 
 ## 1.6 --- BIO's 2022
 # Load data (no nutrients, no oxygen)
-MAR2022 = pd.read_csv(os.path.join(dataset_path, '2022_AZMP_spring_allchemdata_forFrederic_formatted.csv'), parse_dates = {'timestamp' : [8, 9]}, encoding='utf-8')
+#MAR2022 = pd.read_csv(os.path.join(dataset_path, '2022_AZMP_spring_allchemdata_forFrederic_formatted.csv'), parse_dates = {'timestamp' : [8, 9]}, encoding='utf-8')
+MAR2022 = pd.read_csv(os.path.join(dataset_path, '2022_AZMP_spring_allchemdata_forFrederic_formatted_O2.csv'), parse_dates = {'timestamp' : [8, 9]}, encoding='utf-8')
 # swap weird flags
 MAR2022 = MAR2022.replace('I23', 3)
 MAR2022 = MAR2022.replace('I22', 3)
@@ -362,7 +363,6 @@ MAR2022 = MAR2022.replace('I03', 3)
 # Remove "" from timestamp
 MAR2022['timestamp'] = MAR2022['timestamp'].replace({'"':''}, regex=True)
 MAR2022['timestamp'] = pd.to_datetime(MAR2022['timestamp'])
-
 # Rename columns
 MAR2022 = MAR2022.rename(columns={'Station' : 'StationID'})
 MAR2022 = MAR2022.rename(columns={'PrDM' : 'depth'})
@@ -372,10 +372,10 @@ MAR2022 = MAR2022.rename(columns={'TA (umol/kg) ' : 'TA'}) # <-- YES! there's a 
 MAR2022 = MAR2022.rename(columns={'TA flag' : 'TAflag'})
 MAR2022 = MAR2022.rename(columns={'TIC (umol/kg)' : 'TIC'})
 MAR2022 = MAR2022.rename(columns={'TIC flag' : 'TICflag'})
-MAR2022 = MAR2022.rename(columns={'O2_Concentration(ml/l)' : 'O2'})
+MAR2022 = MAR2022.rename(columns={'O2_CTD_mLL | O2' : 'O2'})
 MAR2022 = MAR2022.rename(columns={'cruise_number' : 'TripID'})
 # select columns
-variables_nonuts = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'TA', 'salinity', 'temperature', 'TIC', 'TAflag', 'TICflag']
+variables_nonuts = ['TripID', 'Region', 'StationID', 'timestamp', 'latitude', 'longitude', 'depth', 'TA', 'salinity', 'temperature', 'O2', 'TIC', 'TAflag', 'TICflag']
 MAR2022['Region'] ='MAR'
 MAR2022 = MAR2022.loc[:,variables_nonuts]
 # append to df_MAR
@@ -463,110 +463,18 @@ df_june = pd.read_excel(os.path.join(dataset_path,'June 2014-2022_v24mar2023(Cyr
 df_ice = pd.read_excel(os.path.join(dataset_path,'Iceforcast 2014-2022_vfmar2023 (Cyr).xlsx'))
 # Groundfish Missions (need to read all tabs)
 df_gf_2022 = pd.read_excel(os.path.join(dataset_path,'Groundfish surveys_2022_vmar2023(Cyr).xlsx'))
+df_gf_2021 = pd.read_excel(os.path.join(dataset_path,'AZMP_OA_IML_Groundfish surveys_2021.xlsx'))
 xls = pd.ExcelFile(os.path.join(dataset_path,'AZMP_OA_IML_Groundfish surveys_2017-2019(MS-3).xlsx'))
 df_gf_2019_2020 = pd.read_excel(xls, 'Groundfish surveys 2019')
 df_gf_2018 = pd.read_excel(xls, 'Groundfish surveys 2018')
 df_gf_2017 = pd.read_excel(xls, 'Groundfish surveys 2017')
-df_gf = pd.concat([df_gf_2019_2020, df_gf_2018, df_gf_2017], axis=0, sort=False)
+df_gf = pd.concat([df_gf_2022, df_gf_2021, df_gf_2019_2020, df_gf_2018, df_gf_2017], axis=0, sort=False)
 # Rimouski Station
 df_riki = pd.read_excel(os.path.join(dataset_path,'StationRimouski (2014-2022)vmar2023(Cyr).xlsx'))
 df_riki['CTD Station (nom/no)'] = 'Rimouski'
 # merge all IML
 df_IML = pd.concat([df_june, df_ice, df_gf, df_riki], axis=0, sort=False)
 df_IML = df_IML.reset_index()
-
-
-
-## ## 3.2 --- 2019 & 2020 data 
-## xls = pd.ExcelFile(os.path.join(dataset_path,'IMLSpring and Fall 2019 (Gibb).xlsx'))
-## df2019s = pd.read_excel(xls, 'June 2019-2', header=1)
-## df2019f = pd.read_excel(xls, 'Fall 2019', header=1)
-## df2020f = pd.read_excel(os.path.join(dataset_path,'AZMPIceforcast2020(Cyr).xlsx'), header=1, encoding='utf-8')
-## df2019s = df2019s.drop(0)
-## df2019f = df2019f.drop(0)
-## df2020f = df2020f.drop(0)
-## # merge 2 sheets
-## df2019f = df2019f.rename(columns={'PSAL_BS' : 'psal_bs'})
-## df2019f = df2019f.rename(columns={'oxy_02' : 'OXY_02'})
-## df2019f = df2019f.rename(columns={'Q_oxy' : 'Q_OXY'})
-## df2019f = df2019f.rename(columns={'oxy_02.1' : 'OXY_02.1'})
-## df2019f = df2019f.rename(columns={'Q_oxy.1' : 'Q_OXY.1'})
-## df2019 = pd.concat([df2019s, df2019f, df2020f]) # <------- note 2020 data here
-## # clean un-necessary columns
-## df2019.Date = pd.to_datetime(df2019.Date)
-## df2019 = df2019.drop(columns=['Unnamed: 49'])
-## df2019 = df2019.drop(columns=['Unnamed: 50'])
-## # Rename columns because 2019 was provided in a different format.
-## df2019 = df2019.rename(columns={'Unnamed: 0' : 'Mission  (nom)'})
-## df2019 = df2019.rename(columns={'Fichier' : 'CTD Fichier (nom)'})
-## df2019 = df2019.rename(columns={'Station' : 'CTD Station (nom/no)'})
-## df2019 = df2019.rename(columns={'Latitude' : 'CTD Latitude (degres)'})
-## df2019 = df2019.rename(columns={'Longitude' : 'CTD Longitude (degres)'})
-## df2019 = df2019.rename(columns={'Date' : 'CTD Date (jj-mmm-yyyy)'})
-## df2019 = df2019.rename(columns={'Heure' : 'CTD Heure (GMT)'})
-## df2019 = df2019.rename(columns={'PRES' : 'CTD PRES (dbar)'})
-## df2019 = df2019.rename(columns={'PRES_SDEV' : 'CTD PRES_SDEV (dbar)'})
-## df2019 = df2019.rename(columns={'TE90' : 'CTD TE90 (celsius)'})
-## df2019 = df2019.rename(columns={'TE90_SDEV' : 'CTD TE90_SDEV (celsius)'})
-## df2019 = df2019.rename(columns={'PSAL' : 'CTD PSAL (psu)'})
-## df2019 = df2019.rename(columns={'SIGT' : 'CTD SIGT (kg/m**3)'})
-## df2019 = df2019.rename(columns={'FLOR' : 'CTD FLOR (mg/m**3)'})
-## df2019 = df2019.rename(columns={'DOXY' : 'CTD DOXY (ml/l)'})
-## df2019 = df2019.rename(columns={'PHPH' : 'CTD PHPH (NBS scale)'})
-## df2019 = df2019.rename(columns={'PHPH_T' : 'CTD PHPH (Total scale)'})
-## df2019 = df2019.rename(columns={'psal_bs' : 'labo psal_bs (PSU)'})
-## df2019 = df2019.rename(columns={'Q_PSAL' : 'labo Q_PSAL ((none))'})
-## df2019 = df2019.rename(columns={'OXY_02' : 'labo oxy_02 (ml/l)'})
-## df2019 = df2019.rename(columns={'Q_OXY' : 'labo Q_OXY ((none))'})
-## df2019 = df2019.rename(columns={'OXY_02.1' : 'labo oxy_02 (ml/l).1'})
-## df2019 = df2019.rename(columns={'Q_OXY.1' : 'labo Q_OXY ((none)).1'})
-## df2019 = df2019.rename(columns={'NO2_03' : 'labo NO2_03 (mmol/m**3)'})
-## df2019 = df2019.rename(columns={'Q_NO2' : 'labo Q_NO2 ((none))'})
-## df2019 = df2019.rename(columns={'NO2_03.1' : 'labo NO2_03 (mmol/m**3).1'})
-## df2019 = df2019.rename(columns={'Q_NO2.1' : 'labo Q_NO2 ((none)).1'})
-## df2019 = df2019.rename(columns={'NO2_03.2' : 'labo NO2_03 (mmol/m**3).2'})
-## df2019 = df2019.rename(columns={'Q_NO2.2' : 'labo Q_NO2 ((none)).2'})
-## df2019 = df2019.rename(columns={'NOX_03' : 'labo NOX_03 (mmol/m**3)'})
-## df2019 = df2019.rename(columns={'Q_NOX' : 'labo Q_NOX ((none))'})
-## df2019 = df2019.rename(columns={'NOX_03.1' : 'labo NOX_03 (mmol/m**3).1'})
-## df2019 = df2019.rename(columns={'Q_NOX.1' : 'labo Q_NOX ((none)).1'})
-## df2019 = df2019.rename(columns={'NOX_03.2' : 'labo NOX_03 (mmol/m**3).2'})
-## df2019 = df2019.rename(columns={'Q_NOX.2' : 'labo Q_NOX ((none)).2'})
-## df2019 = df2019.rename(columns={'PO4_03' : 'labo PO4_03 (mmol/m**3)'})
-## df2019 = df2019.rename(columns={'Q_PO4' : 'labo Q_PO4 ((none))'})
-## df2019 = df2019.rename(columns={'PO4_03.1' : 'labo PO4_03 (mmol/m**3).1'})
-## df2019 = df2019.rename(columns={'Q_PO4.1' : 'labo Q_PO4 ((none)).1'})
-## df2019 = df2019.rename(columns={'PO4_03.2' : 'labo PO4_03 (mmol/m**3).2'})
-## df2019 = df2019.rename(columns={'Q_PO4.2' : 'labo Q_PO4 ((none)).2'})
-## df2019 = df2019.rename(columns={'Si_03' : 'labo Si_03 (mmol/m**3)'})
-## df2019 = df2019.rename(columns={'Q_Si' : 'labo Q_Si ((none))'})
-## df2019 = df2019.rename(columns={'Si_03.1' : 'labo Si_03 (mmol/m**3).1'})
-## df2019 = df2019.rename(columns={'Q_Si.1' : 'labo Q_Si ((none)).1'})
-## df2019 = df2019.rename(columns={'LBPHT_02' : 'labo LBPHT_02 (Total scale)'})
-## df2019 = df2019.rename(columns={'pHT_02' : 'labo pHT_02 (Total scale)'})
-## df2019 = df2019.rename(columns={'pHT_02.1' : 'labo pHT_02 (Total scale).1'})
-## df2019 = df2019.rename(columns={'ALKW_01' : 'labo_ALKW_01_(umol/kg**1)'}) # only one alk, so same as 'At' below
-## df2019 = df2019.rename(columns={'TICW_01' : 'labo_TICW_01_(umol/kg**1)'}) # only since fall 2019
-## df2019 = df2019.rename(columns={'At' : 'Moyenne At (umol/kg)'})
-## df2019 = df2019.drop(columns=['At.1']) # N
-## df2019 = df2019.drop(columns=['At.2']) # empty
-## df2019 = df2019.rename(columns={'At.3' : 'Flag At '})
-## df2019 = df2019.rename(columns={'LABT_01' : 'labo LABT_01 (deg C)'})
-## df2019 = df2019.rename(columns={'pH  labo' : 'Moyenne  pH total in situ'})
-## df2019 = df2019.drop(columns=['pH  labo.1']) # N
-## df2019 = df2019.drop(columns=['pH  labo.2']) # empty
-## df2019 = df2019.rename(columns={'pH  labo.3' : 'Flag pH total in situ'})
-## df2019 = df2019.rename(columns={'PO4_03.3' : 'Mean PO4_03 (mmol/m**3)'})
-## df2019 = df2019.rename(columns={'PO4_03.4' : 'Flag PO4_03 '})
-## df2019 = df2019.rename(columns={'Si_03.2' : 'Mean Si_03 (mmol/m**3)'})
-## df2019 = df2019.rename(columns={'Si_03.3' : 'Flag Si_03 '})
-## df2019 = df2019.drop(columns=['pH in situ'])
-## df2019 = df2019.rename(columns={'Unnamed: 65' : ' WCa out '})
-## df2019 = df2019.rename(columns={'Unnamed: 66' : ' WAr out '})
-## df2019 = df2019.rename(columns={'Unnamed: 67' : ' Strate '})
-
-## df_IML = pd.concat([df2019, df2018f, df2018s, df2018, df2017f, df2017s, df2017, df2016f, df2016, df2015, df2015f], axis=0, sort=False)
-## df_IML = df_IML.reset_index()
 
 # Clean dataframe (with the new updated dataset)
 cols = df_IML.columns
@@ -680,7 +588,7 @@ df.dropna(subset=['TA', 'TIC', 'pH_25'], axis=0, how='all', inplace=True)
 # Calculate missing TA values based on TA-S relationship
 dflinreg = df.copy(deep=True)
 # Keep only <2021 for manuscript [!!]
-dflinreg = dflinreg[dflinreg.timestamp.dt.year<2021]
+#dflinreg = dflinreg[dflinreg.timestamp.dt.year<2021]
 dflinreg.dropna(subset=['TA', 'salinity'], inplace=True)
 var_x = 'salinity'
 var_y = 'TA'
@@ -714,7 +622,6 @@ print("p_value: ", p_value)
 print("standard error: ", std_err)
 print("95% confidence interval: ", ci)
 print('')
-#fig.set_size_inches(w=6,h=5)
 fig_name = 'TA-S_scatter_ms_all.png' 
 plt.savefig(fig_name, dpi=200) 
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -724,18 +631,15 @@ fig = plt.figure(2)
 # Keep GSL-Spring only
 dflinreg = dflinreg[dflinreg['Region'].str.contains("GSL")]
 dflinreg = dflinreg[(dflinreg.timestamp.dt.month>=3) & (dflinreg.timestamp.dt.month<=6)]
+dflinreg = dflinreg[(dflinreg.salinity>=30)]
 linreg = sns.lmplot(var_x, var_y, dflinreg, legend=False, fit_reg=True, ci=95, scatter_kws={'s':2, 'alpha':1}, line_kws={'lw':1}, hue='Region', palette='plasma_r', height=4, aspect=1.1)
 lines = sns.regplot(x=var_x, y=var_y, data=dflinreg, scatter=False, ci=95, color='k', line_kws={'lw': 1})
 linreg.set_xlabels(r'Salinity')
 linreg.set_ylabels(r'TA $(\rm \mu $mol/kg)')
 axes = linreg.axes
-#axes[0,0].set_xlim(17, 38)
-#axes[0,0].set_ylim(1700, 2500)
-#sns.set_style('whitegrid')
+axes[0,0].set_xlim(29, 36)
+axes[0,0].set_ylim(2000, 2400)
 sns.despine(top=False, right=False, left=False, bottom=False)   
-plt.plot([-2,22], [400,400,], 'black', linewidth=2, linestyle='dashed')
-axes[0,0].set_xlim(17, 38)
-axes[0,0].set_ylim(1700, 2500)
 plt.legend()
 plt.grid()
 plt.text(36, 1725, 'b', fontweight='bold')
@@ -758,6 +662,8 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 ## Replace missing TA for this specify GSL mission
 # * these will need to be removed from "measured" column at the end
 df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region'].str.contains('GSL')), 'TA'] = ((slope * df.salinity)+ intercept)
+# For Table 2
+#df.loc[((df.timestamp.dt.year==2015) & (df.timestamp.dt.month==6)) & (df['Region'].str.contains('GSL')), 'TA'] = (((slope-2*std_err) * df.salinity)+ intercept)
 
 
 ###########################################
@@ -776,6 +682,12 @@ df.PO4 = df.PO4.replace(np.nan, 0)
 df.SiO = df.SiO.replace(np.nan, 0)
 print(str(no_nan) + ' out of ' + str(df.shape[0]) + ' nutrient data where replaced by zeros (' + str(perc_nan) + ' %)')
 
+# replace NaN Lab temperature by 25degC
+no_nan = df.temp_pH[df.temp_pH.isna()].size
+perc_nan = float(no_nan)/df.shape[0]*100.0
+df.temp_pH = df.temp_pH.replace(np.nan, 25)
+print(str(no_nan) + ' out of ' + str(df.shape[0]) + ' missing lab temperature where set to 25degC (' + str(perc_nan) + ' %)')
+
 # Isolate index with 3 parameters
 df_tmp = df.copy()
 df_TA_TIC_pH = df_tmp.dropna(subset=['TA', 'TIC', 'pH_25'], thresh=3, axis=0)
@@ -793,7 +705,7 @@ if df_tmp.size:
     print('Might have problem, there are left overs for CO2sys!!')
 
 # apply CO2sys (TA/TIC/pH)
-CO2dict = CO2SYS(df_TA_TIC_pH.TA, df_TA_TIC_pH.pH_25, 1, 3, df_TA_TIC_pH.salinity, 20, df_TA_TIC_pH.temperature, 0, df_TA_TIC_pH.depth, df_TA_TIC_pH.SiO, df_TA_TIC_pH.PO4, 1, 4, 1)
+CO2dict = CO2SYS(df_TA_TIC_pH.TA, df_TA_TIC_pH.pH_25, 1, 3, df_TA_TIC_pH.salinity, df_TA_TIC_pH.temp_pH, df_TA_TIC_pH.temperature, 0, df_TA_TIC_pH.depth, df_TA_TIC_pH.SiO, df_TA_TIC_pH.PO4, 1, 4, 1)
 co2sys_TA_TIC_pH = pd.DataFrame.from_dict(CO2dict)
 co2sys_TA_TIC_pH.index = df_TA_TIC_pH.index
 # replace calculated TIC by measured TIC:
@@ -801,17 +713,17 @@ co2sys_TA_TIC_pH.index = df_TA_TIC_pH.index
 co2sys_TA_TIC_pH['TCO2'] = df_TA_TIC_pH.TIC
 del CO2dict    
 # apply CO2sys (TA/TIC)
-CO2dict = CO2SYS(df_TA_TIC.TA, df_TA_TIC.TIC, 1, 2, df_TA_TIC.salinity, 20, df_TA_TIC.temperature, 0, df_TA_TIC.depth, df_TA_TIC.SiO, df_TA_TIC.PO4, 1, 4, 1)
+CO2dict = CO2SYS(df_TA_TIC.TA, df_TA_TIC.TIC, 1, 2, df_TA_TIC.salinity, df_TA_TIC.temp_pH, df_TA_TIC.temperature, 0, df_TA_TIC.depth, df_TA_TIC.SiO, df_TA_TIC.PO4, 1, 4, 1)
 co2sys_TA_TIC = pd.DataFrame.from_dict(CO2dict)
 co2sys_TA_TIC.index = df_TA_TIC.index
 del CO2dict
 # apply CO2sys (TA/pH)
-CO2dict = CO2SYS(df_TA_pH.TA, df_TA_pH.pH_25, 1, 3, df_TA_pH.salinity, 20, df_TA_pH.temperature, 0, df_TA_pH.depth, df_TA_pH.SiO, df_TA_pH.PO4, 1, 4, 1)
+CO2dict = CO2SYS(df_TA_pH.TA, df_TA_pH.pH_25, 1, 3, df_TA_pH.salinity, df_TA_pH.temp_pH, df_TA_pH.temperature, 0, df_TA_pH.depth, df_TA_pH.SiO, df_TA_pH.PO4, 1, 4, 1)
 co2sys_TA_pH = pd.DataFrame.from_dict(CO2dict)
 co2sys_TA_pH.index = df_TA_pH.index
 del CO2dict
 # apply CO2sys (TIC/pH)
-CO2dict = CO2SYS(df_TIC_pH.TIC, df_TIC_pH.pH_25, 2, 3, df_TIC_pH.salinity, 20, df_TIC_pH.temperature, 0, df_TIC_pH.depth, df_TIC_pH.SiO, df_TIC_pH.PO4, 1, 4, 1)
+CO2dict = CO2SYS(df_TIC_pH.TIC, df_TIC_pH.pH_25, 2, 3, df_TIC_pH.salinity, df_TIC_pH.temp_pH, df_TIC_pH.temperature, 0, df_TIC_pH.depth, df_TIC_pH.SiO, df_TIC_pH.PO4, 1, 4, 1)
 co2sys_TIC_pH = pd.DataFrame.from_dict(CO2dict)
 co2sys_TIC_pH.index = df_TIC_pH.index
 del CO2dict
@@ -861,7 +773,19 @@ df['TripID'] = df['TripID'].replace('39176', 'TEL176')
 #df['TripID'] = df['TripID'].replace('TEL2018196', 'TEL196')
 df['TripID'] = df['TripID'].replace('15009', 'DIS009')
 df['TripID'] = df['TripID'].replace('JC001', 'COO001')
-df['TripID'] = df['TripID'].replace('IML2016-015', 'IML2016015')
+df['TripID'] = df['TripID'].replace('iml2016-015', 'IML2016015')
+df['TripID'] = df['TripID'].replace('PER2021151/Northumberland survey', 'PER2021151')
+df['TripID'] = df['TripID'].replace('August multidisciplinary survey (Qc region)', 'IML2021030')
+df['TripID'] = df['TripID'].replace('PER2021156/West Cape Breton', 'PER2021156')
+df['TripID'] = df['TripID'].replace('CJC2021222/Ecosystem survey', 'CJC2021222')
+df['TripID'] = df['TripID'].replace('PER2021021_C021/Herring survey', 'PER2021021')
+df['TripID'] = df['TripID'].replace('PER2022152/Gulf Region, Northumberland Strait survey 2022', 'PER2022152')
+df['TripID'] = df['TripID'].replace('2022039/August multidisciplinary survey (Qc region)', 'IML2022039')
+df['TripID'] = df['TripID'].replace('PER202223330/Snow crab tagging and plankton sampling (West Cape Breton)', 'PER202223330')
+df['TripID'] = df['TripID'].replace('CAR2022025/SGSL Ecosystem Trawl Survey', 'CAR2022025')
+df['TripID'] = df['TripID'].replace('PER2022022/Herring survey', 'PER2022022')
+#df['TripID'] = df['TripID'].replace('PER004', 'PER2022004')
+df['TripID'] = df['TripID'].replace(' HUD2020063', 'HUD2020063')
 
 # Update some StationIDd
 # Remove space
@@ -913,7 +837,7 @@ df = df.rename(columns={'O2' : 'Dissolved_Oxygen_(mL/L)'})
 df = df.rename(columns={'O2sat_perc' : 'Oxygen_Saturation_(%)'})
 df = df.rename(columns={'TA' : 'Total_Alkalinity_Measured_(umol/kg)'})
 df = df.rename(columns={'temp_pH' : 'pH_lab_temp_(degC)'})
-df = df.rename(columns={'pH_25' : 'pH_lab_(seawater_scale)'})
+df = df.rename(columns={'pH_25' : 'pH_lab_(total_scale)'})
 df = df.rename(columns={'PO4' : 'Phosphate_Concentration_(mmol/m3)'})
 df = df.rename(columns={'SiO' : 'Silicate_Concentration_(mmol/m3)'})
 df = df.rename(columns={'TIC' : 'Inorganic_Carbon_Measured_(umol/kg)'})
@@ -942,4 +866,6 @@ print(str(df.shape[0]) + ' data points, including ' + str(df.shape[0] - df_missi
 
 # Save final dataset
 df.to_csv(os.path.join(dataset_main_path, 'AZMP_carbon_data.csv'), float_format='%.4f', index=True)
+
+os.system('montage TA-S_scatter_ms_all.png TA-S_scatter_ms_gsl.png -tile 1x2 -geometry +10+10  -background white TA-S_scatter_ms.png')
 

@@ -24,6 +24,7 @@ import cc_variable_list2 as vl
 
 YEAR = 2017
 SEASONS = ['spring', 'summer', 'fall']
+SEASONS = ['fall']
 VARIABLES = ['Temperature_(degC)',
              'Salinity_(psu)',
              'Oxygen_Saturation_(%)',
@@ -62,3 +63,12 @@ for VARIABLE in VARIABLES:
 # montage AZMP_OA_2017_spring_Omega_Aragonite_\(unitless\)_surface.png AZMP_OA_2017_spring_Omega_Aragonite_\(unitless\)_bottom.png AZMP_OA_2017_summer_Omega_Aragonite_\(unitless\)_surface.png AZMP_OA_2017_summer_Omega_Aragonite_\(unitless\)_bottom.png AZMP_OA_2017_fall_Omega_Aragonite_\(unitless\)_surface.png AZMP_OA_2017_fall_Omega_Aragonite_\(unitless\)_bottom.png -tile 2x3 -geometry +10+10  -background white  AZMP_OA_2017_Omega_A.png
 
 # montage AZMP_OA_2017_spring_Omega_Calcite_\(unitless\)_surface.png AZMP_OA_2017_spring_Omega_Calcite_\(unitless\)_bottom.png AZMP_OA_2017_summer_Omega_Calcite_\(unitless\)_surface.png AZMP_OA_2017_summer_Omega_Calcite_\(unitless\)_bottom.png AZMP_OA_2017_fall_Omega_Calcite_\(unitless\)_surface.png AZMP_OA_2017_fall_Omega_Calcite_\(unitless\)_bottom.png -tile 2x3 -geometry +10+10  -background white  AZMP_OA_2017_Omega_C.png
+
+
+# Fall 2017 main figures
+#montage AZMP_OA_2017_fall_Temperature_surface.png AZMP_OA_2017_fall_Temperature_bottom.png AZMP_OA_2017_fall_Salinity_surface.png AZMP_OA_2017_fall_Salinity_bottom.png AZMP_OA_2017_fall_DO_perc_surface.png AZMP_OA_2017_fall_DO_perc_bottom.png -tile 2x3 -geometry +10+10  -background white Figure06.png
+
+#montage AZMP_OA_2017_fall_TA_surface.png AZMP_OA_2017_fall_TA_bottom.png AZMP_OA_2017_fall_DIC_surface.png AZMP_OA_2017_fall_DIC_bottom.png AZMP_OA_2017_fall_pCO2_surface.png AZMP_OA_2017_fall_pCO2_bottom.png -tile 2x3 -geometry +10+10  -background white Figure07.png
+
+#montage AZMP_OA_2017_fall_pH_surface.png AZMP_OA_2017_fall_pH_bottom.png AZMP_OA_2017_fall_OmegaA_surface.png AZMP_OA_2017_fall_OmegaA_bottom.png AZMP_OA_2017_fall_OmegaC_surface.png AZMP_OA_2017_fall_OmegaC_bottom.png -tile 2x3 -geometry +10+10  -background white Figure08.png
+
