@@ -6,6 +6,7 @@
 # There are two types of product.
 # Homogenized Temperature is the best since corrections are applied:
 # ftp://ccrp.tor.ec.gc.ca/pub/AHCCD/Homog_monthly_mean_temp.zip
+
 # Update 2022 with Gen.3, may want to use this address:
 # https://www.canada.ca/en/environment-climate-change/services/climate-change/science-research-data/climate-trends-variability/adjusted-homogenized-canadian-data/surface-air-temperature-access.html
 #

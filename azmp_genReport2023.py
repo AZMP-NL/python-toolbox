@@ -38,6 +38,7 @@ import azmp_report_tools as azrt
 import azmp_genreport as azgen
 import azmp_utils as azu
 import cc_tools as cc
+import azmp_stn27_newtest as azS27
 
 ## ---- 2023 update ---- ## [DONE 2022x]
 # 1.  NAO (should be a function with year as input) [Done 2021]
@@ -53,26 +54,26 @@ azgen.nao(
     2023,
     '~/data/AZMP/climate_indices/nao_data.csv'
     ) #(FINISHED/WORKING - 2023)
-azgen.ao(
+azgen.ao( # Jon to check
     2023,
-    '/home/jcoyne/Documents/CSAS/2024_RAP_crab/operation_files/ao_data.csv'
+    '~/data/AZMP/climate_indices/ao_data.csv'
     )
-azgen.amo(
+azgen.amo( # Jon to check
     2023,
-    '/home/jcoyne/Documents/CSAS/2024_RAP_crab/operation_files/amon.us.data'
+    '~/data/AZMP/climate_indices/amo_data.csv'
     )
 os.system('cp  NAO_winter_1950-2023.png NAO_winter_1950-2023_FR.png 2023')
 os.system('mv *.pkl climate_indices')
 os.system('mv *.csv climate_indices')
 os.system('mv *.png climate_indices')
 
-# 2. Air temperature (need to dowload AHCCD and download NUUK update) [DONE 2022x]
+# 2. Air temperature (need to dowload AHCCD and download NUUK update) [FRED CHECK!]
 %my_run azmp_dmi_nuukAirT.py
 %my_run azmp_airTemp.py # use this one since 2020 conditions report
-os.system('cp air_temp_2022.png air_temp_2022_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ../2022/')
+os.system('cp air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ../2023/')
 
 %my_run azmp_air_scorecards.py
-os.system('cp scorecards_air.png scorecards_air_FR.png ../2022/')
+os.system('cp scorecards_air.png scorecards_air_FR.png ../2023/')
 
 # 3. SSTs  [Received from PSG]
 # wget -m ftp://ftp.dfo-mpo.gc.ca/bometrics/noaa/stats/boxes/*.stat 
@@ -84,7 +85,7 @@ os.system('cp scorecards_air.png scorecards_air_FR.png ../2022/')
 #os.system('cp scorecards_sst_yearly.png scorecards_sst_monthly.png ../2022/')
 
 
-# 4. Station 27 [Done 2022; but problems with data]
+# 4. Station 27 [JON to UPDATE]
 #%my_run viking2022.py  # NOT IN 2022
 #os.system('cp Viking2022.png Viking2022_FR.png ../2022')
 '''
@@ -104,27 +105,27 @@ os.system("find ./ -maxdepth 1 -type f | xargs mv -t ./stn27") #move all other f
 os.system('mkdir stn27')
 
 #Isolate the stn27 data
-file_location = 'operation_files/stn27_all_casts.nc'
-CASTS_path = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
+file_location = '~/data/AZMP/operation_files/stn27_all_casts.nc'
+CASTS_path = '~/data/CASTS/*.nc'
 s27_loc = [47.54667,-52.58667]
 dc = .025
 problem_casts = ['1988_10073164.nc','1990_02183115.nc','1991_11229001.nc']
-azmpS27.stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts)
+azS27.stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts)
 #Determine the temperature and salinity climatology
 year_clim = [1991, 2020]
 current_year = 2023
-df,df_monthly,weekly_clim,df_weekly,df_year,anom = azmpS27.stn27_climatology(file_location,year_clim,current_year)
+df,df_monthly,weekly_clim,df_weekly,df_year,anom = azS27.stn27_climatology(file_location,year_clim,current_year)
 #Save the current year monthly average
 for variable in df_monthly:
     csv_file = 'monthly_' + variable +  '_' + str(current_year) + '.csv'
     df_monthly[variable].T.to_csv(csv_file, float_format='%.4f')
 #Create a temperature and salinity climatology figure
 XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
-azmpS27.stn27_climatology_plot(weekly_clim,XLIM)
+azS27.stn27_climatology_plot(weekly_clim,XLIM)
 #Create a temperature and salinity current year plot
-azmpS27.stn27_currentyear_plot(df_weekly,df_year,current_year,XLIM)
+azS27.stn27_currentyear_plot(df_weekly,df_year,current_year,XLIM)
 #Create a temperature and salinity anomaly year plot
-azmpS27.stn27_anomaly_plot(anom,current_year,XLIM)
+azS27.stn27_anomaly_plot(anom,current_year,XLIM)
 #Convert to subplots and remove individual plots
 for variable in anom:
     os.system('montage '+\
@@ -146,56 +147,56 @@ for variable in anom:
         's27_'+variable+'_clim_FR.png '+\
         's27_'+variable+'_anom_2023_FR.png')
 #Create a station occupation figure
-azmpS27.station_occupations(file_location,current_year,year_clim)
+azS27.station_occupations(file_location,current_year,year_clim)
 
 #Isolate the density data
-df_rho,df_sig,df_SA,df_CT,ds,Z = azmpS27.density_calculator(df,file_location)
+df_rho,df_sig,df_SA,df_CT,ds,Z = azS27.density_calculator(df,file_location)
 #Save the MLD
-azmpS27.MLD_calculator(df_SA,df_CT,df_rho,Z)
+azS27.MLD_calculator(df_SA,df_CT,df_rho,Z)
 #Save the stratification
-azmpS27.stratification_calculator(file_location)
+azS27.stratification_calculator(file_location)
 
 #Create anomaly output for temperature
 years_flag = [1950,1980]
 df = pd.read_pickle('S27_temperature_monthly.pkl')
-df,anom_std,anom,annual_mean,ts_monthly_clim = azmpS27.anomaly_calculator(df,years_flag,current_year,year_clim)
+df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the temperature anomaly
-azmpS27.anomaly_plotter(anom_std,'temperature')
+azS27.anomaly_plotter(anom_std,'temperature')
 #Plot the temperature climatology
-azmpS27.climatology_plotter(ts_monthly_clim,annual_mean,'temperature')
+azS27.climatology_plotter(ts_monthly_clim,annual_mean,'temperature')
 #Determine the CIL metrics
-cil_temp,cil_core,cil_coredepth,cil_thickness = azmpS27.CIL_calculator(df)
+cil_temp,cil_core,cil_coredepth,cil_thickness = azS27.CIL_calculator(df)
 #Create the CIL figures
-azmpS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly')
-azmpS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly')
-azmpS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly')
-azmpS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly')
+azS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly')
+azS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly')
+azS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly')
+azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly')
 
 #Create anomaly output for salinity
 df = pd.read_pickle('S27_salinity_monthly.pkl')
-df,anom_std,anom,annual_mean,ts_monthly_clim = azmpS27.anomaly_calculator(df,years_flag,current_year,year_clim)
+df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the salinity anomaly
-azmpS27.anomaly_plotter(anom_std,'salinity')
+azS27.anomaly_plotter(anom_std,'salinity')
 
 #Get the stratification ready for plotting
 strat_shallow_path = 'S27_stratif_0-50_monthly.pkl'
 strat_deep_path = 'S27_stratif_10-150_monthly.pkl'
-strat_monthly_shallow,strat_monthly_deep,anom,anom_std,strat_monthly_clim = azmpS27.stratification_plotter(
+strat_monthly_shallow,strat_monthly_deep,anom,anom_std,strat_monthly_clim = azS27.stratification_plotter(
     strat_shallow_path,
     strat_deep_path,
     years_flag,current_year,year_clim)
 #Create a stratification barplot
-azmpS27.stratification_barplot(anom_std)
+azS27.stratification_barplot(anom_std)
 #Create a stratification time series
-azmpS27.stratification_timeseries(anom)
+azS27.stratification_timeseries(anom)
 #Create the mean stratification time series
-azmpS27.stratification_timeseries_mean(anom,strat_monthly_clim)
+azS27.stratification_timeseries_mean(anom,strat_monthly_clim)
 #Create a current year stratification bar plot
-azmpS27.stratification_currentyear_barplot(strat_monthly_shallow,strat_monthly_deep,current_year,year_clim)
+azS27.stratification_currentyear_barplot(strat_monthly_shallow,strat_monthly_deep,current_year,year_clim)
 
 #Get the MLD ready for plotting
 MLD_path = 'S27_MLD_monthly.pkl'
-mld,anom,anom_std = azmpS27.MLD_processor(MLD_path,years_flag,year_clim,current_year)
+mld,anom,anom_std = azS27.MLD_processor(MLD_path,years_flag,year_clim,current_year)
 
 
 
@@ -209,7 +210,7 @@ mld,anom,anom_std = azmpS27.MLD_processor(MLD_path,years_flag,year_clim,current_
 #os.system('cp ice_index.png ice_index_FR.png ../2022/')
 
 
-# 6. Icebergs (/home/cyrf0006/AZMP/state_reports/bergs) [DONE 2021]
+# 6. Icebergs (/home/cyrf0006/AZMP/state_reports/bergs) [FRED to UPDATE]
 %my_run azmp_bergs.py
 os.system('cp bergs_annual_FR.png bergs_annual.png bergs_monthly_FR.png bergs_monthly.png ../2022')
 
@@ -217,42 +218,44 @@ os.system('cp bergs_annual_FR.png bergs_annual.png bergs_monthly_FR.png bergs_mo
 
 
 # 7. bottom temperature maps (FINISHED/WORKING - 2023)
-os.system('mkdir operation_files')
+#os.system('mkdir operation_files')
 os.system('mkdir bottom_temp')
 azu.get_bottomT_climato(
-    INFILES='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/',
+    INFILES='~/data/CABOTS/temperature_adjusted/spring/',
     lonLims=[-63, -45],
     latLims=[42, 58],
-    bath_file='/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc',
+    bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
     year_lims=[1991, 2020],
     season='spring',
-    h5_outputfile='Tbot_climato_spring_0.10.h5'
+    h5_outputfile='bottom_temp/Tbot_climato_spring_0.10.h5'
     )
 azu.get_bottomT_climato(
-    INFILES='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/fall/',
+    INFILES='~/data/CABOTS/temperature_adjusted/fall/',
     lonLims=[-63, -45],
     latLims=[42, 58],
-    bath_file='/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc',
+    bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
     year_lims=[1991, 2020],
     season='fall',
-    h5_outputfile='Tbot_climato_fall_0.10.h5'
+    h5_outputfile='bottom_temp/Tbot_climato_fall_0.10.h5'
     )
-os.system('mv *.h5 operation_files/')
+#os.system('mv *.h5 operation_files/')
 azrt.bottom_temperature(
     season='spring',
     year='2023',
     lonLims=[-63, -45],
     latLims=[42, 58],
-    climato_file='operation_files/Tbot_climato_spring_0.10.h5',
-    netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/'
+    climato_file='bottom_temp/Tbot_climato_spring_0.10.h5',
+    netcdf_path='~/data/CABOTS/temperature_adjusted/spring/',
+    CASTS_path='~/data/CASTS/'
     )
 azrt.bottom_temperature(
     season='fall',
     year='2023',
     lonLims=[-63, -45],
     latLims=[42, 58],
-    climato_file='operation_files/Tbot_climato_fall_0.10.h5',
-    netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/fall/'
+    climato_file='bottom_temp/Tbot_climato_fall_0.10.h5',
+    netcdf_path='~/data/CABOTS/temperature_adjusted/fall/',
+    CASTS_path='~/data/CASTS/'
     )
 os.system('cp bottomT_spring2023.png bottomT_spring2023_FR.png bottomT_fall2023.png bottomT_fall2023_FR.png 2023')
 os.system('mv *.png bottom_temp/')
