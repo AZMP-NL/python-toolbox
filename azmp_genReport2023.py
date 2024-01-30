@@ -4,24 +4,22 @@
 
 For ResDoc and presentation on 2023 conditions.
 
-This script is usuall run into:
-/home/cyrf0006/AZMP/state_reports/
+This script can be run from anywhere, but a suggestion:
+~/AZMP/state_reports/
 
-with subfolders:
-airTemp/
+The following subfolders will be created:
+air_temperature/
 bergs/
-bottomT/
+bottom_temp/
 CIL/
 climate_index/
 LC_transport/
-SSTs/
 
 and figures further moved here:
-2022/
+./{year-in-review}/
 
-Started Jan. 2023
-Frederic.Cyr@dfo-mpo.gc.ca
-Edited by:
+Jan/Feb 2023
+Frederic.Cyr@dfo-mpo.gc.ca &
 Jonathan.Coyne@dfo-mpo.gc.ca
 
 
@@ -68,12 +66,20 @@ os.system('mv *.csv climate_indices')
 os.system('mv *.png climate_indices')
 
 # 2. Air temperature (need to dowload AHCCD and download NUUK update) [FRED CHECK!]
+os.system('mkdir air_temperature')
 %my_run azmp_dmi_nuukAirT.py
 %my_run azmp_airTemp.py # use this one since 2020 conditions report
-os.system('cp air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ../2023/')
+os.system('cp air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./2023/')
+os.system('mv air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
+os.system('mv air*.pkl Nuuk*.pkl air_temperature')
 
 %my_run azmp_air_scorecards.py
-os.system('cp scorecards_air.png scorecards_air_FR.png ../2023/')
+os.system('cp scorecards_air.png scorecards_air_FR.png ./2023/')
+os.system('mv scorecards_air.png scorecards_air_FR.png ./air_temperature')
+# delete tmp files
+os.system('rm scorecards_air.png scorecards_air_FR.png ./2023/')
+
+
 
 # 3. SSTs  [Received from PSG]
 # wget -m ftp://ftp.dfo-mpo.gc.ca/bometrics/noaa/stats/boxes/*.stat 

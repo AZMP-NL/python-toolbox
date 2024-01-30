@@ -45,7 +45,7 @@ df_21 = pd.read_csv('~/github/AZMP-NL/external_data/DMI/nuuk-2021.csv', delimite
 df_22 = pd.read_csv('~/github/AZMP-NL/external_data/DMI/nuuk-2022.csv', delimiter=";")
 df_23 = pd.read_csv('~/github/AZMP-NL/external_data/DMI/nuuk-2023.csv', delimiter=",")
 
-df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_18.Middel, df_19.Middel, df_20.Middel, df_21.Middel, df_22.Middel, df_23.Middel], axis=1, keys=np.arange(2014, 2023))
+df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_18.Middel, df_19.Middel, df_20.Middel, df_21.Middel, df_22.Middel, df_23.Middel], axis=1, keys=np.arange(2014, 2024))
 
 df_recent = df_all.T
 df_recent.columns = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']

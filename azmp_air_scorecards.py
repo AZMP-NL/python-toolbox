@@ -168,7 +168,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
 
     if str(cell_text)=='nan':
@@ -206,7 +206,7 @@ for key, cell in the_table.get_celld().items():
         pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
 
     if str(cell_text)=='nan':
@@ -259,7 +259,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
 plt.savefig("scorecards_winterAirT.png", dpi=300)
 os.system('convert -trim scorecards_winterAirT.png scorecards_winterAirT.png')
@@ -291,7 +291,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
 plt.savefig("scorecards_winterAirT_FR.png", dpi=300)
 os.system('convert -trim scorecards_winterAirT_FR.png scorecards_winterAirT_FR.png')
@@ -342,7 +342,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
 plt.savefig("scorecards_annualAirT.png", dpi=300)
 os.system('convert -trim scorecards_annualAirT.png scorecards_annualAirT.png')
@@ -374,7 +374,7 @@ for key, cell in the_table.get_celld().items():
     ##     pass
     elif key[1] in last_columns:
          cell._text.set_color('darkslategray')
-    elif (np.float(cell_text) <= -2) | (np.float(cell_text) >= 2) :
+    elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
         cell._text.set_color('white')
 plt.savefig("scorecards_annualAirT_FR.png", dpi=300)
 os.system('convert -trim scorecards_annualAirT_FR.png scorecards_annualAirT_FR.png')

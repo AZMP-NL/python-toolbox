@@ -57,63 +57,63 @@ plt.rc('font', **font)
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
 current_year = 2023
-use_climate_summaries = False
+use_climate_summaries = True
 
 
 ## ---- If climate summaries are needed ---- ##
 if use_climate_summaries:
     # NL
-    NL_01 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_01-2022.csv', index_col='Clim_ID')
+    NL_01 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_01-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_01 = NL_01.loc[['8400601','8403505','8501106']].Tm
-    NL_02 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_02-2022.csv', index_col='Clim_ID')
+    NL_02 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_02-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_02 = NL_02.loc[['8400601','8403505','8501106']].Tm
-    NL_03 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_03-2022.csv', index_col='Clim_ID')
+    NL_03 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_03-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_03 = NL_03.loc[['8400601','8403505','8501106']].Tm
-    NL_04 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_04-2022.csv', index_col='Clim_ID')
+    NL_04 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_04-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_04 = NL_04.loc[['8400601','8403505','8501106']].Tm
-    NL_05 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_05-2022.csv', index_col='Clim_ID')
+    NL_05 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_05-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_05 = NL_05.loc[['8400601','8403505','8501106']].Tm
-    NL_06 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_06-2022.csv', index_col='Clim_ID')
+    NL_06 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_06-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_06 = NL_06.loc[['8400601','8403505','8501106']].Tm
-    NL_07 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_07-2022.csv', index_col='Clim_ID')
+    NL_07 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_07-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_07 = NL_07.loc[['8400601','8403505','8501106']].Tm
-    NL_08 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_08-2022.csv', index_col='Clim_ID')
+    NL_08 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_08-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_08 = NL_08.loc[['8400601','8403505','8501106']].Tm
-    NL_09 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_09-2022.csv', index_col='Clim_ID')
+    NL_09 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_09-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_09 = NL_09.loc[['8400601','8403505','8501106']].Tm
-    NL_10 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_10-2022.csv', index_col='Clim_ID')
+    NL_10 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_10-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_10 = NL_10.loc[['8400601','8403505','8501106']].Tm
-    NL_11 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_11-2022.csv', index_col='Clim_ID')
+    NL_11 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_11-' + str(current_year) + '.csv', index_col='Clim_ID')
     NL_11 = NL_11.loc[['8400601','8403505','8501106']].Tm
-    NL_12 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NL_12-2022.csv', index_col='Clim_ID')      
+    NL_12 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_12-' + str(current_year) + '.csv', index_col='Clim_ID')      
     NL_12 = NL_12.loc[['8400601','8403505','8501106']].Tm
     df_NL = pd.concat([NL_01,NL_02,NL_03,NL_04,NL_05,NL_06,NL_07,NL_08,NL_09,NL_10,NL_11,NL_12], axis=1).T
     months = pd.Series(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']) 
     df_NL.index = pd.to_datetime('15-' + months + '-' + str(current_year)) 
     # NU
-    NU_01 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_01-2022.csv', index_col='Clim_ID')
+    NU_01 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_01-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_01 = NU_01.loc[['2402592']].Tm
-    NU_02 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_02-2022.csv', index_col='Clim_ID')
+    NU_02 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_02-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_02 = NU_02.loc[['2402592']].Tm
-    NU_03 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_03-2022.csv', index_col='Clim_ID')
+    NU_03 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_03-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_03 = NU_03.loc[['2402592']].Tm
-    NU_04 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_04-2022.csv', index_col='Clim_ID')
+    NU_04 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_04-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_04 = NU_04.loc[['2402592']].Tm
-    NU_05 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_05-2022.csv', index_col='Clim_ID')
+    NU_05 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_05-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_05 = NU_05.loc[['2402592']].Tm
-    NU_06 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_06-2022.csv', index_col='Clim_ID')
+    NU_06 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_06-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_06 = NU_06.loc[['2402592']].Tm
-    NU_07 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_07-2022.csv', index_col='Clim_ID')
+    NU_07 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_07-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_07 = NU_07.loc[['2402592']].Tm
-    NU_08 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_08-2022.csv', index_col='Clim_ID')
+    NU_08 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_08-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_08 = NU_08.loc[['2402592']].Tm
-    NU_09 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_09-2022.csv', index_col='Clim_ID')
+    NU_09 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_09-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_09 = NU_09.loc[['2402592']].Tm
-    NU_10 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_10-2022.csv', index_col='Clim_ID')
+    NU_10 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_10-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_10 = NU_10.loc[['2402592']].Tm
-    NU_11 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_11-2022.csv', index_col='Clim_ID')
+    NU_11 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_11-' + str(current_year) + '.csv', index_col='Clim_ID')
     NU_11 = NU_11.loc[['2402592']].Tm
-    NU_12 = pd.read_csv('/home/cyrf0006/data/EC/climate_summaries/en_climate_summaries_NU_12-2022.csv', index_col='Clim_ID')      
+    NU_12 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NU_12-' + str(current_year) + '.csv', index_col='Clim_ID')      
     NU_12 = NU_12.loc[['2402592']].Tm
     df_NU = pd.concat([NU_01,NU_02,NU_03,NU_04,NU_05,NU_06,NU_07,NU_08,NU_09,NU_10,NU_11,NU_12], axis=1).T
     df_NU.index = pd.to_datetime('15-' + months + '-' + str(current_year)) 
@@ -144,7 +144,7 @@ df_BB = df.copy()
 del df
 # Append climate summaries if needed
 if use_climate_summaries:
-    df_BB = df_BB.append(df_NL['8400601'])  
+    df_BB = pd.concat([df_BB,df_NL['8400601']])
 
 
 ## 2. St. John's - 8403505
@@ -172,7 +172,7 @@ df_SJ = df.copy()
 del df
 # Append climate summaries if needed
 if use_climate_summaries:
-    df_SJ = df_SJ.append(df_NL['8403505'])
+    df_SJ = pd.concat([df_SJ,df_NL['8403505']])
     
 ## 3. Cartwright - 8501106
 # tmp file without blank space
@@ -199,7 +199,7 @@ df_CA = df.copy()
 del df
 # Append climate summaries if needed
 if use_climate_summaries:
-    df_CA = df_CA.append(df_NL['8501106'])
+    df_CA = pd.concat([df_CA,df_NL['8501106']])
     
 ## 4. Iqaluit - 2402592
 # tmp file without blank space
@@ -226,11 +226,10 @@ df_IQ = df.copy()
 del df
 # Append climate summaries if needed
 if use_climate_summaries:
-    df_IQ = df_IQ.append(df_NU['2402592'])
+    df_IQ = pd.concat([df_IQ,df_NU['2402592']])
     
 ## 5. NUUK - see azmp_dmi_nuukAirT.py
 df_NUUK = pd.read_pickle('Nuuk_air_temp.pkl')  
-
 
 ## ---- Concatenate all timeseries ---- ##
 df = pd.concat([df_NUUK, df_IQ, df_CA, df_BB, df_SJ], axis=1)
@@ -270,7 +269,7 @@ std_anom_annual.to_pickle('airT_std_anom.pkl')
 df.to_pickle('airT_monthly.pkl')
 
 #Load back in if starting here!
-std_anom_annual = pd.read_pickle('operation_files/airT_std_anom.pkl')
+std_anom_annual = pd.read_pickle('airT_std_anom.pkl')
 
 # restrict time for following
 std_anom_annual = std_anom_annual[std_anom_annual.index>=1950]
@@ -288,7 +287,7 @@ std_anom_annual = std_anom_annual[std_anom_annual.index>=1950]
 ax = anom.plot(kind='bar', stacked=True, cmap='YlGn')
 plt.grid('on')
 ax.set_ylabel(r'[$^{\circ}$C]')
-ax.set_title(np.str(current_year) + ' Air temperature anomalies')
+ax.set_title(str(current_year) + ' Air temperature anomalies')
 #ax.legend(loc='upper center')
 plt.ylim([-15, 15])
 
@@ -300,7 +299,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 # Save French Figure
 french_months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
-ax.set_title(' Anomalies des températures de l\'air - ' + np.str(current_year))
+ax.set_title(' Anomalies des températures de l\'air - ' + str(current_year))
 ax.set_xticklabels(french_months, rotation='horizontal')
 fig_name = 'air_temp_' + str(current_year) + '_FR.png'
 fig.savefig(fig_name, dpi=300)
