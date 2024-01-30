@@ -1,5 +1,8 @@
 '''
-For ResDoc and presentation on 2022 conditions.
+
+!!! This is the new script with new working tree.
+
+For ResDoc and presentation on 2023 conditions.
 
 This script is usuall run into:
 /home/cyrf0006/AZMP/state_reports/
@@ -18,6 +21,9 @@ and figures further moved here:
 
 Started Jan. 2023
 Frederic.Cyr@dfo-mpo.gc.ca
+Edited by:
+Jonathan.Coyne@dfo-mpo.gc.ca
+
 
 '''
 
@@ -26,7 +32,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 #Provide the path to where custom packages are saved
 import sys
-sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_modules')
+sys.path.append('~/github/AZMP-NL/python-toolbox/azmp_modules')
 import azmp_sections_tools as azst
 import azmp_report_tools as azrt
 import azmp_genreport as azgen
@@ -45,7 +51,7 @@ os.system('mkdir 2023')
 os.system('mkdir climate_indices')
 azgen.nao(
     2023,
-    '/home/jcoyne/Documents/CSAS/2024_RAP_crab/operation_files/nao_data.csv'
+    '~/data/AZMP/climate_indices/nao_data.csv'
     ) #(FINISHED/WORKING - 2023)
 azgen.ao(
     2023,
