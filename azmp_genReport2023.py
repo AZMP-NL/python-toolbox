@@ -24,6 +24,9 @@ Frederic.Cyr@dfo-mpo.gc.ca
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import cmocean as cmocean
+import datetime
 #Provide the path to where custom packages are saved
 import sys
 sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_modules')
@@ -32,6 +35,8 @@ import azmp_report_tools as azrt
 import azmp_genreport as azgen
 import azmp_utils as azu
 import cc_tools as cc
+sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/trial_scripts')
+import azmp_stn27_newtest as azmpS27
 
 ## ---- 2023 update ---- ## [DONE 2022x]
 # 1.  NAO (should be a function with year as input) [Done 2021]
@@ -82,16 +87,129 @@ os.system('cp scorecards_air.png scorecards_air_FR.png ../2022/')
 #%my_run viking2022.py  # NOT IN 2022
 #os.system('cp Viking2022.png Viking2022_FR.png ../2022')
 
-# need to delete /home/cyrf0006/AZMP/state_reports/stn27/stn27_all_casts.nc
+#(FINISHED/WORKING - 2023)
 os.system('mkdir stn27')
 #Remember, azmp_stn27.py needs to be run twice (temperature and salinity)
 os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27.py')
 os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27_density.py')
 os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27_analysis.py')
 os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27_scorecards.py')
-os.system('cp scorecards_s27.png scorecards_s27_FR.png s27_CIL_subplots.png s27_CIL_subplots_FR.png s27_TS_subplots.png s27_TS_subplotsFR.png s27_mld_monthly.png  s27_stratif_monthly_shallow.png s27_stratif_monthly_shallow_FR.png   2021/')
-os.system('cp s27_salinity_subplot_2021.png s27_salinity_subplot_2021_FR.png s27_temperature_subplot_2021.png s27_temperature_subplot_2021_FR.png 2021/')
-os.system("find ./ -maxdepth 1 -type f | xargs mv -t ./stn27") #move all other files to stn27/
+os.system('cp scorecards_s27.png scorecards_s27_FR.png s27_CIL_subplots.png s27_CIL_subplots_FR.png s27_TS_subplots.png s27_TS_subplotsFR.png s27_mld_monthly.png  s27_stratif_monthly_shallow.png s27_stratif_monthly_shallow_FR.png   2023/')
+os.system('cp s27_salinity_subplot_2023.png s27_salinity_subplot_2023_FR.png s27_temperature_subplot_2023.png s27_temperature_subplot_2023_FR.png 2023/')
+os.system('mv *.png stn27')
+os.system('mv *.pkl stn27')
+os.system('mv *.csv stn27')
+
+
+#New version using only functions
+os.system('mkdir stn27')
+
+#Isolate the stn27 data
+file_location = 'operation_files/stn27_all_casts.nc'
+CASTS_path = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/*.nc'
+s27_loc = [47.54667,-52.58667]
+dc = .025
+problem_casts = ['1988_10073164.nc','1990_02183115.nc','1991_11229001.nc']
+azmpS27.stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts)
+#Determine the temperature and salinity climatology
+year_clim = [1991, 2020]
+current_year = 2023
+df,df_monthly,weekly_clim,df_weekly,df_year,anom = azmpS27.stn27_climatology(file_location,year_clim,current_year)
+#Save the current year monthly average
+for variable in df_monthly:
+    csv_file = 'monthly_' + variable +  '_' + str(current_year) + '.csv'
+    df_monthly[variable].T.to_csv(csv_file, float_format='%.4f')
+#Create a temperature and salinity climatology figure
+XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
+azmpS27.stn27_climatology_plot(weekly_clim,XLIM)
+#Create a temperature and salinity current year plot
+azmpS27.stn27_currentyear_plot(df_weekly,df_year,current_year,XLIM)
+#Create a temperature and salinity anomaly year plot
+azmpS27.stn27_anomaly_plot(anom,current_year,XLIM)
+#Convert to subplots and remove individual plots
+for variable in anom:
+    os.system('montage '+\
+        's27_'+variable+'_2023.png '+\
+        's27_'+variable+'_clim.png '+\
+        's27_'+variable+'_anom_2023.png '+\
+        '-tile 1x3 -geometry +10+10  -background white  s27_'+variable+'_subplot_'+str(current_year)+'.png')
+    os.system('montage '+\
+        's27_'+variable+'_2023_FR.png '+\
+        's27_'+variable+'_clim_FR.png '+\
+        's27_'+variable+'_anom_2023_FR.png '+\
+        '-tile 1x3 -geometry +10+10  -background white  s27_'+variable+'_subplot_'+str(current_year)+'_FR.png')
+    os.system('rm '+\
+        's27_'+variable+'_2023.png '+\
+        's27_'+variable+'_clim.png '+\
+        's27_'+variable+'_anom_2023.png')
+    os.system('rm '+\
+        's27_'+variable+'_2023_FR.png '+\
+        's27_'+variable+'_clim_FR.png '+\
+        's27_'+variable+'_anom_2023_FR.png')
+#Create a station occupation figure
+azmpS27.station_occupations(file_location,current_year,year_clim)
+
+#Isolate the density data
+df_rho,df_sig,df_SA,df_CT,ds,Z = azmpS27.density_calculator(df,file_location)
+#Save the MLD
+azmpS27.MLD_calculator(df_SA,df_CT,df_rho,Z)
+#Save the stratification
+azmpS27.stratification_calculator(file_location)
+
+#Create anomaly output for temperature
+years_flag = [1950,1980]
+df = pd.read_pickle('S27_temperature_monthly.pkl')
+df,anom_std,anom,annual_mean,ts_monthly_clim = azmpS27.anomaly_calculator(df,years_flag,current_year,year_clim)
+#Plot the temperature anomaly
+azmpS27.anomaly_plotter(anom_std,'temperature')
+#Plot the temperature climatology
+azmpS27.climatology_plotter(ts_monthly_clim,annual_mean,'temperature')
+#Determine the CIL metrics
+cil_temp,cil_core,cil_coredepth,cil_thickness = azmpS27.CIL_calculator(df)
+#Create the CIL figures
+azmpS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly')
+azmpS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly')
+azmpS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly')
+azmpS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly')
+
+#Create anomaly output for salinity
+df = pd.read_pickle('S27_salinity_monthly.pkl')
+df,anom_std,anom,annual_mean,ts_monthly_clim = azmpS27.anomaly_calculator(df,years_flag,current_year,year_clim)
+#Plot the salinity anomaly
+azmpS27.anomaly_plotter(anom_std,'salinity')
+
+#Get the stratification ready for plotting
+strat_shallow_path = 'S27_stratif_0-50_monthly.pkl'
+strat_deep_path = 'S27_stratif_10-150_monthly.pkl'
+strat_monthly_shallow,strat_monthly_deep,anom,anom_std,strat_monthly_clim = azmpS27.stratification_plotter(
+    strat_shallow_path,
+    strat_deep_path,
+    years_flag,current_year,year_clim)
+#Create a stratification barplot
+azmpS27.stratification_barplot(anom_std)
+#Create a stratification time series
+azmpS27.stratification_timeseries(anom)
+#Create the mean stratification time series
+azmpS27.stratification_timeseries_mean(anom,strat_monthly_clim)
+#Create a current year stratification bar plot
+azmpS27.stratification_currentyear_barplot(strat_monthly_shallow,strat_monthly_deep,current_year,year_clim)
+
+#Get the MLD ready for plotting
+MLD_path = 'S27_MLD_monthly.pkl'
+mld,anom,anom_std = azmpS27.MLD_processor(MLD_path,years_flag,year_clim,current_year)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # To prepare MS
 #%my_run azmp_stn27_climateindex_ms.py 
