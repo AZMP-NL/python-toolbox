@@ -30,6 +30,8 @@ Jonathan.Coyne@dfo-mpo.gc.ca
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
+import pandas as pd
 #Provide the path to where custom packages are saved
 import sys
 sys.path.append('~/github/AZMP-NL/python-toolbox/azmp_modules')
@@ -197,6 +199,13 @@ azS27.stratification_currentyear_barplot(strat_monthly_shallow,strat_monthly_dee
 #Get the MLD ready for plotting
 MLD_path = 'S27_MLD_monthly.pkl'
 mld,anom,anom_std = azS27.MLD_processor(MLD_path,years_flag,year_clim,current_year)
+#Bar plot the MLD
+azS27.MLD_barplot(anom_std)
+#Time series plot the MLD 
+azS27.MLD_timeseries(anom)
+#Bar plot the current year MLD
+azS27.MLD_currentyear_barplot(mld,current_year,year_clim=[1991,2020])
+
 
 
 

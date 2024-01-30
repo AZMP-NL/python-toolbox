@@ -53,7 +53,7 @@ XLIM = [datetime.date(current_year, 1, 1), datetime.date(current_year, 12, 31)]
 
 def stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts):
 	#Import CASTS
-	if os.path.isfile(file_location):
+	if os.path.isfile(os.path.expanduser(file_location)):
 		ds = xr.open_dataset(file_location)
 	else:
 		#If the files not available, make one
@@ -61,8 +61,8 @@ def stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts):
 		#Isolate for the standard depth range
 		ds = ds.sel(level=ds['level']<180)
 		#Select stn27 data according to lat-lon in a box [47.55,-52.59]
-		ds = ds.where((ds.longitude>s27_loc[1]-dc/2) & (ds.longitude<s27_loc[1]+dc/2), drop=True)
-		ds = ds.where((ds.latitude>s27_loc[0]-dc/2) & (ds.latitude<s27_loc[0]+dc/2), drop=True)
+		ds = ds.where((ds.longitude>s27_loc[1]-dc/2).compute() & (ds.longitude<s27_loc[1]+dc/2).compute(), drop=True)
+		ds = ds.where((ds.latitude>s27_loc[0]-dc/2).compute() & (ds.latitude<s27_loc[0]+dc/2).compute(), drop=True)
 		ds = ds.sortby('time')
 		#Remove problem casts
 		ds = ds.isel(time = ~np.isin(ds.file_names,problem_casts))
@@ -405,6 +405,9 @@ def density_calculator(df,file_location):
 	#Define each of the necessary variables
 	df_hydroT = df['temperature']
 	df_hydroS = df['salinity']
+	#Ensure that the measurement for each are present
+	df_hydroS = df_hydroS.iloc[np.isin(df_hydroS.index.values,df_hydroT.index)]
+	df_hydroT = df_hydroT.iloc[np.isin(df_hydroT.index.values,df_hydroS.index)]
 	#Remove nans from each
 	idx_S = pd.notnull(df_hydroS).any(1).values.nonzero()[0]
 	df_hydroT = df_hydroT.iloc[idx_S]
@@ -1068,26 +1071,26 @@ def scorecard_variable_processer(file_location,year_clim,year_plot):
 
 
 
-
-# merge anomalies
-T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
-T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
-T_anom = T_anom[T_anom.index.year>=1947]
-T_anom_std = T_anom_std[T_anom_std.index.year>=1947]
-S_anom = pd.concat([Save_anom,Ssurf_anom,Sbot_anom], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
-S_anom_std = pd.concat([Save_anom_std,Ssurf_anom_std,Sbot_anom_std], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
-S_anom = S_anom[S_anom.index.year>=1947]
-S_anom_std = S_anom_std[S_anom_std.index.year>=1947]
-# Save pkl for climate indices (whole timeseries)
-T_anom_std.to_pickle('s27_temp_std_anom.pkl')
-S_anom_std.to_pickle('s27_sal_std_anom.pkl')
-# keep only relevant window
-T_anom_std = T_anom_std[T_anom_std.index.year>=years[0]]
-S_anom_std = S_anom_std[S_anom_std.index.year>=years[0]]
-# annual clims (for inclusion)
-T_clim_period_annual = T_clim_period.resample('As').mean()
-S_clim_period_annual = S_clim_period.resample('As').mean()
-
+	'''
+	# merge anomalies
+	T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
+	T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
+	T_anom = T_anom[T_anom.index.year>=1947]
+	T_anom_std = T_anom_std[T_anom_std.index.year>=1947]
+	S_anom = pd.concat([Save_anom,Ssurf_anom,Sbot_anom], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
+	S_anom_std = pd.concat([Save_anom_std,Ssurf_anom_std,Sbot_anom_std], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
+	S_anom = S_anom[S_anom.index.year>=1947]
+	S_anom_std = S_anom_std[S_anom_std.index.year>=1947]
+	# Save pkl for climate indices (whole timeseries)
+	T_anom_std.to_pickle('s27_temp_std_anom.pkl')
+	S_anom_std.to_pickle('s27_sal_std_anom.pkl')
+	# keep only relevant window
+	T_anom_std = T_anom_std[T_anom_std.index.year>=years[0]]
+	S_anom_std = S_anom_std[S_anom_std.index.year>=years[0]]
+	# annual clims (for inclusion)
+	T_clim_period_annual = T_clim_period.resample('As').mean()
+	S_clim_period_annual = S_clim_period.resample('As').mean()
+	'''
 
 
 
