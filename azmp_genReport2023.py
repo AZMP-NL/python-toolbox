@@ -40,21 +40,18 @@ import azmp_utils as azu
 import cc_tools as cc
 import azmp_stn27_newtest as azS27
 
-## Preamble (create a folder to dump temporary files) # not sure if needed...
-if os.path.isdir('operation_files') != True:
-    os.system('mkdir operation_files')
+## Preamble (create folders to dump figures and data)
+if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
+if os.path.isdir('2023') != True: os.system('mkdir 2023')
+if os.path.isdir('climate_indices') != True: os.system('mkdir climate_indices')
+if os.path.isdir('air_temperature') != True: os.system('mkdir air_temperature')
+if os.path.isdir('stn27') != True: os.system('mkdir stn27')
+if os.path.isdir('bergs') != True: os.system('mkdir bergs')
+if os.path.isdir('bottom_temp') != True: os.system('mkdir bottom_temp')
 
 
 ## ---- 2023 update ---- ## [DONE 2022x]
-# 1.  NAO (should be a function with year as input) [Done 2021]
-# in /home/cyrf0006/AZMP/state_reports/airTemp
-# previously:
-#%my_run azmp_nao.py # had to re-write in 2021
-#%my_run azmp_ao.py  # had to re-write in 2021
-#%my_run azmp_amo.py
-# New from 2022:
-os.system('mkdir 2023')
-os.system('mkdir climate_indices')
+# 1.  NAO, AO, AMO (now a function)
 azgen.nao(
     2023,
     '~/data/AZMP/climate_indices/nao_data.csv'
@@ -68,36 +65,26 @@ azgen.amo( # Jon to check
     '~/data/AZMP/climate_indices/amo_data.csv'
     )
 os.system('cp  NAO_winter_1950-2023.png NAO_winter_1950-2023_FR.png 2023')
-os.system('mv *.pkl climate_indices')
-os.system('mv *.csv climate_indices')
+os.system('mv *.pkl operation_files')
+os.system('mv *.csv operation_files')
 os.system('mv *.png climate_indices')
 
 # 2. Air temperature (need to dowload AHCCD and download NUUK update) [Done 2023!]
-os.system('mkdir air_temperature')
 %my_run azmp_dmi_nuukAirT.py
 %my_run azmp_airTemp.py # use this one since 2020 conditions report
 os.system('cp air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./2023/')
 os.system('mv air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
-os.system('mv air*.pkl Nuuk*.pkl air_temperature')
+os.system('mv *.pkl operation_files')
 
 %my_run azmp_air_scorecards.py
 os.system('cp scorecards_air.png scorecards_air_FR.png ./2023/')
-os.system('mv scorecards_air.png scorecards_air_FR.png ./air_temperature')
-< os.system('mv winter_air*.csv ./air_temperature')
 # delete tmp files
 os.system('rm scorecards_*Air*.png scorecards_*nao*.png ')
-
-
+os.system('mv *.png ./air_temperature')
+os.system('mv *.csv ./operation_files')
 
 # 3. SSTs  [Received from PSG]
-# wget -m ftp://ftp.dfo-mpo.gc.ca/bometrics/noaa/stats/boxes/*.stat 
-# (in /home/cyrf0006/data/BIO_remote/bometrics/noaa/stats/boxes)
-#%my_run azmp_SSTs.py # to update bometrics data
-#%my_run azmp_SSTs_fromExcel.py # To merge with Eugene's historical Excel data
-#os.system('cp SST_index.png ../2022/')
-#%my_run azmp_SSTs_scorecards.py # to generate monthly anom, scorecards, etc.
-#os.system('cp scorecards_sst_yearly.png scorecards_sst_monthly.png ../2022/')
-
+# -> [Received from PSG]
 
 # 4. Station 27 [JON to UPDATE]
 #%my_run viking2022.py  # NOT IN 2022
@@ -116,8 +103,6 @@ os.system("find ./ -maxdepth 1 -type f | xargs mv -t ./stn27") #move all other f
 '''
 
 #New version using only functions
-os.system('mkdir stn27')
-
 #Isolate the stn27 data
 file_location = '~/data/AZMP/operation_files/stn27_all_casts.nc'
 CASTS_path = '~/data/CASTS/*.nc'
@@ -218,29 +203,27 @@ azS27.MLD_timeseries(anom)
 #Bar plot the current year MLD
 azS27.MLD_currentyear_barplot(mld,current_year,year_clim=[1991,2020])
 
+# Clean the files:
+os.system('cp s27_mld_monthly.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./2023/')
+os.system('cp s27_salinity_subplot_2023.png s27_temperature_subplot_2023.png ./2023/')
+
+os.system('mv s27*.png ./stn27')
+os.system('mv *.csv *.pkl ./operation_files')
 
 
-
-
-# To prepare MS
-#%my_run azmp_stn27_climateindex_ms.py 
-
-# 5. Sea Ice (/home/cyrf0006/AZMP/state_reports/ice) [Received from PSG]
-
-#%my_run azmp_ice_index.py
-#os.system('cp ice_index.png ice_index_FR.png ../2022/')
+# 5. Sea Ice (/home/cyrf0006/AZMP/state_reports/ice)
+# -> [Received from PSG]
 
 
 # 6. Icebergs (/home/cyrf0006/AZMP/state_reports/bergs) [FRED to UPDATE]
 %my_run azmp_bergs.py
-os.system('cp bergs_annual_FR.png bergs_annual.png bergs_monthly_FR.png bergs_monthly.png ../2022')
-
-
+os.system('cp icebergs_climate*.png ../2023')
+#os.system('cp bergs_annual_FR.png bergs_annual.png bergs_monthly_FR.png bergs_monthly.png ../2023')
+os.system('mv *.png ./bergs')
+os.system('mv *.pkl ./operation_files')
 
 
 # 7. bottom temperature maps (FINISHED/WORKING - 2023)
-#os.system('mkdir operation_files')
-os.system('mkdir bottom_temp')
 azu.get_bottomT_climato(
     INFILES='~/data/CABOTS/temperature_adjusted/spring/',
     lonLims=[-63, -45],
@@ -248,7 +231,7 @@ azu.get_bottomT_climato(
     bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
     year_lims=[1991, 2020],
     season='spring',
-    h5_outputfile='bottom_temp/Tbot_climato_spring_0.10.h5'
+    h5_outputfile='operation_files/Tbot_climato_spring_0.10.h5'
     )
 azu.get_bottomT_climato(
     INFILES='~/data/CABOTS/temperature_adjusted/fall/',
@@ -257,7 +240,7 @@ azu.get_bottomT_climato(
     bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
     year_lims=[1991, 2020],
     season='fall',
-    h5_outputfile='bottom_temp/Tbot_climato_fall_0.10.h5'
+    h5_outputfile='operation_files/Tbot_climato_fall_0.10.h5'
     )
 #os.system('mv *.h5 operation_files/')
 azrt.bottom_temperature(
@@ -265,7 +248,7 @@ azrt.bottom_temperature(
     year='2023',
     lonLims=[-63, -45],
     latLims=[42, 58],
-    climato_file='bottom_temp/Tbot_climato_spring_0.10.h5',
+    climato_file='operation_files/Tbot_climato_spring_0.10.h5',
     netcdf_path='~/data/CABOTS/temperature_adjusted/spring/',
     CASTS_path='~/data/CASTS/'
     )
@@ -274,7 +257,7 @@ azrt.bottom_temperature(
     year='2023',
     lonLims=[-63, -45],
     latLims=[42, 58],
-    climato_file='bottom_temp/Tbot_climato_fall_0.10.h5',
+    climato_file='operation_files/Tbot_climato_fall_0.10.h5',
     netcdf_path='~/data/CABOTS/temperature_adjusted/fall/',
     CASTS_path='~/data/CASTS/'
     )
@@ -282,6 +265,7 @@ os.system('cp bottomT_spring2023.png bottomT_spring2023_FR.png bottomT_fall2023.
 os.system('mv *.png bottom_temp/')
 
 
+## WE'RE HERE I THINK ##
 
 # For NAFO STACFEN and STACFIS input: [NEED TO DO]
 azrt.bottom_temperature(season='summer', year='2022', climato_file='Tbot_climato_SA4_summer_0.10.h5')

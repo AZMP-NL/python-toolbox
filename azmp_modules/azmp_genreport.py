@@ -63,10 +63,10 @@ def nao(YEAR,nao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip
     '''
 
     # Adjust fontsize/weight
-    font = {'family' : 'normal',
-            'weight' : 'bold',
-            'size'   : 18}
-    plt.rc('font', **font)
+    #font = {'family' : 'normal',
+    #        'weight' : 'bold',
+    #        'size'   : 18}
+    #plt.rc('font', **font)
 
     # Download and save up-to-date  NAO index from NOAA (data.csv) if needed
     #url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv' (until 2020...)
@@ -171,7 +171,7 @@ def nao(YEAR,nao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip
     plt.grid()
     fig.set_size_inches(w=15,h=9)
     fig_name = 'NAO_winter_1950-' + str(YEAR) + '_FR.png'
-    plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, fontsize=12)
+    #plt.annotate('source données: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, fontsize=12)
     fig.savefig(fig_name, dpi=300)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
@@ -252,7 +252,7 @@ def ao(YEAR,ao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/C
     plt.grid()
     fig.set_size_inches(w=15,h=9)
     fig_name = 'AO_1950-' + str(2021) + '.png'
-    plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+    #plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
     fig.savefig(fig_name, dpi=300)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
@@ -359,7 +359,7 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
     plt.grid()
     fig.set_size_inches(w=15,h=9)
     fig_name = 'AMO_bar_1950-' + str(YEAR) + '.png'
-    plt.annotate('data source: http://www.esrl.noaa.gov/psd/data/timeseries/AMO/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
+    #plt.annotate('data source: http://www.esrl.noaa.gov/psd/data/timeseries/AMO/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
     fig.savefig(fig_name, dpi=300)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
 

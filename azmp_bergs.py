@@ -39,7 +39,7 @@ current_year = 2021
 #df = df.drop(columns = 'TOT SEASON')
 
 # Since 2021, load from NSIDC (https://nsidc.org/data/G10028/versions/1)
-df = pd.read_csv('/home/cyrf0006/data/NSIDC/Icebergs/G10028_Icebergs_South_of_48N.csv', index_col='YEAR') 
+df = pd.read_csv('~/github/AZMP-NL/external_data/NSIDC/Icebergs/G10028_Icebergs_South_of_48N.csv', index_col='YEAR') 
 df = df.drop(columns = 'TOTAL')
 
 # Rename columns
@@ -54,6 +54,7 @@ df.rename(columns={'OCT':'Oct', 'NOV':'Nov', 'DEC':'Dec', 'JAN':'Jan', 'FEB':'Fe
 df_annual = df.sum(axis=1)
 # Temporary:
 df_annual.loc[2022] = 58
+df_annual.loc[2023] = 385
 df_annual.to_pickle('bergs_annual.pkl')
 df_annual_clim = df_annual[(df_annual.index>=clim_year[0]) & (df_annual.index<=clim_year[1])]
 df_annual_anom = df_annual - df_annual_clim.mean()
