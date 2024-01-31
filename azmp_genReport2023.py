@@ -40,6 +40,11 @@ import azmp_utils as azu
 import cc_tools as cc
 import azmp_stn27_newtest as azS27
 
+## Preamble (create a folder to dump temporary files) # not sure if needed...
+if os.path.isdir('operation_files') != True:
+    os.system('mkdir operation_files')
+
+
 ## ---- 2023 update ---- ## [DONE 2022x]
 # 1.  NAO (should be a function with year as input) [Done 2021]
 # in /home/cyrf0006/AZMP/state_reports/airTemp
@@ -67,7 +72,7 @@ os.system('mv *.pkl climate_indices')
 os.system('mv *.csv climate_indices')
 os.system('mv *.png climate_indices')
 
-# 2. Air temperature (need to dowload AHCCD and download NUUK update) [FRED CHECK!]
+# 2. Air temperature (need to dowload AHCCD and download NUUK update) [Done 2023!]
 os.system('mkdir air_temperature')
 %my_run azmp_dmi_nuukAirT.py
 %my_run azmp_airTemp.py # use this one since 2020 conditions report
@@ -78,8 +83,9 @@ os.system('mv air*.pkl Nuuk*.pkl air_temperature')
 %my_run azmp_air_scorecards.py
 os.system('cp scorecards_air.png scorecards_air_FR.png ./2023/')
 os.system('mv scorecards_air.png scorecards_air_FR.png ./air_temperature')
+< os.system('mv winter_air*.csv ./air_temperature')
 # delete tmp files
-os.system('rm scorecards_air.png scorecards_air_FR.png ./2023/')
+os.system('rm scorecards_*Air*.png scorecards_*nao*.png ')
 
 
 
