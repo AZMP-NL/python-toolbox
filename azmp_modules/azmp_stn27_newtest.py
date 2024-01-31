@@ -7,8 +7,10 @@ import os
 import matplotlib.dates as mdates
 from matplotlib.ticker import NullFormatter
 from matplotlib.dates import MonthLocator, DateFormatter
+from matplotlib.colors import from_levels_and_colors
 import cmocean
 import gsw
+import unicodedata
 import warnings
 
 '''
@@ -587,7 +589,7 @@ def anomaly_plotter(anom_std,variable,YLIM=[-3,3]):
 	width = 200
 	p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 	p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
-	plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+	plt.fill_between([anom_std.index[0], anom_std.index[-1]+np.timedelta64(1,'Y')], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 	plt.ylabel('Normalized anomaly')
 	plt.title('Station 27 - Average '+variable+' (0-176m)')
 	plt.ylim(YLIM)
@@ -617,8 +619,8 @@ def climatology_plotter(ts_monthly_clim,annual_mean,variable):
 	fig = plt.figure(1)
 	fig.clf()
 	annual_mean.plot()
-	plt.plot([-20, 51],[ts_monthly_clim.mean(), ts_monthly_clim.mean()], '--k', linewidth=3)
-	plt.fill_between([-20, 51], [ts_monthly_clim.mean()+annual_mean.std(), ts_monthly_clim.mean()+annual_mean.std()], [ts_monthly_clim.mean()-annual_mean.std(), ts_monthly_clim.mean()-annual_mean.std()], facecolor='gray', alpha=.2)
+	plt.plot([annual_mean.index[0]-np.timedelta64(1,'Y'),annual_mean.index[-1]+np.timedelta64(1,'Y')],[ts_monthly_clim.mean(), ts_monthly_clim.mean()], '--k', linewidth=3)
+	plt.fill_between([annual_mean.index[0]-np.timedelta64(1,'Y'),annual_mean.index[-1]+np.timedelta64(1,'Y')], [ts_monthly_clim.mean()+annual_mean.std(), ts_monthly_clim.mean()+annual_mean.std()], [ts_monthly_clim.mean()-annual_mean.std(), ts_monthly_clim.mean()-annual_mean.std()], facecolor='gray', alpha=.2)
 	plt.ylabel(r'Mean '+variable+' ($^\circ$C)')
 	plt.title('Station 27 - Average '+variable+' (0-176m)')
 	#plt.xlim(XLIM)
@@ -687,7 +689,7 @@ def CIL_plotter(cil_stat,title,title_FR,save_title,year_clim=[1991,2020],YLIM=[-
 	width = 200
 	p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 	p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
-	plt.fill_between([anom_std.index[0], anom_std.index[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+	plt.fill_between([anom_std.index[0], anom_std.index[-1]+np.timedelta64(1,'Y')], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 	plt.ylabel('Normalized anomaly')
 	plt.title('Station 27 - '+title)
 	plt.ylim(YLIM)
@@ -1022,24 +1024,22 @@ def MLD_currentyear_barplot(mld,current_year,year_clim=[1991,2020]):
 #########################################################################
 #THIS IS THE START OF azmp_stn27_scorecards.py associated FUNCTIONS
 
-def scorecard_variable_processer(file_location,year_clim,year_plot):
+def scorecard_TS_processor(file_location,year_clim,year_plot,variable):
 	#Import the data and isolate to post-1950
 	df_var = pd.read_pickle(file_location)
 	df_var = df_var[df_var.index.year>=1950]
 	#Calculate the anomaly
 	#Isolate variable by year, month
 	var_stack = df_var.groupby([(df_var.index.year),(df_var.index.month)]).mean()
-	var_stack = df_var.index.set_names(['year','month'])
+	var_stack.index = var_stack.index.set_names(['year','month'])
 	#Isolate the climatology period
 	var_clim_period = df_var[(df_var.index.year>=year_clim[0]) & (df_var.index.year<=year_clim[1])]
 	monthly_clim_mean = var_clim_period.groupby(var_clim_period.index.month).mean()
 	monthly_clim_stdv = var_clim_period.groupby(var_clim_period.index.month).std()
-	var_monthly_clim = monthly_clim_mean.mean(axis=1)
-	var_monthly_std = monthly_clim_stdv.mean(axis=1)
 	#Tile the climatology for the number of years
 	var_years = len(df_var.index.year.unique())
 	monthly_clim_mean = pd.concat([monthly_clim_mean]*var_years)
-	monthly_clim_stdv = pd.concat([monthly_clim_stdv]*ts_years)
+	monthly_clim_stdv = pd.concat([monthly_clim_stdv]*var_years)
 	monthly_clim_mean = monthly_clim_mean.iloc[:var_stack.index.size,:]
 	monthly_clim_stdv = monthly_clim_stdv.iloc[:var_stack.index.size,:]
 	#Set multi-index to clim (using ts_stack index)
@@ -1068,32 +1068,276 @@ def scorecard_variable_processer(file_location,year_clim,year_plot):
 	ave_anom_std.index = pd.to_datetime(ave_anom_std.index, format='%Y')
 	surf_anom_std.index = pd.to_datetime(surf_anom_std.index, format='%Y')
 	bot_anom_std.index = pd.to_datetime(bot_anom_std.index, format='%Y')
+	#Merge the anomalies
+	anom = pd.concat([ave_anom,surf_anom,bot_anom], axis=1, keys=[variable+' 0-176m',variable+' 0-50m',variable+' 150-176m'])
+	anom_std = pd.concat([ave_anom_std,surf_anom_std,bot_anom_std], axis=1, keys=[variable+' 0-176m',variable+' 0-50m',variable+' 150-176m'])
+	anom = anom[anom.index.year>=1947]
+	anom_std = anom_std[anom_std.index.year>=1947]
+	#Vertically average plot years
+	var_0_btm_clim_monthly = var_stack.mean(axis=1).unstack()
+	var_0_50_clim_monthly = var_stack[var_stack.columns[(var_stack.columns<=50)]].unstack()
+	var_150_btm_clim_monthly = var_stack[var_stack.columns[(var_stack.columns>=150)]].unstack()
+	#Convert to yearly
+	var_0_btm_clim = var_0_btm_clim_monthly[var_0_btm_clim_monthly.index>=year_plot[0]].mean(axis=1)
+	var_0_50_clim = var_0_50_clim_monthly[var_0_50_clim_monthly.index>=year_plot[0]].mean(axis=1)
+	var_150_btm_clim = var_150_btm_clim_monthly[var_150_btm_clim_monthly.index>=year_plot[0]].mean(axis=1)
+	#Save pkl for climate indices (whole timeseries)
+	anom_std.to_pickle('s27_'+variable.lower()+'_std_anom.pkl')
+	#Keep only relevant window
+	anom_std = anom_std[anom_std.index.year>=year_plot[0]]
+	#Annual clims (for inclusion)
+	clim_period_annual = pd.concat([var_0_btm_clim,var_0_50_clim,var_150_btm_clim], axis=1, keys=[variable+' 0-176m',variable+' 0-50m',variable+' 150-176m'])
+	return anom,anom_std,clim_period_annual
+
+def scorecard_CIL_processor(file_location,year_clim,year_plot):
+	#Load the saved data
+	df_CIL = pd.read_pickle(file_location)
+	df_CIL = df_CIL[df_CIL.index.year>=year_plot[0]]
+	#Compute anomalies 
+	CIL_clim_period = df_CIL[(df_CIL.index.year>=year_clim[0]) & (df_CIL.index.year<=year_clim[1])]
+	#Anomaly
+	CIL_anom = (df_CIL - CIL_clim_period.mean())
+	CIL_anom_std = CIL_anom / CIL_clim_period.std()
+	return CIL_anom,CIL_anom_std,CIL_clim_period
+
+def scorecard_MLD_processor(file_location,year_clim,year_plot):
+	#Load pickled data
+	mld_monthly = pd.read_pickle(file_location)
+	mld = mld_monthly
+	#Flag some of the data
+	mld[mld.index=='2019-03-15']=np.nan
+	mld[mld.index=='1980-03-15']=np.nan
+	mld = mld[mld.index.year>=year_plot[0]]
+	#Stack the months
+	mld_stack = mld.groupby([(mld.index.year),(mld.index.month)]).mean()
+	mld_unstack = mld_stack.unstack()
+	#Compute the climatology
+	mld_clim_period = mld[(mld.index.year>=year_clim[0]) & (mld.index.year<=year_clim[1])]
+	mld_monthly_stack = mld_clim_period.groupby([(mld_clim_period.index.year),(mld_clim_period.index.month)]).mean()
+	mld_monthly_clim = mld_monthly_stack.groupby(level=1).mean()
+	mld_monthly_std = mld_monthly_stack.groupby(level=1).std()
+	monthly_anom = mld_unstack - mld_monthly_clim 
+	monthly_stdanom = (mld_unstack - mld_monthly_clim)/mld_monthly_std
+	#Seasonal and annual anomalies
+	mld_winter_anom = monthly_stdanom[[1,2,3]].mean(axis=1)
+	mld_spring_anom = monthly_stdanom[[4,5,6]].mean(axis=1)
+	mld_summer_anom = monthly_stdanom[[7,8,9]].mean(axis=1)
+	mld_fall_anom = monthly_stdanom[[10,11,12]].mean(axis=1)
+	mld_annual_anom = monthly_stdanom.mean(axis=1)
+	#Mean values for climatology period (for last columns)
+	mld_winter_clim = mld_monthly_clim[[1,2,3]]
+	mld_spring_clim = mld_monthly_clim[[4,5,6]]
+	mld_summer_clim = mld_monthly_clim[[7,8,9]]
+	mld_fall_clim = mld_monthly_clim[[10,11,12]]
+	mld_annual_clim = mld_monthly_clim
+	#Concat clim and anomaly
+	mld_clim = pd.concat([mld_winter_clim, mld_spring_clim, mld_summer_clim, mld_fall_clim, mld_annual_clim], axis=1, keys=['MLD winter', 'MLD spring', 'MLD summer', 'MLD fall', 'MLD annual'])
+	mld_anom_std = pd.concat([mld_winter_anom, mld_spring_anom, mld_summer_anom, mld_fall_anom, mld_annual_anom], axis=1, keys=['MLD winter', 'MLD spring', 'MLD summer', 'MLD fall', 'MLD annual'])
+	return mld_clim,mld_anom_std
+
+def scorecard_strat_processor(file_location,year_clim,year_plot):
+	#Load the pickled data
+	strat_monthly = pd.read_pickle(file_location)
+	strat = strat = strat_monthly
+	#Flag some data
+	strat[strat.index=='2019-03-15']=np.nan
+	strat[strat.index=='1980-03-15']=np.nan
+	strat = strat[strat.index.year>=year_plot[0]]
+	#Stack months
+	strat_stack = strat.groupby([(strat.index.year),(strat.index.month)]).mean()
+	strat_unstack = strat_stack.unstack()
+	#Compute clim
+	strat_clim_period = strat[(strat.index.year>=year_clim[0]) & (strat.index.year<=year_clim[1])]
+	strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
+	strat_monthly_clim = strat_monthly_stack.groupby(level=1).mean()
+	strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
+	monthly_anom = strat_unstack - strat_monthly_clim
+	monthly_stdanom = (strat_unstack - strat_monthly_clim)/strat_monthly_std
+	#Seasonal and annual anomalies
+	strat_winter_anom = monthly_stdanom[[1,2,3]].mean(axis=1)
+	strat_spring_anom = monthly_stdanom[[4,5,6]].mean(axis=1)
+	strat_summer_anom = monthly_stdanom[[7,8,9]].mean(axis=1)
+	strat_fall_anom = monthly_stdanom[[10,11,12]].mean(axis=1)
+	strat_annual_anom = monthly_stdanom.mean(axis=1)
+	#Mean values for climatology period (for last columns)
+	strat_winter_clim = strat_monthly_clim[[1,2,3]]
+	strat_spring_clim = strat_monthly_clim[[4,5,6]]
+	strat_summer_clim = strat_monthly_clim[[7,8,9]]
+	strat_fall_clim = strat_monthly_clim[[10,11,12]]
+	strat_annual_clim = strat_monthly_clim
+	#Concat clim and anomaly
+	strat_clim = pd.concat([strat_winter_clim, strat_spring_clim, strat_summer_clim, strat_fall_clim, strat_annual_clim], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+	strat_anom_std = pd.concat([strat_winter_anom, strat_spring_anom, strat_summer_anom, strat_fall_anom, strat_annual_anom], axis=1, keys=['strat winter', 'strat spring', 'strat summer', 'strat fall', 'strat annual'])
+	return strat_clim,strat_anom_std
+
+def scorecard_plotter(var_data,var_data_clim,collabel,collabel_FR,savename,years_present=True):
+	#Build the colormap
+	vmin = -3.49
+	vmax = 3.49
+	midpoint = 0
+	levels = np.linspace(vmin, vmax, 15)
+	midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+	colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+	normal = plt.Normalize(-3.49, 3.49)
+	reds = plt.cm.Reds(np.linspace(0,1, num=7))
+	blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+	whites = [(1,1,1,1)]*2
+	colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+	colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+	cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+	cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+	#Common parameters
+	hcell,wcell = 0.5, 0.7
+	hpad,wpad = .8, 0
+
+	#Define the variable
+	if savename=='CIL':
+		my_df = var_data.drop('CIL core depth', axis=1).T
+	else:
+		my_df = var_data.T
+	my_df['MEAN'] = var_data_clim.mean()
+	my_df['SD'] = var_data_clim.std()
+	#Get text values + cell color
+	vals = np.around(my_df.values,1)
+	vals[vals==-0.] = 0.
+	vals_color = vals.copy()
+	vals_color[:,-1] = 0 #No color to last two columns (mean and STD)
+	vals_color[:,-2] = 0
+	#Custom colour flips
+	if savename=='CIL':
+		vals_color[2,:] = vals_color[2,:]*-1
+	#Set up the rows and columns (+1 for years)
+	if years_present:
+		#Preamble, determine the years
+		year_list = var_data.index.year.astype('str')
+		year_list = [i[2:4] for i in year_list] #2-digit year
+		year_list.append(r'$\rm \overline{x}$') #add 2 extra columns
+		year_list.append(r'sd')
+		year_list_FR = year_list[:]
+		year_list_FR[-1] = u'ET'
+		nrows, ncols = my_df.index.size+1, my_df.columns.size
+	else:
+		nrows, ncols = my_df.index.size, my_df.columns.size
+	fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad)) # size+1 because of year's row
+	ax = fig.add_subplot(111)
+	ax.axis('off')
+	#Plot the table
+	header = ax.table(cellText=[['']],
+		colLabels=[collabel],
+		loc='center'
+		)
+	header.set_fontsize(13)
+	if years_present:
+		the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
+			loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+			bbox=[0, 0, 1, 0.5]
+			)
+	else:
+		the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
+			loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+			bbox=[0, 0, 1, 0.5]
+			)
+	#Change font color to white where needed:
+	the_table.auto_set_font_size(False)
+	the_table.set_fontsize(13)
+	table_props = the_table.properties()
+	last_columns = np.arange(vals.shape[1]-2, vals.shape[1])
+	if years_present:
+		for key, cell in the_table.get_celld().items():
+			cell_text = cell.get_text().get_text() 
+			if is_number(cell_text) == False:
+				pass
+			elif key[0] == 0: #year's row = no color
+				pass
+			elif key[1] in last_columns:
+				cell._text.set_color('darkslategray')
+			elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
+				cell._text.set_color('white')
+			elif (cell_text=='nan'):
+				cell._set_facecolor('darkgray')
+				cell._text.set_color('darkgray')
+	else:
+		for key, cell in the_table.get_celld().items():
+			cell_text = cell.get_text().get_text() 
+			if is_number(cell_text) == False:
+				pass
+			elif key[1] in last_columns:
+				cell._text.set_color('darkslategray')
+			elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
+				cell._text.set_color('white')
+			elif (cell_text=='nan'):
+				cell._set_facecolor('darkgray')
+				cell._text.set_color('darkgray')
+
+	#Save the figure, english
+	plt.savefig('scorecards_s27_'+savename+'.png', dpi=300)
+	os.system('convert -trim scorecards_s27_'+savename+'.png scorecards_s27_'+savename+'.png')
+
+	#French table
+	header = ax.table(cellText=[['']],
+		colLabels=[collabel_FR],
+		loc='center'
+		)
+	header.set_fontsize(13)
+	if years_present:
+		the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list_FR,
+			loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+			bbox=[0, 0, 1, 0.5]
+			)
+	else:
+		the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
+			loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
+			bbox=[0, 0, 1, 0.5]
+			)
+	#Change font color to white where needed:
+	the_table.auto_set_font_size(False)
+	the_table.set_fontsize(13)
+	table_props = the_table.properties()
+	last_columns = np.arange(vals.shape[1]-2, vals.shape[1])
+	if years_present:
+		for key, cell in the_table.get_celld().items():
+			cell_text = cell.get_text().get_text() 
+			if is_number(cell_text) == False:
+				pass
+			elif key[0] == 0: #year's row = no color
+				pass
+			elif key[1] in last_columns:
+				cell._text.set_color('darkslategray')
+			elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
+				cell._text.set_color('white')
+			elif (cell_text=='nan'):
+				cell._set_facecolor('darkgray')
+				cell._text.set_color('darkgray')
+	else:
+		for key, cell in the_table.get_celld().items():
+			cell_text = cell.get_text().get_text() 
+			if is_number(cell_text) == False:
+				pass
+			elif key[1] in last_columns:
+				cell._text.set_color('darkslategray')
+			elif (float(cell_text) <= -2) | (float(cell_text) >= 2) :
+				cell._text.set_color('white')
+			elif (cell_text=='nan'):
+				cell._set_facecolor('darkgray')
+				cell._text.set_color('darkgray')
+
+	#Save the figure, french
+	plt.savefig('scorecards_s27_'+savename+'_FR.png', dpi=300)
+	os.system('convert -trim scorecards_s27_'+savename+'_FR.png scorecards_s27_'+savename+'_FR.png')
 
 
-
-	'''
-	# merge anomalies
-	T_anom = pd.concat([Tave_anom,Tsurf_anom,Tbot_anom], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
-	T_anom_std = pd.concat([Tave_anom_std,Tsurf_anom_std,Tbot_anom_std], axis=1, keys=['Temp 0-176m','Temp 0-50m','Temp 150-176m'])
-	T_anom = T_anom[T_anom.index.year>=1947]
-	T_anom_std = T_anom_std[T_anom_std.index.year>=1947]
-	S_anom = pd.concat([Save_anom,Ssurf_anom,Sbot_anom], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
-	S_anom_std = pd.concat([Save_anom_std,Ssurf_anom_std,Sbot_anom_std], axis=1, keys=['Sal 0-176m','Sal 0-50m','Sal 150-176m ${~}$'])
-	S_anom = S_anom[S_anom.index.year>=1947]
-	S_anom_std = S_anom_std[S_anom_std.index.year>=1947]
-	# Save pkl for climate indices (whole timeseries)
-	T_anom_std.to_pickle('s27_temp_std_anom.pkl')
-	S_anom_std.to_pickle('s27_sal_std_anom.pkl')
-	# keep only relevant window
-	T_anom_std = T_anom_std[T_anom_std.index.year>=years[0]]
-	S_anom_std = S_anom_std[S_anom_std.index.year>=years[0]]
-	# annual clims (for inclusion)
-	T_clim_period_annual = T_clim_period.resample('As').mean()
-	S_clim_period_annual = S_clim_period.resample('As').mean()
-	'''
+def is_number(s):
+	#https://www.pythoncentral.io/how-to-check-if-a-string-is-a-number-in-python-including-unicode/
+	try:
+		float(s)
+		return True
+	except ValueError:
+		pass 
+	try:
+		unicodedata.numeric(s)
+		return True
+	except (TypeError, ValueError):
+		pass 
+	return False
 
 
-
-
-
-	return ave_anom,ave_anom_std,surf_anom,surf_anom_std,bot_anom,bot_anom_std

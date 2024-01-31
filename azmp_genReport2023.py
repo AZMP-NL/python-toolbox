@@ -32,7 +32,7 @@ import datetime
 import pandas as pd
 #Provide the path to where custom packages are saved
 import sys
-sys.path.append('~/github/AZMP-NL/python-toolbox/azmp_modules')
+sys.path.append(os.path.expanduser('~/github/AZMP-NL/python-toolbox/azmp_modules'))
 import azmp_sections_tools as azst
 import azmp_report_tools as azrt
 import azmp_genreport as azgen
@@ -202,6 +202,58 @@ azS27.MLD_barplot(anom_std)
 azS27.MLD_timeseries(anom)
 #Bar plot the current year MLD
 azS27.MLD_currentyear_barplot(mld,current_year,year_clim=[1991,2020])
+
+#Get the scorecard plot ready
+year_plot = [1981,2023]
+T_anom,T_anom_std,T_clim_period_annual = azS27.scorecard_TS_processor('S27_temperature_monthly.pkl',year_clim,year_plot,'Temp')
+S_anom,S_anom_std,S_clim_period_annual = azS27.scorecard_TS_processor('S27_salinity_monthly.pkl',year_clim,year_plot,'Sal')
+CIL_anom,CIL_anom_std,CIL_clim_period = azS27.scorecard_CIL_processor('S27_CIL_summer_stats.pkl',year_clim,year_plot)
+mld_clim,mld_anom_std = azS27.scorecard_MLD_processor('S27_MLD_monthly.pkl',year_clim,year_plot)
+strat_clim_0to50,strat_anom_std_0to50 = azS27.scorecard_strat_processor('S27_stratif_0-50_monthly.pkl',year_clim,year_plot)
+strat_clim_10to150,strat_anom_std_10to150 = azS27.scorecard_strat_processor('S27_stratif_10-150_monthly.pkl',year_clim,year_plot)
+#Plot the scorecard
+azS27.scorecard_plotter(
+    T_anom_std,
+    T_clim_period_annual,
+    '-- Vertically averaged temperature --',
+    u'-- Moyenne verticale de température --',
+    'T',years_present=True)
+azS27.scorecard_plotter(
+    S_anom_std,
+    S_clim_period_annual,
+    '-- Vertically averaged salinity --',
+    u'-- Moyenne verticale de salinité --',
+    'S',years_present=False)
+azS27.scorecard_plotter(
+    CIL_anom_std,
+    CIL_clim_period,
+    '-- Cold intermediate layer (CIL) properties --',
+    u'-- Propriétés de la couche intermédiaire froide (CIF) --',
+    'CIL',years_present=False)
+azS27.scorecard_plotter(
+    mld_anom_std,
+    mld_clim,
+    '-- Mixed layer depth (MLD) --',
+    u'-- Profondeur de la couche de mélange (PCM) --',
+    'MLD',years_present=False)
+azS27.scorecard_plotter(
+    strat_anom_std_0to50,
+    strat_clim_0to50,
+    '-- Stratification (0-50m) --',
+    u'-- Stratification (0-50m) --',
+    'strat_0-50m',years_present=False)
+azS27.scorecard_plotter(
+    strat_anom_std_10to150,
+    strat_clim_10to150,
+    '-- Stratification (10-150m) --',
+    u'-- Stratification (10-150m) --',
+    'strat_10-150m',years_present=False)
+#Montage all the figures together
+os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat_0-50m.png scorecards_s27_strat_10-150m.png  -gravity East -append -geometry +1+1 scorecards_s27.png')
+os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_0-50m_FR.png scorecards_s27_strat_10-150m_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
+
+
+
 
 # Clean the files:
 os.system('cp s27_mld_monthly.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./2023/')
