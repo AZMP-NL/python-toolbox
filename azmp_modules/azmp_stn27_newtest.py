@@ -1206,6 +1206,10 @@ def scorecard_plotter(var_data,var_data_clim,collabel,collabel_FR,savename,years
 	#Custom colour flips
 	if savename=='CIL':
 		vals_color[2,:] = vals_color[2,:]*-1
+	if savename.startswith('strat'):
+		for i in np.arange(0,5):
+			vals[i,-1] = np.around(my_df.values[i,-1],3)
+			vals[i,-2] = np.around(my_df.values[i,-2],3)
 	#Set up the rows and columns (+1 for years)
 	if years_present:
 		#Preamble, determine the years
