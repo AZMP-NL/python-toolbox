@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as  np
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
 from scipy.interpolate import griddata
-sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_modules')
+sys.path.append(os.path.expanduser('~/github/AZMP-NL/python-toolbox/azmp_modules'))
 import azmp_sections_tools as azst
 
 
@@ -23,17 +23,6 @@ Remember to move section plots to AZMP_lines/
 Move the .pkl files into operation_files/
 '''
 
-## ---- Region parameters ---- ##
-SECTION = 'BB'
-SEASON = 'summer'
-CLIM_YEAR = [1950, 2023]
-dlat = 2 # how far from station we search
-dlon = 2
-z1 = 2
-dz = 5 # vertical bins
-dc = .2 # grid resolution
-CASTS_path = '/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/'
-bath_path = '/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc'
 
 ## ---- Script Functions ---- ##
 #CIL surface (Note that there is a bias because )
@@ -221,351 +210,366 @@ def temperature_clim_fill(clim, year_data, df_stn):
     cil_core = np.nanmin(year_merged)
     return cil_vol, cil_core
 
-## ---- Get Stations ---- ## 
-df_stn = pd.read_excel('operation_files/STANDARD_SECTIONS.xlsx')
-df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
-df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
-df_stn = df_stn.dropna()
-df_stn = df_stn[df_stn.STATION.str.contains(SECTION+'-')]
-df_stn = df_stn.reset_index(drop=True)
-stn_list = df_stn.STATION.values
+'''
+SECTION = 'SI'
+SEASON = 'summer'
+CLIM_YEAR = [1950, 2023]
+dlat = 2 # how far from station we search
+dlon = 2
+z1 = 2
+dz = 5 # vertical bins
+dc = .2 # grid resolution
+CASTS_path = '~/data/CASTS/'
+bath_path = '~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
+'''
+def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_path):
 
-#Derive regular grid
-latLims = np.array([df_stn.LAT.min() - dlat, df_stn.LAT.max() + dlat])
-lonLims = np.array([df_stn.LON.min() - dlon, df_stn.LON.max() + dlon])
-lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
-lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
+    ## ---- Get Stations ---- ## 
+    df_stn = pd.read_excel('~/github/AZMP-NL/utils/STANDARD_SECTIONS.xlsx')
+    df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
+    df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
+    df_stn = df_stn.dropna()
+    df_stn = df_stn[df_stn.STATION.str.contains(SECTION+'-')]
+    df_stn = df_stn.reset_index(drop=True)
+    stn_list = df_stn.STATION.values
 
-## --------- Get Bathymetry -------- ####
-bathy_file = 'operation_files/' + SECTION + '_bathy.npy'
-if os.path.isfile(bathy_file):
-    print('Load saved bathymetry!')
-    Zitp = np.load(bathy_file)
+    #Derive regular grid
+    latLims = np.array([df_stn.LAT.min() - dlat, df_stn.LAT.max() + dlat])
+    lonLims = np.array([df_stn.LON.min() - dlon, df_stn.LON.max() + dlon])
+    lon_reg = np.arange(lonLims[0]+dc/2, lonLims[1]-dc/2, dc)
+    lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
-else:
-    print('Get bathy...')
-    dataFile = bath_path # Maybe find a better way to handle this file
+    ## --------- Get Bathymetry -------- ####
+    bathy_file = 'operation_files/' + SECTION + '_bathy.npy'
+    if os.path.isfile(bathy_file):
+        print('Load saved bathymetry!')
+        Zitp = np.load(bathy_file)
 
-    dataset = xr.open_dataset(dataFile)
-    dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
-    dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
-
-    #Extract latitude and longitude
-    lon = dataset.lon.values
-    lat = dataset.lat.values
-
-    #Extract the elevation
-    Z = dataset.elevation.values
-
-    #Set up the lats and lons
-    lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
-    lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
-
-    #Interpolate
-    Zitp = griddata((lon_grid_bathy.flatten(),lat_grid_bathy.flatten()), Z.flatten(), (lon_grid,lat_grid), method='linear')
-    np.save(bathy_file, Zitp)
-    print(' -> Done!')
-
-
-#Loop on climatological years
-years = np.arange(CLIM_YEAR[0], CLIM_YEAR[1]+1)
-years_series = pd.Series(years)
-years_series.name='year'
-
-#Set up the empty arrays and lists
-cil_vol_stn_clim = np.full(years.shape, np.nan)
-cil_vol_stn_man_clim = np.full(years.shape, np.nan)
-cil_vol_itp_clim = np.full(years.shape, np.nan)
-cil_core_stn_clim = np.full(years.shape, np.nan)
-cil_core_stn_man_clim = np.full(years.shape, np.nan)
-cil_core_itp_clim = np.full(years.shape, np.nan)
-df_stn_temp = []
-df_stn_man_temp = []
-df_itp_temp = []
-df_stn_sal = []
-df_stn_man_sal = []
-df_itp_sal = []
-
-#Cycle through each year
-for idx, YEAR in enumerate(years):
-
-    ## -------- Get CTD data -------- ##
-    year_file = CASTS_path + str(YEAR) + '.nc'
-    print('Get ' + year_file)
-    ds = xr.open_dataset(year_file)
-
-    #Select Region
-    ds = ds.isel(time = (ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]))
-    ds = ds.isel(time = (ds.latitude>latLims[0]) & (ds.latitude<latLims[1]))
-    ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
-
-    #Take the station ID and station ID manual
-    station_ID = ds.station_ID.values.astype(str)
-    station_ID_manual = ds.station_ID_manual.values.astype(str)
-
-    #Do the bin average here
-    bins = np.arange(z1, 2000, dz)
-    warnings.simplefilter(action='ignore', category=FutureWarning)
-    ds = ds.groupby_bins('level', bins).mean(dim='level')
-
-    #Select time (save several options here)
-    if SEASON == 'summer':
-        station_ID = station_ID[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
-        station_ID_manual = station_ID_manual[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
-        ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
-    elif SEASON == 'spring':
-        station_ID = station_ID[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
-        station_ID_manual = station_ID_manual[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
-        ds = ds.sel(time=((ds['time.month']>=3)) & ((ds['time.month']<=5)))
-    elif SEASON == 'fall':
-        station_ID = station_ID[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
-        station_ID_manual = station_ID_manual[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
-        ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
     else:
-        print('!! no season specified, used them all! !!')
+        print('Get bathy...')
+        dataFile = bath_path # Maybe find a better way to handle this file
 
-    #Extract temperature and salinity
-    da_temp = ds['temperature'].T
-    da_sal = ds['salinity'].T
-    lons = np.array(ds.longitude)[0,:]
-    lats = np.array(ds.latitude)[0,:]
+        dataset = xr.open_dataset(dataFile)
+        dataset = dataset.isel(lon=(dataset.lon>=lonLims[0])*(dataset.lon<=lonLims[1]))
+        dataset = dataset.isel(lat=(dataset.lat>=latLims[0])*(dataset.lat<=latLims[1]))
 
+        #Extract latitude and longitude
+        lon = dataset.lon.values
+        lat = dataset.lat.values
 
-    ## -------- Method 1: Interpolation -------- ##
-    #Temperature to Pandas Dataframe
-    print('Process temperature')
-    df = da_temp.to_pandas()
-    #Rename columns with 'bins'
-    df.columns = bins[0:-1]
-    # Remove empty columns.
-    idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
-    df = df.dropna(axis=0,how='all')
-    lonsT = np.delete(lons,idx_empty_rows)
-    latsT = np.delete(lats,idx_empty_rows)
-    V_temp,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsT, latsT, dc)
-    print(' -> Done!')
+        #Extract the elevation
+        Z = dataset.elevation.values
 
-    #Salinity to Pandas Dataframe
-    print('Process salinity')
-    df = da_sal.to_pandas()
-    #Rename columns with 'bins'
-    df.columns = bins[0:-1]
-    # Remove empty columns
-    idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
-    df = df.dropna(axis=0,how='all')
-    lonsS = np.delete(lons,idx_empty_rows)
-    latsS = np.delete(lats,idx_empty_rows)
-    V_sal,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsS, latsS, dc)
-    print(' -> Done!')
+        #Set up the lats and lons
+        lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
+        lon_grid_bathy, lat_grid_bathy = np.meshgrid(lon,lat)
 
-    #Mask using bathymetry (not completely necessary)
-    for i, xx in enumerate(lon_reg):
-        for ii,yy in enumerate(lat_reg):
-            #Remove measurements shallower than 10m
-            if Zitp[ii,i] > -10:
-                V_temp[ii,i,:] = np.nan
-                V_sal[ii,i,:] = np.nan
-
-    #Determine the indices closest to the stations of interest
-    V_coords = np.array([[x,y] for x in lat_reg for y in lon_reg])
-    VT = V_temp.reshape(V_coords.shape[0],V_temp.shape[2])
-    VS = V_sal.reshape(V_coords.shape[0],V_sal.shape[2])
-    ZZ = Zitp.reshape(V_coords.shape[0],1)
-    #Set up the dataframes
-    df_section_itp_T = pd.DataFrame(index=stn_list, columns=z)
-    df_section_itp_S = pd.DataFrame(index=stn_list, columns=z)
-    for stn in stn_list:
-        #Determine index closest to station
-        station = df_stn[df_stn.STATION==stn]
-        idx_opti = np.argmin(np.sum(np.abs(V_coords - np.array([station.LAT.values,station.LON.values]).T), axis=1))
-        Tprofile = VT[idx_opti,:]
-        Sprofile = VS[idx_opti,:]
-        # remove data below bottom
-        bottom_depth = -ZZ[idx_opti]
-        Tprofile[z>=bottom_depth]=np.nan
-        Sprofile[z>=bottom_depth]=np.nan
-        # store in dataframe
-        df_section_itp_T.loc[stn] = Tprofile
-        df_section_itp_S.loc[stn] = Sprofile
-
-    # Drop indices with only NaNs (option #2)
-    df_section_itp_T = df_section_itp_T.dropna(axis=0, how='all')
-    df_section_itp_S = df_section_itp_S.dropna(axis=0, how='all')
-    df_section_itp_T = df_section_itp_T.astype(float)
-    df_section_itp_S = df_section_itp_S.astype(float)
-
-    #Compute the distance between stations
-    distance_itp = np.full(df_section_itp_T.index.shape, np.nan)
-    for i,stn in enumerate(df_section_itp_T.index):
-        distance_itp[i] = azst.haversine(
-            df_stn.LON[0],
-            df_stn.LAT[0],
-            df_stn[df_stn.STATION==df_section_itp_T.index[i]].LON,
-            df_stn[df_stn.STATION==df_section_itp_T.index[i]].LAT,
-            )
-
-    #Plot the CIL and record stats
-    if df_section_itp_T.index.size > 1:
-        cil_vol,cil_core = plot_temperature(distance_itp, df_section_itp_T, YEAR, SECTION, SEASON, method='itp')
-        cil_vol_itp_clim[idx] = cil_vol
-        cil_core_itp_clim[idx] = cil_core
-
-    #Record the results
-    df_section_itp_T.index.name = 'station'
-    df_section_itp_T.columns.name = 'depth'
-    df_itp_temp.append(df_section_itp_T)
-    df_section_itp_S.index.name = 'station'
-    df_section_itp_S.columns.name = 'depth'
-    df_itp_sal.append(df_section_itp_S)
-
-    ## -------- Method 2: Station_ID -------- ##
-    df_section_stn_T,df_section_stn_S = name_variable(ds, stn_list, station_ID.squeeze(), manual=False)
-
-    #Compute the distance between stations
-    distance_stn = np.full(df_section_stn_T.index.shape, np.nan)
-    for i,stn in enumerate(df_section_stn_T.index):
-        distance_stn[i] = azst.haversine(
-            df_stn.LON[0],
-            df_stn.LAT[0],
-            df_stn[df_stn.STATION==df_section_stn_T.index[i]].LON,
-            df_stn[df_stn.STATION==df_section_stn_T.index[i]].LAT,
-            )
-
-    #Plot the CIL and record stats
-    if df_section_stn_T.index.size > 1:
-        cil_vol,cil_core = plot_temperature(distance_stn, df_section_stn_T, YEAR, SECTION, SEASON, method='stn')
-        cil_vol_stn_clim[idx] = cil_vol
-        cil_core_stn_clim[idx] = cil_core
-
-    #Record the results
-    df_section_stn_T.index.name = 'station'
-    df_section_stn_T.columns.name = 'depth'
-    df_stn_temp.append(df_section_stn_T)
-    df_section_stn_S.index.name = 'station'
-    df_section_stn_S.columns.name = 'depth'
-    df_stn_sal.append(df_section_stn_S)
-
-    ## -------- Method 3: Station_ID_manual -------- ##
-    df_section_stn_man_T,df_section_stn_man_S = name_variable(ds, stn_list, station_ID_manual.squeeze(), manual=True)
-
-    #Compute the distance between stations
-    distance_stn_man = np.full(df_section_stn_man_T.index.shape, np.nan)
-    for i,stn in enumerate(df_section_stn_man_T.index):
-        distance_stn_man[i] = azst.haversine(
-            df_stn.LON[0],
-            df_stn.LAT[0],
-            df_stn[df_stn.STATION==df_section_stn_man_T.index[i]].LON,
-            df_stn[df_stn.STATION==df_section_stn_man_T.index[i]].LAT,
-            )
-
-    #Plot the CIL and record stats
-    if df_section_stn_man_T.index.size > 1:
-        cil_vol,cil_core = plot_temperature(distance_stn_man, df_section_stn_man_T, YEAR, SECTION, SEASON, method='stnman')
-        cil_vol_stn_man_clim[idx] = cil_vol
-        cil_core_stn_man_clim[idx] = cil_core
-
-    #Record the results
-    df_section_stn_man_T.index.name = 'station'
-    df_section_stn_man_T.columns.name = 'depth'
-    df_stn_man_temp.append(df_section_stn_man_T)
-    df_section_stn_man_S.index.name = 'station'
-    df_section_stn_man_S.columns.name = 'depth'
-    df_stn_man_sal.append(df_section_stn_man_S)
+        #Interpolate
+        Zitp = griddata((lon_grid_bathy.flatten(),lat_grid_bathy.flatten()), Z.flatten(), (lon_grid,lat_grid), method='linear')
+        np.save(bathy_file, Zitp)
+        print(' -> Done!')
 
 
-#Save temperature (not necessary)
-df_stn_mindex = pd.concat(df_stn_temp,keys=years_series)
-df_stn_man_mindex = pd.concat(df_stn_man_temp,keys=years_series)
-df_itp_mindex = pd.concat(df_itp_temp,keys=years_series)
+    #Loop on climatological years
+    years = np.arange(CLIM_YEAR[0], CLIM_YEAR[1]+1)
+    years_series = pd.Series(years)
+    years_series.name='year'
 
-#Save Salinity (not necessary)
-df_stn_mindex_S = pd.concat(df_stn_sal,keys=years_series)
-df_stn_man_mindex_S = pd.concat(df_stn_man_sal,keys=years_series)
-df_itp_mindex_S = pd.concat(df_itp_sal,keys=years_series)
+    #Set up the empty arrays and lists
+    cil_vol_stn_clim = np.full(years.shape, np.nan)
+    cil_vol_stn_man_clim = np.full(years.shape, np.nan)
+    cil_vol_itp_clim = np.full(years.shape, np.nan)
+    cil_core_stn_clim = np.full(years.shape, np.nan)
+    cil_core_stn_man_clim = np.full(years.shape, np.nan)
+    cil_core_itp_clim = np.full(years.shape, np.nan)
+    df_stn_temp = []
+    df_stn_man_temp = []
+    df_itp_temp = []
+    df_stn_sal = []
+    df_stn_man_sal = []
+    df_itp_sal = []
 
-#Save Climatology - currently set to stn
-df_clim =  df_stn_mindex.groupby(level=1).apply(lambda x: x.mean())
-picklename = 'df_temperature_' + SECTION + '_' + SEASON + '_clim.pkl'
-df_clim.to_pickle(picklename)
-df_clim_S =  df_stn_mindex_S.groupby(level=1).apply(lambda x: x.mean())
-picklename = 'df_salinity_' + SECTION + '_' + SEASON + '_clim.pkl'
-df_clim_S.to_pickle(picklename)
+    #Cycle through each year
+    for idx, YEAR in enumerate(years):
 
-# Save CIL timseries
-df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
-df_CIL.index = years_series
-df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
-picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
-df_CIL.to_pickle(picklename)
+        ## -------- Get CTD data -------- ##
+        year_file = CASTS_path + str(YEAR) + '.nc'
+        print('Get ' + year_file)
+        ds = xr.open_dataset(year_file)
 
-## -------- Fill temperature with climatology for CIL -------- ##
-#We need to add climatology to blank areas
-#This is done retroactively 
+        #Select Region
+        ds = ds.isel(time = (ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]))
+        ds = ds.isel(time = (ds.latitude>latLims[0]) & (ds.latitude<latLims[1]))
+        ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
 
-#Determine which years are covered in each method
-stn_years = np.unique(df_stn_mindex.index.get_level_values('year').values)
-stn_man_years = np.unique(df_stn_man_mindex.index.get_level_values('year').values)
-itp_years = np.unique(df_itp_mindex.index.get_level_values('year').values)
+        #Take the station ID and station ID manual
+        station_ID = ds.station_ID.values.astype(str)
+        station_ID_manual = ds.station_ID_manual.values.astype(str)
 
-#Cycle through each of the years
-for YEAR in years:
+        #Do the bin average here
+        bins = np.arange(z1, 2000, dz)
+        warnings.simplefilter(action='ignore', category=FutureWarning)
+        ds = ds.groupby_bins('level', bins).mean(dim='level')
 
-    ## -------- Method 1: Interpolation -------- ##
-    if np.isin(YEAR, itp_years):
-        #Import the climatology
-        stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
-        #Import the year of interest data
-        year_data = df_itp_mindex.T[[YEAR]].copy()
-        year_data = year_data.T.droplevel('year').T
-        year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
+        #Select time (save several options here)
+        if SEASON == 'summer':
+            station_ID = station_ID[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
+            station_ID_manual = station_ID_manual[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
+            ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
+        elif SEASON == 'spring':
+            station_ID = station_ID[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
+            station_ID_manual = station_ID_manual[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
+            ds = ds.sel(time=((ds['time.month']>=3)) & ((ds['time.month']<=5)))
+        elif SEASON == 'fall':
+            station_ID = station_ID[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
+            station_ID_manual = station_ID_manual[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
+            ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
+        else:
+            print('!! no season specified, used them all! !!')
 
-        #Determine the new CIL
-        cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+        #Extract temperature and salinity
+        da_temp = ds['temperature'].T
+        da_sal = ds['salinity'].T
+        lons = np.array(ds.longitude)[0,:]
+        lats = np.array(ds.latitude)[0,:]
 
-        #Record the CIL vol
-        cil_vol_itp_clim[np.where(YEAR == years)[0][0]] = cil_vol
-        #Record the CIL core
-        cil_core_itp_clim[np.where(YEAR == years)[0][0]] = cil_core
 
-    ## -------- Method 2: Station_ID -------- ##
-    if np.isin(YEAR, stn_years):
-        #Import the climatology
-        stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
-        #Import the year of interest data
-        year_data = df_stn_mindex.T[[YEAR]].copy()
-        year_data = year_data.T.droplevel('year').T
-        year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
+        ## -------- Method 1: Interpolation -------- ##
+        #Temperature to Pandas Dataframe
+        print('Process temperature')
+        df = da_temp.to_pandas()
+        #Rename columns with 'bins'
+        df.columns = bins[0:-1]
+        # Remove empty columns.
+        idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
+        df = df.dropna(axis=0,how='all')
+        lonsT = np.delete(lons,idx_empty_rows)
+        latsT = np.delete(lats,idx_empty_rows)
+        V_temp,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsT, latsT, dc)
+        print(' -> Done!')
 
-        #Determine the new CIL
-        cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+        #Salinity to Pandas Dataframe
+        print('Process salinity')
+        df = da_sal.to_pandas()
+        #Rename columns with 'bins'
+        df.columns = bins[0:-1]
+        # Remove empty columns
+        idx_empty_rows = df.isnull().all(1).values.nonzero()[0]
+        df = df.dropna(axis=0,how='all')
+        lonsS = np.delete(lons,idx_empty_rows)
+        latsS = np.delete(lats,idx_empty_rows)
+        V_sal,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsS, latsS, dc)
+        print(' -> Done!')
 
-        #Record the CIL vol
-        cil_vol_stn_clim[np.where(YEAR == years)[0][0]] = cil_vol
-        #Record the CIL core
-        cil_core_stn_clim[np.where(YEAR == years)[0][0]] = cil_core
+        #Mask using bathymetry (not completely necessary)
+        for i, xx in enumerate(lon_reg):
+            for ii,yy in enumerate(lat_reg):
+                #Remove measurements shallower than 10m
+                if Zitp[ii,i] > -10:
+                    V_temp[ii,i,:] = np.nan
+                    V_sal[ii,i,:] = np.nan
 
-    ## -------- Method 3: Station_ID_manual -------- ##
-    if np.isin(YEAR, stn_years):
-        #Import the climatology
-        stn_clim = df_stn_man_mindex.groupby(level=1).apply(lambda x: x.mean()).T
-        #Import the year of interest data
-        year_data = df_stn_man_mindex.T[[YEAR]].copy()
-        year_data = year_data.T.droplevel('year').T
-        year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
+        #Determine the indices closest to the stations of interest
+        V_coords = np.array([[x,y] for x in lat_reg for y in lon_reg])
+        VT = V_temp.reshape(V_coords.shape[0],V_temp.shape[2])
+        VS = V_sal.reshape(V_coords.shape[0],V_sal.shape[2])
+        ZZ = Zitp.reshape(V_coords.shape[0],1)
+        #Set up the dataframes
+        df_section_itp_T = pd.DataFrame(index=stn_list, columns=z)
+        df_section_itp_S = pd.DataFrame(index=stn_list, columns=z)
+        for stn in stn_list:
+            #Determine index closest to station
+            station = df_stn[df_stn.STATION==stn]
+            idx_opti = np.argmin(np.sum(np.abs(V_coords - np.array([station.LAT.values,station.LON.values]).T), axis=1))
+            Tprofile = VT[idx_opti,:]
+            Sprofile = VS[idx_opti,:]
+            # remove data below bottom
+            bottom_depth = -ZZ[idx_opti]
+            Tprofile[z>=bottom_depth]=np.nan
+            Sprofile[z>=bottom_depth]=np.nan
+            # store in dataframe
+            df_section_itp_T.loc[stn] = Tprofile
+            df_section_itp_S.loc[stn] = Sprofile
 
-        #Determine the new CIL
-        cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+        # Drop indices with only NaNs (option #2)
+        df_section_itp_T = df_section_itp_T.dropna(axis=0, how='all')
+        df_section_itp_S = df_section_itp_S.dropna(axis=0, how='all')
+        df_section_itp_T = df_section_itp_T.astype(float)
+        df_section_itp_S = df_section_itp_S.astype(float)
 
-        #Record the CIL vol
-        cil_vol_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_vol
-        #Record the CIL core
-        cil_core_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_core
+        #Compute the distance between stations
+        distance_itp = np.full(df_section_itp_T.index.shape, np.nan)
+        for i,stn in enumerate(df_section_itp_T.index):
+            distance_itp[i] = azst.haversine(
+                df_stn.LON[0],
+                df_stn.LAT[0],
+                df_stn[df_stn.STATION==df_section_itp_T.index[i]].LON,
+                df_stn[df_stn.STATION==df_section_itp_T.index[i]].LAT,
+                )
 
-    print(' -> '+str(YEAR)+' done! ')
+        #Plot the CIL and record stats
+        if df_section_itp_T.index.size > 1:
+            cil_vol,cil_core = plot_temperature(distance_itp, df_section_itp_T, YEAR, SECTION, SEASON, method='itp')
+            cil_vol_itp_clim[idx] = cil_vol
+            cil_core_itp_clim[idx] = cil_core
 
-# Save CIL timseries
-df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
-df_CIL.index = years_series
-df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
-picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
-df_CIL.to_pickle(picklename)
+        #Record the results
+        df_section_itp_T.index.name = 'station'
+        df_section_itp_T.columns.name = 'depth'
+        df_itp_temp.append(df_section_itp_T)
+        df_section_itp_S.index.name = 'station'
+        df_section_itp_S.columns.name = 'depth'
+        df_itp_sal.append(df_section_itp_S)
+
+        ## -------- Method 2: Station_ID -------- ##
+        df_section_stn_T,df_section_stn_S = name_variable(ds, stn_list, station_ID.squeeze(), manual=False)
+
+        #Compute the distance between stations
+        distance_stn = np.full(df_section_stn_T.index.shape, np.nan)
+        for i,stn in enumerate(df_section_stn_T.index):
+            distance_stn[i] = azst.haversine(
+                df_stn.LON[0],
+                df_stn.LAT[0],
+                df_stn[df_stn.STATION==df_section_stn_T.index[i]].LON,
+                df_stn[df_stn.STATION==df_section_stn_T.index[i]].LAT,
+                )
+
+        #Plot the CIL and record stats
+        if df_section_stn_T.index.size > 1:
+            cil_vol,cil_core = plot_temperature(distance_stn, df_section_stn_T, YEAR, SECTION, SEASON, method='stn')
+            cil_vol_stn_clim[idx] = cil_vol
+            cil_core_stn_clim[idx] = cil_core
+
+        #Record the results
+        df_section_stn_T.index.name = 'station'
+        df_section_stn_T.columns.name = 'depth'
+        df_stn_temp.append(df_section_stn_T)
+        df_section_stn_S.index.name = 'station'
+        df_section_stn_S.columns.name = 'depth'
+        df_stn_sal.append(df_section_stn_S)
+
+        ## -------- Method 3: Station_ID_manual -------- ##
+        df_section_stn_man_T,df_section_stn_man_S = name_variable(ds, stn_list, station_ID_manual.squeeze(), manual=True)
+
+        #Compute the distance between stations
+        distance_stn_man = np.full(df_section_stn_man_T.index.shape, np.nan)
+        for i,stn in enumerate(df_section_stn_man_T.index):
+            distance_stn_man[i] = azst.haversine(
+                df_stn.LON[0],
+                df_stn.LAT[0],
+                df_stn[df_stn.STATION==df_section_stn_man_T.index[i]].LON,
+                df_stn[df_stn.STATION==df_section_stn_man_T.index[i]].LAT,
+                )
+
+        #Plot the CIL and record stats
+        if df_section_stn_man_T.index.size > 1:
+            cil_vol,cil_core = plot_temperature(distance_stn_man, df_section_stn_man_T, YEAR, SECTION, SEASON, method='stnman')
+            cil_vol_stn_man_clim[idx] = cil_vol
+            cil_core_stn_man_clim[idx] = cil_core
+
+        #Record the results
+        df_section_stn_man_T.index.name = 'station'
+        df_section_stn_man_T.columns.name = 'depth'
+        df_stn_man_temp.append(df_section_stn_man_T)
+        df_section_stn_man_S.index.name = 'station'
+        df_section_stn_man_S.columns.name = 'depth'
+        df_stn_man_sal.append(df_section_stn_man_S)
+
+
+    #Save temperature (not necessary)
+    df_stn_mindex = pd.concat(df_stn_temp,keys=years_series)
+    df_stn_man_mindex = pd.concat(df_stn_man_temp,keys=years_series)
+    df_itp_mindex = pd.concat(df_itp_temp,keys=years_series)
+
+    #Save Salinity (not necessary)
+    df_stn_mindex_S = pd.concat(df_stn_sal,keys=years_series)
+    df_stn_man_mindex_S = pd.concat(df_stn_man_sal,keys=years_series)
+    df_itp_mindex_S = pd.concat(df_itp_sal,keys=years_series)
+
+    #Save Climatology - currently set to stn
+    df_clim =  df_stn_mindex.groupby(level=1).apply(lambda x: x.mean())
+    picklename = 'df_temperature_' + SECTION + '_' + SEASON + '_clim.pkl'
+    df_clim.to_pickle(picklename)
+    df_clim_S =  df_stn_mindex_S.groupby(level=1).apply(lambda x: x.mean())
+    picklename = 'df_salinity_' + SECTION + '_' + SEASON + '_clim.pkl'
+    df_clim_S.to_pickle(picklename)
+
+    # Save CIL timseries
+    df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
+    df_CIL.index = years_series
+    df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
+    picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
+    df_CIL.to_pickle(picklename)
+
+    ## -------- Fill temperature with climatology for CIL -------- ##
+    #We need to add climatology to blank areas
+    #This is done retroactively
+
+    #Determine which years are covered in each method
+    stn_years = np.unique(df_stn_mindex.index.get_level_values('year').values)
+    stn_man_years = np.unique(df_stn_man_mindex.index.get_level_values('year').values)
+    itp_years = np.unique(df_itp_mindex.index.get_level_values('year').values)
+
+    #Cycle through each of the years
+    for YEAR in years:
+
+        ## -------- Method 1: Interpolation -------- ##
+        if np.isin(YEAR, itp_years):
+            #Import the climatology
+            stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+            #Import the year of interest data
+            year_data = df_itp_mindex.T[[YEAR]].copy()
+            year_data = year_data.T.droplevel('year').T
+            year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
+
+            #Determine the new CIL
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+
+            #Record the CIL vol
+            cil_vol_itp_clim[np.where(YEAR == years)[0][0]] = cil_vol
+            #Record the CIL core
+            cil_core_itp_clim[np.where(YEAR == years)[0][0]] = cil_core
+
+        ## -------- Method 2: Station_ID -------- ##
+        if np.isin(YEAR, stn_years):
+            #Import the climatology
+            stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+            #Import the year of interest data
+            year_data = df_stn_mindex.T[[YEAR]].copy()
+            year_data = year_data.T.droplevel('year').T
+            year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
+
+            #Determine the new CIL
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+
+            #Record the CIL vol
+            cil_vol_stn_clim[np.where(YEAR == years)[0][0]] = cil_vol
+            #Record the CIL core
+            cil_core_stn_clim[np.where(YEAR == years)[0][0]] = cil_core
+
+        ## -------- Method 3: Station_ID_manual -------- ##
+        if np.isin(YEAR, stn_years):
+            #Import the climatology
+            stn_clim = df_stn_man_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+            #Import the year of interest data
+            year_data = df_stn_man_mindex.T[[YEAR]].copy()
+            year_data = year_data.T.droplevel('year').T
+            year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
+
+            #Determine the new CIL
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+
+            #Record the CIL vol
+            cil_vol_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_vol
+            #Record the CIL core
+            cil_core_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_core
+
+        print(' -> '+str(YEAR)+' done! ')
+
+    # Save CIL timseries
+    df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
+    df_CIL.index = years_series
+    df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
+    picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
+    df_CIL.to_pickle(picklename)
+    os.system('mv temp_section_*.png AZMP_lines/')

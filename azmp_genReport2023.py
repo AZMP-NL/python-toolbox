@@ -34,6 +34,7 @@ import pandas as pd
 import sys
 sys.path.append(os.path.expanduser('~/github/AZMP-NL/python-toolbox/azmp_modules'))
 import azmp_sections_tools as azst
+import azmp_sections_climtools as azsct
 import azmp_report_tools as azrt
 import azmp_genreport as azgen
 import azmp_utils as azu
@@ -50,6 +51,7 @@ if os.path.isdir('bergs') != True: os.system('mkdir bergs')
 if os.path.isdir('bottom_temp') != True: os.system('mkdir bottom_temp')
 if os.path.isdir('bottom_saln') != True: os.system('mkdir bottom_saln')
 if os.path.isdir('bottom_temp_stats') != True: os.system('mkdir bottom_temp_stats')
+if os.path.isdir('AZMP_lines') != True: os.system('AZMP_lines')
 
 
 ## ---- 2023 update ---- ## [DONE 2022x]
@@ -342,11 +344,9 @@ for season in ['spring','fall']:
         netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc'
         )
 os.system('mv *.pkl operation_files/')
-#azrt.bottom_stats(years=np.arange(1980, 2023), season='summer')
 azrt.bottom_scorecards(years=[1980, 2023], clim_year=[1991, 2020])
 os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png 2023')
-os.system('mv *.csv bottom_temp_stats/')
-os.system('mv *.png bottom_temp_stats/')
+os.system('mv *.png *.csv bottom_temp_stats/')
 
 
 
@@ -361,11 +361,25 @@ os.system('mv *.png bottom_temp_stats/')
 
 
 ## ---------------  Sections plots ------------- ## (FINISHED/WORKING - 2023)
-#Ensure that climatologies have been set up (azmp_section_clim.py)
-os.system('mkdir AZMP_lines')
 year = 2023
 sections = ['SI', 'BB', 'FC']
 seasons = ['summer']
+#Ensure that climatologies have been set up
+for section in sections:
+    for season in seasons:
+        azsct.section_clim(
+            SECTION=section,
+            SEASON=season,
+            CLIM_YEAR=[1950,2023],
+            dlat=2,
+            dlon=2,
+            z1=2,
+            dz=5,
+            dc=0.2,
+            CASTS_path='~/data/CASTS/',
+            bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
+            )
+os.system('mv *.pkl operation_files/')
 variables = ['temperature', 'salinity']
 for section in sections:
     for season in seasons:
@@ -376,8 +390,8 @@ for section in sections:
                 VAR=var,
                 SECTION=section,
                 SEASON=season,
-                bath_path='/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc',
-                CASTS_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/',
+                bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+                CASTS_path='~/data/CASTS/',
                 YEAR=year,
                 ZMAX=500,
                 STATION_BASED=True
@@ -391,9 +405,8 @@ for section in sections:
 
         os.system('cp ' + section + '_stn_' + season + '_' + str(year) + '.png 2023')
         os.system('cp ' + section + '_stn_' + season + '_' + str(year) + '_FR.png 2023')
-os.system('mv *.png AZMP_lines/')
-os.system('mv *.csv AZMP_lines/')
-os.system('mv *.pkl AZMP_lines/')
+os.system('mv *.png *.csv *.pkl AZMP_lines/')
+
 
 # Section CIL [CANNOT UPDATE 2022]
 %my_run azmp_CIL_scorecards.py  # update year in script!

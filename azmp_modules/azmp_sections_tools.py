@@ -47,7 +47,7 @@ def haversine(lon1, lat1, lon2, lat2):
     return km
 
 
-def section_bathymetry(section_name):
+def section_bathymetry(section_name,section_path):
     """
     Retrieve high-resultion bathymetry (depth vs along-distance from 1st station on section) along AZMP-NL sections.
     Bathymetry taken from high-resolution data (https://github.com/AZMP-NL/bathymetry)
@@ -65,7 +65,7 @@ def section_bathymetry(section_name):
     bathy_dict = dict(zip(standard_sections, bathy_files))
 
     # This is my personal path, maybe find a way to generelize this.
-    bathy_file = 'operation_files/' + bathy_dict[section_name]
+    bathy_file = section_path + bathy_dict[section_name]
     
     bathy = np.loadtxt(bathy_file, delimiter=",", unpack=False)
     bathy_x = bathy[:,0]/1000.0
@@ -113,7 +113,7 @@ def get_section(section_name, year, season, var_name, bath_path, CASTS_path, dla
     '''
 
     ## ---- Get Stations ---- ## 
-    df_stn = pd.read_excel('operation_files/STANDARD_SECTIONS.xlsx')
+    df_stn = pd.read_excel('~/github/AZMP-NL/utils/STANDARD_SECTIONS.xlsx')
     df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
     df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
     df_stn = df_stn.dropna()
@@ -557,7 +557,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, bath_path, CASTS_path, ZMA
     df_clim.index = df_section_itp.loc[df_clim.index].index
     
     ## ---- Retrieve bathymetry using function ---- ##
-    bathymetry = section_bathymetry(SECTION_BATHY)
+    bathymetry = section_bathymetry(SECTION_BATHY, os.path.expanduser('~/github/AZMP-NL/bathymetry/bottom_profiles/'))
 
     ## ---  ---- ## 
     df_anom =  df_section - df_clim
