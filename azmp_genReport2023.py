@@ -48,6 +48,8 @@ if os.path.isdir('air_temperature') != True: os.system('mkdir air_temperature')
 if os.path.isdir('stn27') != True: os.system('mkdir stn27')
 if os.path.isdir('bergs') != True: os.system('mkdir bergs')
 if os.path.isdir('bottom_temp') != True: os.system('mkdir bottom_temp')
+if os.path.isdir('bottom_saln') != True: os.system('mkdir bottom_saln')
+if os.path.isdir('bottom_temp_stats') != True: os.system('mkdir bottom_temp_stats')
 
 
 ## ---- 2023 update ---- ## [DONE 2022x]
@@ -251,14 +253,13 @@ azS27.scorecard_plotter(
 #Montage all the figures together
 os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat_0-50m.png scorecards_s27_strat_10-150m.png  -gravity East -append -geometry +1+1 scorecards_s27.png')
 os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_0-50m_FR.png scorecards_s27_strat_10-150m_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
-
-
+os.system('cp scorecards_s27.png cp scorecards_s27_FR.png ./2023/')
+os.system('rm scorecards_s27*.png')
 
 
 # Clean the files:
 os.system('cp s27_mld_monthly.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./2023/')
 os.system('cp s27_salinity_subplot_2023.png s27_temperature_subplot_2023.png ./2023/')
-
 os.system('mv s27*.png ./stn27')
 os.system('mv *.csv *.pkl ./operation_files')
 
@@ -276,45 +277,53 @@ os.system('mv *.pkl ./operation_files')
 
 
 # 7. bottom temperature maps (FINISHED/WORKING - 2023)
-azu.get_bottomT_climato(
-    INFILES='~/data/CABOTS/temperature_adjusted/spring/',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
-    year_lims=[1991, 2020],
-    season='spring',
-    h5_outputfile='operation_files/Tbot_climato_spring_0.10.h5'
-    )
-azu.get_bottomT_climato(
-    INFILES='~/data/CABOTS/temperature_adjusted/fall/',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
-    year_lims=[1991, 2020],
-    season='fall',
-    h5_outputfile='operation_files/Tbot_climato_fall_0.10.h5'
-    )
-#os.system('mv *.h5 operation_files/')
-azrt.bottom_temperature(
-    season='spring',
-    year='2023',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    climato_file='operation_files/Tbot_climato_spring_0.10.h5',
-    netcdf_path='~/data/CABOTS/temperature_adjusted/spring/',
-    CASTS_path='~/data/CASTS/'
-    )
-azrt.bottom_temperature(
-    season='fall',
-    year='2023',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    climato_file='operation_files/Tbot_climato_fall_0.10.h5',
-    netcdf_path='~/data/CABOTS/temperature_adjusted/fall/',
-    CASTS_path='~/data/CASTS/'
-    )
+#Calculate the bottom temperature and salinity climatology
+for season in ['spring','summer','fall']:
+    azu.get_bottomT_climato(
+        INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        lonLims=[-63, -45],
+        latLims=[42, 58],
+        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        year_lims=[1991, 2020],
+        season=season,
+        h5_outputfile='operation_files/Tbot_climato_'+season+'_0.10.h5'
+        )
+    azu.get_bottomS_climato(
+        INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        lonLims=[-63, -45],
+        latLims=[42, 58],
+        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        year_lims=[1991, 2020],
+        season=season,
+        h5_outputfile='operation_files/Sbot_climato_'+season+'_0.10.h5'
+        )
+    print('    -> '+season+' done!')
+
+#Calculate the bottom temperature and salinity for specific years
+for season in ['spring','fall']:
+    azrt.bottom_temperature(
+        season=season,
+        year='2023',
+        lonLims=[-63, -45],
+        latLims=[42, 58],
+        climato_file='operation_files/Tbot_climato_'+season+'_0.10.h5',
+        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        CASTS_path='~/data/CASTS/'
+        )
+    azrt.bottom_salinity(
+        season=season,
+        year='2023',
+        lonLims=[-63, -45],
+        latLims=[42, 58],
+        climato_file='operation_files/Sbot_climato_'+season+'_0.10.h5',
+        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        CASTS_path='~/data/CASTS/'
+        )
+    print('    -> '+season+' done!')
 os.system('cp bottomT_spring2023.png bottomT_spring2023_FR.png bottomT_fall2023.png bottomT_fall2023_FR.png 2023')
-os.system('mv *.png bottom_temp/')
+os.system('cp bottomS_spring2023.png bottomS_spring2023_FR.png bottomS_fall2023.png bottomS_fall2023_FR.png 2023')
+os.system('mv bottomT_*.png bottom_temp_*.png bottom_temp/')
+os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 
 
 ## WE'RE HERE I THINK ##
@@ -322,60 +331,16 @@ os.system('mv *.png bottom_temp/')
 # For NAFO STACFEN and STACFIS input: [NEED TO DO]
 azrt.bottom_temperature(season='summer', year='2022', climato_file='Tbot_climato_SA4_summer_0.10.h5')
 
-# bottom salinity maps (FINISHED/WORKING - 2023)
-os.system('mkdir  bottom_saln')
-azu.get_bottomS_climato(
-    INFILES='/home/jcoyne/Documents/Bottom_Stats/salinity_adjusted/spring/',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    bath_file='/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc',
-    year_lims=[1991, 2020],
-    season='spring',
-    h5_outputfile='Sbot_climato_spring_0.10.h5'
-    )
-azu.get_bottomS_climato(
-    INFILES='/home/jcoyne/Documents/Bottom_Stats/salinity_adjusted/fall/',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    bath_file='/home/jcoyne/Documents/Datasets/GEBCO_2023/GEBCO_2023_sub_ice_topo.nc',
-    year_lims=[1991, 2020],
-    season='fall',
-    h5_outputfile='Sbot_climato_fall_0.10.h5'
-    )
-os.system('mv *.h5 operation_files/')
-azrt.bottom_salinity(
-    season='spring',
-    year='2023',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    climato_file='operation_files/Sbot_climato_spring_0.10.h5',
-    netcdf_path='/home/jcoyne/Documents/Bottom_Stats/salinity_adjusted/spring/'
-    )
-azrt.bottom_salinity(
-    season='fall',
-    year='2023',
-    lonLims=[-63, -45],
-    latLims=[42, 58],
-    climato_file='operation_files/Sbot_climato_fall_0.10.h5',
-    netcdf_path='/home/jcoyne/Documents/Bottom_Stats/salinity_adjusted/fall/'
-    )
-os.system('cp bottomS_spring2023.png bottomS_spring2023_FR.png bottomS_fall2023.png bottomS_fall2023_FR.png 2023')
-os.system('mv *.png bottom_saln/')
-
 
 # bottom stats and scorecards (arange year+1)
 #[need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
 os.system('mkdir bottom_temp_stats')
-azrt.bottom_stats(
-    years=np.arange(1980, 2023+1),
-    season='spring',
-    netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/'
-    )
-azrt.bottom_stats(
-    years=np.arange(1980, 2023+1),
-    season='fall',
-    netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/fall/'
-    )
+for season in ['spring','fall']:
+    azrt.bottom_stats(
+        years=np.arange(1980, 2023+1),
+        season=season,
+        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc'
+        )
 os.system('mv *.pkl operation_files/')
 #azrt.bottom_stats(years=np.arange(1980, 2023), season='summer')
 azrt.bottom_scorecards(years=[1980, 2023], clim_year=[1991, 2020])

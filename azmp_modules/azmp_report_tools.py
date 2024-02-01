@@ -39,7 +39,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from shapely.ops import unary_union
 ## AZMP custom imports
-sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_modules')
+sys.path.append(os.path.expanduser('~/github/AZMP-NL/python-toolbox/azmp_modules'))
 import azmp_utils as azu
 ## for scorecards
 import unicodedata
@@ -81,7 +81,15 @@ def add_path(PATH):
     sys.path.append(PATH)  # or .insert(0, YOUR_PATH) may give higher priority
 
 
-def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/', CASTS_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/', climato_file=''):
+def bottom_temperature(
+    season,
+    lonLims,
+    latLims,
+    year,
+    clim_fill=True,
+    netcdf_path='~/data/CABOTS/',
+    CASTS_path='~/data/CASTS/',
+    climato_file=''):
     """
     Bottom temperature maps for AZMP ResDoc
 
@@ -120,8 +128,15 @@ def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_pa
         elif season=='summer':
             climato_file='operation_files/Tbot_climato_summer_0.10.h6'
 
-    year_file = netcdf_path + str(year) + '.nc'
-
+    if netcdf_path.endswith('.nc') == False:
+        if season=='spring':
+            year_file=netcdf_path+'CABOTS_bottomstats_spring.nc'
+        elif season=='summer':
+            year_file=netcdf_path+'CABOTS_bottomstats_summer.nc'
+        elif season=='fall':
+            year_file=netcdf_path+'CABOTS_bottomstats_fall.nc'
+    else:
+        year_file=netcdf_path
 
     ## ---- Load Climato data ---- ##
     print('Load ' + climato_file)
@@ -133,10 +148,10 @@ def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_pa
     h5f.close()
 
     #Load in the CASTS data for cast locations
-    ds = xr.open_dataset(CASTS_path+str(year)+'.nc')
+    ds = xr.open_dataset(os.path.expanduser(CASTS_path)+str(year)+'.nc')
     # Selection of a subset region
-    ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
-    ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
+    ds = ds.sel(time=((ds.longitude>lonLims[0])*(ds.longitude<=lonLims[1])))
+    ds = ds.sel(time=((ds.latitude>latLims[0])*(ds.latitude<=latLims[1])))
     # Select time (save several options here)
     if season == 'summer':
         ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
@@ -146,6 +161,11 @@ def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_pa
         ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
     else:
         print('!! no season specified, used them all! !!')
+
+    #Determine which temperature casts have measurements
+    ds_temp_filt = ds.temperature.values
+    ds_temp_filt = np.isnan(ds_temp_filt).sum(axis=1) != ds.level.size
+    ds = ds.sel(time=ds_temp_filt)
     lons = ds.longitude.values
     lats = ds.latitude.values
 
@@ -154,24 +174,22 @@ def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_pa
 
     ## ---- Get bottom_temperature data --- ##
     print('Get ' + year_file)
-    ds = xr.open_dataset(year_file)
-    ds = ds.mean('time')
+    ds = xr.open_dataset(os.path.expanduser(year_file))
+    #Isolate for the year of interest
+    ds = ds.sel(TIME=ds['TIME.year']==int(year))
+    ds = ds.mean('TIME')
 
     # Selection of a subset region
-    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
-    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
-    Tbot = ds.bottom_temperature.values
+    ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
+    ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
+    Tbot = ds.BOTTOM_TEMPERATURE.values
 
     # Use climatology to fill missing pixels
     if clim_fill:
         print('Fill NaNs with climatology')
         Tbot_orig = Tbot.copy()
-        #Tbot_fill = Tbot_climato[Tbot_orig.isna()]
-        #Tbot[Tbot_orig.isna()] = Tbot_climato[Tbot_orig.isna()]
         Tbot_fill = Tbot_climato[np.isnan(Tbot_orig)]
         Tbot[np.isnan(Tbot_orig)] = Tbot_climato[np.isnan(Tbot_orig)]
-
-
 
     # Mask data outside Nafo div.
     print('Mask according to NAFO division for ' + season)
@@ -439,7 +457,15 @@ def bottom_temperature(season, lonLims, latLims, year, clim_fill=True, netcdf_pa
 
 
 #### bottom_salinity
-def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path='/home/jcoyne/Documents/Bottom_Stats/temperature_adjusted/spring/', CASTS_path='/home/jcoyne/Documents/CASH/Combined_Data/CASTS_new-vertical_v2/', climato_file=''):
+def bottom_salinity(
+    season,
+    year,
+    lonLims,
+    latLims,
+    clim_fill=True,
+    netcdf_path='~/data/CABOTS/',
+    CASTS_path='~/data/CASTS/',
+    climato_file=''):
     '''
     Bottom salinity maps for AZMP ResDoc
 
@@ -463,8 +489,15 @@ def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path=
         elif season=='summer':
             climato_file='operation_files/Sbot_climato_summer_0.10.h6'
 
-    year_file = netcdf_path + str(year) + '.nc'
-
+    if netcdf_path.endswith('.nc') == False:
+        if season=='spring':
+            year_file=netcdf_path+'CABOTS_bottomstats_spring.nc'
+        elif season=='summer':
+            year_file=netcdf_path+'CABOTS_bottomstats_summer.nc'
+        elif season=='fall':
+            year_file=netcdf_path+'CABOTS_bottomstats_fall.nc'
+    else:
+        year_file=netcdf_path
 
     ## ---- Load Climato data ---- ##    
     print('Load ' + climato_file)
@@ -476,10 +509,10 @@ def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path=
     h5f.close()
 
     #Load in the CASTS data for cast locations
-    ds = xr.open_dataset(CASTS_path+str(year)+'.nc')
+    ds = xr.open_dataset(os.path.expanduser(CASTS_path)+str(year)+'.nc')
     # Selection of a subset region
-    ds = ds.where((ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]), drop=True)
-    ds = ds.where((ds.latitude>latLims[0]) & (ds.latitude<latLims[1]), drop=True)
+    ds = ds.sel(time=((ds.longitude>lonLims[0])*(ds.longitude<=lonLims[1])))
+    ds = ds.sel(time=((ds.latitude>latLims[0])*(ds.latitude<=latLims[1])))
     # Select time (save several options here)
     if season == 'summer':
         ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
@@ -489,6 +522,11 @@ def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path=
         ds = ds.sel(time=((ds['time.month']>=9)) & ((ds['time.month']<=12)))
     else:
         print('!! no season specified, used them all! !!')
+
+    #Determine which salinity casts have measurements
+    ds_saln_filt = ds.salinity.values
+    ds_saln_filt = np.isnan(ds_saln_filt).sum(axis=1) != ds.level.size
+    ds = ds.sel(time=ds_saln_filt)
     lons = ds.longitude.values
     lats = ds.latitude.values
 
@@ -497,13 +535,15 @@ def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path=
 
     ## ---- Get bottom_salinity data --- ##
     print('Get ' + year_file)
-    ds = xr.open_dataset(year_file)
-    ds = ds.mean('time')
+    ds = xr.open_dataset(os.path.expanduser(year_file))
+    #Isolate for the year of interest
+    ds = ds.sel(TIME=ds['TIME.year']==int(year))
+    ds = ds.mean('TIME')
 
     # Selection of a subset region
-    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
-    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
-    Sbot = ds.bottom_salinity.values
+    ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
+    ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
+    Sbot = ds.BOTTOM_SALINITY.values
 
     # Use climatology to fill missing pixels
     if clim_fill:
@@ -776,7 +816,12 @@ def bottom_salinity(season, year, lonLims, latLims, clim_fill=True, netcdf_path=
 
 
 #### bottom_stats
-def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', climato_file=''):
+def bottom_stats(
+    years,
+    season,
+    plot=False,
+    netcdf_path='',
+    climato_file=''):
 
     '''
         Function bottom_stats() based on script azmp_bottom_stats.py
@@ -888,8 +933,8 @@ def bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf
     df_list = []
     for year in years:
         print(' ---- ' + str(year) + ' ---- ')
-        year_file = netcdf_path + str(year) + '.nc'
-        Tdict = azu.get_bottomT(year_file, season, climato_file, lab_mask=False)
+        year_file = netcdf_path
+        Tdict = azu.get_bottomT(year_file, year, season, climato_file, lab_mask=False)
         Tdict['Tbot_orig'] = Tdict['Tbot']
         Tbot = Tdict['Tbot']
         lons = Tdict['lon_reg']

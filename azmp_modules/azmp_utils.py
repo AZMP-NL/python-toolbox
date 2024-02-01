@@ -416,20 +416,22 @@ def get_bottomT_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
     else:
 
         #Load in the bottom temperature data
-        ds = xr.open_mfdataset([INFILES+str(year)+'.nc' for year in np.arange(year_lims[0],year_lims[1]+1)])
-        ds = ds.mean('time')
+        ds = xr.open_dataset(os.path.expanduser(INFILES))
+        #Isolate for the time of interest
+        ds = ds.sel(TIME=((ds['TIME.year']>=year_lims[0])*(ds['TIME.year']<=year_lims[1])))
+        ds = ds.mean('TIME')
 
         #Isolate for the region of interest
-        ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
-        ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+        ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
+        ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
 
         #Record the temperature, latitude, longitude
-        ds_temp = ds.bottom_temperature.values
-        lons = ds.longitude.values
-        lats = ds.latitude.values
+        ds_temp = ds.BOTTOM_TEMPERATURE.values
+        lons = ds.LONGITUDE.values
+        lats = ds.LATITUDE.values
 
         ## ---- Region parameters ---- ##
-        ds_bath = xr.open_dataset(bath_file)
+        ds_bath = xr.open_dataset(os.path.expanduser(bath_file))
         ds_bath = ds_bath.isel(lon=(ds_bath.lon>=lonLims[0])*(ds_bath.lon<=lonLims[1]))
         ds_bath = ds_bath.isel(lat=(ds_bath.lat>=latLims[0])*(ds_bath.lat<=latLims[1]))
         Zitp = ds_bath.elevation[::10,::10].values
@@ -490,18 +492,20 @@ def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
 
     else:
 
-        #Load in the bottom temperature data
-        ds = xr.open_mfdataset([INFILES+str(year)+'.nc' for year in np.arange(year_lims[0],year_lims[1]+1)])
-        ds = ds.mean('time')
+        #Load in the bottom salinity data
+        ds = xr.open_dataset(os.path.expanduser(INFILES))
+        #Isolate for the time of interest
+        ds = ds.sel(TIME=((ds['TIME.year']>=year_lims[0])*(ds['TIME.year']<=year_lims[1])))
+        ds = ds.mean('TIME')
 
         #Isolate for the region of interest
-        ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
-        ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
+        ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
+        ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
 
         #Record the temperature, latitude, longitude
-        ds_saln = ds.bottom_salinity.values
-        lons = ds.longitude.values
-        lats = ds.latitude.values
+        ds_saln = ds.BOTTOM_SALINITY.values
+        lons = ds.LONGITUDE.values
+        lats = ds.LATITUDE.values
 
         ## ---- Region parameters ---- ##
         ds_bath = xr.open_dataset(bath_file)
@@ -528,7 +532,7 @@ def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
 
 
 
-def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
+def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=True):
     '''
     Generate and return bottom temperature data corresponding to a certain climatology map.
     Returns a dictionary.
@@ -560,14 +564,16 @@ def get_bottomT(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     ## ---- Get CTD data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
-    ds = ds.mean('time')
+    #Isolate for the time of interest
+    ds = ds.sel(TIME=ds['TIME.year']==int(year))
+    ds = ds.mean('TIME')
     # Selection of a subset region
-    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
-    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
-    Tbot = ds.bottom_temperature.values
+    ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
+    ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
+    Tbot = ds.BOTTOM_TEMPERATURE.values
 
     ## Save data in h5 for further use
-    h5_cube_name = 'operation_files/Tcube_' + season + year_file.split('/')[-1].strip('.nc')  + '.h5'
+    h5_cube_name = 'operation_files/Tcube_' + season + str(year) + '.h5'
     h5f = h5py.File(h5_cube_name, 'w')
     h5f.create_dataset('temperature', data=Tbot)
     h5f.create_dataset('lon_reg', data=lon_reg)
