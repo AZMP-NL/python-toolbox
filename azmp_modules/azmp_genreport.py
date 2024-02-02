@@ -65,12 +65,6 @@ def nao(
     Adapted from nao.py
     '''
 
-    # Adjust fontsize/weight
-    #font = {'family' : 'normal',
-    #        'weight' : 'bold',
-    #        'size'   : 18}
-    #plt.rc('font', **font)
-
     # Download and save up-to-date  NAO index from NOAA (data.csv) if needed
     #url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv' (until 2020...)
     if os.path.exists(os.path.expanduser(nao_file_loc)):
@@ -218,11 +212,6 @@ def ao(
 
     Adapted from ao.py
     '''
-    # Adjust fontsize/weight
-    font = {'family' : 'normal',
-            'weight' : 'bold',
-            'size'   : 18}
-    plt.rc('font', **font)
 
     # Download and save up-to-date  AO index from NOAA (data.csv) if needed
     # url = 'https://www.ncdc.noaa.gov/teleconnections/ao/data.csv'
@@ -322,12 +311,6 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
 
     Adapted from amo.py
     '''
-
-    # Adjust fontsize/weight
-    font = {'family' : 'normal',
-            'weight' : 'bold',
-            'size'   : 18}
-    plt.rc('font', **font)
 
     # Download and save up-to-date  AMO index from NOAA (data.csv) if needed
     if os.path.exists(os.path.expanduser(amo_file_loc)):

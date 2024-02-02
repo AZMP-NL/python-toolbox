@@ -41,9 +41,14 @@ import azmp_utils as azu
 import cc_tools as cc
 import azmp_stn27_newtest as azS27
 
+#Choose a year of interest
+yoi = '2023'
+#Choose a working directory name
+work_name = 'AZMP_v1'
+
 ## Preamble (create folders to dump figures and data)
 if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
-if os.path.isdir('2023') != True: os.system('mkdir 2023')
+if os.path.isdir('2023') != True: os.system('mkdir '+yoi)
 if os.path.isdir('climate_indices') != True: os.system('mkdir climate_indices')
 if os.path.isdir('air_temperature') != True: os.system('mkdir air_temperature')
 if os.path.isdir('stn27') != True: os.system('mkdir stn27')
@@ -51,26 +56,17 @@ if os.path.isdir('bergs') != True: os.system('mkdir bergs')
 if os.path.isdir('bottom_temp') != True: os.system('mkdir bottom_temp')
 if os.path.isdir('bottom_saln') != True: os.system('mkdir bottom_saln')
 if os.path.isdir('bottom_temp_stats') != True: os.system('mkdir bottom_temp_stats')
-if os.path.isdir('AZMP_lines') != True: os.system('AZMP_lines')
+if os.path.isdir('AZMP_lines') != True: os.system('mkdir AZMP_lines')
+if os.path.isdir('climate_indices') != True: os.system('mkdir climate_indices')
 
 
-## ---- 2023 update ---- ## [DONE 2022x]
-# 1.  NAO, AO, AMO (now a function)
-azgen.nao(
-    2023,
-    '~/data/AZMP/climate_indices/nao_data.csv'
-    ) #(FINISHED/WORKING - 2023)
-azgen.ao( # Jon to check
-    2023,
-    '~/data/AZMP/climate_indices/ao_data.csv'
-    )
-azgen.amo( # Jon to check
-    2023,
-    '~/data/AZMP/climate_indices/amo_data.csv'
-    )
-os.system('cp  NAO_winter_1950-2023.png NAO_winter_1950-2023_FR.png 2023')
-os.system('mv *.pkl operation_files')
-os.system('mv *.csv operation_files')
+## ---- 2023 update ---- ##
+# 1.  NAO, AO, AMO
+azgen.nao(int(yoi),'~/data/'+work_name+'/climate_indices/nao_data.csv')
+azgen.ao(int(yoi),'~/data/'+work_name+'/climate_indices/ao_data.csv')
+azgen.amo(int(yoi),'~/data/'+work_name+'/climate_indices/amo_data.csv')
+os.system('cp  NAO_winter_1950-'+yoi+'.png NAO_winter_1950-'+yoi+'_FR.png '+yoi)
+os.system('mv *.pkl *.csv operation_files')
 os.system('mv *.png climate_indices')
 
 # 2. Air temperature (need to dowload AHCCD and download NUUK update) [Done 2023!]
