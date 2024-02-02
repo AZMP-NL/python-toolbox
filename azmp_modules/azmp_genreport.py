@@ -45,7 +45,10 @@ os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 #from mpl_toolkits.basemap import Basemap
 
     
-def nao(YEAR,nao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.nao.monthly.b5001.current.ascii.table'):
+def nao(
+    YEAR,
+    nao_file_loc,
+    url_loc='https://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.nao.monthly.b5001.current.ascii.table'):
     '''
     Update the winter North Atlantic Oscillation
     run in /home/cyrf0006/AZMP/state_reports/airTemp
@@ -70,30 +73,52 @@ def nao(YEAR,nao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip
 
     # Download and save up-to-date  NAO index from NOAA (data.csv) if needed
     #url = 'https://www.ncdc.noaa.gov/teleconnections/nao/data.csv' (until 2020...)
-    url = url_loc
-    nao_file = nao_file_loc
-    import urllib3
-    http = urllib3.PoolManager()
-    r = http.request('GET', url)
+    if os.path.exists(os.path.expanduser(nao_file_loc)):
+        file_check = input('File exists! Do you want to over-write the file? [y/n]')
+        if file_check=='n':
+            nao_file=nao_file_loc
+            print(' -> File loaded!')
+        elif file_check=='y':
+            url = url_loc
+            nao_file = nao_file_loc
+            import urllib3
+            http = urllib3.PoolManager()
+            r = http.request('GET', url)
 
-    #Split the data
-    r_data = str(r.data)[2:-1].split('\\n')
-    months = re.split(r'\s{2,}', r_data[0])
-    data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
-    years = data[:,0]
-    data = data[:,1:].astype(float)
-    pd_data = pd.DataFrame(data, columns=months[1:], index=years)
-    pd_data.to_csv(nao_file_loc)
+            #Split the data
+            r_data = str(r.data)[2:-1].split('\\n')
+            months = re.split(r'\s{2,}', r_data[0])
+            data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
+            years = data[:,0]
+            data = data[:,1:].astype(float)
+            pd_data = pd.DataFrame(data, columns=months[1:], index=years)
+            pd_data.to_csv(os.path.expanduser(nao_file_loc))
+    else:
+        url = url_loc
+        nao_file = nao_file_loc
+        import urllib3
+        http = urllib3.PoolManager()
+        r = http.request('GET', url)
+
+        #Split the data
+        r_data = str(r.data)[2:-1].split('\\n')
+        months = re.split(r'\s{2,}', r_data[0])
+        data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
+        years = data[:,0]
+        data = data[:,1:].astype(float)
+        pd_data = pd.DataFrame(data, columns=months[1:], index=years)
+        pd_data.to_csv(os.path.expanduser(nao_file_loc))
 
     # Reload using pandas
     col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     df = pd.read_csv(nao_file, header=0)
-    df.set_axis(col_names, axis=1, inplace=True)
+    df = df.set_axis(col_names, axis=1)
 
     # Set index
     df = df.set_index('Year')
     df = df.stack()
-    df.index = pd.to_datetime(df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str'))
+    df_index = df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str')
+    df.index = [pd.to_datetime(i) for i in df_index]
 
     ## ----  plot Winter NAO ---- ####
     # Select only DJF
@@ -177,7 +202,10 @@ def nao(YEAR,nao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip
 
     return None
 
-def ao(YEAR,ao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii.table'):
+def ao(
+    YEAR,
+    ao_file_loc,
+    url_loc='https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii.table'):
     '''
     Update the Arctic Oscillation
     run in /home/cyrf0006/AZMP/state_reports/airTemp
@@ -198,35 +226,52 @@ def ao(YEAR,ao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/C
 
     # Download and save up-to-date  AO index from NOAA (data.csv) if needed
     # url = 'https://www.ncdc.noaa.gov/teleconnections/ao/data.csv'
-    url = url_loc
-    ao_file = ao_file_loc
-    if os.path.exists(ao_file):
-        py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
-        response_isnt_good = True
-        while response_isnt_good:
-            if py3:
-                response = input('Do you what to update '  + ao_file + '? [y/n]')
-            else:
-                response = raw_input('Do you what to update '  + ao_file + '? [y/n]')
+    if os.path.exists(os.path.expanduser(ao_file_loc)):
+        file_check = input('File exists! Do you want to over-write the file? [y/n]')
+        if file_check=='n':
+            ao_file=ao_file_loc
+            print(' -> File loaded!')
+        elif file_check=='y':
+            url = url_loc
+            ao_file = ao_file_loc
+            import urllib3
+            http = urllib3.PoolManager()
+            r = http.request('GET', url)
 
-            if response == 'y':
-                import urllib3
-                http = urllib3.PoolManager()
-                r = http.request('GET', url)
-                open(ao_file_loc, 'wb').write(r.data)
-                response_isnt_good = False
-            elif response == 'n':
-                response_isnt_good = False
-            else:
-                print(' -> Please answer "y" or "n"')
+            #Split the data
+            r_data = str(r.data)[2:-1].split('\\n')
+            months = re.split(r'\s{2,}', r_data[0])
+            data = np.array([re.split(r'\s{1,}', i) for i in r_data[1:-1]])
+            years = data[:,0]
+            data = data[:,1:].astype(float)
+            pd_data = pd.DataFrame(data, columns=months[1:], index=years)
+            pd_data.to_csv(os.path.expanduser(ao_file_loc))
+    else:
+        url = url_loc
+        ao_file = ao_file_loc
+        import urllib3
+        http = urllib3.PoolManager()
+        r = http.request('GET', url)
+
+        #Split the data
+        r_data = str(r.data)[2:-1].split('\\n')
+        months = re.split(r'\s{2,}', r_data[0])
+        data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
+        years = data[:,0]
+        data = data[:,1:].astype(float)
+        pd_data = pd.DataFrame(data, columns=months[1:], index=years)
+        pd_data.to_csv(os.path.expanduser(ao_file_loc))
 
     # Reload using pandas
-    df = pd.read_csv(ao_file, header=0, delimiter=r"\s+", error_bad_lines=False)
+    col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    df = pd.read_csv(ao_file, header=0)
+    df = df.set_axis(col_names, axis=1)
 
     # Set index
-    df.index.name = 'Year'
+    df = df.set_index('Year')
     df = df.stack()
-    df.index = pd.to_datetime(df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str'))
+    df_index = df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str')
+    df.index = [pd.to_datetime(i) for i in df_index]
 
     # Resample
     # pickle DataFrame for scorecards:
@@ -251,7 +296,7 @@ def ao(YEAR,ao_file_loc,url_loc='https://www.cpc.ncep.noaa.gov/products/precip/C
     plt.title('Annual AO average')
     plt.grid()
     fig.set_size_inches(w=15,h=9)
-    fig_name = 'AO_1950-' + str(2021) + '.png'
+    fig_name = 'AO_1950-' + str(YEAR) + '.png'
     #plt.annotate('data source: www.ncdc.noaa.gov/teleconnections/', xy=(.58, .01), xycoords='figure fraction', annotation_clip=False, FontSize=12)
     fig.savefig(fig_name, dpi=300)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -285,43 +330,56 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
     plt.rc('font', **font)
 
     # Download and save up-to-date  AMO index from NOAA (data.csv) if needed
-    url = url_loc
-    amo_file = amo_file_loc
-    if os.path.exists(amo_file):
-        py3 = version_info[0] > 2 #creates boolean value for test that Python major version > 2        
-        response_isnt_good = True
-        while response_isnt_good:
-            if py3:
-                response = input('Do you what to update '  + amo_file + '? [y/n]')
-            else:
-                response = raw_input('Do you what to update '  + amo_file + '? [y/n]')
+    if os.path.exists(os.path.expanduser(amo_file_loc)):
+        file_check = input('File exists! Do you want to over-write the file? [y/n]')
+        if file_check=='n':
+            amo_file=amo_file_loc
+            print(' -> File loaded!')
+        elif file_check=='y':
+            url = url_loc
+            amo_file = amo_file_loc
+            import urllib3
+            http = urllib3.PoolManager()
+            r = http.request('GET', url)
 
-            if response == 'y':
-                import urllib3
-                http = urllib3.PoolManager()
-                r = http.request('GET', url)
-                open(amo_file_loc, 'wb').write(r.data)
-                response_isnt_good = False
-            elif response == 'n':
-                response_isnt_good = False
-            else:
-                print(' -> Please answer "y" or "n"')
+            #Split the data
+            r_data = str(r.data)[2:-1].split('\\n')
+            months = re.split(r'\s{2,}', r_data[0])
+            data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-5]])
+            years = data[:,0]
+            data = data[:,1:].astype(float)
+            data[data<=-99] = np.nan
+            col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            pd_data = pd.DataFrame(data, columns=col_names[1:], index=years)
+            pd_data.to_csv(os.path.expanduser(amo_file_loc))
+    else:
+        url = url_loc
+        amo_file = amo_file_loc
+        import urllib3
+        http = urllib3.PoolManager()
+        r = http.request('GET', url)
 
+        #Split the data
+        r_data = str(r.data)[2:-1].split('\\n')
+        months = re.split(r'\s{2,}', r_data[0])
+        data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-5]])
+        years = data[:,0]
+        data = data[:,1:].astype(float)
+        data[data<=-99] = np.nan
+        col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        pd_data = pd.DataFrame(data, columns=col_names[1:], index=years)
+        pd_data.to_csv(os.path.expanduser(amo_file_loc))
 
     # Reload using pandas
     col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    df = pd.read_csv(amo_file, header=1, delimiter=r"\s+", error_bad_lines=False, names=col_names)
-    # Remove last rows
-    df = df.iloc[0:-4]
+    df = pd.read_csv(amo_file, header=0)
+    df = df.set_axis(col_names, axis=1)
 
     # Set index
     df = df.set_index('Year')
-    df = df.stack()      
-    df.index = pd.to_datetime(df.index.get_level_values(1) + '-' + df.index.get_level_values(0))
-
-    # Remove wrong values
-    df = df.astype(float)
-    df = df[df>-99]
+    df = df.stack()
+    df_index = df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str')
+    df.index = [pd.to_datetime(i) for i in df_index]
 
     ## ----  plot Monthly AMO + 5year running mean ---- ##
     fig = plt.figure(1)
