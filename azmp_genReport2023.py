@@ -58,6 +58,7 @@ if os.path.isdir('bottom_saln') != True: os.system('mkdir bottom_saln')
 if os.path.isdir('bottom_temp_stats') != True: os.system('mkdir bottom_temp_stats')
 if os.path.isdir('AZMP_lines') != True: os.system('mkdir AZMP_lines')
 if os.path.isdir('climate_indices') != True: os.system('mkdir climate_indices')
+if os.path.isdir('NLCI') != True: os.system('mkdir NLCI')
 
 
 ## ---- 2023 update ---- ##
@@ -407,7 +408,9 @@ os.system('mv *.pkl operation_files/')
 
 ## ----------- NLCI ---------------- ##
 %my_run azmp_climate_index.py
-
+os.system('cp NL_climate_index_ms_scorecards.png NL_climate_index_ms_scorecards_FR.png ./'+yoi)
+os.system('mv *.png NLCI/')
+os.system('mv *.csv operation_files/')
 
 
 ## ----------- AZMP SAR / IROC ---------------- ##
