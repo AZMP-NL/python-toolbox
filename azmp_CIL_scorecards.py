@@ -41,14 +41,16 @@ def is_number(s):
     return False
 
 #### ---- Load the data and compute anomalies ---- ####
-#df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl')
-#df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
-#df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
-# EXCEPTION FOR 2022
+
+#Determine the name of the working directory
+work_name = input('What is the name of the working directory within ~/data/?  ')
+work_name = str(work_name)
+print('  -> '+work_name+' used as working directory!')
+
 #Files come from azmp_section_clim.py
-df_SI = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/df_CIL_SI_summer.pkl')
-df_BB = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/df_CIL_BB_summer.pkl')
-df_FC = pd.read_pickle('/home/jcoyne/Documents/CASH/Combined_Data/AZMP-lines_output/genReport_final_2023/operation_files/df_CIL_FC_summer.pkl')
+df_SI = pd.read_pickle('~/data/'+work_name+'/operation_files/df_CIL_SI_summer.pkl')
+df_BB = pd.read_pickle('~/data/'+work_name+'/operation_files/df_CIL_BB_summer.pkl')
+df_FC = pd.read_pickle('~/data/'+work_name+'/operation_files/df_CIL_FC_summer.pkl')
 
 # Set problem years equal to nan
 df_SI['vol_stn'].loc[badstn_SI] = np.nan

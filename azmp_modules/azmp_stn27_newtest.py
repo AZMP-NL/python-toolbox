@@ -73,6 +73,10 @@ def stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts):
 			if ds[i].dtype == 'O':
 				ds[i] = ds[i].astype('U40')
 		#Save data
+		time_attrs = ds['time'].attrs
+		time_attrs['_FillValue'] = -99.9999
+		ds['time'].attrs = time_attrs
+		warnings.simplefilter(action='ignore', category=FutureWarning)
 		ds.to_netcdf(file_location)
 
 
@@ -95,7 +99,7 @@ def stn27_climatology(file_location,year_clim,current_year,zbin=5,binning=True,m
 		if binning:
 			old_z = df[variable].columns
 			new_z = np.arange((old_z[0]+zbin)/2,old_z[-1],zbin)
-			dfT = df[variable].groupby(np.arange(len(df[variable].columns))//zbin, axis=1).mean()
+			dfT = df[variable].T.groupby(np.arange(len(df[variable].columns))//zbin).mean().T
 			dfT.columns=new_z[:]
 			df[variable] = dfT
 		elif move_ave:
@@ -216,7 +220,7 @@ def stn27_currentyear_plot(df_weekly,df_year,current_year,XLIM):
 			df_weekly[variable].values.T,
 			V[variable], extend='both', cmap=CMAP[variable])
 		plt.plot(
-			df_year[variable].index,
+			np.array(df_year[variable].index),
 			np.repeat(0, df_year[variable].index.size),
 			'|k', markersize=20)
 		plt.ylim([0, 175])
@@ -375,7 +379,7 @@ def station_occupations(file_location,current_year,year_clim,binning=True,move_a
 	if binning:
 		old_z = df.columns
 		new_z = np.arange((old_z[0]+zbin)/2,old_z[-1],zbin)
-		dfT = df.groupby(np.arange(len(df.columns))//zbin, axis=1).mean()
+		dfT = df.T.groupby(np.arange(len(df.columns))//zbin).mean().T
 		dfT.columns=new_z[:]
 		df = dfT
 	elif move_ave:
@@ -411,10 +415,10 @@ def density_calculator(df,file_location):
 	df_hydroS = df_hydroS.iloc[np.isin(df_hydroS.index.values,df_hydroT.index)]
 	df_hydroT = df_hydroT.iloc[np.isin(df_hydroT.index.values,df_hydroS.index)]
 	#Remove nans from each
-	idx_S = pd.notnull(df_hydroS).any(1).values.nonzero()[0]
+	idx_S = pd.notnull(df_hydroS).any(axis=1).values.nonzero()[0]
 	df_hydroT = df_hydroT.iloc[idx_S]
 	df_hydroS = df_hydroS.iloc[idx_S]
-	idx_T = pd.notnull(df_hydroT).any(1).values.nonzero()[0]
+	idx_T = pd.notnull(df_hydroT).any(axis=1).values.nonzero()[0]
 	df_hydroT = df_hydroT.iloc[idx_T]
 	df_hydroS = df_hydroS.iloc[idx_T]
 	df_temp = df_hydroT.copy()
@@ -589,7 +593,7 @@ def anomaly_plotter(anom_std,variable,YLIM=[-3,3]):
 	width = 200
 	p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 	p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
-	plt.fill_between([anom_std.index[0], anom_std.index[-1]+np.timedelta64(1,'Y')], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+	plt.fill_between([anom_std.index[0], anom_std.index[-1]+np.timedelta64(365,'D')], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 	plt.ylabel('Normalized anomaly')
 	plt.title('Station 27 - Average '+variable+' (0-176m)')
 	plt.ylim(YLIM)
@@ -619,8 +623,8 @@ def climatology_plotter(ts_monthly_clim,annual_mean,variable):
 	fig = plt.figure(1)
 	fig.clf()
 	annual_mean.plot()
-	plt.plot([annual_mean.index[0]-np.timedelta64(1,'Y'),annual_mean.index[-1]+np.timedelta64(1,'Y')],[ts_monthly_clim.mean(), ts_monthly_clim.mean()], '--k', linewidth=3)
-	plt.fill_between([annual_mean.index[0]-np.timedelta64(1,'Y'),annual_mean.index[-1]+np.timedelta64(1,'Y')], [ts_monthly_clim.mean()+annual_mean.std(), ts_monthly_clim.mean()+annual_mean.std()], [ts_monthly_clim.mean()-annual_mean.std(), ts_monthly_clim.mean()-annual_mean.std()], facecolor='gray', alpha=.2)
+	plt.plot([annual_mean.index[0]-np.timedelta64(365,'D'),annual_mean.index[-1]+np.timedelta64(365,'D')],[ts_monthly_clim.mean(), ts_monthly_clim.mean()], '--k', linewidth=3)
+	plt.fill_between([annual_mean.index[0]-np.timedelta64(365,'D'),annual_mean.index[-1]+np.timedelta64(365,'D')], [ts_monthly_clim.mean()+annual_mean.std(), ts_monthly_clim.mean()+annual_mean.std()], [ts_monthly_clim.mean()-annual_mean.std(), ts_monthly_clim.mean()-annual_mean.std()], facecolor='gray', alpha=.2)
 	plt.ylabel(r'Mean '+variable+' ($^\circ$C)')
 	plt.title('Station 27 - Average '+variable+' (0-176m)')
 	#plt.xlim(XLIM)
@@ -689,7 +693,7 @@ def CIL_plotter(cil_stat,title,title_FR,save_title,year_clim=[1991,2020],YLIM=[-
 	width = 200
 	p1 = plt.bar(df1.index, np.squeeze(df1.values), width, alpha=0.8, color='indianred', zorder=10)
 	p2 = plt.bar(df2.index, np.squeeze(df2.values), width, bottom=0, alpha=0.8, color='steelblue', zorder=10)
-	plt.fill_between([anom_std.index[0], anom_std.index[-1]+np.timedelta64(1,'Y')], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+	plt.fill_between([anom_std.index[0], anom_std.index[-1]+np.timedelta64(365,'D')], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 	plt.ylabel('Normalized anomaly')
 	plt.title('Station 27 - '+title)
 	plt.ylim(YLIM)

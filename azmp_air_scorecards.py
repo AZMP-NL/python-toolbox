@@ -40,10 +40,15 @@ def is_number(s):
     return False
 
 
+#Determine the name of the working directory
+work_name = input('What is the name of the working directory within ~/data/?  ')
+work_name = str(work_name)
+print('  -> '+work_name+' used as working directory!')
+
 #### ------------- NAO & AO ---------------- ####
-nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter.pkl')
-ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/AO_annual.pkl')
-amo = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/AMO_annual.pkl')
+nao_winter = pd.read_pickle('~/data/'+work_name+'/operation_files//NAO_winter.pkl')
+ao = pd.read_pickle('~/data/'+work_name+'/operation_files/AO_annual.pkl')
+amo = pd.read_pickle('~/data/'+work_name+'/operation_files/AMO_annual.pkl')
 ao.to_csv('ao_annual.csv', float_format='%.2f')
 amo.to_csv('amo_annual.csv', float_format='%.2f')
 
@@ -63,7 +68,7 @@ df_ind_clim = df_indices[(df_indices.index>=clim_year[0]-1) & (df_indices.index<
 
 
 #### ------------- Air Temperature ---------------- ####
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/airT_monthly.pkl')
+df = pd.read_pickle('~/data/'+work_name+'/operation_files/airT_monthly.pkl')
 # restrict years (years[0]-1 for winter...)
 df = df[(df.index.year>=years[0]-1) & (df.index.year<=years[1])]
 

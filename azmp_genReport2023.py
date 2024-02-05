@@ -72,12 +72,12 @@ os.system('mv *.png climate_indices')
 # 2. Air temperature (need to dowload AHCCD and download NUUK update) [Done 2023!]
 %my_run azmp_dmi_nuukAirT.py
 %my_run azmp_airTemp.py # use this one since 2020 conditions report
-os.system('cp air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./2023/')
-os.system('mv air_temp_2023.png air_temp_2023_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
+os.system('cp air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./'+yoi+'/')
+os.system('mv air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
 os.system('mv *.pkl operation_files')
 
 %my_run azmp_air_scorecards.py
-os.system('cp scorecards_air.png scorecards_air_FR.png ./2023/')
+os.system('cp scorecards_air.png scorecards_air_FR.png ./'+yoi+'/')
 # delete tmp files
 os.system('rm scorecards_*Air*.png scorecards_*nao*.png ')
 os.system('mv *.png ./air_temperature')
@@ -89,22 +89,10 @@ os.system('mv *.csv ./operation_files')
 # 4. Station 27 [JON to UPDATE]
 #%my_run viking2022.py  # NOT IN 2022
 #os.system('cp Viking2022.png Viking2022_FR.png ../2022')
-'''
-# need to delete /home/cyrf0006/AZMP/state_reports/stn27/stn27_all_casts.nc
-os.system('mkdir stn27')
-#Remember, azmp_stn27.py needs to be run twice (temperature and salinity)
-os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27.py')
-os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27_density.py')
-os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27_analysis.py')
-os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_stn27_scorecards.py')
-os.system('cp scorecards_s27.png scorecards_s27_FR.png s27_CIL_subplots.png s27_CIL_subplots_FR.png s27_TS_subplots.png s27_TS_subplotsFR.png s27_mld_monthly.png  s27_stratif_monthly_shallow.png s27_stratif_monthly_shallow_FR.png   2021/')
-os.system('cp s27_salinity_subplot_2021.png s27_salinity_subplot_2021_FR.png s27_temperature_subplot_2021.png s27_temperature_subplot_2021_FR.png 2021/')
-os.system("find ./ -maxdepth 1 -type f | xargs mv -t ./stn27") #move all other files to stn27/
-'''
 
 #New version using only functions
 #Isolate the stn27 data
-file_location = '~/data/AZMP/operation_files/stn27_all_casts.nc'
+file_location = '~/data/'+work_name+'/operation_files/stn27_all_casts.nc'
 CASTS_path = '~/data/CASTS/*.nc'
 s27_loc = [47.54667,-52.58667]
 dc = .025
@@ -251,13 +239,12 @@ azS27.scorecard_plotter(
 #Montage all the figures together
 os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat_0-50m.png scorecards_s27_strat_10-150m.png  -gravity East -append -geometry +1+1 scorecards_s27.png')
 os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_0-50m_FR.png scorecards_s27_strat_10-150m_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
-os.system('cp scorecards_s27.png cp scorecards_s27_FR.png ./2023/')
+os.system('cp scorecards_s27.png cp scorecards_s27_FR.png ./'+yoi+'/')
 os.system('rm scorecards_s27*.png')
 
-
 # Clean the files:
-os.system('cp s27_mld_monthly.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./2023/')
-os.system('cp s27_salinity_subplot_2023.png s27_temperature_subplot_2023.png ./2023/')
+os.system('cp s27_mld_monthly.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./'+yoi+'/')
+os.system('cp s27_salinity_subplot_'+yoi+'.png s27_temperature_subplot_'+yoi+'.png ./'+yoi+'/')
 os.system('mv s27*.png ./stn27')
 os.system('mv *.csv *.pkl ./operation_files')
 
@@ -268,7 +255,7 @@ os.system('mv *.csv *.pkl ./operation_files')
 
 # 6. Icebergs (/home/cyrf0006/AZMP/state_reports/bergs) [FRED to UPDATE]
 %my_run azmp_bergs.py
-os.system('cp icebergs_climate*.png ../2023')
+os.system('cp icebergs_climate*.png ./'+yoi+'')
 #os.system('cp bergs_annual_FR.png bergs_annual.png bergs_monthly_FR.png bergs_monthly.png ../2023')
 os.system('mv *.png ./bergs')
 os.system('mv *.pkl ./operation_files')
@@ -301,7 +288,7 @@ for season in ['spring','summer','fall']:
 for season in ['spring','fall']:
     azrt.bottom_temperature(
         season=season,
-        year='2023',
+        year=yoi,
         lonLims=[-63, -45],
         latLims=[42, 58],
         climato_file='operation_files/Tbot_climato_'+season+'_0.10.h5',
@@ -310,7 +297,7 @@ for season in ['spring','fall']:
         )
     azrt.bottom_salinity(
         season=season,
-        year='2023',
+        year=yoi,
         lonLims=[-63, -45],
         latLims=[42, 58],
         climato_file='operation_files/Sbot_climato_'+season+'_0.10.h5',
@@ -318,8 +305,8 @@ for season in ['spring','fall']:
         CASTS_path='~/data/CASTS/'
         )
     print('    -> '+season+' done!')
-os.system('cp bottomT_spring2023.png bottomT_spring2023_FR.png bottomT_fall2023.png bottomT_fall2023_FR.png 2023')
-os.system('cp bottomS_spring2023.png bottomS_spring2023_FR.png bottomS_fall2023.png bottomS_fall2023_FR.png 2023')
+os.system('cp bottomT_spring'+yoi+'.png bottomT_spring'+yoi+'_FR.png bottomT_fall'+yoi+'.png bottomT_fall2023_FR.png '+yoi+'')
+os.system('cp bottomS_spring'+yoi+'.png bottomS_spring'+yoi+'_FR.png bottomS_fall'+yoi+'.png bottomS_fall2023_FR.png '+yoi+'')
 os.system('mv bottomT_*.png bottom_temp_*.png bottom_temp/')
 os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 
@@ -327,37 +314,40 @@ os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 ## WE'RE HERE I THINK ##
 
 # For NAFO STACFEN and STACFIS input: [NEED TO DO]
-azrt.bottom_temperature(season='summer', year='2022', climato_file='Tbot_climato_SA4_summer_0.10.h5')
+#azrt.bottom_temperature(season='summer', year='2022', climato_file='Tbot_climato_SA4_summer_0.10.h5')
 
 
 # bottom stats and scorecards (arange year+1)
 #[need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
-os.system('mkdir bottom_temp_stats')
 for season in ['spring','fall']:
     azrt.bottom_stats(
-        years=np.arange(1980, 2023+1),
+        years=np.arange(1980, int(yoi)+1),
         season=season,
         netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc'
         )
 os.system('mv *.pkl operation_files/')
-azrt.bottom_scorecards(years=[1980, 2023], clim_year=[1991, 2020])
-os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png 2023')
+azrt.bottom_scorecards(years=[1980, int(yoi)], clim_year=[1991, 2020])
+os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png '+yoi+'')
 os.system('mv *.png *.csv bottom_temp_stats/')
 
 
 
 # For NAFO STACFEN and STACFIS input (for azmp_composite_index.py): [NEED TO DO]
-azrt.bottom_stats(years=np.arange(1980, 2022), season='summer', climato_file='Tbot_climato_SA4_summer_0.10.h5')
+azrt.bottom_stats(
+    years=np.arange(1980, int(yoi)),
+    season='summer',
+    netcdf_path='~/data/CABOTS/CABOTS_bottomstats_summer.nc'
+    )
 
 # bottom temperature bar plots [need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
-os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_bottomT_mean_anomaly.py')
-os.system('cp bottomT_anomalies_climateindex.png bottomT_anomalies_climateindex_FR.png 2023')
-os.system('mv *.pkl bottom_temp_stats/')
+%my_run azmp_bottomT_mean_anomaly.py
+os.system('cp bottomT_anomalies_climateindex.png bottomT_anomalies_climateindex_FR.png '+yoi)
+os.system('mv *.pkl operation_files/')
 os.system('mv *.png bottom_temp_stats/')
 
 
 ## ---------------  Sections plots ------------- ## (FINISHED/WORKING - 2023)
-year = 2023
+year = int(yoi)
 sections = ['SI', 'BB', 'FC']
 seasons = ['summer']
 #Ensure that climatologies have been set up
@@ -366,7 +356,7 @@ for section in sections:
         azsct.section_clim(
             SECTION=section,
             SEASON=season,
-            CLIM_YEAR=[1950,2023],
+            CLIM_YEAR=[1950,int(yoi)],
             dlat=2,
             dlon=2,
             z1=2,
@@ -399,19 +389,19 @@ for section in sections:
         command = 'montage temperature_' + section + '_' + season + '_' + str(year) + '_FR.png salinity_' + section + '_' + season + '_' + str(year) + '_FR.png  -tile 2x1 -geometry +10+10  -background white ' + section + '_stn_' + season + '_' + str(year) + '_FR.png'
         os.system(command)
 
-        os.system('cp ' + section + '_stn_' + season + '_' + str(year) + '.png 2023')
-        os.system('cp ' + section + '_stn_' + season + '_' + str(year) + '_FR.png 2023')
-os.system('mv *.png *.csv *.pkl AZMP_lines/')
-
+        os.system('cp ' + section + '_stn_' + season + '_' + str(year) + '.png '+yoi)
+        os.system('cp ' + section + '_stn_' + season + '_' + str(year) + '_FR.png '+yoi)
+os.system('mv *.png AZMP_lines/')
+os.system('mv *.csv *.pkl operation_files/')
 
 # Section CIL [CANNOT UPDATE 2022]
 %my_run azmp_CIL_scorecards.py  # update year in script!
-os.system('rm scorecards_CIL_SI* scorecards_CIL_BB* scorecards_CIL_FC*')
-os.system('cp scorecards_CIL.png scorecards_CIL_FR.png ../2022')
+os.system('cp scorecards_CIL.png scorecards_CIL_FR.png ./'+yoi)
+os.system('mv *.png AZMP_lines/')
 
 #(FINISHED/WORKING - 2023)
-os.system('python /home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/azmp_CIL_mean_anomaly.py')
-os.system('cp CIL_volume_climateindex.png CIL_volume_climateindex_FR.png ../2023')
+%my_run azmp_CIL_mean_anomaly.py
+os.system('cp CIL_volume_climateindex.png CIL_volume_climateindex_FR.png ./'+yoi)
 os.system('mv *.png AZMP_lines/')
 os.system('mv *.pkl operation_files/')
 

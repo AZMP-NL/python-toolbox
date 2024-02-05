@@ -121,7 +121,7 @@ if use_climate_summaries:
 ## ---- Read 4 stations of interest (AHCCD) ---- ##
 ## 1. Bonavista - 8400601
 # tmp file without blank space
-with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8400601.txt', 'r') as f:
+with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm8400601.txt'), 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -149,7 +149,7 @@ if use_climate_summaries:
 
 ## 2. St. John's - 8403505
 # tmp file without blank space
-with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8403505.txt', 'r') as f:
+with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm8403505.txt'), 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -176,7 +176,7 @@ if use_climate_summaries:
     
 ## 3. Cartwright - 8501106
 # tmp file without blank space
-with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm8501106.txt', 'r') as f:
+with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm8501106.txt'), 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:
@@ -203,7 +203,7 @@ if use_climate_summaries:
     
 ## 4. Iqaluit - 2402592
 # tmp file without blank space
-with open('/home/cyrf0006/data/EC/Homog_monthly_mean_temp/mm2402592.txt', 'r') as f:
+with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm2402592.txt'), 'r') as f:
     lines = f.readlines()
 lines = [line.replace(' ', '') for line in lines]
 with open('/tmp/tmp.txt', 'w') as f:

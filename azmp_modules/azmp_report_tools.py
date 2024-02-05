@@ -858,7 +858,7 @@ def bottom_stats(
         elif season=='fall':
             climato_file='operation_files/Tbot_climato_fall_0.10.h5'
         elif season=='summer':
-            climato_file='operation_files/Tbot_climato_summer_0.10.h6'
+            climato_file='operation_files/Tbot_climato_summer_0.10.h5'
     else:
         print('Climato file provided')
 

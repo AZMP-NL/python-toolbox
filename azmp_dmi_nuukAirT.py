@@ -28,7 +28,8 @@ df = df[['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', '
 
 # Convert to timeseries index
 df = df.stack() 
-df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0).values.astype(str))
+df_dates = '15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0).values.astype(str)
+df.index = [pd.to_datetime(i) for i in df_dates]
 
 # For year 2021, I downloaded: https://www.dmi.dk/fileadmin/Rapporter/2021/DMIRep21-08_new_dataformat_2014_2020.zip
 # But haven't analysed it.
@@ -49,8 +50,9 @@ df_all = pd.concat([df_14.Middel, df_15.Middel, df_16.Middel, df_17.Middel, df_1
 
 df_recent = df_all.T
 df_recent.columns = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-df_recent = df_recent.stack() 
-df_recent.index = pd.to_datetime('15-' + df_recent.index.get_level_values(1) + '-' + df_recent.index.get_level_values(0).values.astype(str))
+df_recent = df_recent.stack()
+df_recent_dates = '15-' + df_recent.index.get_level_values(1) + '-' + df_recent.index.get_level_values(0).values.astype(str)
+df_recent.index = [pd.to_datetime(i) for i in df_recent_dates]
 
 
 # Plot 2 timeseries
