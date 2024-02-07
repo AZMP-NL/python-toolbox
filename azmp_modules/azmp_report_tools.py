@@ -929,125 +929,42 @@ def bottom_stats(
     dict_stats_4VWX = {}
     dict_stats_5Y = {}
 
-    # Loop on years
-    df_list = []
-    for year in years:
-        print(' ---- ' + str(year) + ' ---- ')
-        year_file = netcdf_path
-        Tdict = azu.get_bottomT(year_file, year, season, climato_file, lab_mask=False)
-        Tdict['Tbot_orig'] = Tdict['Tbot']
-        Tbot = Tdict['Tbot']
-        lons = Tdict['lon_reg']
-        lats = Tdict['lat_reg']
-        anom = Tbot-Tbot_climato
+    #Get the bottom temperature for each year
+    year_file = netcdf_path
+    Tdict_together = azu.get_bottomT(year_file, years, season, climato_file, lab_mask=False)
 
-        #Fill the Tbot with Tbot_climato when nan is present
+    #Cycle through and fill with climatology
+    for year in Tdict_together:
+        Tdict_together[year]['Tbot_orig'] = Tdict_together[year]['Tbot']
+        Tbot = Tdict_together[year]['Tbot']
         place1 = Tbot_climato.copy()
         place1[~np.isnan(Tbot)] = Tbot[~np.isnan(Tbot)]
         Tbot = place1
-        Tdict['Tbot'] = Tbot
+        Tdict_together[year]['Tbot'] = Tbot
 
+    # NAFO division stats    
+    dict_stats_2GH = azu.polygon_temperature_stats(Tdict_together, shape_2GH)
+    dict_stats_2G = azu.polygon_temperature_stats(Tdict_together, shape_2G)
+    dict_stats_2H = azu.polygon_temperature_stats(Tdict_together, shape_2H)
+    dict_stats_2J = azu.polygon_temperature_stats(Tdict_together, shape_2J)
+    dict_stats_2HJ = azu.polygon_temperature_stats(Tdict_together, shape_2HJ)
+    dict_stats_3LNO = azu.polygon_temperature_stats(Tdict_together, shape_3LNO)
+    dict_stats_3M = azu.polygon_temperature_stats(Tdict_together, shape_3M)
+    dict_stats_3Ps = azu.polygon_temperature_stats(Tdict_together, shape_3Ps)
+    dict_stats_3K = azu.polygon_temperature_stats(Tdict_together, shape_3K)
+    dict_stats_3L = azu.polygon_temperature_stats(Tdict_together, shape_3L)
+    dict_stats_3O = azu.polygon_temperature_stats(Tdict_together, shape_3O)
 
-        # NAFO division stats    
-        dict_stats_2GH[str(year)] = azu.polygon_temperature_stats(Tdict, shape_2GH)
-        dict_stats_2G[str(year)] = azu.polygon_temperature_stats(Tdict, shape_2G)
-        dict_stats_2H[str(year)] = azu.polygon_temperature_stats(Tdict, shape_2H)
-        dict_stats_2J[str(year)] = azu.polygon_temperature_stats(Tdict, shape_2J)
-        dict_stats_2HJ[str(year)] = azu.polygon_temperature_stats(Tdict, shape_2HJ)
-        dict_stats_3LNO[str(year)] = azu.polygon_temperature_stats(Tdict, shape_3LNO)
-        dict_stats_3M[str(year)] = azu.polygon_temperature_stats(Tdict, shape_3M)
-        dict_stats_3Ps[str(year)] = azu.polygon_temperature_stats(Tdict, shape_3Ps)
-        dict_stats_3K[str(year)] = azu.polygon_temperature_stats(Tdict, shape_3K)
-        dict_stats_3L[str(year)] = azu.polygon_temperature_stats(Tdict, shape_3L)
-        dict_stats_3O[str(year)] = azu.polygon_temperature_stats(Tdict, shape_3O)
-        ## dict_stats_4R[str(year)] = azu.polygon_temperature_stats(Tdict, shape_4R)
-        ## dict_stats_4S[str(year)] = azu.polygon_temperature_stats(Tdict, shape_4S)
-        ## dict_stats_4RS[str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RS)
-        ## dict_stats_4RST[str(year)] = azu.polygon_temperature_stats(Tdict, shape_4RST)
-        ## dict_stats_4T[str(year)] = azu.polygon_temperature_stats(Tdict, shape_4T)
-        ## dict_stats_4VWX[str(year)] = azu.polygon_temperature_stats(Tdict, shape_4VWX)
-        #dict_stats_5Y[str(year)] = azu.polygon_temperature_stats(Tdict, shape_5Y)
-
-        # Append bottom temperature for multi-index export
+    # Append bottom temperature for multi-index export
+    df_list = []
+    for year in Tdict_together:
         df = pd.DataFrame(index=lat_reg, columns=lon_reg)
         df.index.name='latitude'
         df.columns.name='longitude'
-        df[:] = Tbot
+        df[:] = Tdict_together[year]['Tbot']
         df_list.append(df)
 
-
-        if plot:
-            div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R', '4Vn', '4Vs', '4W', '4X']
-    
-            # 1.1 - Plot Anomaly
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-            levels = np.linspace(-3.5, 3.5, 8)
-            xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-            c = m.contourf(xi, yi, anom, levels, cmap=plt.cm.RdBu_r, extend='both')
-            cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-            plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-            if season=='fall':
-                plt.title('Fall Bottom Temperature Anomaly')
-            elif season=='spring':
-                plt.title('Spring Bottom Temperature Anomaly')
-            else:
-                plt.title('Bottom Temperature Anomaly')
-            m.fillcontinents(color='tan');
-            m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-            m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-            cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
-            cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-            cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
-            #cb = plt.colorbar(c, cax=cax)
-            #cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            for div in div_toplot:
-                div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
-                m.plot(div_lon, div_lat, 'k', linewidth=2)
-                ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')    
-            # Save Figure
-            fig.set_size_inches(w=7, h=8)
-            fig.set_dpi(200)
-            outfile = 'bottom_temp_anomaly_' + season + '_' + str(year) + '.png'
-            fig.savefig(outfile)
-
-            # 1.2 - Plot Temperature
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-            levels = np.linspace(-2, 6, 9)
-            xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-            c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both')
-            cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-            plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-            if season=='fall':
-                plt.title('Fall Bottom Temperature')
-            elif season=='spring':
-                plt.title('Spring Bottom Temperature')
-            else:
-                plt.title('Bottom Temperature')
-            m.fillcontinents(color='tan');
-            m.drawparallels([40, 45, 50, 55, 60], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-            m.drawmeridians([-60, -55, -50, -45], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-            x, y = m(lons, lats)
-            m.scatter(x,y, s=50, marker='.',color='k')
-            cax = fig.add_axes([0.16, 0.05, 0.7, 0.025])
-            cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-            cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            #cax = plt.axes([0.85,0.15,0.04,0.7], facecolor='grey')
-            #cb = plt.colorbar(c, cax=cax)
-            #cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            for div in div_toplot:
-                div_lon, div_lat = m(nafo_div[div]['lon'], nafo_div[div]['lat'])
-                m.plot(div_lon, div_lat, 'k', linewidth=2)
-                ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=12, color='black', fontweight='bold')
-            # Save Figure
-            fig.set_size_inches(w=7, h=8)
-            fig.set_dpi(200)
-            outfile = 'bottom_temp_' + season + '_' + str(year) + '.png'
-            fig.savefig(outfile)
-            plt.close('all')
-
+    #Convert to data frames
     df_2G = pd.DataFrame.from_dict(dict_stats_2G, orient='index')
     df_2H = pd.DataFrame.from_dict(dict_stats_2H, orient='index')
     df_2J = pd.DataFrame.from_dict(dict_stats_2J, orient='index')

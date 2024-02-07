@@ -35,13 +35,13 @@ width = 0.7
 
 
 #Determine the name of the working directory
-work_name = input('What is the name of the working directory within ~/data/?  ')
+work_name = input('What is the name of the working directory within ~/?  ')
 work_name = str(work_name)
 print('  -> '+work_name+' used as working directory!')
 
 #### ---- LOAD THE DATA (and prepare) ---- ####
 # 1. NAO
-nao = pd.read_pickle('~/data/'+work_name+'/operation_files/NAO_winter.pkl')
+nao = pd.read_pickle('~/'+work_name+'/operation_files/NAO_winter.pkl')
 nao.name = 'Wint. NAO'
 nao = nao[nao.index<YEAR_MAX+1]
 # normalize NAO with std.
@@ -53,9 +53,9 @@ nao = nao*-1
 
 # 2. Air temp
 if clim_year[0] == 1981:
-    air = pd.read_pickle('~/data/'+work_name+'/operation_files/airT_std_81anom.pkl')
+    air = pd.read_pickle('~/'+work_name+'/operation_files/airT_std_81anom.pkl')
 else:
-    air = pd.read_pickle('~/data/'+work_name+'/operation_files/airT_std_anom.pkl')
+    air = pd.read_pickle('~/'+work_name+'/operation_files/airT_std_anom.pkl')
 air.index.name='Year'
 air = air.mean(axis=1)
 air.name = 'Air Temp'
@@ -79,9 +79,9 @@ ice = ice*-1
 
 # 4. Icebergs
 if clim_year[0] == 1981:
-    bergs = pd.read_pickle('~/data/'+work_name+'/operation_files/bergs_std_anom_1981clim.pkl')
+    bergs = pd.read_pickle('~/'+work_name+'/operation_files/bergs_std_anom_1981clim.pkl')
 else:
-    bergs = pd.read_pickle('~/data/'+work_name+'/operation_files/bergs_std_anom.pkl')
+    bergs = pd.read_pickle('~/'+work_name+'/operation_files/bergs_std_anom.pkl')
 bergs.index.name='Year'
 bergs.name = 'Icebergs'
 bergs_natural = bergs.copy()
@@ -102,11 +102,11 @@ sst = sst[['SST']]
 
 # 6. Stn27 (0-176m, 0-50m, 150-176m)
 if clim_year[0] == 1981:
-    s27_temp = pd.read_pickle('~/data/'+work_name+'/operation_files/s27_temp_std_anom.pkl')
-    s27_sal = pd.read_pickle('~/data/'+work_name+'/operation_files/s27_sal_std_anom.pkl')
+    s27_temp = pd.read_pickle('~/'+work_name+'/operation_files/s27_temp_std_anom.pkl')
+    s27_sal = pd.read_pickle('~/'+work_name+'/operation_files/s27_sal_std_anom.pkl')
 else:
-    s27_temp = pd.read_pickle('~/data/'+work_name+'/operation_files/s27_temp_std_anom.pkl')
-    s27_sal = pd.read_pickle('~/data/'+work_name+'/operation_files/s27_sal_std_anom.pkl')
+    s27_temp = pd.read_pickle('~/'+work_name+'/operation_files/s27_temp_std_anom.pkl')
+    s27_sal = pd.read_pickle('~/'+work_name+'/operation_files/s27_sal_std_anom.pkl')
 
 # Flag years with less than 8 months (!!!Should be in pkl object!!!)
 s27_temp[s27_temp.index.year==1950] = np.nan
@@ -151,7 +151,7 @@ s27_sal = s27_sal*-1 # assume fresh = warm
 ## plt.legend(['prelim (all 3 depths)', 'new (0-176m)'])
 
 # s27_cil not std_anom yet
-s27_cil = pd.read_pickle('~/data/'+work_name+'/operation_files/S27_CIL_summer_stats.pkl')
+s27_cil = pd.read_pickle('~/'+work_name+'/operation_files/S27_CIL_summer_stats.pkl')
 s27_cil.index = s27_cil.index.year
 s27_cil_clim = s27_cil[(s27_cil.index>=clim_year[0]) & (s27_cil.index<=clim_year[1])]
 s27_cil = (s27_cil-s27_cil_clim.mean(axis=0))/s27_cil_clim.std(axis=0)
@@ -175,9 +175,9 @@ s27_cil.index.name='Year'
 
 # 7. Section CIL (only area) [.pkl files form azmp_CIL_mean_anomaly.py]
 if clim_year[0] == 1981:
-    section_cil = pd.read_pickle('~/data/'+work_name+'/operation_files/section_cil_index_1981clim.pkl')
+    section_cil = pd.read_pickle('~/'+work_name+'/operation_files/section_cil_index_1981clim.pkl')
 else:
-    section_cil = pd.read_pickle('~/data/'+work_name+'/operation_files/section_cil_index.pkl')
+    section_cil = pd.read_pickle('~/'+work_name+'/operation_files/section_cil_index.pkl')
 # Select volume and/or coreT
 section_cil = section_cil['volume'] # volume and/or core
 section_cil.name = 'CIL area' 
@@ -188,11 +188,11 @@ section_cil = section_cil*-1
 
 # 8. bottomT [.pkl files from azmp_bottomT_mean_anomaly.py]
 if clim_year[0] == 1981:
-    bottomT_spring = pd.read_pickle('~/data/'+work_name+'/operation_files/bottomT_index_spring_1981clim.pkl')
-    bottomT_fall = pd.read_pickle('~/data/'+work_name+'/operation_files/bottomT_index_fall_1981clim.pkl')
+    bottomT_spring = pd.read_pickle('~/'+work_name+'/operation_files/bottomT_index_spring_1981clim.pkl')
+    bottomT_fall = pd.read_pickle('~/'+work_name+'/operation_files/bottomT_index_fall_1981clim.pkl')
 else:
-    bottomT_spring = pd.read_pickle('~/data/'+work_name+'/operation_files/bottomT_index_spring.pkl')
-    bottomT_fall = pd.read_pickle('~/data/'+work_name+'/operation_files/bottomT_index_fall.pkl')
+    bottomT_spring = pd.read_pickle('~/'+work_name+'/operation_files/bottomT_index_spring.pkl')
+    bottomT_fall = pd.read_pickle('~/'+work_name+'/operation_files/bottomT_index_fall.pkl')
 bottomT = pd.concat([bottomT_spring, bottomT_fall], axis=1).mean(axis=1)
 bottomT.name = 'Bottom T'
 bottomT.index.name = 'Year'
@@ -1074,7 +1074,7 @@ df_merged = pd.concat([df_cei.mean(axis=1), climate_index.mean(axis=1)], axis=1)
 df_merged.corr('pearson')
 
 #### ----- Comparison stn 27 temperatures ---- ####
-s27_temp_all = pd.read_pickle('~/data/'+work_name+'/operation_files/s27_temp_std_anom.pkl')
+s27_temp_all = pd.read_pickle('~/'+work_name+'/operation_files/s27_temp_std_anom.pkl')
 s27_temp_all.index = s27_temp_all.index.year
 df_stn27 = pd.concat([s27_temp_all.mean(axis=1), s27_temp_all['Temp 0-176m']], axis=1)   
 plt.figure()

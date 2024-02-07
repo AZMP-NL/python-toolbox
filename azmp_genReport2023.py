@@ -322,7 +322,7 @@ os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 # bottom stats and scorecards (arange year+1)
 #[need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
 # Would be nice that we don;t need to run the whole thing every year...
-for season in ['spring','fall']:
+for season in ['spring','summer','fall']:
     azrt.bottom_stats(
         years=np.arange(1980, int(yoi)+1),
         season=season,
@@ -332,15 +332,6 @@ os.system('mv *.pkl operation_files/')
 azrt.bottom_scorecards(years=[1980, int(yoi)], clim_year=[1991, 2020])
 os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png '+yoi+'')
 os.system('mv *.png *.csv bottom_temp_stats/')
-
-
-
-# For NAFO STACFEN and STACFIS input (for azmp_composite_index.py): [NEED TO DO] <-- looks like it works
-azrt.bottom_stats(
-    years=np.arange(1980, int(yoi)),
-    season='summer',
-    netcdf_path='~/data/CABOTS/CABOTS_bottomstats_summer.nc'
-    )
 
 # bottom temperature bar plots [need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
 %my_run azmp_bottomT_mean_anomaly.py

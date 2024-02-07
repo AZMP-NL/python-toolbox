@@ -83,7 +83,9 @@ def nao(
             r_data = str(r.data)[2:-1].split('\\n')
             months = re.split(r'\s{2,}', r_data[0])
             #Note "-2" below to remove current year [TO BE FIXED]
-            data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-2]])
+            years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-1]]).astype(int)
+            r_data = np.array(r_data[1:-1])[years<=YEAR]
+            data = np.array([re.split(r'\s{2,}', i) for i in r_data])
             years = data[:,0]
             data = data[:,1:].astype(float)
             pd_data = pd.DataFrame(data, columns=months[1:], index=years)
@@ -98,7 +100,9 @@ def nao(
         #Split the data
         r_data = str(r.data)[2:-1].split('\\n')
         months = re.split(r'\s{2,}', r_data[0])
-        data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
+        years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-1]]).astype(int)
+        r_data = np.array(r_data[1:-1])[years<=YEAR]
+        data = np.array([re.split(r'\s{2,}', i) for i in r_data])
         years = data[:,0]
         data = data[:,1:].astype(float)
         pd_data = pd.DataFrame(data, columns=months[1:], index=years)
@@ -231,7 +235,9 @@ def ao(
             #Split the data
             r_data = str(r.data)[2:-1].split('\\n')
             months = re.split(r'\s{2,}', r_data[0])
-            data = np.array([re.split(r'\s{1,}', i) for i in r_data[1:-2]])
+            years = np.array([re.split(r'\s{1,}', i)[0] for i in r_data[1:-1]]).astype(int)
+            r_data = np.array(r_data[1:-1])[years<=YEAR]
+            data = np.array([re.split(r'\s{1,}', i) for i in r_data])
             years = data[:,0]
             data = data[:,1:].astype(float)
             pd_data = pd.DataFrame(data, columns=months[1:], index=years)
@@ -246,7 +252,9 @@ def ao(
         #Split the data
         r_data = str(r.data)[2:-1].split('\\n')
         months = re.split(r'\s{2,}', r_data[0])
-        data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-1]])
+        years = np.array([re.split(r'\s{1,}', i)[0] for i in r_data[1:-1]]).astype(int)
+        r_data = np.array(r_data[1:-1])[years<=YEAR]
+        data = np.array([re.split(r'\s{1,}', i) for i in r_data])
         years = data[:,0]
         data = data[:,1:].astype(float)
         pd_data = pd.DataFrame(data, columns=months[1:], index=years)
@@ -329,7 +337,9 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
             #Split the data
             r_data = str(r.data)[2:-1].split('\\n')
             months = re.split(r'\s{2,}', r_data[0])
-            data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-5]])
+            years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-5]]).astype(int)
+            r_data = np.array(r_data[1:-5])[years<=YEAR]
+            data = np.array([re.split(r'\s{2,}', i) for i in r_data])
             years = data[:,0]
             data = data[:,1:].astype(float)
             data[data<=-99] = np.nan
@@ -346,7 +356,9 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
         #Split the data
         r_data = str(r.data)[2:-1].split('\\n')
         months = re.split(r'\s{2,}', r_data[0])
-        data = np.array([re.split(r'\s{2,}', i) for i in r_data[1:-5]])
+        years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-5]]).astype(int)
+        r_data = np.array(r_data[1:-5])[years<=YEAR]
+        data = np.array([re.split(r'\s{2,}', i) for i in r_data])
         years = data[:,0]
         data = data[:,1:].astype(float)
         data[data<=-99] = np.nan

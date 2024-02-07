@@ -35,14 +35,14 @@ rplstn_FC = np.concatenate((np.arange(1950,1992),np.array([1992,1997,1998,2000,2
 
 
 #Determine the name of the working directory
-work_name = input('What is the name of the working directory within ~/data/?  ')
+work_name = input('What is the name of the working directory within ~/?  ')
 work_name = str(work_name)
 print('  -> '+work_name+' used as working directory!')
 
 #### ---- Load the data and compute anomalies ---- ####
-df_SI = pd.read_pickle('~/data/'+work_name+'/operation_files/df_CIL_SI_summer.pkl').astype('float')
-df_BB = pd.read_pickle('~/data/'+work_name+'/operation_files/df_CIL_BB_summer.pkl').astype('float')
-df_FC = pd.read_pickle('~/data/'+work_name+'/operation_files/df_CIL_FC_summer.pkl').astype('float')
+df_SI = pd.read_pickle('~/'+work_name+'/operation_files/df_CIL_SI_summer.pkl').astype('float')
+df_BB = pd.read_pickle('~/'+work_name+'/operation_files/df_CIL_BB_summer.pkl').astype('float')
+df_FC = pd.read_pickle('~/'+work_name+'/operation_files/df_CIL_FC_summer.pkl').astype('float')
 
 # Set problem years equal to nan
 df_SI['vol_stn'].loc[baditp_SI] = np.nan

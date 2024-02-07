@@ -561,25 +561,38 @@ def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
     ## ---- NAFO divisions ---- ##
     nafo_div = get_nafo_divisions()
 
-    ## ---- Get CTD data --- ##
+    ## ---- Get CABOTS data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
     #Isolate for the time of interest
-    ds = ds.sel(TIME=ds['TIME.year']==int(year))
-    ds = ds.mean('TIME')
+    if np.size(year) == 1:
+        ds = ds.sel(TIME=ds['TIME.year']==int(year))
+        ds = ds.mean('TIME')
+    else:
+        ds = ds.sel(TIME=np.isin(ds['TIME.year'],year))
     # Selection of a subset region
     ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
     ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
     Tbot = ds.BOTTOM_TEMPERATURE.values
 
     ## Save data in h5 for further use
-    h5_cube_name = 'operation_files/Tcube_' + season + str(year) + '.h5'
-    h5f = h5py.File(h5_cube_name, 'w')
-    h5f.create_dataset('temperature', data=Tbot)
-    h5f.create_dataset('lon_reg', data=lon_reg)
-    h5f.create_dataset('lat_reg', data=lat_reg)
-    h5f.create_dataset('Zitp', data=Zitp)
-    h5f.close()
+    if np.size(year) == 1:
+        h5_cube_name = 'operation_files/Tcube_' + season + str(year) + '.h5'
+        h5f = h5py.File(h5_cube_name, 'w')
+        h5f.create_dataset('temperature', data=Tbot)
+        h5f.create_dataset('lon_reg', data=lon_reg)
+        h5f.create_dataset('lat_reg', data=lat_reg)
+        h5f.create_dataset('Zitp', data=Zitp)
+        h5f.close()
+    else:
+        for i,value in enumerate(year):
+            h5_cube_name = 'operation_files/Tcube_' + season + str(value) + '.h5'
+            h5f = h5py.File(h5_cube_name, 'w')
+            h5f.create_dataset('temperature', data=Tbot[i])
+            h5f.create_dataset('lon_reg', data=lon_reg)
+            h5f.create_dataset('lat_reg', data=lat_reg)
+            h5f.create_dataset('Zitp', data=Zitp)
+            h5f.close()
 
     # Mask data on coastal Labrador
     if lab_mask == True:
@@ -610,7 +623,7 @@ def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
                     if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
                         pass #nothing to do
                     else:
-                        Tbot[j,i] = np.nan
+                        Tbot[:,j,i] = np.nan
 
         elif season == 'fall':
             for i, xx in enumerate(lon_reg):
@@ -630,10 +643,19 @@ def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
 
     # Fill dict for output
     dict = {}
-    dict['Tbot'] = Tbot
-    dict['bathy'] = Zitp
-    dict['lon_reg'] = lon_reg
-    dict['lat_reg'] = lat_reg
+    if np.size(year) == 1:
+        dict['Tbot'] = Tbot
+        dict['bathy'] = Zitp
+        dict['lon_reg'] = lon_reg
+        dict['lat_reg'] = lat_reg
+    else:
+        for i,value in enumerate(year):
+            dict[str(value)] = {}
+            dict[str(value)]['Tbot'] = Tbot[i]
+            dict[str(value)]['bathy'] = Zitp
+            dict[str(value)]['lon_reg'] = lon_reg
+            dict[str(value)]['lat_reg'] = lat_reg
+
 
     return dict
 
@@ -1318,19 +1340,22 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
     """
 
     # Output from
-    if var == 'temperature':
-        map = dict['Tbot']
-        map_org = dict['Tbot_orig']
-    elif 'salinity':
-        map = dict['Sbot']
-        map_org = dict['Sbot_orig']
-    bathy = dict['bathy']
-    lon_reg = dict['lon_reg']
-    lat_reg = dict['lat_reg']
+    map = {}
+    map_org = {}
+    for year in dict:
+        if var == 'temperature':
+            map[year] = dict[year]['Tbot']
+            map_org[year] = dict[year]['Tbot_orig']
+        elif 'salinity':
+            map[year] = dict[year]['Sbot']
+            map_org[year] = dict[year]['Sbot_orig']
+    bathy = dict[year]['bathy']
+    lon_reg = dict[year]['lon_reg']
+    lat_reg = dict[year]['lat_reg']
 
     # derive mean pixel area
     obj = {'type':'Polygon','coordinates':[[[lon_reg[0],lat_reg[0]],[lon_reg[0],lat_reg[-1]],[lon_reg[-1],lat_reg[-1]],[lon_reg[-1],lat_reg[0]],[lon_reg[0],lat_reg[0]]]]}
-    pixel_area = area(obj)/1e6/map.size
+    pixel_area = area(obj)/1e6/map[year].size
 
     #Isolate the bathymetry (remove land pixels)
     bath_mask = bathy.astype(float)*-1
@@ -1338,139 +1363,144 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
     bath_mask[bath_mask > 1000] = np.nan
 
     # select data in polygon
-    data_vec = []
-    bathy_vec = []
     for i, xx in enumerate(lon_reg):
         for j,yy in enumerate(lat_reg):
             point = Point(lon_reg[i], lat_reg[j])
-            if shape.contains(point):
-                data_vec = np.append(data_vec, map[j,i])
-                bathy_vec = np.append(bathy_vec, bathy[j,i])
-            else:
+            if shape.contains(point) == False:
                 bath_mask[j,i] = np.nan
 
-    #Determine if any data is present
-    if np.size(data_vec) != 0:
+    #Cycle through each of the years
+    data_vec = {}
+    for year in dict:
+        data_vec[year] = map[year][~np.isnan(bath_mask)]
+    bathy_vec_org = bathy[~np.isnan(bath_mask)]
 
-        # total area of the polygon (save in pkl)
-        total_polygon_area = np.size(data_vec)*pixel_area
+    #Cycle through each year
+    dict_together = {}
+    for year in map:
 
-        # remove nans
-        bathy_vec = bathy_vec[~np.isnan(data_vec)]
-        data_vec = data_vec[~np.isnan(data_vec)]
-        
-        # mean temperature all polygon
-        Tmean = data_vec.mean()
+        #Determine if any data is present
+        if np.size(data_vec[year]) != 0:
 
-        # mean temperature at depth shallower than 100m, 200m, 300m
-        Tmean100 = data_vec[bathy_vec>=-100].mean()
-        Tmean200 = data_vec[bathy_vec>=-200].mean()
-        Tmean300 = data_vec[bathy_vec>=-300].mean()
-        
-        # area with temperature < 0
-        area_colder_0deg = data_vec[data_vec<=0].size*pixel_area
-        # area with temperature < 1
-        area_colder_1deg = data_vec[data_vec<=1].size*pixel_area        
-        # area with temperature > 2
-        area_warmer_2deg = data_vec[data_vec>=2].size*pixel_area
-        # area with temperature > 2 & < 4 (shrimp habitat)
-        area_shrimp = data_vec[(data_vec>=2) & (data_vec<=4)].size*pixel_area
-        # area with temperature < 2 (crab habitat)
-        area_colder_2deg = data_vec[data_vec<=2].size*pixel_area
-        # % area with temperature < 2 (crab habitat)
-        area_colder_2deg_perc = area_colder_2deg/(data_vec.size*pixel_area)*100.0
+            # total area of the polygon (save in pkl)
+            total_polygon_area = np.size(data_vec[year])*pixel_area
 
-        # Pandalus Borealis habitat
-        Pbor = data_vec[(bathy_vec>=-460) & (bathy_vec<=-180) &  (data_vec>=-.2) &  (data_vec<=4.7)].size*pixel_area
-        Pbor_perc = Pbor/(data_vec.size*pixel_area)*100.0
-        # Pandalus Montagui habitat
-        Pmon = data_vec[(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec>=-1) &  (data_vec<=3.7)].size*pixel_area    
-        Pmon_perc = Pmon/(data_vec.size*pixel_area)*100.0
-
-        # Measure of the successfulness of the sampling
-        sampled_area= data_vec.size*pixel_area
-
-        #Determine the percentage of missing area
-        percent_coverage = np.sum(~np.isnan(map_org*bath_mask))/np.sum(~np.isnan(bath_mask))
-        percent_coverage = percent_coverage*100
-
-
-        # Fill dict for output
-        dict = {}
-        dict['Tmean'] = Tmean # temperature and salinity
-        dict['Tmean_sha100'] = Tmean100
-        dict['Tmean_sha200'] = Tmean200
-        dict['Tmean_sha300'] = Tmean300
-
-        if var == 'temperature': # temperature only
-            dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
-            dict['area_colder1'] = area_colder_1deg 
-            dict['area_warmer2'] = area_warmer_2deg
-            dict['area_shrimp'] = area_shrimp
-            dict['area_colder2'] = area_colder_2deg 
-            dict['area_colder2_perc'] = area_colder_2deg_perc 
-            dict['area_Pborealis'] = Pbor
-            dict['area_Pborealis_perc'] = Pbor_perc
-            dict['area_Pmontagui'] = Pmon
-            dict['area_Pmontagui_perc'] = Pmon_perc
-            dict['sampled_area'] = sampled_area
-            dict['total_area'] = total_polygon_area
-            dict['percent_coverage'] = percent_coverage
-
-        
-        if nsrf:
-            # Area of NSRF seafloor with conditions within a certain depth and temperature range (project with Wojciech)
-            Pbor_eaz = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.4) &  (data_vec<=4.7)].size*pixel_area
-            Pbor_waz = data_vec[(bathy_vec>=-520) & (bathy_vec<=-210) &  (data_vec>=-.7) &  (data_vec<=4.0)].size*pixel_area
-            Pbor_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec>=-.7) &  (data_vec<=4.7)].size*pixel_area
-            Pmon_eaz = data_vec[(bathy_vec>=-600) & (bathy_vec<=-120) &  (data_vec>=-.5) &  (data_vec<=3.7)].size*pixel_area
-            Pmon_waz = data_vec[(bathy_vec>=-530) & (bathy_vec<=-110) &  (data_vec>=-1.2) &  (data_vec<=2.8)].size*pixel_area
-            Pmon_sfa4 = data_vec[(bathy_vec>=-590) & (bathy_vec<=-140) &  (data_vec>=-0.9) &  (data_vec<=4.0)].size*pixel_area
-            # % of good pixels
-            Pbor_eaz_perc = Pbor_eaz/(data_vec.size*pixel_area)*100.0
-            Pbor_waz_perc = Pbor_waz/(data_vec.size*pixel_area)*100.0
-            Pbor_sfa4_perc = Pbor_sfa4/(data_vec.size*pixel_area)*100.0
-            Pmon_eaz_perc = Pmon_eaz/(data_vec.size*pixel_area)*100.0
-            Pmon_waz_perc = Pmon_waz/(data_vec.size*pixel_area)*100.0
-            Pmon_sfa4_perc = Pmon_sfa4/(data_vec.size*pixel_area)*100.0
+            # remove nans
+            bathy_vec = bathy_vec_org[~np.isnan(data_vec[year])]
+            data_vec[year] = data_vec[year][~np.isnan(data_vec[year])]
             
+            # mean temperature all polygon
+            Tmean = data_vec[year].mean()
+
+            # mean temperature at depth shallower than 100m, 200m, 300m
+            Tmean100 = data_vec[year][bathy_vec>=-100].mean()
+            Tmean200 = data_vec[year][bathy_vec>=-200].mean()
+            Tmean300 = data_vec[year][bathy_vec>=-300].mean()
+            
+            # area with temperature < 0
+            area_colder_0deg = data_vec[year][data_vec[year]<=0].size*pixel_area
+            # area with temperature < 1
+            area_colder_1deg = data_vec[year][data_vec[year]<=1].size*pixel_area        
+            # area with temperature > 2
+            area_warmer_2deg = data_vec[year][data_vec[year]>=2].size*pixel_area
+            # area with temperature > 2 & < 4 (shrimp habitat)
+            area_shrimp = data_vec[year][(data_vec[year]>=2) & (data_vec[year]<=4)].size*pixel_area
+            # area with temperature < 2 (crab habitat)
+            area_colder_2deg = data_vec[year][data_vec[year]<=2].size*pixel_area
+            # % area with temperature < 2 (crab habitat)
+            area_colder_2deg_perc = area_colder_2deg/(data_vec[year].size*pixel_area)*100.0
+
+            # Pandalus Borealis habitat
+            Pbor = data_vec[year][(bathy_vec>=-460) & (bathy_vec<=-180) &  (data_vec[year]>=-.2) &  (data_vec[year]<=4.7)].size*pixel_area
+            Pbor_perc = Pbor/(data_vec[year].size*pixel_area)*100.0
+            # Pandalus Montagui habitat
+            Pmon = data_vec[year][(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec[year]>=-1) &  (data_vec[year]<=3.7)].size*pixel_area    
+            Pmon_perc = Pmon/(data_vec[year].size*pixel_area)*100.0
+
+            # Measure of the successfulness of the sampling
+            sampled_area= data_vec[year].size*pixel_area
+
+            #Determine the percentage of missing area
+            percent_coverage = np.sum(~np.isnan(map_org[year]*bath_mask))/np.sum(~np.isnan(bath_mask))
+            percent_coverage = percent_coverage*100
+
+
             # Fill dict for output
-            dict['Pbor_eaz_habitat'] = Pbor_eaz
-            dict['Pbor_waz_habitat'] = Pbor_waz
-            dict['Pbor_sfa4_habitat'] = Pbor_sfa4
-            dict['Pmon_eaz_habitat'] = Pmon_eaz
-            dict['Pmon_waz_habitat'] = Pmon_waz
-            dict['Pmon_sfa4_habitat'] = Pmon_sfa4
-            dict['Pbor_eaz_perc'] = Pbor_eaz_perc
-            dict['Pbor_waz_perc'] = Pbor_waz_perc
-            dict['Pbor_sfa4_perc'] = Pbor_sfa4_perc
-            dict['Pmon_eaz_perc'] = Pmon_eaz_perc
-            dict['Pmon_waz_perc'] = Pmon_waz_perc
-            dict['Pmon_sfa4_perc'] = Pmon_sfa4_perc
+            dict = {}
+            dict['Tmean'] = Tmean # temperature and salinity
+            dict['Tmean_sha100'] = Tmean100
+            dict['Tmean_sha200'] = Tmean200
+            dict['Tmean_sha300'] = Tmean300
 
-    else:
-        # Fill dict for output
-        dict={}
-        dict['Tmean'] = np.nan
-        dict['Tmean_sha100'] = np.nan
-        dict['Tmean_sha200'] = np.nan
-        dict['Tmean_sha300'] = np.nan
-        dict['area_colder0'] = np.nan
-        dict['area_colder1'] = np.nan 
-        dict['area_warmer2'] = np.nan
-        dict['area_shrimp'] = np.nan
-        dict['area_colder2'] = np.nan 
-        dict['area_colder2_perc'] = np.nan 
-        dict['area_Pborealis'] = np.nan
-        dict['area_Pborealis_perc'] = np.nan
-        dict['area_Pmontagui'] = np.nan
-        dict['area_Pmontagui_perc'] = np.nan
-        dict['sampled_area'] = np.nan
-        dict['total_area'] = np.nan
-        dict['percent_coverage'] = np.nan
+            if var == 'temperature': # temperature only
+                dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
+                dict['area_colder1'] = area_colder_1deg 
+                dict['area_warmer2'] = area_warmer_2deg
+                dict['area_shrimp'] = area_shrimp
+                dict['area_colder2'] = area_colder_2deg 
+                dict['area_colder2_perc'] = area_colder_2deg_perc 
+                dict['area_Pborealis'] = Pbor
+                dict['area_Pborealis_perc'] = Pbor_perc
+                dict['area_Pmontagui'] = Pmon
+                dict['area_Pmontagui_perc'] = Pmon_perc
+                dict['sampled_area'] = sampled_area
+                dict['total_area'] = total_polygon_area
+                dict['percent_coverage'] = percent_coverage
 
+            
+            if nsrf:
+                # Area of NSRF seafloor with conditions within a certain depth and temperature range (project with Wojciech)
+                Pbor_eaz = data_vec[year][(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec[year]>=-.4) &  (data_vec[year]<=4.7)].size*pixel_area
+                Pbor_waz = data_vec[year][(bathy_vec>=-520) & (bathy_vec<=-210) &  (data_vec[year]>=-.7) &  (data_vec[year]<=4.0)].size*pixel_area
+                Pbor_sfa4 = data_vec[year][(bathy_vec>=-590) & (bathy_vec<=-180) &  (data_vec[year]>=-.7) &  (data_vec[year]<=4.7)].size*pixel_area
+                Pmon_eaz = data_vec[year][(bathy_vec>=-600) & (bathy_vec<=-120) &  (data_vec[year]>=-.5) &  (data_vec[year]<=3.7)].size*pixel_area
+                Pmon_waz = data_vec[year][(bathy_vec>=-530) & (bathy_vec<=-110) &  (data_vec[year]>=-1.2) &  (data_vec[year]<=2.8)].size*pixel_area
+                Pmon_sfa4 = data_vec[year][(bathy_vec>=-590) & (bathy_vec<=-140) &  (data_vec[year]>=-0.9) &  (data_vec[year]<=4.0)].size*pixel_area
+                # % of good pixels
+                Pbor_eaz_perc = Pbor_eaz/(data_vec[year].size*pixel_area)*100.0
+                Pbor_waz_perc = Pbor_waz/(data_vec[year].size*pixel_area)*100.0
+                Pbor_sfa4_perc = Pbor_sfa4/(data_vec[year].size*pixel_area)*100.0
+                Pmon_eaz_perc = Pmon_eaz/(data_vec[year].size*pixel_area)*100.0
+                Pmon_waz_perc = Pmon_waz/(data_vec[year].size*pixel_area)*100.0
+                Pmon_sfa4_perc = Pmon_sfa4/(data_vec[year].size*pixel_area)*100.0
+                
+                # Fill dict for output
+                dict['Pbor_eaz_habitat'] = Pbor_eaz
+                dict['Pbor_waz_habitat'] = Pbor_waz
+                dict['Pbor_sfa4_habitat'] = Pbor_sfa4
+                dict['Pmon_eaz_habitat'] = Pmon_eaz
+                dict['Pmon_waz_habitat'] = Pmon_waz
+                dict['Pmon_sfa4_habitat'] = Pmon_sfa4
+                dict['Pbor_eaz_perc'] = Pbor_eaz_perc
+                dict['Pbor_waz_perc'] = Pbor_waz_perc
+                dict['Pbor_sfa4_perc'] = Pbor_sfa4_perc
+                dict['Pmon_eaz_perc'] = Pmon_eaz_perc
+                dict['Pmon_waz_perc'] = Pmon_waz_perc
+                dict['Pmon_sfa4_perc'] = Pmon_sfa4_perc
 
-    return dict
+        else:
+            # Fill dict for output
+            dict={}
+            dict['Tmean'] = np.nan
+            dict['Tmean_sha100'] = np.nan
+            dict['Tmean_sha200'] = np.nan
+            dict['Tmean_sha300'] = np.nan
+            dict['area_colder0'] = np.nan
+            dict['area_colder1'] = np.nan 
+            dict['area_warmer2'] = np.nan
+            dict['area_shrimp'] = np.nan
+            dict['area_colder2'] = np.nan 
+            dict['area_colder2_perc'] = np.nan 
+            dict['area_Pborealis'] = np.nan
+            dict['area_Pborealis_perc'] = np.nan
+            dict['area_Pmontagui'] = np.nan
+            dict['area_Pmontagui_perc'] = np.nan
+            dict['sampled_area'] = np.nan
+            dict['total_area'] = np.nan
+            dict['percent_coverage'] = np.nan
+        dict_together[year] = dict
+
+    return dict_together
 
 #def polygon_salinity_stats(dict, shape):
 #    """ Almost the same as previous, but for salinity
