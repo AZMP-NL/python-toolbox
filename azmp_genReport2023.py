@@ -360,7 +360,8 @@ for section in sections:
         azsct.section_clim(
             SECTION=section,
             SEASON=season,
-            CLIM_YEAR=[1950,int(yoi)],
+            YEARS=[1950,int(yoi)],
+            CLIM_YEAR=[1991,2020],
             dlat=2,
             dlon=2,
             z1=2,
@@ -369,6 +370,7 @@ for section in sections:
             CASTS_path='~/data/CASTS/',
             bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
             )
+os.system('mv temp_section_*.png AZMP_lines/')
 os.system('mv *.pkl operation_files/')
 variables = ['temperature', 'salinity']
 for section in sections:

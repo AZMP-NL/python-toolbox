@@ -213,7 +213,8 @@ def temperature_clim_fill(clim, year_data, df_stn):
 '''
 SECTION = 'SI'
 SEASON = 'summer'
-CLIM_YEAR = [1950, 2023]
+YEARS = [1950,2023]
+CLIM_YEAR = [1990, 2021]
 dlat = 2 # how far from station we search
 dlon = 2
 z1 = 2
@@ -222,7 +223,7 @@ dc = .2 # grid resolution
 CASTS_path = '~/data/CASTS/'
 bath_path = '~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
 '''
-def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_path):
+def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_path):
 
     ## ---- Get Stations ---- ## 
     df_stn = pd.read_excel('~/github/AZMP-NL/utils/STANDARD_SECTIONS.xlsx')
@@ -270,8 +271,8 @@ def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_pat
         print(' -> Done!')
 
 
-    #Loop on climatological years
-    years = np.arange(CLIM_YEAR[0], CLIM_YEAR[1]+1)
+    #Loop on years
+    years = np.arange(YEARS[0], YEARS[1]+1)
     years_series = pd.Series(years)
     years_series.name='year'
 
@@ -476,21 +477,28 @@ def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_pat
         df_stn_man_sal.append(df_section_stn_man_S)
 
 
-    #Save temperature (not necessary)
+    #Concatenate all temperature measurements
     df_stn_mindex = pd.concat(df_stn_temp,keys=years_series)
     df_stn_man_mindex = pd.concat(df_stn_man_temp,keys=years_series)
     df_itp_mindex = pd.concat(df_itp_temp,keys=years_series)
 
-    #Save Salinity (not necessary)
+    #Concatenate all salinity measurements
     df_stn_mindex_S = pd.concat(df_stn_sal,keys=years_series)
     df_stn_man_mindex_S = pd.concat(df_stn_man_sal,keys=years_series)
     df_itp_mindex_S = pd.concat(df_itp_sal,keys=years_series)
 
     #Save Climatology - currently set to stn
-    df_clim =  df_stn_mindex.groupby(level=1).apply(lambda x: x.mean())
+    #Isolate for climatology years
+    stn_years = df_stn_mindex.index.get_level_values('year').values
+    clim_filt = (stn_years>=CLIM_YEAR[0])*(stn_years<=CLIM_YEAR[1])
+    df_stn_mindex_clim = df_stn_mindex.iloc[clim_filt]
+    df_clim =  df_stn_mindex_clim.groupby(level=1).apply(lambda x: x.mean())
     picklename = 'df_temperature_' + SECTION + '_' + SEASON + '_clim.pkl'
     df_clim.to_pickle(picklename)
-    df_clim_S =  df_stn_mindex_S.groupby(level=1).apply(lambda x: x.mean())
+    stn_years = df_stn_mindex_S.index.get_level_values('year').values
+    clim_filt = (stn_years>=CLIM_YEAR[0])*(stn_years<=CLIM_YEAR[1])
+    df_stn_mindex_S_clim = df_stn_mindex_S.iloc[clim_filt]
+    df_clim_S =  df_stn_mindex_S_clim.groupby(level=1).apply(lambda x: x.mean())
     picklename = 'df_salinity_' + SECTION + '_' + SEASON + '_clim.pkl'
     df_clim_S.to_pickle(picklename)
 
@@ -516,7 +524,7 @@ def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_pat
         ## -------- Method 1: Interpolation -------- ##
         if np.isin(YEAR, itp_years):
             #Import the climatology
-            stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+            stn_clim = df_stn_mindex_clim.groupby(level=1).apply(lambda x: x.mean()).T
             #Import the year of interest data
             year_data = df_itp_mindex.T[[YEAR]].copy()
             year_data = year_data.T.droplevel('year').T
@@ -533,7 +541,7 @@ def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_pat
         ## -------- Method 2: Station_ID -------- ##
         if np.isin(YEAR, stn_years):
             #Import the climatology
-            stn_clim = df_stn_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+            stn_clim = df_stn_mindex_clim.groupby(level=1).apply(lambda x: x.mean()).T
             #Import the year of interest data
             year_data = df_stn_mindex.T[[YEAR]].copy()
             year_data = year_data.T.droplevel('year').T
@@ -550,7 +558,7 @@ def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_pat
         ## -------- Method 3: Station_ID_manual -------- ##
         if np.isin(YEAR, stn_years):
             #Import the climatology
-            stn_clim = df_stn_man_mindex.groupby(level=1).apply(lambda x: x.mean()).T
+            stn_clim = df_stn_mindex_clim.groupby(level=1).apply(lambda x: x.mean()).T
             #Import the year of interest data
             year_data = df_stn_man_mindex.T[[YEAR]].copy()
             year_data = year_data.T.droplevel('year').T
@@ -572,4 +580,3 @@ def section_clim(SECTION,SEASON,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,bath_pat
     df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
     picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
     df_CIL.to_pickle(picklename)
-    os.system('mv temp_section_*.png AZMP_lines/')
