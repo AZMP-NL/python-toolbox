@@ -44,7 +44,7 @@ import azmp_stn27_newtest as azS27
 #Choose a year of interest
 yoi = '2023'
 #Choose a working directory name
-work_name = 'AZMP_v1'
+work_name = 'AZMP'
 
 ## Preamble (create folders to dump figures and data)
 if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
@@ -76,7 +76,7 @@ os.system('mv *.png climate_indices')
 os.system('cp air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./'+yoi+'/')
 os.system('mv air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
 os.system('mv *.pkl operation_files')
-
+# Air Scorecards
 %my_run azmp_air_scorecards.py
 os.system('cp scorecards_air.png scorecards_air_FR.png ./'+yoi+'/')
 # delete tmp files
@@ -93,7 +93,8 @@ os.system('mv *.csv ./operation_files')
 
 #New version using only functions
 #Isolate the stn27 data
-file_location = '~/data/'+work_name+'/operation_files/stn27_all_casts.nc'
+#file_location = '~/data/'+work_name+'/operation_files/stn27_all_casts.nc'
+file_location = './operation_files/stn27_all_casts.nc'
 CASTS_path = '~/data/CASTS/*.nc'
 s27_loc = [47.54667,-52.58667]
 dc = .025
@@ -101,7 +102,7 @@ problem_casts = ['1988_10073164.nc','1990_02183115.nc','1991_11229001.nc']
 azS27.stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts)
 #Determine the temperature and salinity climatology
 year_clim = [1991, 2020]
-current_year = 2023
+current_year = int(yoi)
 df,df_monthly,weekly_clim,df_weekly,df_year,anom = azS27.stn27_climatology(file_location,year_clim,current_year)
 #Save the current year monthly average
 for variable in df_monthly:
@@ -117,23 +118,23 @@ azS27.stn27_anomaly_plot(anom,current_year,XLIM)
 #Convert to subplots and remove individual plots
 for variable in anom:
     os.system('montage '+\
-        's27_'+variable+'_2023.png '+\
+        's27_'+variable+'_'+ yoi +'.png '+\
         's27_'+variable+'_clim.png '+\
-        's27_'+variable+'_anom_2023.png '+\
+        's27_'+variable+'_anom_'+ yoi + '.png '+\
         '-tile 1x3 -geometry +10+10  -background white  s27_'+variable+'_subplot_'+str(current_year)+'.png')
     os.system('montage '+\
-        's27_'+variable+'_2023_FR.png '+\
+        's27_'+variable+'_'+ yoi + '_FR.png '+\
         's27_'+variable+'_clim_FR.png '+\
-        's27_'+variable+'_anom_2023_FR.png '+\
+        's27_'+variable+'_anom_'+ yoi +'_FR.png '+\
         '-tile 1x3 -geometry +10+10  -background white  s27_'+variable+'_subplot_'+str(current_year)+'_FR.png')
     os.system('rm '+\
-        's27_'+variable+'_2023.png '+\
+        's27_'+variable+'_'+ yoi + '.png '+\
         's27_'+variable+'_clim.png '+\
-        's27_'+variable+'_anom_2023.png')
+        's27_'+variable+'_anom_'+ yoi + '.png')
     os.system('rm '+\
-        's27_'+variable+'_2023_FR.png '+\
+        's27_'+variable+'_'+ yoi + '_FR.png '+\
         's27_'+variable+'_clim_FR.png '+\
-        's27_'+variable+'_anom_2023_FR.png')
+        's27_'+variable+'_anom_'+ yoi + '_FR.png')
 #Create a station occupation figure
 azS27.station_occupations(file_location,current_year,year_clim)
 
@@ -193,7 +194,7 @@ azS27.MLD_timeseries(anom)
 azS27.MLD_currentyear_barplot(mld,current_year,year_clim=[1991,2020])
 
 #Get the scorecard plot ready
-year_plot = [1981,2023]
+year_plot = [1981,int(yoi)]
 T_anom,T_anom_std,T_clim_period_annual = azS27.scorecard_TS_processor('S27_temperature_monthly.pkl',year_clim,year_plot,'Temp')
 S_anom,S_anom_std,S_clim_period_annual = azS27.scorecard_TS_processor('S27_salinity_monthly.pkl',year_clim,year_plot,'Sal')
 CIL_anom,CIL_anom_std,CIL_clim_period = azS27.scorecard_CIL_processor('S27_CIL_summer_stats.pkl',year_clim,year_plot)
@@ -320,6 +321,7 @@ os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 
 # bottom stats and scorecards (arange year+1)
 #[need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
+# Would be nice that we don;t need to run the whole thing every year...
 for season in ['spring','fall']:
     azrt.bottom_stats(
         years=np.arange(1980, int(yoi)+1),
@@ -333,7 +335,7 @@ os.system('mv *.png *.csv bottom_temp_stats/')
 
 
 
-# For NAFO STACFEN and STACFIS input (for azmp_composite_index.py): [NEED TO DO]
+# For NAFO STACFEN and STACFIS input (for azmp_composite_index.py): [NEED TO DO] <-- looks like it works
 azrt.bottom_stats(
     years=np.arange(1980, int(yoi)),
     season='summer',
@@ -346,6 +348,7 @@ os.system('cp bottomT_anomalies_climateindex.png bottomT_anomalies_climateindex_
 os.system('mv *.pkl operation_files/')
 os.system('mv *.png bottom_temp_stats/')
 
+# FC: Need to double check below
 
 ## ---------------  Sections plots ------------- ## (FINISHED/WORKING - 2023)
 year = int(yoi)
@@ -417,7 +420,7 @@ os.system('mv *.csv operation_files/')
 #%my_run azmp_CIL_stats.py 
 %my_run azmp_CIL_stats_update.py # <---- preferred if only an update is needed (need to edit sections)
 %my_run azmp_sar_input.py
-os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../2022')
+os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../'+yoi)
 
 ## ----------- CSAS DATA ---------------- ##
 %my_run csas_crab_stats.py
