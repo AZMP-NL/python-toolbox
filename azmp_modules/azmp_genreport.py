@@ -78,44 +78,35 @@ def nao(
             import urllib3
             http = urllib3.PoolManager()
             r = http.request('GET', url)
-
-            #Split the data
-            r_data = str(r.data)[2:-1].split('\\n')
-            months = re.split(r'\s{2,}', r_data[0])
-            #Note "-2" below to remove current year [TO BE FIXED]
-            years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-1]]).astype(int)
-            r_data = np.array(r_data[1:-1])[years<=YEAR]
-            data = np.array([re.split(r'\s{2,}', i) for i in r_data])
-            years = data[:,0]
-            data = data[:,1:].astype(float)
-            pd_data = pd.DataFrame(data, columns=months[1:], index=years)
-            pd_data.to_csv(os.path.expanduser(nao_file_loc))
+            open(os.path.expanduser(nao_file_loc), 'wb').write(r.data)
     else:
         url = url_loc
         nao_file = nao_file_loc
         import urllib3
         http = urllib3.PoolManager()
         r = http.request('GET', url)
+        open(os.path.expanduser(nao_file_loc), 'wb').write(r.data)
 
-        #Split the data
-        r_data = str(r.data)[2:-1].split('\\n')
-        months = re.split(r'\s{2,}', r_data[0])
-        years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-1]]).astype(int)
-        r_data = np.array(r_data[1:-1])[years<=YEAR]
-        data = np.array([re.split(r'\s{2,}', i) for i in r_data])
-        years = data[:,0]
-        data = data[:,1:].astype(float)
-        pd_data = pd.DataFrame(data, columns=months[1:], index=years)
-        pd_data.to_csv(os.path.expanduser(nao_file_loc))
-
-    # Reload using pandas
-    col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    df = pd.read_csv(nao_file, header=0)
-    df = df.set_axis(col_names, axis=1)
+    #Import and Split the data
+    df = pd.read_csv(nao_file, header=None).values
+    months = re.split(r'\s{2,}', df[0][0])
+    years = np.array([re.split(r'\s{2,}', i[0])[0] for i in df[1:]]).astype(int)
+    r_data = df[1:][years<=YEAR].flatten()
+    data = []
+    for i in r_data:
+        data_split = re.split(r'\s{2,}', i)
+        if np.size(data_split) == 13:
+            data.append(data_split)
+        else:
+            #Fill with nans for missing months
+            nan_adds = np.full(13-np.size(data_split), np.nan)
+            data.append(np.concatenate((data_split,nan_adds)))
+    years = np.array(data)[:,0]
+    data = np.array(data)[:,1:].astype(float)
+    pd_data = pd.DataFrame(data,columns=months[1:],index=years)
 
     # Set index
-    df = df.set_index('Year')
-    df = df.stack()
+    df = pd_data.stack()
     df_index = df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str')
     df.index = [pd.to_datetime(i) for i in df_index]
 
@@ -231,43 +222,35 @@ def ao(
             import urllib3
             http = urllib3.PoolManager()
             r = http.request('GET', url)
-
-            #Split the data
-            r_data = str(r.data)[2:-1].split('\\n')
-            months = re.split(r'\s{2,}', r_data[0])
-            years = np.array([re.split(r'\s{1,}', i)[0] for i in r_data[1:-1]]).astype(int)
-            r_data = np.array(r_data[1:-1])[years<=YEAR]
-            data = np.array([re.split(r'\s{1,}', i) for i in r_data])
-            years = data[:,0]
-            data = data[:,1:].astype(float)
-            pd_data = pd.DataFrame(data, columns=months[1:], index=years)
-            pd_data.to_csv(os.path.expanduser(ao_file_loc))
+            open(os.path.expanduser(ao_file_loc), 'wb').write(r.data)
     else:
         url = url_loc
         ao_file = ao_file_loc
         import urllib3
         http = urllib3.PoolManager()
         r = http.request('GET', url)
+        open(os.path.expanduser(ao_file_loc), 'wb').write(r.data)
 
-        #Split the data
-        r_data = str(r.data)[2:-1].split('\\n')
-        months = re.split(r'\s{2,}', r_data[0])
-        years = np.array([re.split(r'\s{1,}', i)[0] for i in r_data[1:-1]]).astype(int)
-        r_data = np.array(r_data[1:-1])[years<=YEAR]
-        data = np.array([re.split(r'\s{1,}', i) for i in r_data])
-        years = data[:,0]
-        data = data[:,1:].astype(float)
-        pd_data = pd.DataFrame(data, columns=months[1:], index=years)
-        pd_data.to_csv(os.path.expanduser(ao_file_loc))
-
-    # Reload using pandas
-    col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    df = pd.read_csv(ao_file, header=0)
-    df = df.set_axis(col_names, axis=1)
+    #Import and Split the data
+    df = pd.read_csv(ao_file, header=None).values
+    months = re.split(r'\s{2,}', df[0][0])
+    years = np.array([re.split(r'\s{1,}', i[0])[0] for i in df[1:]]).astype(int)
+    r_data = df[1:][years<=YEAR].flatten()
+    data = []
+    for i in r_data:
+        data_split = re.split(r'\s{1,}', i)
+        if np.size(data_split) == 13:
+            data.append(data_split)
+        else:
+            #Fill with nans for missing months
+            nan_adds = np.full(13-np.size(data_split), np.nan)
+            data.append(np.concatenate((data_split,nan_adds)))
+    years = np.array(data)[:,0]
+    data = np.array(data)[:,1:].astype(float)
+    pd_data = pd.DataFrame(data,columns=months[1:],index=years)
 
     # Set index
-    df = df.set_index('Year')
-    df = df.stack()
+    df = pd_data.stack()
     df_index = df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str')
     df.index = [pd.to_datetime(i) for i in df_index]
 
@@ -333,47 +316,39 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
             import urllib3
             http = urllib3.PoolManager()
             r = http.request('GET', url)
-
-            #Split the data
-            r_data = str(r.data)[2:-1].split('\\n')
-            months = re.split(r'\s{2,}', r_data[0])
-            years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-5]]).astype(int)
-            r_data = np.array(r_data[1:-5])[years<=YEAR]
-            data = np.array([re.split(r'\s{2,}', i) for i in r_data])
-            years = data[:,0]
-            data = data[:,1:].astype(float)
-            data[data<=-99] = np.nan
-            col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-            pd_data = pd.DataFrame(data, columns=col_names[1:], index=years)
-            pd_data.to_csv(os.path.expanduser(amo_file_loc))
+            open(os.path.expanduser(amo_file_loc), 'wb').write(r.data)
     else:
         url = url_loc
         amo_file = amo_file_loc
         import urllib3
         http = urllib3.PoolManager()
         r = http.request('GET', url)
+        open(os.path.expanduser(amo_file_loc), 'wb').write(r.data)
 
-        #Split the data
-        r_data = str(r.data)[2:-1].split('\\n')
-        months = re.split(r'\s{2,}', r_data[0])
-        years = np.array([re.split(r'\s{2,}', i)[0] for i in r_data[1:-5]]).astype(int)
-        r_data = np.array(r_data[1:-5])[years<=YEAR]
-        data = np.array([re.split(r'\s{2,}', i) for i in r_data])
-        years = data[:,0]
-        data = data[:,1:].astype(float)
-        data[data<=-99] = np.nan
-        col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        pd_data = pd.DataFrame(data, columns=col_names[1:], index=years)
-        pd_data.to_csv(os.path.expanduser(amo_file_loc))
-
-    # Reload using pandas
+    #Import and Split the data
+    df = pd.read_csv(amo_file, header=None, on_bad_lines='skip').values
     col_names = ["Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    df = pd.read_csv(amo_file, header=0)
-    df = df.set_axis(col_names, axis=1)
+    months = col_names
+    years = np.array([re.split(r'\s{2,}', i[0])[0] for i in df[1:-3]]).astype(int)
+    r_data = df[1:-3][years<=YEAR].flatten()
+    data = []
+    for i in r_data:
+        data_split = re.split(r'\s{2,}', i)
+        if np.size(data_split) == 13:
+            data.append(data_split)
+        else:
+            #Fill with nans for missing months
+            nan_adds = np.full(13-np.size(data_split), np.nan)
+            data.append(np.concatenate((data_split,nan_adds)))
+    years = np.array(data)[:,0]
+    years = np.array([i.strip() for i in years])
+    data = np.array(data)[:,1:].astype(float)
+    data[data <= -99] = np.nan
+    pd_data = pd.DataFrame(data,columns=months[1:],index=years)
+
 
     # Set index
-    df = df.set_index('Year')
-    df = df.stack()
+    df = pd_data.stack()
     df_index = df.index.get_level_values(1) + '-' + df.index.get_level_values(0).astype('str')
     df.index = [pd.to_datetime(i) for i in df_index]
 
