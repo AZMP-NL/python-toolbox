@@ -146,8 +146,7 @@ def plot_temperature(distance, df, year, section, season, method=''):
             [0,], colors='k', linewidths=2
             )
         cil_vol = 0
-        CIL = c_cil.collections[0]
-        for path in CIL.get_paths()[:]:
+        for path in c_cil.get_paths()[:]:
             vs = path.vertices
             cil_vol = cil_vol + np.abs(area(vs))/1000
         cil_core = np.nanmin(df.values)
@@ -163,7 +162,7 @@ def plot_temperature(distance, df, year, section, season, method=''):
     plt.colorbar(c)
     plt.title(str(year))
     #Save the figure
-    fig_name = 'temp_section_' + section + '_' + season + '_' + '_' + str(year) + '_'+method+'.png'
+    fig_name = 'temp_section_' + section + '_' + season + '_'+str(year) + '_'+method+'.png'
     fig.savefig(fig_name, dpi=150)
     plt.close('all')
     return cil_vol, cil_core
@@ -203,8 +202,7 @@ def temperature_clim_fill(clim, year_data, df_stn):
     plt.clf()
     #CIL area
     cil_vol = 0
-    CIL = c_cil.collections[0]
-    for path in CIL.get_paths()[:]:
+    for path in c_cil.get_paths()[:]:
         vs = path.vertices
         cil_vol = cil_vol + np.abs(area(vs))/1000
     cil_core = np.nanmin(year_merged)
@@ -213,7 +211,7 @@ def temperature_clim_fill(clim, year_data, df_stn):
 '''
 SECTION = 'SI'
 SEASON = 'summer'
-YEARS = [1950,2023]
+YEARS = [2020,2023]
 CLIM_YEAR = [1990, 2021]
 dlat = 2 # how far from station we search
 dlon = 2
