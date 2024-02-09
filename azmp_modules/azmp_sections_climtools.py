@@ -148,7 +148,8 @@ def plot_temperature(distance, df, year, section, season, method=''):
         cil_vol = 0
         for path in c_cil.get_paths()[:]:
             vs = path.vertices
-            cil_vol = cil_vol + np.abs(area(vs))/1000
+            if vs.shape[0] != 0:
+                cil_vol = cil_vol + np.abs(area(vs))/1000
         cil_core = np.nanmin(df.values)
     else:
         cil_vol = 0
@@ -204,14 +205,15 @@ def temperature_clim_fill(clim, year_data, df_stn):
     cil_vol = 0
     for path in c_cil.get_paths()[:]:
         vs = path.vertices
-        cil_vol = cil_vol + np.abs(area(vs))/1000
+        if vs.shape[0] != 0:
+            cil_vol = cil_vol + np.abs(area(vs))/1000
     cil_core = np.nanmin(year_merged)
     return cil_vol, cil_core
 
 '''
 SECTION = 'SI'
 SEASON = 'summer'
-YEARS = [2020,2023]
+YEARS = [1950,2023]
 CLIM_YEAR = [1990, 2021]
 dlat = 2 # how far from station we search
 dlon = 2
@@ -268,7 +270,6 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         np.save(bathy_file, Zitp)
         print(' -> Done!')
 
-
     #Loop on years
     years = np.arange(YEARS[0], YEARS[1]+1)
     years_series = pd.Series(years)
@@ -287,6 +288,51 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     df_stn_sal = []
     df_stn_man_sal = []
     df_itp_sal = []
+
+    #Check to see if files are available
+    file_check = [
+    'df_stn_mindex_T_'+SECTION+'_'+SEASON+'.pkl',
+    'df_stn_man_mindex_T_'+SECTION+'_'+SEASON+'.pkl',
+    'df_itp_mindex_T_'+SECTION+'_'+SEASON+'.pkl',
+    'df_stn_mindex_S_'+SECTION+'_'+SEASON+'.pkl',
+    'df_stn_man_mindex_S_'+SECTION+'_'+SEASON+'.pkl',
+    'df_itp_mindex_S_'+SECTION+'_'+SEASON+'.pkl',
+    'df_CIL_'+SECTION+'_'+SEASON+'.pkl',
+    ]
+    data_available = np.array([os.path.isfile('operation_files/'+i) for i in file_check])
+    if np.sum(data_available) == data_available.size:
+        print('All temperature and salinity data files available!')
+        concat = input('Would you like to use existing files and caculate only missing years[y/n]? ')
+        if concat == 'y':
+            print(' ->  Calculating missing years only.')
+
+            #Import the data
+            df_stn_mindex = pd.read_pickle('operation_files/'+file_check[0])
+            df_stn_man_mindex = pd.read_pickle('operation_files/'+file_check[1])
+            df_itp_mindex = pd.read_pickle('operation_files/'+file_check[2])
+            df_stn_mindex_S = pd.read_pickle('operation_files/'+file_check[3])
+            df_stn_man_mindex_S = pd.read_pickle('operation_files/'+file_check[4])
+            df_itp_mindex_S = pd.read_pickle('operation_files/'+file_check[5])
+            df_CIL = pd.read_pickle('operation_files/'+file_check[6])
+
+            #Determine the years present
+            years_present = np.unique(df_itp_mindex.index.get_level_values('year').values)
+            years = years[~np.isin(years,years_present)]
+            years_series = pd.Series(years)
+            years_series.name='year'
+            cil_vol_stn_clim = np.full(years.shape, np.nan)
+            cil_vol_stn_man_clim = np.full(years.shape, np.nan)
+            cil_vol_itp_clim = np.full(years.shape, np.nan)
+            cil_core_stn_clim = np.full(years.shape, np.nan)
+            cil_core_stn_man_clim = np.full(years.shape, np.nan)
+            cil_core_itp_clim = np.full(years.shape, np.nan)
+
+
+        elif concat == 'n':
+            print(' ->  Calculating all years')
+    else:
+        concat = 'n'
+
 
     #Cycle through each year
     for idx, YEAR in enumerate(years):
@@ -476,14 +522,50 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
 
 
     #Concatenate all temperature measurements
-    df_stn_mindex = pd.concat(df_stn_temp,keys=years_series)
-    df_stn_man_mindex = pd.concat(df_stn_man_temp,keys=years_series)
-    df_itp_mindex = pd.concat(df_itp_temp,keys=years_series)
+    if concat=='y':
+        if np.size(df_stn_temp) != 0:
+            place_stn = pd.concat(df_stn_temp,keys=years_series)
+            df_stn_mindex = pd.concat([place_stn,df_stn_mindex]).sort_index()
+            df_stn_mindex = df_stn_mindex[~df_stn_mindex.index.duplicated(keep='first')]
+        if np.size(df_stn_man_temp) != 0:
+            place_stn_man = pd.concat(df_stn_man_temp,keys=years_series)
+            df_stn_man_mindex = pd.concat([place_stn_man,df_stn_man_mindex]).sort_index()
+            df_stn_man_mindex = df_stn_man_mindex[~df_stn_man_mindex.index.duplicated(keep='first')]
+        if np.size(df_itp_temp) != 0:
+            place_itp = pd.concat(df_itp_temp,keys=years_series)
+            df_itp_mindex = pd.concat([place_itp,df_itp_mindex]).sort_index()
+            df_itp_mindex = df_itp_mindex[~df_itp_mindex.index.duplicated(keep='first')]
+    elif concat=='n':
+        df_stn_mindex = pd.concat(df_stn_temp,keys=years_series)
+        df_stn_man_mindex = pd.concat(df_stn_man_temp,keys=years_series)
+        df_itp_mindex = pd.concat(df_itp_temp,keys=years_series)
+    #Save all three versions
+    df_stn_mindex.to_pickle('df_stn_mindex_T_'+SECTION+'_'+SEASON+'.pkl')
+    df_stn_man_mindex.to_pickle('df_stn_man_mindex_T_'+SECTION+'_'+SEASON+'.pkl')
+    df_itp_mindex.to_pickle('df_itp_mindex_T_'+SECTION+'_'+SEASON+'.pkl')
 
     #Concatenate all salinity measurements
-    df_stn_mindex_S = pd.concat(df_stn_sal,keys=years_series)
-    df_stn_man_mindex_S = pd.concat(df_stn_man_sal,keys=years_series)
-    df_itp_mindex_S = pd.concat(df_itp_sal,keys=years_series)
+    if concat=='y':
+        if np.size(df_stn_sal) != 0:
+            place_stn = pd.concat(df_stn_sal,keys=years_series)
+            df_stn_mindex_S = pd.concat([place_stn,df_stn_mindex_S]).sort_index()
+            df_stn_mindex_S = df_stn_mindex_S[~df_stn_mindex_S.index.duplicated(keep='first')]
+        if np.size(df_stn_man_sal) != 0:
+            place_stn_man = pd.concat(df_stn_man_sal,keys=years_series)
+            df_stn_man_mindex_S = pd.concat([place_stn_man,df_stn_man_mindex_S]).sort_index()
+            df_stn_man_mindex_S = df_stn_man_mindex_S[~df_stn_man_mindex_S.index.duplicated(keep='first')]
+        if np.size(df_itp_sal) != 0:
+            place_itp = pd.concat(df_itp_sal,keys=years_series)
+            df_itp_mindex_S = pd.concat([place_itp,df_itp_mindex_S]).sort_index()
+            df_itp_mindex_S = df_itp_mindex_S[~df_itp_mindex_S.index.duplicated(keep='first')]
+    elif concat=='n':
+        df_stn_mindex_S = pd.concat(df_stn_sal,keys=years_series)
+        df_stn_man_mindex_S = pd.concat(df_stn_man_sal,keys=years_series)
+        df_itp_mindex_S = pd.concat(df_itp_sal,keys=years_series)
+    #Save all three versions
+    df_stn_mindex_S.to_pickle('df_stn_mindex_S_'+SECTION+'_'+SEASON+'.pkl')
+    df_stn_man_mindex_S.to_pickle('df_stn_man_mindex_S_'+SECTION+'_'+SEASON+'.pkl')
+    df_itp_mindex_S.to_pickle('df_itp_mindex_S_'+SECTION+'_'+SEASON+'.pkl')
 
     #Save Climatology - currently set to stn
     #Isolate for climatology years
@@ -501,9 +583,19 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     df_clim_S.to_pickle(picklename)
 
     # Save CIL timseries
-    df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
-    df_CIL.index = years_series
-    df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
+    if concat=='y':
+        if np.size(cil_vol_stn_clim) != 0:
+            place_CIL = pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
+            place_years_series = pd.Series(years)
+            place_years_series.name = 'year'
+            place_CIL.index = place_years_series
+            place_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
+            df_CIL = pd.concat([place_CIL,df_CIL]).sort_index()
+            df_CIL = df_CIL[~df_CIL.index.duplicated(keep='first')]
+    elif concat=='n':
+        df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
+        df_CIL.index = years_series
+        df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
     picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
     df_CIL.to_pickle(picklename)
 
@@ -515,6 +607,14 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     stn_years = np.unique(df_stn_mindex.index.get_level_values('year').values)
     stn_man_years = np.unique(df_stn_man_mindex.index.get_level_values('year').values)
     itp_years = np.unique(df_itp_mindex.index.get_level_values('year').values)
+    years = np.arange(YEARS[0],YEARS[1]+1)
+    cil_vol_stn_clim = np.full(years.shape, np.nan)
+    cil_vol_stn_man_clim = np.full(years.shape, np.nan)
+    cil_vol_itp_clim = np.full(years.shape, np.nan)
+    cil_core_stn_clim = np.full(years.shape, np.nan)
+    cil_core_stn_man_clim = np.full(years.shape, np.nan)
+    cil_core_itp_clim = np.full(years.shape, np.nan)
+
 
     #Cycle through each of the years
     for YEAR in years:
@@ -570,11 +670,12 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             #Record the CIL core
             cil_core_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_core
 
-        print(' -> '+str(YEAR)+' done! ')
+        print(' -> CIL climatology fill: '+str(YEAR)+' done! ')
 
     # Save CIL timseries
     df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
-    df_CIL.index = years_series
+    df_CIL.index = years
+    df_CIL.index.name = 'year'
     df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
     picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
     df_CIL.to_pickle(picklename)
