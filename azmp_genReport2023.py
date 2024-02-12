@@ -339,8 +339,6 @@ os.system('cp bottomT_anomalies_climateindex.png bottomT_anomalies_climateindex_
 os.system('mv *.pkl operation_files/')
 os.system('mv *.png bottom_temp_stats/')
 
-# FC: Need to double check below
-
 ## ---------------  Sections plots ------------- ## (FINISHED/WORKING - 2023)
 year = int(yoi)
 sections = ['SI', 'BB', 'FC']
@@ -391,7 +389,7 @@ for section in sections:
 os.system('mv *.png AZMP_lines/')
 os.system('mv *.csv *.pkl operation_files/')
 
-# Section CIL [CANNOT UPDATE 2022]
+# Section CIL [DONE 2023]
 %my_run azmp_CIL_scorecards.py  # update year in script!
 os.system('cp scorecards_CIL.png scorecards_CIL_FR.png ./'+yoi)
 os.system('mv *.png AZMP_lines/')
@@ -404,16 +402,19 @@ os.system('mv *.pkl operation_files/')
 
 ## ----------- NLCI ---------------- ##
 %my_run azmp_climate_index.py
-os.system('cp NL_climate_index_ms_scorecards.png NL_climate_index_ms_scorecards_FR.png ./'+yoi)
+os.system('cp NL_climate_index_ms*.png ./'+yoi)
 os.system('mv *.png NLCI/')
 os.system('mv *.csv operation_files/')
+
+
+# FC:  !!! CHECK BELOW !!!
 
 
 ## ----------- AZMP SAR / IROC ---------------- ##
 #%my_run azmp_CIL_stats.py 
 %my_run azmp_CIL_stats_update.py # <---- preferred if only an update is needed (need to edit sections)
 %my_run azmp_sar_input.py
-os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../'+yoi)
+#os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../'+yoi)
 
 ## ----------- CSAS DATA ---------------- ##
 %my_run csas_crab_stats.py
