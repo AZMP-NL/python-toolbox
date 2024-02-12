@@ -89,10 +89,16 @@ def name_variable(ds,z,bins,stn_list,station_ID,manual=False):
     for stn in stn_list:
         #Determine where potential stations are
         if manual:
-            ds_V = ds.isel(time = station_ID == 'AZMP_NAFC_'+stn)
+            if ds.time.size == 1:
+                ds_V = ds.isel(time = [station_ID == 'AZMP_NAFC_'+stn])
+            else:
+                ds_V = ds.isel(time = station_ID == 'AZMP_NAFC_'+stn)
             ds_V['station_ID'] = (['time'], np.tile('AZMP_NAFC_'+stn, ds_V.time.size))
         else:
-            ds_V = ds.isel(time = station_ID == stn)
+            if ds.time.size == 1:
+                ds_V = ds.isel(time = [station_ID == stn])
+            else:
+                ds_V = ds.isel(time = station_ID == stn)
             ds_V['station_ID'] = (['time'], np.tile(stn, ds_V.time.size))
         if ds_V.time.size > 1:
             #If more than 1 measurement, average (shouldn't happen for station_ID)
@@ -211,8 +217,8 @@ def temperature_clim_fill(clim, year_data, df_stn):
     return cil_vol, cil_core
 
 '''
-SECTION = 'SI'
-SEASON = 'summer'
+SECTION = 'FC'
+SEASON = 'fall'
 YEARS = [1950,2023]
 CLIM_YEAR = [1990, 2021]
 dlat = 2 # how far from station we search
