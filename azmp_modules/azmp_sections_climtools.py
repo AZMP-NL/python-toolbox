@@ -151,12 +151,13 @@ def plot_temperature(distance, df, year, section, season, method=''):
             df.T,
             [0,], colors='k', linewidths=2
             )
+        #CIL area
         cil_vol = 0
-        for path in c_cil.get_paths()[:]:
-            vs = path.vertices
+        for path in c_cil.allsegs[0]:
+            vs = path
             if vs.shape[0] != 0:
                 cil_vol = cil_vol + np.abs(area(vs))/1000
-        cil_core = np.nanmin(df.values)
+        cil_core = np.nanmin(df)
     else:
         cil_vol = 0
         cil_core = np.nan
@@ -175,8 +176,9 @@ def plot_temperature(distance, df, year, section, season, method=''):
     return cil_vol, cil_core
 
 #Fill in temperature with climatology
-def temperature_clim_fill(clim, year_data, df_stn):
+def temperature_clim_fill(clim, year_data, df_stn, year, section, season, method=''):
     #Merge the climatology and yearly data
+    year_orig = year_data.copy()
     year_merged = year_data.copy()
     stn_clim = np.array(clim)
     year_data = np.array(year_data)
@@ -184,41 +186,58 @@ def temperature_clim_fill(clim, year_data, df_stn):
     year_merged.iloc[:,:] = year_data.astype(float)
 
     #Compute the new distance vector
-    distance_stn = np.full((year_merged.T.index.shape), np.nan)
+    distance_stn_merged = np.full((year_merged.T.index.shape), np.nan)
     for i, stn in enumerate(year_merged.T.index):
-        distance_stn[i] = azst.haversine(
+        distance_stn_merged[i] = azst.haversine(
             df_stn.LON[0],
             df_stn.LAT[0],
-            df_stn[df_stn.STATION==year_merged.T.index[i]].LON,
-            df_stn[df_stn.STATION==year_merged.T.index[i]].LAT
+            df_stn[df_stn.STATION==year_merged.T.index[i]].LON.values,
+            df_stn[df_stn.STATION==year_merged.T.index[i]].LAT.values
             )
     #Calculate CIL
     #Plot the figure
+    fig,ax = plt.subplots()
     levels = np.arange(-2,10)
-    c = plt.contourf(
-        distance_stn,
+    plt.contourf(
+        distance_stn_merged,
         year_merged.T.columns,
         year_merged,
-        levels
+        levels,cmap=cm.cm.thermal,extend='max',alpha=0.5,zorder=1
         )
+    c = plt.contourf(
+        distance_stn_merged,
+        year_orig.T.columns,
+        year_orig,
+        levels,cmap=cm.cm.thermal,extend='max',zorder=2
+        )
+    
     c_cil = plt.contour(
-        distance_stn,
+        distance_stn_merged,
         year_merged.T.columns,
         year_merged,
-        [0,],colors='k',linewidths=2)
-    plt.clf()
+        [0,],colors='k',linewidths=2,zorder=3)
     #CIL area
     cil_vol = 0
-    for path in c_cil.get_paths()[:]:
-        vs = path.vertices
+    for path in c_cil.allsegs[0]:
+        vs = path
         if vs.shape[0] != 0:
             cil_vol = cil_vol + np.abs(area(vs))/1000
     cil_core = np.nanmin(year_merged)
+    #Other stuff
+    ax.set_ylim([0, 400])
+    ax.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax.set_xlabel('Distance (km)')
+    ax.invert_yaxis()
+    plt.colorbar(c)
+    plt.title(str(year)+' - '+method)
+    fig_name = 'temp_section_' + section + '_' + season + '_'+str(year) + '_'+method+'.png'
+    fig.savefig(fig_name, dpi=150)
+    plt.close('all')
     return cil_vol, cil_core
 
 '''
 SECTION = 'FC'
-SEASON = 'fall'
+SEASON = 'summer'
 YEARS = [1950,2023]
 CLIM_YEAR = [1990, 2021]
 dlat = 2 # how far from station we search
@@ -635,7 +654,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, YEAR, SECTION, SEASON, method='itp')
 
             #Record the CIL vol
             cil_vol_itp_clim[np.where(YEAR == years)[0][0]] = cil_vol
@@ -652,7 +671,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, YEAR, SECTION, SEASON, method='stn')
 
             #Record the CIL vol
             cil_vol_stn_clim[np.where(YEAR == years)[0][0]] = cil_vol
@@ -660,7 +679,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             cil_core_stn_clim[np.where(YEAR == years)[0][0]] = cil_core
 
         ## -------- Method 3: Station_ID_manual -------- ##
-        if np.isin(YEAR, stn_years):
+        if np.isin(YEAR, stn_man_years):
             #Import the climatology
             stn_clim = df_stn_mindex_clim.groupby(level=1).apply(lambda x: x.mean()).T
             #Import the year of interest data
@@ -669,7 +688,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn)
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, YEAR, SECTION, SEASON, method='stnman')
 
             #Record the CIL vol
             cil_vol_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_vol
@@ -683,5 +702,5 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     df_CIL.index = years
     df_CIL.index.name = 'year'
     df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
-    picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
+    picklename = 'df_CIL_' + SECTION + '_' + SEASON + '_climfill.pkl'
     df_CIL.to_pickle(picklename)
