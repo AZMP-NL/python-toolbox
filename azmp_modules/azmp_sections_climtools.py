@@ -4,9 +4,11 @@ import netCDF4
 import xarray as xr
 import warnings
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 import cmocean as cm
 import pandas as pd
 import numpy as  np
+from shapely.geometry import Point,Polygon
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
 from scipy.interpolate import griddata
 sys.path.append(os.path.expanduser('~/github/AZMP-NL/python-toolbox/azmp_modules'))
@@ -133,6 +135,7 @@ def name_variable(ds,z,bins,stn_list,station_ID,manual=False):
 
 #Temperature plot for each method
 def plot_temperature(distance, df, year, section, season, method=''):
+    '''
     #Create the figure
     fig,ax = plt.subplots()
     levels=np.arange(-2,10)
@@ -174,9 +177,107 @@ def plot_temperature(distance, df, year, section, season, method=''):
     fig.savefig(fig_name, dpi=150)
     plt.close('all')
     return cil_vol, cil_core
+    '''
+    #TESTING AREA
+
+    #COMBINE WITH CLIMATOLOGY FIRST
+    #ONCE COMBINED, THEN RUN INTERPOLATION
+    #ENSURE THAT INTERPOLATION IS DONE AT THE BEGINNING OUTSIDE OF LOOP
+    #FROM THERE ONLY INTEPROLATE TO POINTS OUTSIDE OF BATH SHAPE FILE
+
+    #Make sure that all the stations are present
+    df = df.T
+    df = df.reindex(columns=df_stn.STATION.values, fill_value=np.nan).T
+
+    #Compute the new distance vector
+    distance = np.full((df.index.shape), np.nan)
+    for i, stn in enumerate(df.index):
+        distance[i] = azst.haversine(
+            df_stn.LON[0],
+            df_stn.LAT[0],
+            df_stn[df_stn.STATION==df.index[i]].LON.values,
+            df_stn[df_stn.STATION==df.index[i]].LAT.values
+            )
+
+    ## ---- Retrieve bathymetry using function ---- ##
+    bathymetry = azst.section_bathymetry(section, os.path.expanduser('~/github/AZMP-NL/bathymetry/bottom_profiles/'))
+
+    #Interpolate the data to 1km
+    dist_interp = np.arange(int(distance.min())+1,int(distance.max()))
+    df_var = np.full((df.columns.size,dist_interp.size),np.nan)
+    #Cycle through the depths and interpolate horizontally
+    for i in np.arange(df_var.shape[0]):
+        #Isolate the measurements of interest
+        var_slice = df.iloc[:,i].values
+        if np.isnan(var_slice).sum() < var_slice.size:
+            #Determine which distances can be interpolated
+            bath_shape = Polygon(bathymetry)
+            bath_filt = np.full(dist_interp.size, True)
+            for ii,value in enumerate(bath_filt):
+                if bath_shape.contains(Point(df.columns.values[i],dist_interp[ii])):
+                    bath_filt[ii] = False
+
+            df_var[i,bath_filt] = np.interp(
+                dist_interp[bath_filt],
+                distance,
+                var_slice)
+
+    #Define the area of each gridcell and calculate CIL
+    grid_area = 1*(dz/1000)
+    cil_vol = np.sum(df_var<=0)*grid_area
+    if np.nanmin(df) <= 0:
+        cil_core = np.nanmin(df)
+    else:
+        cil_core = 0
+
+    #Plot the figure
+    fig,ax = plt.subplots()
+    c = ax.pcolormesh(
+        dist_interp,
+        df.columns.values,
+        df_var,
+        cmap=cm.cm.thermal,vmin=-2,vmax=10,zorder=1)
+
+    #Plot the CIL
+    CIL_hatch = np.ma.masked_greater(df_var, 0)
+    ax.pcolor(
+        dist_interp,
+        df.columns.values,
+        CIL_hatch,
+        hatch='....',
+        alpha=0.,zorder=2
+        )
+
+    #Plot the bathymetry
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    ax.add_patch(Bgon)
+    ax.set_ylim([0, 400])
+    ax.set_xlim([0, np.max(Bgon.xy[:,0])])
+    ax.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax.set_xlabel('Distance (km)')
+    ax.invert_yaxis()
+    plt.colorbar(c)
+    plt.title(str(year))
+    #Save the figure
+    fig_name = 'temp_section_' + section + '_' + season + '_'+str(year) + '_'+method+'.png'
+    fig.savefig(fig_name, dpi=150)
+    plt.close('all')
+
+    return cil_vol, cil_core
+
+
+
+
+
+
+
+
+
+
+
 
 #Fill in temperature with climatology
-def temperature_clim_fill(clim, year_data, df_stn, year, section, season, method=''):
+def temperature_clim_fill(clim, year_data, df_stn, dz, year, section, season, method=''):
     #Merge the climatology and yearly data
     year_orig = year_data.copy()
     year_merged = year_data.copy()
@@ -184,55 +285,83 @@ def temperature_clim_fill(clim, year_data, df_stn, year, section, season, method
     year_data = np.array(year_data)
     year_data[pd.isnull(year_data)] = stn_clim[pd.isnull(year_data)]
     year_merged.iloc[:,:] = year_data.astype(float)
+    year_merged = year_merged.T
 
     #Compute the new distance vector
-    distance_stn_merged = np.full((year_merged.T.index.shape), np.nan)
-    for i, stn in enumerate(year_merged.T.index):
+    distance_stn_merged = np.full((year_merged.index.shape), np.nan)
+    for i, stn in enumerate(year_merged.index):
         distance_stn_merged[i] = azst.haversine(
             df_stn.LON[0],
             df_stn.LAT[0],
-            df_stn[df_stn.STATION==year_merged.T.index[i]].LON.values,
-            df_stn[df_stn.STATION==year_merged.T.index[i]].LAT.values
+            df_stn[df_stn.STATION==year_merged.index[i]].LON.values,
+            df_stn[df_stn.STATION==year_merged.index[i]].LAT.values
             )
-    #Calculate CIL
+
+    ## ---- Retrieve bathymetry using function ---- ##
+    bathymetry = azst.section_bathymetry(section, os.path.expanduser('~/github/AZMP-NL/bathymetry/bottom_profiles/'))
+
+    #Interpolate the data to 1km
+    dist_interp = np.arange(int(distance_stn_merged.min())+1,int(distance_stn_merged.max()))
+    df_var = np.full((year_merged.columns.size,dist_interp.size),np.nan)
+    #Cycle through the depths and interpolate horizontally
+    for i in np.arange(df_var.shape[0]):
+        #Isolate the measurements of interest
+        var_slice = year_merged.iloc[:,i].values
+        if np.isnan(var_slice).sum() < var_slice.size:
+            df_var[i,:] = np.interp(
+                dist_interp,
+                distance_stn_merged,
+                var_slice,
+                right=np.nan,left=np.nan)
+    #Define the area of each gridcell
+    grid_area = 1*(dz/1000)
+    cil_vol = np.sum(df_var<=0)*grid_area
+    if np.nanmin(df_var) <= 0:
+        cil_core = np.nanmin(df_var)
+    else:
+        cil_core = 0
+
     #Plot the figure
     fig,ax = plt.subplots()
-    levels = np.arange(-2,10)
-    plt.contourf(
+    ax.pcolormesh(
+        dist_interp,
+        year_merged.columns.values,
+        df_var,
+        cmap=cm.cm.thermal,vmin=-2,vmax=10,alpha=0.5,zorder=1)
+    c = ax.pcolormesh(
         distance_stn_merged,
-        year_merged.T.columns,
-        year_merged,
-        levels,cmap=cm.cm.thermal,extend='max',alpha=0.5,zorder=1
-        )
-    c = plt.contourf(
-        distance_stn_merged,
-        year_orig.T.columns,
+        year_orig.T.columns.values,
         year_orig,
-        levels,cmap=cm.cm.thermal,extend='max',zorder=2
+        cmap=cm.cm.thermal,vmin=-2,vmax=10,zorder=1)
+
+
+    #Plot the CIL
+    CIL_hatch = np.ma.masked_greater(df_var, 0)
+    ax.pcolor(
+        dist_interp,
+        year_merged.columns.values,
+        CIL_hatch,
+        hatch='....',
+        alpha=0.,zorder=3
         )
-    
-    c_cil = plt.contour(
-        distance_stn_merged,
-        year_merged.T.columns,
-        year_merged,
-        [0,],colors='k',linewidths=2,zorder=3)
-    #CIL area
-    cil_vol = 0
-    for path in c_cil.allsegs[0]:
-        vs = path
-        if vs.shape[0] != 0:
-            cil_vol = cil_vol + np.abs(area(vs))/1000
-    cil_core = np.nanmin(year_merged)
-    #Other stuff
+
+    #Plot the bathymetry
+    Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=0.8)
+    ax.add_patch(Bgon)
     ax.set_ylim([0, 400])
+    ax.set_xlim([0, np.max(Bgon.xy[:,0])])
     ax.set_ylabel('Depth (m)', fontweight = 'bold')
     ax.set_xlabel('Distance (km)')
     ax.invert_yaxis()
     plt.colorbar(c)
-    plt.title(str(year)+' - '+method)
+    plt.title(str(year))
+    #Save the figure
     fig_name = 'temp_section_' + section + '_' + season + '_'+str(year) + '_'+method+'.png'
     fig.savefig(fig_name, dpi=150)
     plt.close('all')
+
+
+
     return cil_vol, cil_core
 
 '''
@@ -476,13 +605,13 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
                 df_stn[df_stn.STATION==df_section_itp_T.index[i]].LON,
                 df_stn[df_stn.STATION==df_section_itp_T.index[i]].LAT,
                 )
-
+        '''
         #Plot the CIL and record stats
         if df_section_itp_T.index.size > 1:
             cil_vol,cil_core = plot_temperature(distance_itp, df_section_itp_T, YEAR, SECTION, SEASON, method='itp')
             cil_vol_itp_clim[idx] = cil_vol
             cil_core_itp_clim[idx] = cil_core
-
+        '''
         #Record the results
         df_section_itp_T.index.name = 'station'
         df_section_itp_T.columns.name = 'depth'
@@ -503,13 +632,13 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
                 df_stn[df_stn.STATION==df_section_stn_T.index[i]].LON,
                 df_stn[df_stn.STATION==df_section_stn_T.index[i]].LAT,
                 )
-
+        '''
         #Plot the CIL and record stats
         if df_section_stn_T.index.size > 1:
             cil_vol,cil_core = plot_temperature(distance_stn, df_section_stn_T, YEAR, SECTION, SEASON, method='stn')
             cil_vol_stn_clim[idx] = cil_vol
             cil_core_stn_clim[idx] = cil_core
-
+        '''
         #Record the results
         df_section_stn_T.index.name = 'station'
         df_section_stn_T.columns.name = 'depth'
@@ -530,13 +659,13 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
                 df_stn[df_stn.STATION==df_section_stn_man_T.index[i]].LON,
                 df_stn[df_stn.STATION==df_section_stn_man_T.index[i]].LAT,
                 )
-
+        '''
         #Plot the CIL and record stats
         if df_section_stn_man_T.index.size > 1:
             cil_vol,cil_core = plot_temperature(distance_stn_man, df_section_stn_man_T, YEAR, SECTION, SEASON, method='stnman')
             cil_vol_stn_man_clim[idx] = cil_vol
             cil_core_stn_man_clim[idx] = cil_core
-
+        '''
         #Record the results
         df_section_stn_man_T.index.name = 'station'
         df_section_stn_man_T.columns.name = 'depth'
@@ -608,6 +737,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     df_clim_S.to_pickle(picklename)
 
     # Save CIL timseries
+    '''
     if concat=='y':
         if np.size(cil_vol_stn_clim) != 0:
             place_CIL = pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T
@@ -623,7 +753,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df_CIL.columns = ['vol_stn', 'vol_stn_man', 'vol_itp', 'core_stn', 'core_stn_man', 'core_itp']
     picklename = 'df_CIL_' + SECTION + '_' + SEASON + '.pkl'
     df_CIL.to_pickle(picklename)
-
+    '''
     ## -------- Fill temperature with climatology for CIL -------- ##
     #We need to add climatology to blank areas
     #This is done retroactively
@@ -640,7 +770,6 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     cil_core_stn_man_clim = np.full(years.shape, np.nan)
     cil_core_itp_clim = np.full(years.shape, np.nan)
 
-
     #Cycle through each of the years
     for YEAR in years:
 
@@ -654,7 +783,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, YEAR, SECTION, SEASON, method='itp')
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='itp')
 
             #Record the CIL vol
             cil_vol_itp_clim[np.where(YEAR == years)[0][0]] = cil_vol
@@ -671,7 +800,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, YEAR, SECTION, SEASON, method='stn')
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='stn')
 
             #Record the CIL vol
             cil_vol_stn_clim[np.where(YEAR == years)[0][0]] = cil_vol
@@ -688,7 +817,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, YEAR, SECTION, SEASON, method='stnman')
+            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='stnman')
 
             #Record the CIL vol
             cil_vol_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_vol
