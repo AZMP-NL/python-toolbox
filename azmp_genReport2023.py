@@ -426,17 +426,86 @@ os.system('mv *.csv operation_files/')
 #azrt.bottom_stats(years=np.arange(1980, 2020), season='summer') # for crab 4R
 azrt.bottom_temperature(season='summer', year='2020') # for crab 4R
 
-# SFAs (clim fill is new in 2022) [done 2022]
-#azrt.sfa_bottom_stats(years=np.arange(2006, 2023), season='summer', plot=True, climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5')
-azrt.sfa_bottom_stats(years=np.arange(2006, 2023), season='summer', climato_file='Tbot_climato_NSRFx_summer_2006-2021.h5', plot=True, clim_fill=True, plot_biomass=True)
-os.system('cp sfa_bottomT_2022.png ../../2022')
-azrt.sfa_bottom_scorecards(years=np.arange(2006, 2023), clim_year=[2006, 2020])
-os.system('cp scorecards_botT_SFA2-4_summer.png scorecards_botT_SFA2-4_summer_FR.png ../../2022')
-# salinity (new in 2022)
-azrt.sfa_bottom_stats(years=np.arange(2006, 2023), season='summer', climato_file='Sbot_climato_NSRFx_summer_2006-2021.h5', plot=True, clim_fill=True, plot_biomass=True ,var='salinity')
-os.system('cp sfa_bottomS_2022.png ../../2022')
-azrt.sfa_bottomS_scorecards(years=np.arange(2006, 2023), clim_year=[2006, 2021])
-os.system('cp scorecards_botS_SFA2-4_summer.png scorecards_botS_SFA2-4_summer_FR.png ../../2022')
+
+# SFAs (clim fill is new in 2022)
+#Calculate the bottom temperature and salinity climatology
+for season in ['summer']:
+    azu.get_bottomT_climato(
+        INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        lonLims=[-70, -56],
+        latLims=[57, 67],
+        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        year_lims=[2006, 2021],
+        season=season,
+        h5_outputfile='operation_files/Tbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5'
+        )
+    azu.get_bottomS_climato(
+        INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        lonLims=[-70, -56],
+        latLims=[57, 67],
+        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        year_lims=[2006, 2021],
+        season=season,
+        h5_outputfile='operation_files/Sbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5'
+        )
+    print('    -> '+season+' done!')
+
+#Calculate the bottom temperature and salinity for specific years
+for season in ['summer']:
+    azrt.bottom_temperature(
+        season=season,
+        year=yoi,
+        lonLims=[-70, -56],
+        latLims=[57, 67],
+        climato_file='operation_files/Tbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5',
+        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        CASTS_path='~/data/CASTS/'
+        )
+    azrt.bottom_salinity(
+        season=season,
+        year=yoi,
+        lonLims=[-70, -56],
+        latLims=[57, 67],
+        climato_file='operation_files/Sbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5',
+        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        CASTS_path='~/data/CASTS/'
+        )
+    print('    -> '+season+' done!')
+os.system('cp sfa*.png '+yoi)
+os.system('mv sfa_bottomT*.png bottom_temp/')
+os.system('mv sfa_bottomS*.png bottom_saln/')
+os.system('rm bottom_temp*.png ')
+os.system('rm bottom_sal*.png ')
+
+#Calculate the bottom stats for temperature and salinity, SFA
+azrt.sfa_bottom_stats(
+    years=np.arange(2006,int(year)+1),
+    season='summer',
+    netcdf_path='~/data/CABOTS/CABOTS_bottomstats_summer.nc',
+    climato_file='operation_files/Tbot_NSRFx_climato_summer_2006-2021_0.10.h5',
+    var='temperature',
+    )
+azrt.sfa_bottom_stats(
+    years=np.arange(2006,int(year)+1),
+    season='summer',
+    netcdf_path='~/data/CABOTS/CABOTS_bottomstats_summer.nc',
+    climato_file='operation_files/Sbot_NSRFx_climato_summer_2006-2021_0.10.h5',
+    var='salinity',
+    )
+os.system('mv *.pkl operation_files/')
+
+#Create the accompanying bottom scorecards
+azrt.sfa_bottom_scorecards(years=np.arange(2006,int(year)+1),clim_year=[2006,2020])
+azrt.sfa_bottomS_scorecards(years=np.arange(2006,int(year)+1),clim_year=[2006,2020])
+os.system('cp scorecards_botT_SFA2-4_summer.png scorecards_botT_SFA2-4_summer_FR.png '+yoi)
+os.system('cp scorecards_botS_SFA2-4_summer.png scorecards_botS_SFA2-4_summer_FR.png '+yoi)
+os.system('mv scorecards_botT_SFA*.png bottomT*.csv bottom_temp/')
+os.system('mv scorecards_botS_SFA*.png bottomS*.csv bottom_saln/')
+
+
+
+
+
 # In ~/research/lobster:
 %my_run lfa_sst_extract.py
 %my_run lfa_sst_analysis.py

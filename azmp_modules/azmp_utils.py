@@ -39,6 +39,7 @@ from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from shapely.ops import cascaded_union
+import shapefile 
 from area import area # external fns to compute surface area
 #from seawater import extras as swx
 import datetime
@@ -659,7 +660,7 @@ def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
 
     return dict
 
-def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):    
+def get_bottomS(year_file, year, season, climato_file, nafo_mask=True, lab_mask=True):
     '''
     Generate and return bottom salinity data corresponding to a certain climatology map.
     Returns a dictionary.
@@ -697,6 +698,12 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
 
     """
 
+    #Determine if it's NSRF data
+    if 'NSRF' in climato_file:
+        NSRF_plot = True
+    else:
+        NSRF_plot = False
+
     ## ---- Load Climato data ---- ##    
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
@@ -713,23 +720,55 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
     ## ---- NAFO divisions ---- ##
     nafo_div = get_nafo_divisions()
 
-    ## ---- Get CTD data --- ##
+    ## Get SFAs data
+    myshp = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp'), 'rb')
+    mydbf = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf'), 'rb')
+    r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
+    records = r.records()
+    shapes = r.shapes()
+
+    # Fill dictionary with shapes
+    shrimp_area = {}
+    for idx, rec in enumerate(records):
+        if rec[1] == 'Eastern Assessment Zone':
+            shrimp_area['2'] = np.array(shapes[idx].points)
+        elif rec[1] == 'Western Assessment Zone':
+            shrimp_area['3'] = np.array(shapes[idx].points)
+        else:
+            shrimp_area[rec[0]] = np.array(shapes[idx].points)
+
+    ## ---- Get CABOTS data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(year_file)
-    ds = ds.mean('time')
+    #Isolate for the time of interest
+    if np.size(year) == 1:
+        ds = ds.sel(TIME=ds['TIME.year']==int(year))
+        ds = ds.mean('TIME')
+    else:
+        ds = ds.sel(TIME=np.isin(ds['TIME.year'],year))
     # Selection of a subset region
-    ds = ds.sel(x=((ds.longitude[0,:]>=lonLims[0])*(ds.longitude[0,:]<=lonLims[1])).values)
-    ds = ds.sel(y=((ds.latitude[:,0]>=latLims[0])*(ds.latitude[:,0]<=latLims[1])).values)
-    Sbot = ds.bottom_salinity.values
+    ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
+    ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
+    Sbot = ds.BOTTOM_SALINITY.values
 
     ## Save data in h5 for further use
-    h5_cube_name = 'Scube_' + season +  year_file.split('/')[-1].strip('.nc')  + '.h5'
-    h5f = h5py.File(h5_cube_name, 'w')
-    h5f.create_dataset('salinity', data=Sbot)
-    h5f.create_dataset('lon_reg', data=lon_reg)
-    h5f.create_dataset('lat_reg', data=lat_reg)
-    h5f.create_dataset('Zitp', data=Zitp)
-    h5f.close()
+    if np.size(year) == 1:
+        h5_cube_name = 'operation_files/Scube_' + season + str(year) + '.h5'
+        h5f = h5py.File(h5_cube_name, 'w')
+        h5f.create_dataset('salinity', data=Sbot)
+        h5f.create_dataset('lon_reg', data=lon_reg)
+        h5f.create_dataset('lat_reg', data=lat_reg)
+        h5f.create_dataset('Zitp', data=Zitp)
+        h5f.close()
+    else:
+        for i,value in enumerate(year):
+            h5_cube_name = 'operation_files/Scube_' + season + str(value) + '.h5'
+            h5f = h5py.File(h5_cube_name, 'w')
+            h5f.create_dataset('salinity', data=Sbot[i])
+            h5f.create_dataset('lon_reg', data=lon_reg)
+            h5f.create_dataset('lat_reg', data=lat_reg)
+            h5f.create_dataset('Zitp', data=Zitp)
+            h5f.close()
 
     # Mask data on coastal Labrador
     if lab_mask == True:
@@ -752,38 +791,72 @@ def get_bottomS(year_file, season, climato_file, nafo_mask=True, lab_mask=True):
         polygon3O = Polygon(zip(nafo_div['3O']['lon'], nafo_div['3O']['lat']))
         polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
         polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
+        sfa2 = Polygon(shrimp_area['2'])
+        sfa3 = Polygon(shrimp_area['3'])
+        sfa4 = Polygon(shrimp_area['4'])
+        sfa5 = Polygon(shrimp_area['5'])
+        sfa6 = Polygon(shrimp_area['6'])
+        sfa7 = Polygon(shrimp_area['7'])
 
-        if season == 'spring':
-            for i, xx in enumerate(lon_reg):
-                for j,yy in enumerate(lat_reg):
-                    point = Point(lon_reg[i], lat_reg[j])
-                    if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                        pass #nothing to do
-                    else:
-                        Sbot[j,i] = np.nan
-
-        elif season == 'fall':
-            for i, xx in enumerate(lon_reg):
-                for j,yy in enumerate(lat_reg):
-                    point = Point(lon_reg[i], lat_reg[j])
-                    if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
-                        pass #nothing to do
-                    else:
-                        pass # No mask in the fall
-
+        if NSRF_plot:
+            if season == 'summer':
+                for i, xx in enumerate(lon_reg):
+                    for j,yy in enumerate(lat_reg):
+                        point = Point(lon_reg[i], lat_reg[j])
+                        if sfa2.contains(point) | sfa3.contains(point) | sfa4.contains(point):
+                            pass #nothing to do but cannot implement negative statement "if not" above
+                        else:
+                            Sbot[:,j,i] = np.nan
+            if season == 'fall':
+                for i, xx in enumerate(lon_reg):
+                    for j,yy in enumerate(lat_reg):
+                        point = Point(lon_reg[i], lat_reg[j])
+                        if sfa4.contains(point) | sfa5.contains(point) | sfa6.contains(point) | sfa7.contains(point):
+                            pass #nothing to do but cannot implement negative statement "if not" above
+                        else:
+                            Sbot[:,j,i] = np.nan
         else:
-            print('no division mask, all data taken')
-    else:
-        print('no division mask, all data taken')
+            if season == 'spring':
+                for i, xx in enumerate(lon_reg):
+                    for j,yy in enumerate(lat_reg):
+                        point = Point(lon_reg[i], lat_reg[j])
+                        if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                            pass #nothing to do but cannot implement negative statement "if not" above
+                        else:
+                            Sbot[:,j,i] = np.nan
+            elif season == 'fall':
+                for i, xx in enumerate(lon_reg):
+                    for j,yy in enumerate(lat_reg):
+                        point = Point(lon_reg[i], lat_reg[j])
+                        if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
+                            pass #nothing to do but cannot implement negative statement "if not" above
+                        else:
+                            Sbot[:,j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
+            elif season == 'summer':
+                for i, xx in enumerate(lon_reg):
+                    for j,yy in enumerate(lat_reg):
+                        point = Point(lon_reg[i], lat_reg[j])
 
-    print(' -> Done!')
+            else:
+                print('no division mask, all data taken')
+
+        print(' -> Done!')
 
     # Fill dict for output
     dict = {}
-    dict['Sbot'] = Sbot
-    dict['bathy'] = Zitp
-    dict['lon_reg'] = lon_reg
-    dict['lat_reg'] = lat_reg
+    if np.size(year) == 1:
+        dict['Sbot'] = Sbot
+        dict['bathy'] = Zitp
+        dict['lon_reg'] = lon_reg
+        dict['lat_reg'] = lat_reg
+    else:
+        for i,value in enumerate(year):
+            dict[str(value)] = {}
+            dict[str(value)]['Sbot'] = Sbot[i]
+            dict[str(value)]['bathy'] = Zitp
+            dict[str(value)]['lon_reg'] = lon_reg
+            dict[str(value)]['lat_reg'] = lat_reg
+
 
     return dict
 

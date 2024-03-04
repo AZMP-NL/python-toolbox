@@ -138,6 +138,13 @@ def bottom_temperature(
     else:
         year_file=netcdf_path
 
+    #Determine if we're making NSRF plot
+    if 'NSRF' in climato_file:
+        NSRF_plot = True
+        print('NSRF data detected.')
+    else:
+        NSRF_plot = False
+
     ## ---- Load Climato data ---- ##
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
@@ -172,6 +179,22 @@ def bottom_temperature(
     ## ---- NAFO divisions ---- ##
     nafo_div = azu.get_nafo_divisions()
 
+    ## ---- SFA divisions ---- ##
+    myshp = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp'), 'rb')
+    mydbf = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf'), 'rb')
+    r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
+    records = r.records()
+    shapes = r.shapes()
+    # Fill dictionary with shapes
+    shrimp_area = {}
+    for idx, rec in enumerate(records):
+        if rec[1] == 'Eastern Assessment Zone':
+            shrimp_area['2'] = np.array(shapes[idx].points)
+        elif rec[1] == 'Western Assessment Zone':
+            shrimp_area['3'] = np.array(shapes[idx].points)
+        else:
+            shrimp_area[rec[0]] = np.array(shapes[idx].points)
+
     ## ---- Get bottom_temperature data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(os.path.expanduser(year_file))
@@ -202,42 +225,71 @@ def bottom_temperature(
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
     polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
+    sfa2 = Polygon(shrimp_area['2'])
+    sfa3 = Polygon(shrimp_area['3'])
+    sfa4 = Polygon(shrimp_area['4'])
+    sfa5 = Polygon(shrimp_area['5'])
+    sfa6 = Polygon(shrimp_area['6'])
+    sfa7 = Polygon(shrimp_area['7'])
 
-    if season == 'spring':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    Tbot[j,i] = np.nan
-                    Tbot_orig[j,i] = np.nan
-
-    elif season == 'fall':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-                if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
-                    Tbot_orig[j,i] = np.nan
-                    #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
-
-    elif season == 'summer':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-
-
+    if NSRF_plot:
+        if season == 'summer':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if sfa2.contains(point) | sfa3.contains(point) | sfa4.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Tbot[j,i] = np.nan
+                        Tbot_orig[j,i] = np.nan
+        if season == 'fall':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if sfa4.contains(point) | sfa5.contains(point) | sfa6.contains(point) | sfa7.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Tbot[j,i] = np.nan
+                        Tbot_orig[j,i] = np.nan
     else:
-        print('no division mask, all data taken')
+        if season == 'spring':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Tbot[j,i] = np.nan
+                        Tbot_orig[j,i] = np.nan
+
+        elif season == 'fall':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
+                        Tbot_orig[j,i] = np.nan
+                        #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+        elif season == 'summer':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+
+
+        else:
+            print('no division mask, all data taken')
 
     print(' -> Done!')
 
     # Temperature anomaly:
     anom = Tbot-Tbot_climato
-    div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
+    if NSRF_plot:
+        div_toplot = ['sfa2','sfa3','sfa4']
+    else:
+        div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 
     #Set up the map
     land_10m = cfeature.NaturalEarthFeature('physical','land','10m',
@@ -246,6 +298,8 @@ def bottom_temperature(
     ## ---- Plot Anomaly ---- ##
     fig = plt.figure(figsize=(6,9))
     ax = plt.subplot(projection=ccrs.Mercator())
+    ax._autoscaleXon = False
+    ax._autoscaleYon = False
 
     #Plot the coastline
     ax.set_facecolor('white')
@@ -270,22 +324,30 @@ def bottom_temperature(
         plt.title('Bottom Temperature ' + year + '  Anomaly')
 
     #Add gridlines
-    gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
-        dms=True, x_inline=False, y_inline=False, linestyle='--')
+    if NSRF_plot:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+    else:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
     gl.xlabel_style = {'size': 8}
 
     #Add a colourbar
-    cax = fig.add_axes([0.15, 0.07, 0.73, 0.025])
+    cax = fig.add_axes([0.15, 0.07, 0.73, 0.0125])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=8, fontweight='normal')
     cb.ax.tick_params(labelsize=8)
 
     #Plot the divisions
     for div in div_toplot:
-        div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
-        ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
-        ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
-
+        if NSRF_plot:
+            div_lon, div_lat = shrimp_area[div[-1]][:,0], shrimp_area[div[-1]][:,1]
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div.upper(), fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        else:
+            div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
 
     # Save Figure
     outfile = 'bottom_temp_anomaly_' + season + '_' + year + '.png'
@@ -315,6 +377,8 @@ def bottom_temperature(
     ## ---- Plot Anomaly ---- ##
     fig = plt.figure(figsize=(6,9))
     ax = plt.subplot(projection=ccrs.Mercator())
+    ax._autoscaleXon = False
+    ax._autoscaleYon = False
 
     #Plot the coastline
     ax.set_facecolor('white')
@@ -343,22 +407,30 @@ def bottom_temperature(
     ax.scatter(lons, lats, s=2, marker='.', c='k', transform=ccrs.PlateCarree())
 
     #Add gridlines
-    gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
-        dms=True, x_inline=False, y_inline=False, linestyle='--')
+    if NSRF_plot:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+    else:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
     gl.xlabel_style = {'size': 8}
 
     #Add a colourbar
-    cax = fig.add_axes([0.15, 0.07, 0.73, 0.025])
+    cax = fig.add_axes([0.15, 0.07, 0.73, 0.0125])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=8, fontweight='normal')
     cb.ax.tick_params(labelsize=8)
 
     #Plot the divisions
     for div in div_toplot:
-        div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
-        ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
-        ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree())
-
+        if NSRF_plot:
+            div_lon, div_lat = shrimp_area[div[-1]][:,0], shrimp_area[div[-1]][:,1]
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div.upper(), fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        else:
+            div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
 
     # Save Figure
     outfile = 'bottom_temp_' + season + '_' + year + '.png'
@@ -390,6 +462,8 @@ def bottom_temperature(
     ## ---- Plot Anomaly ---- ##
     fig = plt.figure(figsize=(6,9))
     ax = plt.subplot(projection=ccrs.Mercator())
+    ax._autoscaleXon = False
+    ax._autoscaleYon = False
 
     #Plot the coastline
     ax.set_facecolor('white')
@@ -414,22 +488,32 @@ def bottom_temperature(
         plt.title('Bottom Temperature Climatology')
 
     #Add gridlines
-    gl = ax.gridlines(draw_labels=['left','bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
-        dms=True, x_inline=False, y_inline=False, linestyle='--')    
+    if NSRF_plot:
+        gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+    else:
+        gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
     gl.xlabel_style = {'size': 8}
+    gl.ylabel_style = {'size': 8}
 
     #Add a colourbar
-    cax = fig.add_axes([0.15, 0.07, 0.73, 0.025])
+    cax = fig.add_axes([0.15, 0.07, 0.73, 0.0125])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=8, fontweight='normal')
     cb.ax.tick_params(labelsize=8)
 
+
     #Plot the divisions
     for div in div_toplot:
-        div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
-        ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
-        ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree())
-
+        if NSRF_plot:
+            div_lon, div_lat = shrimp_area[div[-1]][:,0], shrimp_area[div[-1]][:,1]
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div.upper(), fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        else:
+            div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
 
     # Save Figure
     outfile = 'bottom_temp_climato_' + season + '_' + year + '.png'
@@ -449,11 +533,15 @@ def bottom_temperature(
 
 
     # Convert to a subplot
-    os.system('montage bottom_temp_climato_' + season + '_' + year + '.png bottom_temp_' + season + '_' + year + '.png bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  bottomT_' + season + year + '.png')
+    if NSRF_plot:
+        save_end = 'sfa'
+    else:
+        save_end = ''
+    os.system('montage bottom_temp_climato_' + season + '_' + year + '.png bottom_temp_' + season + '_' + year + '.png bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomT_' + season + year + '.png')
     # in French
-    os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  bottomT_' + season + year + '_FR.png')
+    os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomT_' + season + year + '_FR.png')
     # Move to year folder
-    os.system('cp bottomT_' + season + year + '.png bottomT_' + season + year + '_FR.png ' + year)
+    os.system('cp '+save_end+'+bottomT_' + season + year + '.png '+save_end+'_bottomT_' + season + year + '_FR.png ' + year)
 
 
 #### bottom_salinity
@@ -499,6 +587,13 @@ def bottom_salinity(
     else:
         year_file=netcdf_path
 
+    #Determine if we're making NSRF plot
+    if 'NSRF' in climato_file:
+        NSRF_plot = True
+        print('NSRF data detected.')
+    else:
+        NSRF_plot = False
+
     ## ---- Load Climato data ---- ##    
     print('Load ' + climato_file)
     h5f = h5py.File(climato_file, 'r')
@@ -533,6 +628,22 @@ def bottom_salinity(
     ## ---- NAFO divisions ---- ##
     nafo_div = azu.get_nafo_divisions()
 
+    ## ---- SFA divisions ---- ##
+    myshp = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp'), 'rb')
+    mydbf = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf'), 'rb')
+    r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
+    records = r.records()
+    shapes = r.shapes()
+    # Fill dictionary with shapes
+    shrimp_area = {}
+    for idx, rec in enumerate(records):
+        if rec[1] == 'Eastern Assessment Zone':
+            shrimp_area['2'] = np.array(shapes[idx].points)
+        elif rec[1] == 'Western Assessment Zone':
+            shrimp_area['3'] = np.array(shapes[idx].points)
+        else:
+            shrimp_area[rec[0]] = np.array(shapes[idx].points)
+
     ## ---- Get bottom_salinity data --- ##
     print('Get ' + year_file)
     ds = xr.open_dataset(os.path.expanduser(year_file))
@@ -565,43 +676,72 @@ def bottom_salinity(
     polygon3Ps = Polygon(zip(nafo_div['3Ps']['lon'], nafo_div['3Ps']['lat']))
     polygon2J = Polygon(zip(nafo_div['2J']['lon'], nafo_div['2J']['lat']))
     polygon2H = Polygon(zip(nafo_div['2H']['lon'], nafo_div['2H']['lat']))
+    sfa2 = Polygon(shrimp_area['2'])
+    sfa3 = Polygon(shrimp_area['3'])
+    sfa4 = Polygon(shrimp_area['4'])
+    sfa5 = Polygon(shrimp_area['5'])
+    sfa6 = Polygon(shrimp_area['6'])
+    sfa7 = Polygon(shrimp_area['7'])
 
-    if season == 'spring':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-                if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    Sbot[j,i] = np.nan
-                    Sbot_orig[j,i] = np.nan
-
-    elif season == 'fall':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-                if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
-                    pass #nothing to do but cannot implement negative statement "if not" above
-                else:
-                    Sbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
-                    Sbot_orig[j,i] = np.nan
-                    #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
-
-    elif season == 'summer':
-        for i, xx in enumerate(lon_reg):
-            for j,yy in enumerate(lat_reg):
-                point = Point(lon_reg[i], lat_reg[j])
-
-
-
+    if NSRF_plot:
+        if season == 'summer':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if sfa2.contains(point) | sfa3.contains(point) | sfa4.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Sbot[j,i] = np.nan
+                        Sbot_orig[j,i] = np.nan
+        if season == 'fall':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if sfa4.contains(point) | sfa5.contains(point) | sfa6.contains(point) | sfa7.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Sbot[j,i] = np.nan
+                        Sbot_orig[j,i] = np.nan
     else:
-        print('no division mask, all data taken')
+        if season == 'spring':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point) | polygon4R.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Sbot[j,i] = np.nan
+                        Sbot_orig[j,i] = np.nan
+
+        elif season == 'fall':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+                    if polygon2H.contains(point) | polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point):
+                        pass #nothing to do but cannot implement negative statement "if not" above
+                    else:
+                        Sbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
+                        Sbot_orig[j,i] = np.nan
+                        #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
+
+        elif season == 'summer':
+            for i, xx in enumerate(lon_reg):
+                for j,yy in enumerate(lat_reg):
+                    point = Point(lon_reg[i], lat_reg[j])
+
+
+        else:
+            print('no division mask, all data taken')
 
     print(' -> Done!')
 
     # Salinity anomaly:
     anom = Sbot-Sbot_climato
-    div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
+    if NSRF_plot:
+        div_toplot = ['sfa2','sfa3','sfa4']
+    else:
+        div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
+
     #Set up the map
     land_10m = cfeature.NaturalEarthFeature('physical','land','10m',
     facecolor='tan')
@@ -609,6 +749,8 @@ def bottom_salinity(
     ## ---- Plot Anomaly ---- ##
     fig = plt.figure(figsize=(6,9))
     ax = plt.subplot(projection=ccrs.Mercator())
+    ax._autoscaleXon = False
+    ax._autoscaleYon = False
 
     #Plot the coastline
     ax.set_facecolor('white')
@@ -633,22 +775,30 @@ def bottom_salinity(
         plt.title('Bottom Salinity ' + year + '  Anomaly')
     
     #Add gridlines
-    gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
-        dms=True, x_inline=False, y_inline=False, linestyle='--')    
+    if NSRF_plot:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+    else:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
     gl.xlabel_style = {'size': 8}
 
     #Add a colourbar
-    cax = fig.add_axes([0.15, 0.07, 0.73, 0.025])
+    cax = fig.add_axes([0.15, 0.07, 0.73, 0.0125])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm S$', fontsize=8, fontweight='normal')
     cb.ax.tick_params(labelsize=8)
     
     #Plot the divisions
     for div in div_toplot:
-        div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
-        ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
-        ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
-
+        if NSRF_plot:
+            div_lon, div_lat = shrimp_area[div[-1]][:,0], shrimp_area[div[-1]][:,1]
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div.upper(), fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        else:
+            div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
 
     # Save Figure
     outfile = 'bottom_sal_anomaly_' + season + '_' + year + '.png'
@@ -678,6 +828,8 @@ def bottom_salinity(
 
     fig = plt.figure(figsize=(6,9))
     ax = plt.subplot(projection=ccrs.Mercator())
+    ax._autoscaleXon = False
+    ax._autoscaleYon = False
 
     #Plot the coastline
     ax.set_facecolor('white')
@@ -706,21 +858,30 @@ def bottom_salinity(
     ax.scatter(lons, lats, s=2, marker='.', c='k', transform=ccrs.PlateCarree())
 
     #Add gridlines
-    gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
-        dms=True, x_inline=False, y_inline=False, linestyle='--')    
+    if NSRF_plot:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+    else:
+        gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
     gl.xlabel_style = {'size': 8}
 
     #Add a colourbar
-    cax = fig.add_axes([0.15, 0.07, 0.73, 0.025])
+    cax = fig.add_axes([0.15, 0.07, 0.73, 0.0125])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm S$', fontsize=8, fontweight='normal')
     cb.ax.tick_params(labelsize=8)
     
     #Plot the divisions
     for div in div_toplot:
-        div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
-        ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
-        ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        if NSRF_plot:
+            div_lon, div_lat = shrimp_area[div[-1]][:,0], shrimp_area[div[-1]][:,1]
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div.upper(), fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        else:
+            div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
 
 
     # Save Figure
@@ -749,6 +910,8 @@ def bottom_salinity(
 
     fig = plt.figure(figsize=(6,9))
     ax = plt.subplot(projection=ccrs.Mercator())
+    ax._autoscaleXon = False
+    ax._autoscaleYon = False
 
     #Plot the coastline
     ax.set_facecolor('white')
@@ -772,22 +935,31 @@ def bottom_salinity(
     else:
         plt.title('Bottom Salinity Climatology')
 
-    #Add gridlines
-    gl = ax.gridlines(draw_labels=['left','bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
-        dms=True, x_inline=False, y_inline=False, linestyle='--')    
+    if NSRF_plot:
+        gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+    else:
+        gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
     gl.xlabel_style = {'size': 8}
+    gl.ylabel_style = {'size': 8}
 
     #Add a colourbar
-    cax = fig.add_axes([0.15, 0.07, 0.73, 0.025])
+    cax = fig.add_axes([0.15, 0.07, 0.73, 0.0125])
     cb = plt.colorbar(c, cax=cax, orientation='horizontal')
     cb.set_label(r'$\rm S$', fontsize=8, fontweight='normal')
     cb.ax.tick_params(labelsize=8)
     
     #Plot the divisions
     for div in div_toplot:
-        div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
-        ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
-        ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        if NSRF_plot:
+            div_lon, div_lat = shrimp_area[div[-1]][:,0], shrimp_area[div[-1]][:,1]
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div.upper(), fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
+        else:
+            div_lon, div_lat = nafo_div[div]['lon'], nafo_div[div]['lat']
+            ax.plot(div_lon, div_lat, 'k', linewidth=1, transform=ccrs.PlateCarree())
+            ax.text(np.mean(div_lon), np.mean(div_lat), div, fontsize=8, color='black', fontweight='bold', transform=ccrs.PlateCarree()) 
 
 
     # Save Figure
@@ -808,11 +980,15 @@ def bottom_salinity(
 
 
     # Convert to a subplot
-    os.system('montage bottom_sal_climato_' + season + '_' + year + '.png bottom_sal_' + season + '_' + year + '.png bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  bottomS_' + season + year + '.png') 
+    if NSRF_plot:
+        save_end = 'sfa'
+    else:
+        save_end = ''
+    os.system('montage bottom_sal_climato_' + season + '_' + year + '.png bottom_sal_' + season + '_' + year + '.png bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomS_' + season + year + '.png') 
     # French
-    os.system('montage bottom_sal_climato_' + season + '_' + year + '_FR.png bottom_sal_' + season + '_' + year + '_FR.png bottom_sal_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  bottomS_' + season + year + '_FR.png') 
+    os.system('montage bottom_sal_climato_' + season + '_' + year + '_FR.png bottom_sal_' + season + '_' + year + '_FR.png bottom_sal_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomS_' + season + year + '_FR.png') 
     # Move to year folder
-    os.system('cp bottomS_' + season + year + '.png bottomS_' + season + year + '_FR.png ' + year)
+    os.system('cp '+save_end+'_bottomS_' + season + year + '.png '+save_end+'_bottomS_' + season + year + '_FR.png ' + year)
 
 
 #### bottom_stats
@@ -1028,7 +1204,13 @@ def bottom_stats(
     df_mindex.to_pickle(season + '_bottom_temperature.pkl')
 
     #### bottom_stats
-def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/cyrf0006/data/dev_database/netCDF/', sfas=[2,3,4], climato_file='', clim_fill=False, plot_biomass=False, plot_biomass_anomaly=False, var='temperature'):
+def sfa_bottom_stats(
+    years,
+    season,
+    netcdf_path='',
+    var='',
+    sfas=[2,3,4],
+    climato_file='',):
 
     '''
     Function sfa_bottom_stats() is based bottom_stats(), but sfa instead of NAFO divs.
@@ -1072,9 +1254,6 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
 
     # load climato
     if len(climato_file) == 0: # climato not provided (default)
-        if var=='salinity':
-            print('ERROR! Please provide climatology file')
-            return
         if season == 'fall':
             climato_file = 'Tbot_climato_NSRF_fall.h5'
         elif season == 'spring':
@@ -1083,14 +1262,14 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
             climato_file = 'Tbot_climato_NSRF_summer.h5'
     else:
         print('Climato file provided')
-               
+
     h5f = h5py.File(climato_file, 'r')
     if var == 'temperature':
         Tbot_climato = h5f['Tbot'][:]
     elif var == 'salinity':
         Tbot_climato = h5f['Sbot'][:]
-    lon_reg = h5f['lon_reg'][:]
-    lat_reg = h5f['lat_reg'][:]
+    lon_reg = h5f['lon_reg'][:][0,:]
+    lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
     h5f.close()
 
@@ -1100,19 +1279,13 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
     lonLims = [lon_reg[0], lon_reg[-1]]
     latLims = [lat_reg[0], lat_reg[-1]]
 
-    ## get Pandalus biomass data
-    df_biomass = pd.read_excel('/home/cyrf0006/research/Pandalus_project/NSRF_PBPM_biomass_standardized.xlsx')
-    df_biomass.set_index('Year', inplace=True)
-    df_biomass = df_biomass[['Latitude', 'Longitude', 'PB TB(kg/km2)', 'PM TB(kg/km2)']]
-    df_biomass = df_biomass.replace(0.0, 1) # replace zeros by ones for log transform
-
     ## Get SFAs data
-    myshp = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp', 'rb')
-    mydbf = open('/home/cyrf0006/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf', 'rb')
+    myshp = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.shp'), 'rb')
+    mydbf = open(os.path.expanduser('~/github/AZMP-NL/utils/SFAs/SFAs_PANOMICS_Fall2020_shp/SFAs_PANOMICS_Fall2020.dbf'), 'rb')
     r = shapefile.Reader(shp=myshp, dbf=mydbf, encoding = "ISO8859-1")
     records = r.records()
     shapes = r.shapes()
-    
+
     # Fill dictionary with shapes
     shrimp_area = {}
     for idx, rec in enumerate(records):
@@ -1121,7 +1294,7 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
         elif rec[1] == 'Western Assessment Zone':
             shrimp_area['3'] = np.array(shapes[idx].points)
         else:
-            shrimp_area[rec[0]] = np.array(shapes[idx].points)            
+            shrimp_area[rec[0]] = np.array(shapes[idx].points)
 
     ## sfa0 = Polygon(shrimp_area['0'])
     ## sfa1 = Polygon(shrimp_area['1'])
@@ -1140,261 +1313,48 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
     dict_stats_sfa5 = {}
     dict_stats_sfa6 = {}
     dict_stats_sfa7 = {}
-   
-    # Loop on years
-    df_list = []
-    for year in years:
-        print(' ---- ' + np.str(year) + ' ---- ')
-        year_file = netcdf_path + np.str(year) + '.nc'
+
+    #Get the bottom temp, saln for each year
+    year_file = netcdf_path
+    if var == 'temperature':
+        Tdict_together = azu.get_bottomT(year_file,years,season,climato_file,lab_mask=False)
+    elif var == 'salinity':
+        Tdict_together = azu.get_bottomS(year_file,years,season,climato_file,lab_mask=False)
+
+    #Cycle through and fill with climatology
+    for year in Tdict_together:
         if var == 'temperature':
-            Tdict = azu.get_bottomT(year_file, season, climato_file)    
-            Tbot = Tdict['Tbot']
-        else:
-            Tdict = azu.get_bottomS(year_file, season, climato_file)    
-            Tbot = Tdict['Sbot']
-        lons = Tdict['lons']
-        lats = Tdict['lats']
+            var_l = 'T'
+        elif var == 'salinity':
+            var_l = 'S'
+        Tdict_together[year][var_l+'bot_orig'] = Tdict_together[year][var_l+'bot']
+        Tbot = Tdict_together[year][var_l+'bot']
+        place1 = Tbot_climato.copy()
+        place1[~np.isnan(Tbot)] = Tbot[~np.isnan(Tbot)]
+        Tbot = place1
+        Tdict_together[year][var_l+'bot'] = Tbot
 
-        # Use climatology to fill missing pixels
-        if clim_fill:
-            print('Fill NaNs with climatology')
-            Tbot_orig = Tbot.copy()
-            #Tbot_fill = Tbot_climato[Tbot_orig.isna()]
-            #Tbot[Tbot_orig.isna()] = Tbot_climato[Tbot_orig.isna()]
-            Tbot_fill = Tbot_climato[np.isnan(Tbot_orig)]
-            Tbot[np.isnan(Tbot_orig)] = Tbot_climato[np.isnan(Tbot_orig)]            
-        # Calculation of anomaly
-        anom = Tbot-Tbot_climato
-        
-        # NAFO division stats
-        if season == 'summer':
-            # To use different definition for each SFAs
-            ## dict_stats_sfa2[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa2, nsrf=True)
-            ## dict_stats_sfa3[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa3, nsrf=True)
-            ## dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4, nsrf=True)
-            dict_stats_sfa2[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa2, var=var)
-            dict_stats_sfa3[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa3, var=var)
-            dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4, var=var)
-        elif season=='fall':
-            dict_stats_sfa4[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa4, var=var)
-            dict_stats_sfa5[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa5, var=var)
-            dict_stats_sfa6[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa6, var=var)
-            dict_stats_sfa7[np.str(year)] = azu.polygon_temperature_stats(Tdict, sfa7, var=var)
-        elif season == 'spring':
-            print('Not implemented, check this!')
-            keyboard
+    # NAFO division stats
+    if season == 'summer':
+        dict_stats_sfa2 = azu.polygon_temperature_stats(Tdict_together, sfa2, var=var)
+        dict_stats_sfa3 = azu.polygon_temperature_stats(Tdict_together, sfa3, var=var)
+        dict_stats_sfa4 = azu.polygon_temperature_stats(Tdict_together, sfa4, var=var)
+    elif season=='fall':
+        dict_stats_sfa4 = azu.polygon_temperature_stats(Tdict_together, sfa4, var=var)
+        dict_stats_sfa5 = azu.polygon_temperature_stats(Tdict_together, sfa5, var=var)
+        dict_stats_sfa6 = azu.polygon_temperature_stats(Tdict_together, sfa6, var=var)
+        dict_stats_sfa7 = azu.polygon_temperature_stats(Tdict_together, sfa7, var=var)
 
-        # Append bottom temperature for multi-index export
+    # Append bottom temperature for multi-index export
+    df_list = []
+    for year in Tdict_together:
         df = pd.DataFrame(index=lat_reg, columns=lon_reg)
         df.index.name='latitude'
         df.columns.name='longitude'
-        df[:] = Tbot
+        df[:] = Tdict_together[year][var_l+'bot']
         df_list.append(df)
 
-        if plot:
-            div_toplot = [ '2', '3', '4']
-            if var == 'temperature':
-                levels = np.linspace(-2, 6, 9)
-                levels_anom = np.linspace(-3.5, 3.5, 8)
-                CMAP = cmo.cm.thermal
-            elif var == 'salinity':
-                levels = np.linspace(30, 35, 11)
-                levels_anom = np.array([-1, -.8, -.6, -.4, -.2, .2, .4, .6, .8, 1])
-                CMAP = cmo.cm.haline
-
-            if year == years[0]: 
-            # 1.0 - Plot Climatology
-                fig, ax = plt.subplots(nrows=1, ncols=1)
-                m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-                xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-                cclim = m.contourf(xi, yi, Tbot_climato, levels, cmap=CMAP, extend='both')
-                cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-                plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-                m.fillcontinents(color='tan');
-                m.drawparallels([56, 58, 60, 62, 64, 66], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-                m.drawmeridians([-68, -66, -64, -62, -60, -58, -56], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-                if var == 'temperature':
-                    if season=='fall':
-                        plt.title('Fall Bottom Temperature')
-                    elif season=='spring':
-                        plt.title('Spring Bottom Temperature')
-                    else:
-                        plt.title('Bottom Temperature')
-                elif var == 'salinity':
-                    if season=='fall':
-                        plt.title('Fall Bottom Salinity')
-                    elif season=='spring':
-                        plt.title('Spring Bottom Salinity')
-                    else:
-                        plt.title('Bottom Salinity')
-                # add colorbar
-                cax = fig.add_axes([0.25, 0.055, 0.5, 0.02])
-                cb = plt.colorbar(cclim, cax=cax, orientation='horizontal')
-                if var == 'temperature':
-                    cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-                elif var == 'salinity':
-                    cb.set_label('S', fontsize=12, fontweight='normal')
-                # plot SFA divisons
-                for div in div_toplot:
-                    div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
-                    m.plot(div_lon, div_lat, 'k', linewidth=2)
-                    ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
- 
-                # Save Figure
-                fig.set_size_inches(w=7, h=8)
-                fig.set_dpi(200)
-                outfile = 'bottom_clim_' + season  + '.png'
-                fig.savefig(outfile)
-                plt.close('all')
-                os.system('convert -trim ' + outfile + ' ' + outfile)
-
-            # 1.1 - Plot Anomaly
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-            xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-            c = m.contourf(xi, yi, anom, levels_anom, cmap=plt.cm.RdBu_r, extend='both')
-            cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-            plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-            m.fillcontinents(color='tan');
-            m.drawparallels([56, 58, 60, 62, 64, 66], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-            m.drawmeridians([-68, -66, -64, -62, -60, -58, -56], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-            if var == 'temperature':
-                if season=='fall':
-                    plt.title('Fall Bottom Temperature Anomaly')
-                elif season=='spring':
-                    plt.title('Spring Bottom Temperature Anomaly')
-                else:
-                    plt.title('Bottom Temperature Anomaly')
-            elif var == 'salinity':
-                if season=='fall':
-                    plt.title('Fall Bottom Salinity Anomaly')
-                elif season=='spring':
-                    plt.title('Spring Bottom Salinity Anomaly')
-                else:
-                    plt.title('Bottom Salinity Anomaly')
-            # add colorbar
-            cax = fig.add_axes([0.25, 0.055, 0.5, 0.02])
-            cb = plt.colorbar(c, cax=cax, orientation='horizontal')
-            if var == 'temperature':
-                cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            elif var == 'salinity':
-                cb.set_label('S', fontsize=12, fontweight='normal')
-            # plot SFA divisons
-            for div in div_toplot:
-                div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
-                m.plot(div_lon, div_lat, 'k', linewidth=2)
-                ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
-            # Add Biomass
-            if plot_biomass_anomaly:
-                biomass = df_biomass[df_biomass.index==int(year)]
-                xb, yb = m(biomass.Longitude.values, biomass.Latitude.values)
-                for idx, tmp in enumerate(xb):
-                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PB TB(kg/km2)'].iloc[idx])*30, c='orange', alpha=.5, zorder=200)
-                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PM TB(kg/km2)'].iloc[idx])*30, c='slategray', alpha=.5, zorder=200)
-                    m.scatter(xb[idx], yb[idx], s=biomass['PB TB(kg/km2)'].iloc[idx]/50, c='orange', alpha=.5)
-                    m.scatter(xb[idx], yb[idx], s=biomass['PM TB(kg/km2)'].iloc[idx]/50, c='darkgray', alpha=.5)
-                # add legend
-                xbl, ybl = m(-69.5, 66.8)
-                xml, yml = m(-69.5, 66.5)
-                m.scatter(xbl, ybl, s=60, c='orange', alpha=.7, zorder=200)
-                m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
-                #ax.text(xbl, ybl, r'  P. Borealis (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-                #ax.text(xml, yml, r'  P. Montagui (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-                ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-                ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-            # Save Figure
-            fig.set_size_inches(w=7, h=8)
-            fig.set_dpi(200)
-            outfile1 = 'bottom_' + var + '_anomaly_' + season + '_' + np.str(year) + '.png'
-            fig.savefig(outfile1)
-            os.system('convert -trim ' + outfile1 + ' ' + outfile1)
-
-            # 1.2 - Plot Temperature
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            m = Basemap(ax=ax, projection='merc',lon_0=lon_0,lat_0=lat_0, llcrnrlon=lonLims[0],llcrnrlat=latLims[0],urcrnrlon=lonLims[1],urcrnrlat=latLims[1], resolution= 'i')
-            xi, yi = m(*np.meshgrid(lon_reg, lat_reg))
-            if clim_fill:
-                #c = m.contourf(xi, yi, Tbot, levels, cmap=plt.cm.RdBu_r, extend='both', alpha=.3)
-                #cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=plt.cm.RdBu_r, extend='both', alpha=1)
-                c = m.contourf(xi, yi, Tbot, levels, cmap=CMAP, extend='both', alpha=.3)
-                cfill = m.contourf(xi, yi, Tbot_orig, levels, cmap=CMAP, extend='both', alpha=.8)
-            else:
-                cfill = m.contourf(xi, yi, Tbot, levels, cmap=CMAP, extend='both')
-            cc = m.contour(xi, yi, -Zitp, [100, 500, 1000, 4000], colors='grey');
-            plt.clabel(cc, inline=1, fontsize=10, fmt='%d')
-            m.fillcontinents(color='tan');
-            m.drawparallels([56, 58, 60, 62, 64, 66], labels=[1,0,0,0], fontsize=12, fontweight='normal');
-            m.drawmeridians([-68, -66, -64, -62, -60, -58, -56], labels=[0,0,0,1], fontsize=12, fontweight='normal');
-            x, y = m(lons, lats)
-            m.scatter(x,y, s=50, marker='.',color='k')
-            if var == 'temperature':
-                if season=='fall':
-                    plt.title('Fall Bottom Temperature ' + str(year))
-                elif season=='spring':
-                    plt.title('Spring Bottom Temperature ' + str(year))
-                else:
-                    plt.title('Bottom Temperature ' + str(year))
-            elif var == 'salinity':
-                if season=='fall':
-                    plt.title('Fall Bottom Salinity ' + str(year))
-                elif season=='spring':
-                    plt.title('Spring Bottom Salinity ' + str(year))
-                else:
-                    plt.title('Bottom Salinity ' + str(year))
-            # add colorbar
-            cax = fig.add_axes([0.25, 0.055, 0.5, 0.02])
-            cb = plt.colorbar(cclim, cax=cax, orientation='horizontal')
-            if var == 'temperature':
-                cb.set_label(r'$\rm T(^{\circ}C)$', fontsize=12, fontweight='normal')
-            elif var == 'salinity':
-                cb.set_label('S', fontsize=12, fontweight='normal')                    
-            # plot SFA divisons
-            for div in div_toplot:
-                div_lon, div_lat = m(shrimp_area[div][:,0], shrimp_area[div][:,1])
-                m.plot(div_lon, div_lat, 'k', linewidth=2)
-                ax.text(np.mean(div_lon), np.mean(div_lat), 'SFA'+div, fontsize=12, color='black', fontweight='bold')
-            # Add Biomass
-            if plot_biomass:
-                biomass = df_biomass[df_biomass.index==int(year)]
-                xb, yb = m(biomass.Longitude.values, biomass.Latitude.values)
-                for idx, tmp in enumerate(xb):
-                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PB TB(kg/km2)'].iloc[idx])*30, c='red', alpha=.5, zorder=200)
-                    #m.scatter(xb[idx], yb[idx], s=np.log10(biomass['PM TB(kg/km2)'].iloc[idx])*30, c='slategray', alpha=.5, zorder=200)
-                    m.scatter(xb[idx], yb[idx], s=biomass['PB TB(kg/km2)'].iloc[idx]/50, c='red', alpha=.5)
-                    m.scatter(xb[idx], yb[idx], s=biomass['PM TB(kg/km2)'].iloc[idx]/50, c='dimgray', alpha=.5)
-                # add legend
-                xbl, ybl = m(-69.5, 66.8)
-                xml, yml = m(-69.5, 66.5)
-                m.scatter(xbl, ybl, s=60, c='red', alpha=.7, zorder=200)
-                m.scatter(xml, yml, s=60, c='slategray', alpha=.7, zorder=200)
-                #ax.text(xbl, ybl, r'  P. Borealis (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-                #ax.text(xml, yml, r'  P. Montagui (100 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-                ax.text(xbl, ybl, r'  P. Borealis (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-                ax.text(xml, yml, r'  P. Montagui (3000 $\rm kg\,km^{-2}$)', zorder=200, verticalalignment='center')
-            # Save Figure
-            fig.set_size_inches(w=7, h=8)
-            fig.set_dpi(200)
-            if clim_fill:
-                outfile2 = 'bottom_' + var + '_filled_' + season + '_' + np.str(year) + '.png'
-            else:
-                outfile2 = 'bottom_' + var + '_' + season + '_' + np.str(year) + '.png'
-            fig.savefig(outfile2)
-            plt.close('all')
-            os.system('convert -trim ' + outfile2 + ' ' + outfile2)
-
-            # Montage figure
-            if var == 'temperature':
-                montage_out = 'sfa_bottomT_' + str(year) + '.png'
-            elif var == 'salinity':
-                montage_out = 'sfa_bottomS_' + str(year) + '.png'
-            os.system('montage ' + outfile + ' ' + outfile2 + ' ' + outfile1 + ' ' + '-tile 3x1 -geometry +10+10  -background white ' + montage_out)
-            os.system('rm ' + outfile2 + ' ' + outfile1) 
-          
-            # clear memory
-            del Tdict, Tbot, anom
-
-    ## df_sfa0 = pd.DataFrame.from_dict(dict_stats_sfa0, orient='index')
-    ## df_sfa1 = pd.DataFrame.from_dict(dict_stats_sfa1, orient='index')
+    #Convert to data frames
     df_sfa2 = pd.DataFrame.from_dict(dict_stats_sfa2, orient='index')
     df_sfa3 = pd.DataFrame.from_dict(dict_stats_sfa3, orient='index')
     df_sfa4 = pd.DataFrame.from_dict(dict_stats_sfa4, orient='index')
@@ -1402,30 +1362,26 @@ def sfa_bottom_stats(years, season, proj='merc', plot=False, netcdf_path='/home/
     df_sfa6 = pd.DataFrame.from_dict(dict_stats_sfa6, orient='index')
     df_sfa7 = pd.DataFrame.from_dict(dict_stats_sfa7, orient='index')
 
-    ## outname = 'stats_sfa0_' + season + '.pkl' # Some are missing here
-    ## df_sfa0.to_pickle(outname)
-    ## outname = 'stats_sfa1_' + season + '.pkl'
-    ## df_sfa1.to_pickle(outname)
     if var == 'salinity':
         season = season + '_' + var
     outname = 'stats_sfa2_' + season + '.pkl'
     df_sfa2.to_pickle(outname)
     outname = 'stats_sfa3_' + season + '.pkl'
-    df_sfa3.to_pickle(outname)   
+    df_sfa3.to_pickle(outname)
     outname = 'stats_sfa4_' + season + '.pkl'
     df_sfa4.to_pickle(outname)
     outname = 'stats_sfa5_' + season + '.pkl'
-    df_sfa5.to_pickle(outname)   
+    df_sfa5.to_pickle(outname)
     outname = 'stats_sfa6_' + season + '.pkl'
     df_sfa6.to_pickle(outname)
     outname = 'stats_sfa7_' + season + '.pkl'
-    df_sfa7.to_pickle(outname)   
+    df_sfa7.to_pickle(outname)
 
     # Save in multi-index  dataFrame (still useful?)
-    #year_index = pd.Series(years)
-    #year_index.name='year'
-    #df_mindex = pd.concat(df_list,keys=year_index)
-    #df_mindex.to_pickle(season + '_sfa_bottom_temperature.pkl')
+    year_index = pd.Series(years)
+    year_index.name='year'
+    df_mindex = pd.concat(df_list,keys=year_index)
+    df_mindex.to_pickle(season + '_sfa_bottom_'+var+'.pkl')
 
 
 def bottom_scorecards(years, clim_year=[1991, 2020]):
@@ -2260,7 +2216,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
 
     #### ------------- For summer ---------------- ####
     # 0.
-    infile = 'stats_sfa2_summer.pkl'
+    infile = 'operation_files/stats_sfa2_summer.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
@@ -2348,7 +2304,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2393,7 +2349,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     os.system('convert -trim scorecards_summer_SFA2_FR.png scorecards_summer_SFA2_FR.png')
 
  # 1.
-    infile = 'stats_sfa3_summer.pkl'
+    infile = 'operation_files/stats_sfa3_summer.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
@@ -2451,7 +2407,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2485,7 +2441,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2496,7 +2452,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
 
 
     # 2.
-    infile = 'stats_sfa4_summer.pkl'
+    infile = 'operation_files/stats_sfa4_summer.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
@@ -2554,7 +2510,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2589,7 +2545,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2599,7 +2555,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     os.system('convert -trim scorecards_summer_SFA4_FR.png scorecards_summer_SFA4_FR.png')
     plt.close('all')
 
-    
+
     ## **SFA4 in stand-alone (with years row)
     # rename back to English
     std_anom = std_anom.rename({r'$\rm T_{fond}$' : r'$\rm T_{bot}$', r'$\rm T_{fond_{<200m}}$' : r'$\rm T_{bot_{<200m}}$', r'$\rm Aire_{>2^{\circ}C}~$ ' : r'$\rm Area_{>2^{\circ}C}$', r'$\rm Aire_{<1^{\circ}C}~$ ' : r'$\rm Area_{<1^{\circ}C}$'})
@@ -2630,7 +2586,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2665,7 +2621,7 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2700,7 +2656,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
 
     #### ------------- For summer ---------------- ####
     # 0.
-    infile = 'stats_sfa2_summer_salinity.pkl'
+    infile = 'operation_files/stats_sfa2_summer_salinity.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
@@ -2778,7 +2734,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2815,7 +2771,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2825,7 +2781,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
     os.system('convert -trim scorecards_summerS_SFA2_FR.png scorecards_summerS_SFA2_FR.png')
 
  # 1.
-    infile = 'stats_sfa3_summer_salinity.pkl'
+    infile = 'operation_files/stats_sfa3_summer_salinity.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
@@ -2877,7 +2833,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2911,7 +2867,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -2922,7 +2878,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
 
 
     # 2.
-    infile = 'stats_sfa4_summer_salinity.pkl'
+    infile = 'operation_files/stats_sfa4_summer_salinity.pkl'
     df = pd.read_pickle(infile)
     df.index = pd.to_datetime(df.index) # update index to datetime
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
@@ -2976,7 +2932,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -3010,7 +2966,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
         #    pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -3051,7 +3007,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -3085,7 +3041,7 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
