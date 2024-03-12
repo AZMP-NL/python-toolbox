@@ -21,7 +21,7 @@ clim_year = [1991, 2020]
 
 #### ------------- For fall ---------------- ####
 # 1.
-infile = 'stats_2J_fall.pkl'
+infile = 'operation_files/stats_2J_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df = df['area_shrimp']
@@ -31,7 +31,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom2J = std_anom
 
 # 2.
-infile = 'stats_3K_fall.pkl'
+infile = 'operation_files/stats_3K_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df = df['area_shrimp']
@@ -42,7 +42,7 @@ std_anom3K = std_anom
 
 
 # 3.
-infile = 'stats_3LNO_fall.pkl'
+infile = 'operation_files/stats_3LNO_fall.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df = df['area_shrimp']
@@ -77,7 +77,7 @@ os.system('convert -trim shrimp_habitat_anomalies_fall.png shrimp_habitat_anomal
 
 #### ------------- For Spring ---------------- ####
 # 1.
-infile = 'stats_3LNO_spring.pkl'
+infile = 'operation_files/stats_3LNO_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df = df['area_shrimp']
@@ -87,7 +87,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3LNO = std_anom
 
 # 2.
-infile = 'stats_3Ps_spring.pkl'
+infile = 'operation_files/stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 df = df['area_shrimp']
