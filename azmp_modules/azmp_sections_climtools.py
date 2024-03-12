@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 import cmocean as cm
 import pandas as pd
+import skfuzzy as fuzz
 import numpy as  np
 from shapely.geometry import Point,Polygon
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
@@ -41,6 +42,10 @@ def area(vs):
 
 #3D temperature or salinity
 def interpolate_variable_3D(df,lat_reg,lon_reg,lonsV,latsV,dc):
+
+    #Interpolate the casts vertically before combining
+    df = df.interpolate(axis=1,limit_direction='both', limit_area='inside')
+
     #Create 3D cube
     z = df.columns.values
     V = np.full((lat_reg.size, lon_reg.size, z.size), np.nan)
@@ -50,6 +55,8 @@ def interpolate_variable_3D(df,lat_reg,lon_reg,lonsV,latsV,dc):
             idx_coords = np.where((lonsV>=xx-dc/2) & (lonsV<xx+dc/2) & (latsV>=yy-dc/2) & (latsV<yy+dc/2))
             var = np.array(df.iloc[idx_coords].mean(axis=0))
             idx_good = np.argwhere((~np.isnan(var)))
+            V[ii,i,:] = var
+            '''
             #Determine if vertical interpolation is needed
             if np.size(idx_good) == 1:
                 V[ii,i,:] = np.array(df.iloc[idx_coords].mean(axis=0))
@@ -58,7 +65,7 @@ def interpolate_variable_3D(df,lat_reg,lon_reg,lonsV,latsV,dc):
                 idx_interp = np.arange(int(idx_good[0]),int(idx_good[-1]+1))
                 #interpolate only where possible (1st to last good idx)
                 V[ii,i,idx_interp] = interp(z[idx_interp])
-
+            '''
     #Next, interpolate horizontally
     lon_grid, lat_grid = np.meshgrid(lon_reg,lat_reg)
     lon_vec = np.reshape(lon_grid, lon_grid.size)
@@ -83,6 +90,78 @@ def interpolate_variable_3D(df,lat_reg,lon_reg,lonsV,latsV,dc):
         else:
             continue
     return V,z
+
+
+#3D temperature or salinity interpolation IDW
+def IDW_variable_3D(df,df_stn,lonsV,latsV,dc):
+
+    #Interpolate the casts vertically before combining
+    df = df.interpolate(axis=1,limit_direction='both', limit_area='inside')
+
+    #Set up the dataframe
+    df_section_itp = pd.DataFrame(columns=df_stn.STATION.values,index=df.columns.values)
+
+    #Cycle through each station
+    for i,stn in enumerate(df_stn.STATION.values):
+
+        #Determine the distance of all points from the station
+        stn_lon = df_stn.LON.values[i]
+        stn_lat = df_stn.LAT.values[i]
+        distance = (stn_lon - lonsV)**2 + (stn_lat - latsV)**2
+        distance = np.sqrt(distance)
+
+        #Isolate the measurements of interest
+        lonsV_slice = lonsV[distance <= dc]
+        latsV_slice = latsV[distance <= dc]
+        df_slice = df.iloc[distance <= dc].values
+        distance_slice = distance[distance <= dc]
+
+        #Replace 0 distance values with close-to-zero
+        distance_slice[distance_slice == 0.] = 1e-6
+
+        #Isolate for each depth
+        interpolated_value = np.full(df_slice.shape[1],np.nan)
+        for ii in np.arange(interpolated_value.size):
+
+            #Remove the nans
+            temp_slice = df_slice[:,ii]
+            distance_slice_nonan = distance_slice[~np.isnan(temp_slice)]
+            temp_slice = temp_slice[~np.isnan(temp_slice)]
+
+            #If measurements are present, proceed
+            if distance_slice_nonan.size > 0:
+
+                #Determine the power
+                A = np.pi*(dc**2)
+                r_exp = 1/(2*(temp_slice.size/A)**0.5)
+                r_obs = np.mean(distance_slice_nonan)
+                R = r_obs/r_exp
+                R_min = 1
+                R_max = 8
+                if R < R_min:
+                    mu_R = 0
+                elif R > R_max:
+                    mu_R = 1
+                else:
+                    mu_R = fuzz.smf(np.array([0,R]),R_min,R_max)[-1]
+                if mu_R <= 0.1:
+                    power = 0.1
+                elif mu_R >= 0.9:
+                    power = 3
+                else:
+                    slope = (3-0.1)/(0.9-0.1)
+                    b = 0.1-slope*0.1
+                    power = slope*mu_R+b
+
+                #Find the interpolated value
+                numerator = np.nansum(temp_slice / (distance_slice_nonan ** power))
+                weights = np.sum(1 / (distance_slice_nonan ** power))
+                interpolated_value[ii] = numerator/ weights
+
+        #Fill in the data frame
+        df_section_itp[stn] = interpolated_value
+    return df_section_itp
+
 
 #Temperature and salinity based upon station ID or station ID manual
 def name_variable(ds,z,bins,stn_list,station_ID,manual=False):
@@ -495,11 +574,20 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         year_file = CASTS_path + str(YEAR) + '.nc'
         print('Get ' + year_file)
         ds = xr.open_dataset(year_file)
+        ds.load()
 
         #Select Region
         ds = ds.isel(time = (ds.longitude>lonLims[0]) & (ds.longitude<lonLims[1]))
         ds = ds.isel(time = (ds.latitude>latLims[0]) & (ds.latitude<latLims[1]))
-        ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
+        #ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
+
+        #Remove the bottle measurements
+        instrument_ID = ds.instrument_ID.values.astype(str)
+        instrument_flag = np.full(instrument_ID.size,False)
+        for i,value in enumerate(instrument_ID):
+            if 'BO' in value:
+                instrument_flag[i] = True
+        ds = ds.isel(time = ~instrument_flag)
 
         #Take the station ID and station ID manual
         station_ID = ds.station_ID.values.astype(str)
@@ -526,6 +614,42 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         else:
             print('!! no season specified, used them all! !!')
 
+        #Cycle through each cast and remove bad casts
+        '''
+        if YEAR < 1980:
+            import matplotlib
+            matplotlib.interactive(True)
+            instrument_ID = ds.instrument_ID[0].values.astype(str)
+            bad_cast = np.full(ds.time.size, False)
+            temp = ds.temperature.values
+            for i,value in enumerate(instrument_ID):
+                if 'MB' in value or 'BO' in value:
+                    if np.sum(~np.isnan(temp[:,i])) >= 5:
+                        if np.nanmin(temp[:,i]) >= 0 and np.nanmin(temp[:,i]) < 2:
+                            plt.figure()
+                            plt.plot(temp[:,i],bins[:-1],marker='.')
+                            plt.gca().invert_yaxis()
+                            plt.title(value+', '+str(i)+' out of '+str(instrument_ID.size))
+                            plt.show()
+                            plt.pause(0.5)
+                            while True:
+                                place1 = input('Keep cast? [y,n]: ')
+                                if place1 not in ('y','n'):
+                                    print('Not a valid answer. Please type "y" or "n".')
+                                else:
+                                    break
+                            if place1 == 'y':
+                                plt.close()
+                            elif place1 == 'n':
+                                bad_cast[i] = True
+                                plt.close()
+
+            #Remove the bad casts
+            ds = ds.isel(time = ~bad_cast)
+            station_ID = ds.station_ID[0].values.astype(str)
+            station_ID_manual = ds.station_ID_manual[0].values.astype(str)
+            matplotlib.interactive(False)
+        '''
         #Extract temperature and salinity
         da_temp = ds['temperature'].T
         da_sal = ds['salinity'].T
@@ -544,7 +668,11 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df = df.dropna(axis=0,how='all')
         lonsT = np.delete(lons,idx_empty_rows)
         latsT = np.delete(lats,idx_empty_rows)
-        V_temp,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsT, latsT, dc)
+        #V_temp,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsT, latsT, dc)
+        if df.shape[0] != 0:
+            df_section_itp_T = IDW_variable_3D(df, df_stn, lonsT, latsT, 0.125)
+        else:
+            df_section_itp_T = pd.DataFrame(index=stn_list, columns=df.columns.values).T
         print(' -> Done!')
 
         #Salinity to Pandas Dataframe
@@ -557,9 +685,14 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df = df.dropna(axis=0,how='all')
         lonsS = np.delete(lons,idx_empty_rows)
         latsS = np.delete(lats,idx_empty_rows)
-        V_sal,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsS, latsS, dc)
+        #V_sal,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsS, latsS, dc)
+        if df.shape[0] != 0:
+            df_section_itp_S = IDW_variable_3D(df, df_stn, lonsS, latsS, 1)
+        else:
+            df_section_itp_S = pd.DataFrame(index=stn_list, columns=df.columns.values).T
         print(' -> Done!')
 
+        '''
         #Mask using bathymetry (not completely necessary)
         for i, xx in enumerate(lon_reg):
             for ii,yy in enumerate(lat_reg):
@@ -589,6 +722,30 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             # store in dataframe
             df_section_itp_T.loc[stn] = Tprofile
             df_section_itp_S.loc[stn] = Sprofile
+        '''
+
+        #Mask out the bathymetry
+        V_coords = np.array([[x,y] for x in lat_reg for y in lon_reg])
+        ZZ = Zitp.reshape(V_coords.shape[0],1)
+        for stn in stn_list:
+
+            #Determine the index closest to the stn
+            station = df_stn[df_stn.STATION==stn]
+            idx_opti = np.argmin(np.sum(np.abs(V_coords - np.array([station.LAT.values,station.LON.values]).T), axis=1))
+            bottom_depth = -ZZ[idx_opti]
+
+            #Mask out less than 10m, greater than bottom_depth
+            stn_depth = df_section_itp_T.index.values
+            stn_temp = df_section_itp_T[stn].values
+            stn_temp[~((stn_depth >= 10)*(stn_depth <= bottom_depth))] = np.nan
+            df_section_itp_T[stn] = stn_temp
+            #Same for salinity
+            stn_saln = df_section_itp_S[stn].values
+            stn_saln[~((stn_depth >= 10)*(stn_depth <= bottom_depth))] = np.nan
+            df_section_itp_S[stn] = stn_saln
+
+        df_section_itp_T = df_section_itp_T.T
+        df_section_itp_S = df_section_itp_S.T
 
         # Drop indices with only NaNs (option #2)
         df_section_itp_T = df_section_itp_T.dropna(axis=0, how='all')
@@ -621,6 +778,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df_itp_sal.append(df_section_itp_S)
 
         ## -------- Method 2: Station_ID -------- ##
+        z = df.columns.values
         df_section_stn_T,df_section_stn_S = name_variable(ds, z, bins, stn_list, station_ID.squeeze(), manual=False)
 
         #Compute the distance between stations

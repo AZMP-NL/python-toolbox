@@ -87,6 +87,7 @@ def bottom_temperature(
     latLims,
     year,
     clim_fill=True,
+    time_adjust=True,
     netcdf_path='~/data/CABOTS/',
     CASTS_path='~/data/CASTS/',
     climato_file=''):
@@ -205,7 +206,10 @@ def bottom_temperature(
     # Selection of a subset region
     ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
     ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
-    Tbot = ds.BOTTOM_TEMPERATURE.values
+    if time_adjust:
+        Tbot = ds.BOTTOM_TEMPERATURE_ADJUSTED.values
+    else:
+        Tbot = ds.BOTTOM_TEMPERATURE.values
 
     # Use climatology to fill missing pixels
     if clim_fill:
@@ -541,7 +545,7 @@ def bottom_temperature(
     # in French
     os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomT_' + season + year + '_FR.png')
     # Move to year folder
-    os.system('cp '+save_end+'+bottomT_' + season + year + '.png '+save_end+'_bottomT_' + season + year + '_FR.png ' + year)
+    os.system('cp '+save_end+'bottomT_' + season + year + '.png '+save_end+'_bottomT_' + season + year + '_FR.png ' + year)
 
 
 #### bottom_salinity
@@ -551,6 +555,7 @@ def bottom_salinity(
     lonLims,
     latLims,
     clim_fill=True,
+    time_adjust=True,
     netcdf_path='~/data/CABOTS/',
     CASTS_path='~/data/CASTS/',
     climato_file=''):
@@ -654,7 +659,10 @@ def bottom_salinity(
     # Selection of a subset region
     ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
     ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
-    Sbot = ds.BOTTOM_SALINITY.values
+    if time_adjust:
+        Sbot = ds.BOTTOM_SALINITY_ADJUSTED.values
+    else:
+        Sbot = ds.BOTTOM_SALINITY.values
 
     # Use climatology to fill missing pixels
     if clim_fill:
@@ -995,8 +1003,10 @@ def bottom_salinity(
 def bottom_stats(
     years,
     season,
+    time_adjust=True,
     plot=False,
     netcdf_path='',
+    var='',
     climato_file=''):
 
     '''
@@ -1027,19 +1037,28 @@ def bottom_stats(
     np.seterr(divide='ignore', invalid='ignore')
     warnings.simplefilter("ignore", category=RuntimeWarning)
 
+    #Label either S or T
+    if var == ' temperature':
+        var_strt = 'T'
+    elif var == 'salinity':
+        var_strt = 'S'
+
     # load climato
     if len(climato_file) == 0:
         if season=='spring':
-            climato_file='operation_files/Tbot_climato_spring_0.10.h5'
+            climato_file='operation_files/'+var_strt+'bot_climato_spring_0.10.h5'
         elif season=='fall':
-            climato_file='operation_files/Tbot_climato_fall_0.10.h5'
+            climato_file='operation_files/'+var_strt+'bot_climato_fall_0.10.h5'
         elif season=='summer':
-            climato_file='operation_files/Tbot_climato_summer_0.10.h5'
+            climato_file='operation_files/'+var_strt+'bot_climato_summer_0.10.h5'
     else:
         print('Climato file provided')
 
     h5f = h5py.File(climato_file, 'r')
-    Tbot_climato = h5f['Tbot'][:]
+    if var == 'temperature':
+        Tbot_climato = h5f['Tbot'][:]
+    elif var == 'salinity':
+        Tbot_climato = h5f['Sbot'][:]
     lon_reg = h5f['lon_reg'][:][0,:]
     lat_reg = h5f['lat_reg'][:][:,0]
     Zitp = h5f['Zitp'][:]
@@ -1107,29 +1126,32 @@ def bottom_stats(
 
     #Get the bottom temperature for each year
     year_file = netcdf_path
-    Tdict_together = azu.get_bottomT(year_file, years, season, climato_file, lab_mask=False)
+    if var == 'temperature':
+        Tdict_together = azu.get_bottomT(year_file,years,season,climato_file,time_adjust=time_adjust,lab_mask=False)
+    elif var == 'salinity':
+        Tdict_together = azu.get_bottomS(year_file,years,season,climato_file,time_adjust=time_adjust,lab_mask=False)
 
     #Cycle through and fill with climatology
     for year in Tdict_together:
-        Tdict_together[year]['Tbot_orig'] = Tdict_together[year]['Tbot']
-        Tbot = Tdict_together[year]['Tbot']
+        Tdict_together[year][var_strt+'bot_orig'] = Tdict_together[year][var_strt+'bot']
+        Tbot = Tdict_together[year][var_strt+'bot']
         place1 = Tbot_climato.copy()
         place1[~np.isnan(Tbot)] = Tbot[~np.isnan(Tbot)]
         Tbot = place1
-        Tdict_together[year]['Tbot'] = Tbot
+        Tdict_together[year][var_strt+'bot'] = Tbot
 
     # NAFO division stats    
-    dict_stats_2GH = azu.polygon_temperature_stats(Tdict_together, shape_2GH)
-    dict_stats_2G = azu.polygon_temperature_stats(Tdict_together, shape_2G)
-    dict_stats_2H = azu.polygon_temperature_stats(Tdict_together, shape_2H)
-    dict_stats_2J = azu.polygon_temperature_stats(Tdict_together, shape_2J)
-    dict_stats_2HJ = azu.polygon_temperature_stats(Tdict_together, shape_2HJ)
-    dict_stats_3LNO = azu.polygon_temperature_stats(Tdict_together, shape_3LNO)
-    dict_stats_3M = azu.polygon_temperature_stats(Tdict_together, shape_3M)
-    dict_stats_3Ps = azu.polygon_temperature_stats(Tdict_together, shape_3Ps)
-    dict_stats_3K = azu.polygon_temperature_stats(Tdict_together, shape_3K)
-    dict_stats_3L = azu.polygon_temperature_stats(Tdict_together, shape_3L)
-    dict_stats_3O = azu.polygon_temperature_stats(Tdict_together, shape_3O)
+    dict_stats_2GH = azu.polygon_temperature_stats(Tdict_together, shape_2GH, var=var)
+    dict_stats_2G = azu.polygon_temperature_stats(Tdict_together, shape_2G, var=var)
+    dict_stats_2H = azu.polygon_temperature_stats(Tdict_together, shape_2H, var=var)
+    dict_stats_2J = azu.polygon_temperature_stats(Tdict_together, shape_2J, var=var)
+    dict_stats_2HJ = azu.polygon_temperature_stats(Tdict_together, shape_2HJ, var=var)
+    dict_stats_3LNO = azu.polygon_temperature_stats(Tdict_together, shape_3LNO, var=var)
+    dict_stats_3M = azu.polygon_temperature_stats(Tdict_together, shape_3M, var=var)
+    dict_stats_3Ps = azu.polygon_temperature_stats(Tdict_together, shape_3Ps, var=var)
+    dict_stats_3K = azu.polygon_temperature_stats(Tdict_together, shape_3K, var=var)
+    dict_stats_3L = azu.polygon_temperature_stats(Tdict_together, shape_3L, var=var)
+    dict_stats_3O = azu.polygon_temperature_stats(Tdict_together, shape_3O, var=var)
 
     # Append bottom temperature for multi-index export
     df_list = []
@@ -1137,7 +1159,7 @@ def bottom_stats(
         df = pd.DataFrame(index=lat_reg, columns=lon_reg)
         df.index.name='latitude'
         df.columns.name='longitude'
-        df[:] = Tdict_together[year]['Tbot']
+        df[:] = Tdict_together[year][var_strt+'bot']
         df_list.append(df)
 
     #Convert to data frames
@@ -1160,6 +1182,8 @@ def bottom_stats(
     df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
     #df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
 
+    if var == 'salinity':
+        season = season + '_' + var
     outname = 'stats_3Ps_' + season + '.pkl'
     df_3Ps.to_pickle(outname)
     outname = 'stats_3LNO_' + season + '.pkl'
@@ -1201,12 +1225,13 @@ def bottom_stats(
     year_index = pd.Series(years)
     year_index.name='year'
     df_mindex = pd.concat(df_list,keys=year_index)
-    df_mindex.to_pickle(season + '_bottom_temperature.pkl')
+    df_mindex.to_pickle(season + '_bottom_'+var+'.pkl')
 
     #### bottom_stats
 def sfa_bottom_stats(
     years,
     season,
+    time_adjust=True,
     netcdf_path='',
     var='',
     sfas=[2,3,4],
@@ -1317,9 +1342,9 @@ def sfa_bottom_stats(
     #Get the bottom temp, saln for each year
     year_file = netcdf_path
     if var == 'temperature':
-        Tdict_together = azu.get_bottomT(year_file,years,season,climato_file,lab_mask=False)
+        Tdict_together = azu.get_bottomT(year_file,years,season,climato_file,time_adjust=time_adjust,lab_mask=False)
     elif var == 'salinity':
-        Tdict_together = azu.get_bottomS(year_file,years,season,climato_file,lab_mask=False)
+        Tdict_together = azu.get_bottomS(year_file,years,season,climato_file,time_adjust=time_adjust,lab_mask=False)
 
     #Cycle through and fill with climatology
     for year in Tdict_together:
@@ -1426,7 +1451,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1', 'percent_coverage'])
     std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$', 'percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-    
+
     #Re-fill the percent coverage
     std_anom.iloc[4][:-2] = percent_coverage
     std_anom.iloc[4][-2:] = np.nan
@@ -2641,6 +2666,526 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
     os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3_FR.png -tile 1x2 -geometry +1+1  -background white  scorecards_botT_SFA2-3_summer_FR.png')    
     # remove leftowvers
     os.system('rm scorecards_summer_*.png')
+
+
+def bottomS_scorecards(years, clim_year=[2006, 2021]):
+
+
+    '''
+    Similar to bottom_scorecards, but for salinity
+
+    usage example (see azmp_genreport.py):
+    azrt.sfa_bottomS_scorecards(years=np.arange(2006, 2022), clim_year=[2006, 2020])
+
+    ** Note that varuables inside .pkl files are name "Tmean" isntead of "Smean"
+    '''
+
+    #### ------------- For summer ---------------- ####
+    # 0.
+    infile = 'operation_files/stats_2H_fall_salinity.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = df.index.year.values[percent_coverage < 80]
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomS_stn_anom_2H_fall.csv', sep=',', float_format='%0.3f')
+
+    #Re-fill the percent coverage
+    std_anom.iloc[-1][:-2] = percent_coverage
+    std_anom.iloc[-1][-2:] = np.nan
+
+    # Get text values +  cell color
+    year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+    year_list.append(r'sd')   
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    vals_color[-1,:] = 0
+    #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+
+    # Build the colormap
+    vmin = -3.49
+    vmax = 3.49
+    midpoint = 0
+    levels = np.linspace(vmin, vmax, 15)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+    normal = plt.Normalize(-3.49, 3.49)
+    reds = plt.cm.Reds(np.linspace(0,1, num=7))
+    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+    whites = [(1,1,1,1)]*2
+    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+    # Common parameters
+    nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+    hcell, wcell = 0.5, 0.5
+    hpad, wpad = 1, 1    
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 2H --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[0] == 3:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_2H.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_2H.png scorecards_fallS_2H.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm S_{bot}$' : r'$\rm S_{fond}$', r'$\rm S_{bot_{<200m}}$' : r'$\rm S_{fond_{<200m}}$', '% Coverage': '% Cov'})
+    year_list[-1] = u'ET'
+
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 2H de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[0] == 3:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_2H_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_2H_FR.png scorecards_fallS_2H_FR.png')
+
+ # 1.
+    infile = 'operation_files/stats_2J_fall_salinity.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = df.index.year.values[percent_coverage < 80]
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomS_stn_anom_2J_fall.csv', sep=',', float_format='%0.3f')
+
+    #Re-fill the percent coverage
+    std_anom.iloc[-1][:-2] = percent_coverage
+    std_anom.iloc[-1][-2:] = np.nan
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    vals_color[-1,:] = 0
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 2J --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_2J.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_2J.png scorecards_fallS_2J.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm S_{bot}$' : r'$\rm S_{fond}$', r'$\rm S_{bot_{<200m}}$' : r'$\rm S_{fond_{<200m}}$', '% Coverage': '% Cov'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 2J de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_2J_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_2J_FR.png scorecards_fallS_2J_FR.png')
+
+
+    # 2.
+    infile = 'operation_files/stats_3K_fall_salinity.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = df.index.year.values[percent_coverage < 80]
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomS_stn_anom_3K_fall.csv', sep=',', float_format='%0.3f')
+
+    #Re-fill the percent coverage
+    std_anom.iloc[-1][:-2] = percent_coverage
+    std_anom.iloc[-1][-2:] = np.nan
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    vals_color[-1,:] = 0
+    #normal = plt.Normalize(-4.49, 4.49)
+    #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 3K --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_3K.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_3K.png scorecards_fallS_3K.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm S_{bot}$' : r'$\rm S_{fond}$', r'$\rm S_{bot_{<200m}}$' : r'$\rm S_{fond_{<200m}}$', '% Coverage': '% Cov'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 3K de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_3K_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_3K_FR.png scorecards_fallS_3K_FR.png')
+    plt.close('all')
+
+    # 3.
+    infile = 'operation_files/stats_3LNO_fall_salinity.pkl'
+    df = pd.read_pickle(infile)
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = df.index.year.values[percent_coverage < 80]
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
+    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomS_stn_anom_3LNO_fall.csv', sep=',', float_format='%0.3f')
+
+    #Re-fill the percent coverage
+    std_anom.iloc[-1][:-2] = percent_coverage
+    std_anom.iloc[-1][-2:] = np.nan
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    vals_color[-1,:] = 0
+    #normal = plt.Normalize(-4.49, 4.49)
+    #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 3LNO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_3LNO.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_3LNO.png scorecards_fallS_3LNO.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm S_{bot}$' : r'$\rm S_{fond}$', r'$\rm S_{bot_{<200m}}$' : r'$\rm S_{fond_{<200m}}$', '% Coverage': '% Cov'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 3LNO de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_fallS_3LNO_FR.png", dpi=300)
+    os.system('convert -trim scorecards_fallS_3LNO_FR.png scorecards_fallS_3LNO_FR.png')
+    plt.close('all')
+
+
+
+    ## Montage in subplot - English
+    os.system('montage  scorecards_fallS_2H.png scorecards_fallS_2J.png scorecards_fallS_3K.png scorecards_fallS_3LNO.png -tile 1x4 -geometry +1+1  -background white  scorecards_botS_2HJ3KLNO_fall.png') 
+    # French
+    os.system('montage  scorecards_fallS_2H_FR.png scorecards_fallS_2J_FR.png scorecards_fallS_3K_FR.png scorecards_fallS_3LNO_FR.png -tile 1x4 -geometry +1+1  -background white  scorecards_botS_2HJ3KLNO_fall_FR.png') 
+    # remove leftovers
+    os.system('rm scorecards_fallS_*.png')
+
+
+
+
+
 
 def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
 

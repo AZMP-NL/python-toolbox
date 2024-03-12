@@ -49,9 +49,9 @@ if work_name == '':
 print('  -> '+work_name+' used as working directory!')
 
 #Files come from azmp_section_clim.py
-df_SI = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_SI_summer.pkl'))
-df_BB = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_BB_summer.pkl'))
-df_FC = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_FC_summer.pkl'))
+df_SI = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_SI_summer_climfill.pkl'))
+df_BB = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_BB_summer_climfill.pkl'))
+df_FC = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_FC_summer_climfill.pkl'))
 
 # Set problem years equal to nan
 df_SI['vol_stn'].loc[badstn_SI] = np.nan

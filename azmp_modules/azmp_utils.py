@@ -377,7 +377,15 @@ def get_ice_regions():
     return dict
 
 
-def get_bottomT_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2020], season=[], h5_outputfile=[]):
+def get_bottomT_climato(
+    INFILES,
+    lonLims,
+    latLims,
+    bath_file,
+    time_adjust=True,
+    year_lims=[1991, 2020],
+    season=[],
+    h5_outputfile=[]):
     '''
     Generates and returns the bottom temperature climatology.
     This script uses GEBCO data, path needs to be provided.
@@ -427,7 +435,10 @@ def get_bottomT_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
         ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
 
         #Record the temperature, latitude, longitude
-        ds_temp = ds.BOTTOM_TEMPERATURE.values
+        if time_adjust:
+            ds_temp = ds.BOTTOM_TEMPERATURE_ADJUSTED.values
+        else:
+            ds_temp = ds.BOTTOM_TEMPERATURE.values
         lons = ds.LONGITUDE.values
         lats = ds.LATITUDE.values
 
@@ -455,7 +466,15 @@ def get_bottomT_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
     return dict
 
 
-def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2020], season=[], h5_outputfile=[]):
+def get_bottomS_climato(
+    INFILES,
+    lonLims,
+    latLims,
+    bath_file,
+    time_adjust=True,
+    year_lims=[1991, 2020],
+    season=[],
+    h5_outputfile=[]):
     '''
     Generates and returns the bottom salinity climatology.
     This script uses GEBCO data, path needs to be provided.
@@ -486,8 +505,8 @@ def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
         print(h5_outputfile + ' exist! Reading directly')
         h5f = h5py.File(h5_outputfile,'r')
         ds_saln = h5f['Sbot'][:]
-        lon_reg = h5f['lon_reg'][:]
-        lat_reg = h5f['lat_reg'][:]
+        lons = h5f['lon_reg'][:]
+        lats = h5f['lat_reg'][:]
         Zitp = h5f['Zitp'][:]
         h5f.close()
 
@@ -504,7 +523,10 @@ def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
         ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
 
         #Record the temperature, latitude, longitude
-        ds_saln = ds.BOTTOM_SALINITY.values
+        if time_adjust:
+            ds_saln = ds.BOTTOM_SALINITY_ADJUSTED.values
+        else:
+            ds_saln = ds.BOTTOM_SALINITY.values
         lons = ds.LONGITUDE.values
         lats = ds.LATITUDE.values
 
@@ -533,7 +555,7 @@ def get_bottomS_climato(INFILES, lonLims, latLims, bath_file, year_lims=[1991, 2
 
 
 
-def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=True):
+def get_bottomT(year_file, year, season, climato_file, time_adjust=True, nafo_mask=True, lab_mask=True):
     '''
     Generate and return bottom temperature data corresponding to a certain climatology map.
     Returns a dictionary.
@@ -574,7 +596,10 @@ def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
     # Selection of a subset region
     ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
     ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
-    Tbot = ds.BOTTOM_TEMPERATURE.values
+    if time_adjust:
+        Tbot = ds.BOTTOM_TEMPERATURE_ADJUSTED.values
+    else:
+        Tbot = ds.BOTTOM_TEMPERATURE.values
 
     ## Save data in h5 for further use
     if np.size(year) == 1:
@@ -660,7 +685,7 @@ def get_bottomT(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
 
     return dict
 
-def get_bottomS(year_file, year, season, climato_file, nafo_mask=True, lab_mask=True):
+def get_bottomS(year_file, year, season, climato_file, time_adjust=True, nafo_mask=True, lab_mask=True):
     '''
     Generate and return bottom salinity data corresponding to a certain climatology map.
     Returns a dictionary.
@@ -749,7 +774,10 @@ def get_bottomS(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
     # Selection of a subset region
     ds = ds.sel(X=((ds.LONGITUDE[0,:]>=lonLims[0])*(ds.LONGITUDE[0,:]<=lonLims[1])).values)
     ds = ds.sel(Y=((ds.LATITUDE[:,0]>=latLims[0])*(ds.LATITUDE[:,0]<=latLims[1])).values)
-    Sbot = ds.BOTTOM_SALINITY.values
+    if time_adjust:
+        Sbot = ds.BOTTOM_SALINITY_ADJUSTED.values
+    else:
+        Sbot = ds.BOTTOM_SALINITY.values
 
     ## Save data in h5 for further use
     if np.size(year) == 1:
@@ -831,7 +859,7 @@ def get_bottomS(year_file, year, season, climato_file, nafo_mask=True, lab_mask=
                         if polygon2J.contains(point) | polygon3K.contains(point) | polygon3L.contains(point) | polygon3N.contains(point) | polygon3O.contains(point) | polygon3Ps.contains(point):
                             pass #nothing to do but cannot implement negative statement "if not" above
                         else:
-                            Sbot[:,j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
+                            pass
             elif season == 'summer':
                 for i, xx in enumerate(lon_reg):
                     for j,yy in enumerate(lat_reg):
@@ -1504,6 +1532,7 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
             dict['Tmean_sha100'] = Tmean100
             dict['Tmean_sha200'] = Tmean200
             dict['Tmean_sha300'] = Tmean300
+            dict['percent_coverage'] = percent_coverage
 
             if var == 'temperature': # temperature only
                 dict['area_colder0'] = area_colder_0deg # <--- now in km2. They are divisded by 1000 in scorecard.
@@ -1518,7 +1547,6 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
                 dict['area_Pmontagui_perc'] = Pmon_perc
                 dict['sampled_area'] = sampled_area
                 dict['total_area'] = total_polygon_area
-                dict['percent_coverage'] = percent_coverage
 
             
             if nsrf:
@@ -1570,7 +1598,6 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
             dict['area_Pmontagui_perc'] = np.nan
             dict['sampled_area'] = np.nan
             dict['total_area'] = np.nan
-            dict['percent_coverage'] = np.nan
         dict_together[year] = dict
 
     return dict_together

@@ -267,21 +267,23 @@ os.system('mv *.pkl ./operation_files')
 #Calculate the bottom temperature and salinity climatology
 for season in ['spring','summer','fall']:
     azu.get_bottomT_climato(
-        INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        INFILES='~/data/CABOTS/CABOTS_'+season+'.nc',
         lonLims=[-63, -45],
         latLims=[42, 58],
         bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
         year_lims=[1991, 2020],
         season=season,
+        time_adjust=False,
         h5_outputfile='operation_files/Tbot_climato_'+season+'_0.10.h5'
         )
     azu.get_bottomS_climato(
-        INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        INFILES='~/data/CABOTS/CABOTS_'+season+'.nc',
         lonLims=[-63, -45],
         latLims=[42, 58],
         bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
         year_lims=[1991, 2020],
         season=season,
+        time_adjust=False,
         h5_outputfile='operation_files/Sbot_climato_'+season+'_0.10.h5'
         )
     print('    -> '+season+' done!')
@@ -290,20 +292,22 @@ for season in ['spring','summer','fall']:
 for season in ['spring','fall']:
     azrt.bottom_temperature(
         season=season,
+        time_adjust=False,
         year=yoi,
         lonLims=[-63, -45],
         latLims=[42, 58],
         climato_file='operation_files/Tbot_climato_'+season+'_0.10.h5',
-        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        netcdf_path='~/data/CABOTS/CABOTS_'+season+'.nc',
         CASTS_path='~/data/CASTS/'
         )
     azrt.bottom_salinity(
         season=season,
+        time_adjust=False,
         year=yoi,
         lonLims=[-63, -45],
         latLims=[42, 58],
         climato_file='operation_files/Sbot_climato_'+season+'_0.10.h5',
-        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
+        netcdf_path='~/data/CABOTS/CABOTS_'+season+'.nc',
         CASTS_path='~/data/CASTS/'
         )
     print('    -> '+season+' done!')
@@ -326,7 +330,8 @@ for season in ['spring','summer','fall']:
     azrt.bottom_stats(
         years=np.arange(1980, int(yoi)+1),
         season=season,
-        netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc'
+        var='salinity',
+        netcdf_path='~/data/CABOTS/CABOTS_'+season+'.nc'
         )
 os.system('mv *.pkl operation_files/')
 azrt.bottom_scorecards(years=[1980, int(yoi)], clim_year=[1991, 2020])
@@ -436,8 +441,9 @@ for season in ['summer']:
         latLims=[57, 67],
         bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
         year_lims=[2006, 2021],
+        time_adjust=False,
         season=season,
-        h5_outputfile='operation_files/Tbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5'
+        h5_outputfile='operation_files/Tbot_NSRFx_timeadjust_climato_'+season+'_2006-2021_0.10.h5'
         )
     azu.get_bottomS_climato(
         INFILES='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
@@ -445,8 +451,9 @@ for season in ['summer']:
         latLims=[57, 67],
         bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
         year_lims=[2006, 2021],
+        time_adjust=False,
         season=season,
-        h5_outputfile='operation_files/Sbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5'
+        h5_outputfile='operation_files/Sbot_NSRFx_timeadjust_climato_'+season+'_2006-2021_0.10.h5'
         )
     print('    -> '+season+' done!')
 
@@ -457,7 +464,8 @@ for season in ['summer']:
         year=yoi,
         lonLims=[-70, -56],
         latLims=[57, 67],
-        climato_file='operation_files/Tbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5',
+        time_adjust=False,
+        climato_file='operation_files/Tbot_NSRFx_timeadjust_climato_'+season+'_2006-2021_0.10.h5',
         netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
         CASTS_path='~/data/CASTS/'
         )
@@ -466,7 +474,8 @@ for season in ['summer']:
         year=yoi,
         lonLims=[-70, -56],
         latLims=[57, 67],
-        climato_file='operation_files/Sbot_NSRFx_climato_'+season+'_2006-2021_0.10.h5',
+        time_adjust=False,
+        climato_file='operation_files/Sbot_NSRFx_timeadjust_climato_'+season+'_2006-2021_0.10.h5',
         netcdf_path='~/data/CABOTS/CABOTS_bottomstats_'+season+'.nc',
         CASTS_path='~/data/CASTS/'
         )
@@ -481,15 +490,17 @@ os.system('rm bottom_sal*.png ')
 azrt.sfa_bottom_stats(
     years=np.arange(2006,int(year)+1),
     season='summer',
+    time_adjust=False,
     netcdf_path='~/data/CABOTS/CABOTS_bottomstats_summer.nc',
-    climato_file='operation_files/Tbot_NSRFx_climato_summer_2006-2021_0.10.h5',
+    climato_file='operation_files/Tbot_NSRFx_timeadjust_climato_summer_2006-2021_0.10.h5',
     var='temperature',
     )
 azrt.sfa_bottom_stats(
     years=np.arange(2006,int(year)+1),
     season='summer',
+    time_adjust=False,
     netcdf_path='~/data/CABOTS/CABOTS_bottomstats_summer.nc',
-    climato_file='operation_files/Sbot_NSRFx_climato_summer_2006-2021_0.10.h5',
+    climato_file='operation_files/Sbot_NSRFx_timeadjust_climato_summer_2006-2021_0.10.h5',
     var='salinity',
     )
 os.system('mv *.pkl operation_files/')
