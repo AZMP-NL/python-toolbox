@@ -582,13 +582,14 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         #ds = ds.isel(time = ds.source == 'NAFC-Oceanography')
 
         #Remove the bottle measurements
+        '''
         instrument_ID = ds.instrument_ID.values.astype(str)
         instrument_flag = np.full(instrument_ID.size,False)
         for i,value in enumerate(instrument_ID):
             if 'BO' in value:
                 instrument_flag[i] = True
         ds = ds.isel(time = ~instrument_flag)
-
+        '''
         #Take the station ID and station ID manual
         station_ID = ds.station_ID.values.astype(str)
         station_ID_manual = ds.station_ID_manual.values.astype(str)
@@ -670,7 +671,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         latsT = np.delete(lats,idx_empty_rows)
         #V_temp,z = interpolate_variable_3D(df, lat_reg, lon_reg, lonsT, latsT, dc)
         if df.shape[0] != 0:
-            df_section_itp_T = IDW_variable_3D(df, df_stn, lonsT, latsT, 0.125)
+            df_section_itp_T = IDW_variable_3D(df, df_stn, lonsT, latsT, 0.25)
         else:
             df_section_itp_T = pd.DataFrame(index=stn_list, columns=df.columns.values).T
         print(' -> Done!')

@@ -1038,7 +1038,7 @@ def bottom_stats(
     warnings.simplefilter("ignore", category=RuntimeWarning)
 
     #Label either S or T
-    if var == ' temperature':
+    if var == 'temperature':
         var_strt = 'T'
     elif var == 'salinity':
         var_strt = 'S'

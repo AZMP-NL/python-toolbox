@@ -1473,7 +1473,7 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
     #Cycle through each of the years
     data_vec = {}
     for year in dict:
-        data_vec[year] = map[year][~np.isnan(bath_mask)]
+        data_vec[year] = map_org[year][~np.isnan(bath_mask)]
     bathy_vec_org = bathy[~np.isnan(bath_mask)]
 
     #Cycle through each year
@@ -1515,7 +1515,7 @@ def polygon_temperature_stats(dict, shape, nsrf=False, var='temperature'):
             Pbor = data_vec[year][(bathy_vec>=-460) & (bathy_vec<=-180) &  (data_vec[year]>=-.2) &  (data_vec[year]<=4.7)].size*pixel_area
             Pbor_perc = Pbor/(data_vec[year].size*pixel_area)*100.0
             # Pandalus Montagui habitat
-            Pmon = data_vec[year][(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec[year]>=-1) &  (data_vec[year]<=3.7)].size*pixel_area    
+            Pmon = data_vec[year][(bathy_vec>=-600) & (bathy_vec<=-110) &  (data_vec[year]>=-1) &  (data_vec[year]<=3.7)].size*pixel_area
             Pmon_perc = Pmon/(data_vec[year].size*pixel_area)*100.0
 
             # Measure of the successfulness of the sampling

@@ -23,15 +23,15 @@ plt.rc('font', **font)
 clim_year = [1991, 2020]
 years = [1950, 2023]
 
-baditp_SI = [1998,2022]
-baditp_BB = []
-baditp_FC = []
+baditp_SI = [1950,1966,1967,1968,2022]
+baditp_BB = [1966,1967,1968,2022]
+baditp_FC = [2022]
 
 
 #Mark years where stn will be replaced with stn_man
-rplstn_SI = np.concatenate((np.arange(1950,1992),np.array([1992,2000,2003,2004])))
-rplstn_BB = np.concatenate((np.arange(1950,1992),np.array([1992,1997,1998,1999,2000,2001,2002,2022])))
-rplstn_FC = np.concatenate((np.arange(1950,1992),np.array([1992,1997,1998,2000,2001,2002,2006,2007,2022])))
+rplstn_SI = np.concatenate((np.arange(1950,1992),np.array([1992,1993,1994,1998,1999,2000,2001,2003,2004,2006,2007])))
+rplstn_BB = np.concatenate((np.arange(1950,1992),np.array([1992,1993,1994,1995,1997,1998,1999,2000,2001,2002])))
+rplstn_FC = np.concatenate((np.arange(1950,1992),np.array([1992,1993,1994,1995,1997,1998,1999,2000,2001,2002,2003,2004,2006,2007,2008])))
 
 
 #Determine the name of the working directory

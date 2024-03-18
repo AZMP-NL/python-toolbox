@@ -330,7 +330,7 @@ for season in ['spring','summer','fall']:
     azrt.bottom_stats(
         years=np.arange(1980, int(yoi)+1),
         season=season,
-        var='salinity',
+        var='temperature',
         netcdf_path='~/data/CABOTS/CABOTS_'+season+'.nc'
         )
 os.system('mv *.pkl operation_files/')
