@@ -25,7 +25,7 @@ import os
 #import unicodedata
 
 # Parameters 
-path = '/home/cyrf0006/AZMP/state_reports/bottomT/'
+path = 'operation_files/'
 clim_year = [1991, 2020]
 year_min = 1948
 stn27_months = [5, 11]
@@ -139,7 +139,7 @@ df.to_csv('BT_3Ps_spring.dat', header=False, sep = ' ', float_format='%.2f')
 ## df_winter.index = year_unique
 ## df_winter.to_csv('NAO_DJFM.dat', header=False, sep = ' ', float_format='%.2f')
 
-df_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter.pkl')
+df_winter = pd.read_pickle('operation_files/NAO_winter.pkl')
 
 
 #### ------------- 3. CIL ---------------- ####
@@ -151,10 +151,11 @@ df_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/airTemp/NAO_winter
 # azmp_CIL_stats.py
 # azmp_CIL_stats_update.pu
 
-df_SI = pd.read_csv('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/CIL_area_SI.csv')
-df_WB = pd.read_csv('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/CIL_area_WB.csv')
-df_BB = pd.read_csv('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/CIL_area_BB.csv')
-df_FC = pd.read_csv('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/CIL_area_FC.csv')
+df_SI = pd.read_pickle('operation_files/df_CIL_SI_summer_climfill.pkl').vol_itp
+#df_WB = pd.read_pickle('operation_files/df_CIL_WB_summer_climfill.pkl').vol_itp
+df_FC = pd.read_pickle('operation_files/df_CIL_FC_summer_climfill.pkl').vol_itp
+df_BB = pd.read_pickle('operation_files/df_CIL_BB_summer_climfill.pkl').vol_itp
+'''
 df_SI.rename(columns={df_SI.columns[0]:'year'}, inplace=True)
 df_WB.rename(columns={df_WB.columns[0]:'year'}, inplace=True)
 df_BB.rename(columns={df_BB.columns[0]:'year'}, inplace=True)
@@ -163,6 +164,7 @@ df_SI.set_index('year', inplace=True)
 df_WB.set_index('year', inplace=True)
 df_BB.set_index('year', inplace=True)
 df_FC.set_index('year', inplace=True) 
+'''
 # cut timeseries
 df_SI = df_SI[df_SI.index>=year_min]
 df_WB = df_WB[df_WB.index>=year_min]
