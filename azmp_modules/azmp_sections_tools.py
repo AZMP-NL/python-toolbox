@@ -570,10 +570,10 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, bath_path, CASTS_path, ZMA
     # ax1
     ax = plt.subplot2grid((3, 1), (0, 0))
     if len(df_section.index) > 1 & len(df_section.columns>1):
-        c = plt.contourf(df_section.index.droplevel(0), df_section.columns, df_section.T, v, cmap=CMAP, extend='max')
+        c = plt.contourf(df_section.index.droplevel(0), df_section.columns, df_section.T.values.astype(float), v, cmap=CMAP, extend='max')
         plt.colorbar(c)
         if VAR == 'temperature':
-            c_cil_itp = plt.contour(df_section.index.droplevel(0), df_section.columns, df_section.T, [0,], colors='k', linewidths=2)
+            c_cil_itp = plt.contour(df_section.index.droplevel(0), df_section.columns, df_section.T.values.astype(float), [0,], colors='k', linewidths=2)
     ax.set_ylim([0, ZMAX])
     ax.set_xlim([0,  XLIM])
     ax.set_ylabel('Depth (m)', fontweight = 'bold')
@@ -586,10 +586,10 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, bath_path, CASTS_path, ZMA
 
     # ax2
     ax2 = plt.subplot2grid((3, 1), (1, 0))
-    c = plt.contourf(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, v, cmap=CMAP, extend='max')
+    c = plt.contourf(df_clim.index.droplevel(0), df_clim.columns, df_clim.T.values.astype(float), v, cmap=CMAP, extend='max')
     plt.colorbar(c)
     if VAR == 'temperature':
-        c_cil_itp = plt.contour(df_clim.index.droplevel(0), df_clim.columns, df_clim.T, [0,], colors='k', linewidths=2)
+        c_cil_itp = plt.contour(df_clim.index.droplevel(0), df_clim.columns, df_clim.T.values.astype(float), [0,], colors='k', linewidths=2)
     ax2.set_ylim([0, ZMAX])
     ax2.set_xlim([0,  XLIM])
     ax2.set_ylabel('Depth (m)', fontweight = 'bold')
@@ -604,7 +604,7 @@ def seasonal_section_plot(VAR, SECTION, SEASON, YEAR, bath_path, CASTS_path, ZMA
     ax3 = plt.subplot2grid((3, 1), (2, 0))
     df_anom.shape
     if len(df_section.index) > 1 & len(df_section.columns>1):
-        c = plt.contourf(df_anom.index, df_anom.columns, df_anom.T, v_anom, cmap=cmocean.cm.balance, extend='both')
+        c = plt.contourf(df_anom.index, df_anom.columns, df_anom.T.values.astype(float), v_anom, cmap=cmocean.cm.balance, extend='both')
         plt.colorbar(c)
     ax3.set_ylim([0, ZMAX])
     ax3.set_xlim([0,  XLIM])

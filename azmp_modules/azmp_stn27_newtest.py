@@ -364,7 +364,7 @@ def station_occupations(file_location,current_year,year_clim,binning=True,move_a
 	plt.plot(df_occu.index.year.values, df_occu.index.isocalendar().week.values, '.k')
 	ax2.set_ylabel('week of year')
 	# Save Figure
-	fig.set_size_inches(w=6, h=7)
+	fig.set_size_inches(w=12, h=12)
 	outfile_occu = 's27_occupation_stats.png'
 	fig.savefig(outfile_occu, dpi=200)
 	os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
@@ -397,7 +397,7 @@ def station_occupations(file_location,current_year,year_clim,binning=True,move_a
 	plt.xlabel(' ')
 	plt.grid()
 	plt.title(r'Station 27 - Average temperature (0-176m)', fontsize=14)
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	outfile_meanT = 's27_meanT.png'
 	fig.savefig(outfile_meanT, dpi=300)
 	os.system('convert -trim ' + outfile_occu + ' ' + outfile_occu)
@@ -599,7 +599,7 @@ def anomaly_plotter(anom_std,variable,YLIM=[-3,3]):
 	plt.ylim(YLIM)
 	plt.grid()
 	# Save Figure
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	if variable == 'salinity':
 		fig_name = 's27_vert_sal_anomaly.png'
 	elif variable == 'temperature':
@@ -631,7 +631,7 @@ def climatology_plotter(ts_monthly_clim,annual_mean,variable):
 	plt.ylim([-.5, 1.75])
 	plt.grid()
 	# Save Figure
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	if variable == 'temperature':
 		fig_name = 's27_vert_temp_annual_mean.png'
 	elif variable == 'salinity':
@@ -699,7 +699,7 @@ def CIL_plotter(cil_stat,title,title_FR,save_title,year_clim=[1991,2020],YLIM=[-
 	plt.ylim(YLIM)
 	plt.grid()
 	#Save Figure
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	fig_name = save_title+'.png'
 	fig.savefig(fig_name, dpi=300)
 	os.system('convert -trim ' + fig_name + ' ' + fig_name)    
@@ -779,7 +779,7 @@ def stratification_barplot(anom_std):
 		plt.ylim([-1.5, 1.5])
 		plt.grid()
 		# Save Figure
-		fig.set_size_inches(w=7,h=4)
+		fig.set_size_inches(w=12,h=6)
 		fig_name = 's27_stratif_bar_'+i+'.png'
 		fig.savefig(fig_name, dpi=300)
 		os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -800,7 +800,7 @@ def stratification_timeseries(anom):
 		plt.ylabel(r'Stratification anomaly $\rm (g\,m^{-4})$')
 		plt.xlabel(' ')
 		#Save Figure
-		fig.set_size_inches(w=7,h=4)
+		fig.set_size_inches(w=12,h=6)
 		fig_name = 's27_stratif_plot_'+i+'.png'
 		fig.savefig(fig_name, dpi=300)
 		os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -847,7 +847,7 @@ def stratification_timeseries_mean(
 		plt.legend(loc=3, ncol=4)
 		x += 1
 	# Save Figure
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	fig_name = 's27_stratif_plot_means_nolines.png'
 	fig.savefig(fig_name, dpi=300)
 	os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -890,7 +890,7 @@ def stratification_currentyear_barplot(strat_monthly_shallow,strat_monthly_deep,
 		ax.legend()
 		ax.yaxis.grid() # horizontal lines
 		#Save Figure
-		fig.set_size_inches(w=6,h=3)
+		fig.set_size_inches(w=12,h=6)
 		fig_name = 's27_stratif_monthly_'+i+'.png'
 		fig.savefig(fig_name, dpi=300)
 		os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -948,7 +948,7 @@ def MLD_barplot(anom_std):
 	#plt.xlim(XLIM)
 	plt.ylim([-3, 3])
 	plt.grid()
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	fig_name = 's27_mld_bar.png'
 	fig.savefig(fig_name, dpi=300)
 	os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -967,7 +967,7 @@ def MLD_timeseries(anom):
 	plt.grid()
 	plt.ylabel(r'MLD anomaly (m)')
 	plt.xlabel(' ')
-	fig.set_size_inches(w=7,h=4)
+	fig.set_size_inches(w=12,h=6)
 	fig_name = 's27_mld_plot.png'
 	fig.savefig(fig_name, dpi=200)
 	os.system('convert -trim ' + fig_name + ' ' + fig_name)
@@ -1011,7 +1011,7 @@ def MLD_currentyear_barplot(mld,current_year,year_clim=[1991,2020]):
 	ax.set_xticklabels(monthly_anom.index)
 	ax.legend()
 	ax.yaxis.grid() # horizontal lines
-	fig.set_size_inches(w=6,h=3)
+	fig.set_size_inches(w=12,h=6)
 	fig_name = 's27_mld_monthly.png'
 	fig.savefig(fig_name, dpi=300)
 	os.system('convert -trim ' + fig_name + ' ' + fig_name)

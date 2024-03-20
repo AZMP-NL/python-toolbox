@@ -538,14 +538,14 @@ def bottom_temperature(
 
     # Convert to a subplot
     if NSRF_plot:
-        save_end = 'sfa'
+        save_end = 'sfa_'
     else:
         save_end = ''
-    os.system('montage bottom_temp_climato_' + season + '_' + year + '.png bottom_temp_' + season + '_' + year + '.png bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomT_' + season + year + '.png')
+    os.system('montage bottom_temp_climato_' + season + '_' + year + '.png bottom_temp_' + season + '_' + year + '.png bottom_temp_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'bottomT_' + season + year + '.png')
     # in French
-    os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomT_' + season + year + '_FR.png')
+    os.system('montage bottom_temp_climato_' + season + '_' + year + '_FR.png bottom_temp_' + season + '_' + year + '_FR.png bottom_temp_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'bottomT_' + season + year + '_FR.png')
     # Move to year folder
-    os.system('cp '+save_end+'bottomT_' + season + year + '.png '+save_end+'_bottomT_' + season + year + '_FR.png ' + year)
+    os.system('cp '+save_end+'bottomT_' + season + year + '.png '+save_end+'bottomT_' + season + year + '_FR.png ' + year)
 
 
 #### bottom_salinity

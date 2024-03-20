@@ -260,6 +260,9 @@ for key, cell in the_table.get_celld().items():
     if key[1] == -1:
         cell.set_linewidth(0)
         cell.set_fontsize(10)
+    elif key[1] == 72:
+         cell.set_facecolor('grey')
+         cell._text.set_text('')
     else:
         cell._text.set_rotation(90)
         
@@ -300,6 +303,9 @@ for key, cell in the_table.get_celld().items():
     if key[1] == -1:
         cell.set_linewidth(0)
         cell.set_fontsize(10)
+    elif key[1] == 72:
+         cell.set_facecolor('grey')
+         cell._text.set_text('')
     else:
         cell._text.set_rotation(90)
         

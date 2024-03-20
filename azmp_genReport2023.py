@@ -26,6 +26,7 @@ Jonathan.Coyne@dfo-mpo.gc.ca
 '''
 
 import os
+import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
@@ -44,7 +45,7 @@ import azmp_stn27_newtest as azS27
 #Choose a year of interest
 yoi = '2023'
 #Choose a working directory name
-work_name = 'AZMP'
+work_name = 'CSAS_2023'
 
 ## Preamble (create folders to dump figures and data)
 if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
@@ -59,20 +60,21 @@ if os.path.isdir('bottom_temp_stats') != True: os.system('mkdir bottom_temp_stat
 if os.path.isdir('AZMP_lines') != True: os.system('mkdir AZMP_lines')
 if os.path.isdir('climate_indices') != True: os.system('mkdir climate_indices')
 if os.path.isdir('NLCI') != True: os.system('mkdir NLCI')
+if os.path.isdir('SAR_files') != True: os.system('mkdir SAR_files')
 
 
 ## ---- 2023 update ---- ##
 # 1.  NAO, AO, AMO
-azgen.nao(int(yoi),'~/data/'+work_name+'/climate_indices/nao_data.csv')
-azgen.ao(int(yoi),'~/data/'+work_name+'/climate_indices/ao_data.csv')
-azgen.amo(int(yoi),'~/data/'+work_name+'/climate_indices/amo_data.csv')
+azgen.nao(int(yoi),'~/data/AZMP/climate_indices/nao_data.csv')
+azgen.ao(int(yoi),'~/data/AZMP/climate_indices/ao_data.csv')
+azgen.amo(int(yoi),'~/data/AZMP/climate_indices/amo_data.csv')
 os.system('cp  NAO_winter_1950-'+yoi+'.png NAO_winter_1950-'+yoi+'_FR.png '+yoi)
 os.system('mv *.pkl *.csv operation_files')
 os.system('mv *.png climate_indices')
 
 # 2. Air temperature (need to dowload AHCCD and download NUUK update) [Done 2023!]
 %my_run azmp_dmi_nuukAirT.py
-%my_run azmp_airTemp.py # use this one since 2020 conditions report
+%my_run azmp_airTemp.py
 os.system('cp air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./'+yoi+'/')
 os.system('mv air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
 os.system('mv *.pkl operation_files')
@@ -93,7 +95,6 @@ os.system('mv *.csv ./operation_files')
 
 #New version using only functions
 #Isolate the stn27 data
-#file_location = '~/data/'+work_name+'/operation_files/stn27_all_casts.nc'
 file_location = './operation_files/stn27_all_casts.nc'
 CASTS_path = '~/data/CASTS/*.nc'
 s27_loc = [47.54667,-52.58667]
@@ -135,6 +136,8 @@ for variable in anom:
         's27_'+variable+'_'+ yoi + '_FR.png '+\
         's27_'+variable+'_clim_FR.png '+\
         's27_'+variable+'_anom_'+ yoi + '_FR.png')
+os.system('mv s27*.png ./'+yoi+'/')
+
 #Create a station occupation figure
 azS27.station_occupations(file_location,current_year,year_clim)
 
@@ -145,12 +148,45 @@ azS27.MLD_calculator(df_SA,df_CT,df_rho,Z)
 #Save the stratification
 azS27.stratification_calculator(file_location)
 
+#Create iroc output for salinity
+years_flag = [1950,1980]
+df = pd.read_pickle('S27_salinity_monthly.pkl')
+df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
+iroc_stn27_S = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['S', 'Sanom', 'Sanom_std'])
+df = pd.read_pickle('S27_temperature_monthly.pkl')
+df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
+iroc_stn27_T = pd.concat([annual_mean, anom, anom_std], axis=1, keys=['T', 'Tanom', 'Tanom_std'])
+iroc_stn27 = pd.concat([iroc_stn27_T, iroc_stn27_S], axis=1)
+iroc_stn27.index = iroc_stn27.index.year
+
+#Set up the meta-data
+with open('iroc_stn27.csv','w',newline='') as fd:
+    wr = csv.writer(fd, quoting=csv.QUOTE_ALL)
+    wr.writerow(['Station Description:','Station 27 - Newfoundland Shelf Temperature - Canada'])
+    wr.writerow(['Region:','2'])
+    wr.writerow(['Latitude:','47.55 N'])
+    wr.writerow(['Longitude:','52.59 W'])
+    wr.writerow(['Measurement Depth/Range:','0-176m'])
+    wr.writerow(['Long Term Averaging Period:','1991-2020','1991-2020'])
+    wr.writerow(['Long Term Mean:'])
+    wr.writerow(['Standard Deviation'])
+    wr.writerow(['Averaging Method:'])
+    wr.writerow(['Notes:'])
+    wr.writerow(['Data Source:','Northwest Atlantic Fisheries Centre - Canada'])
+    wr.writerow(['Contact Name (email):','Frederic Cyr (Frederic.Cyr@dfo-mpo.gc.ca)'])
+    wr.writerow(['Location of source datasets:','Northwest Atlantic Fisheries Centre - Canada'])
+    wr.writerow(['Data Protection:','Include on ICES website for free distribution.'])
+    wr.writerow(['Year','Temperature Â°C','Temperature Anomaly Â°C','Temperature Anomaly Normalised Â°C','Salinity','Salinity Anomaly','Salinity Anomaly Normalised'])
+
+#Append the data to the bottom
+iroc_stn27.to_csv('iroc_stn27.csv', mode='a', sep=',', float_format='%0.3f', header=False)
+
 #Create anomaly output for temperature
 years_flag = [1950,1980]
 df = pd.read_pickle('S27_temperature_monthly.pkl')
 df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the temperature anomaly
-azS27.anomaly_plotter(anom_std,'temperature')
+azS27.anomaly_plotter(anom_std,'temperature',YLIM=[-2,2])
 #Plot the temperature climatology
 azS27.climatology_plotter(ts_monthly_clim,annual_mean,'temperature')
 #Determine the CIL metrics
@@ -165,7 +201,7 @@ azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILt
 df = pd.read_pickle('S27_salinity_monthly.pkl')
 df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the salinity anomaly
-azS27.anomaly_plotter(anom_std,'salinity')
+azS27.anomaly_plotter(anom_std,'salinity',YLIM=[-2.5,2.5])
 
 #Get the stratification ready for plotting
 strat_shallow_path = 'S27_stratif_0-50_monthly.pkl'
@@ -245,8 +281,11 @@ os.system('cp scorecards_s27.png cp scorecards_s27_FR.png ./'+yoi+'/')
 os.system('rm scorecards_s27*.png')
 
 # Clean the files:
-os.system('cp s27_mld_monthly.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./'+yoi+'/')
-os.system('cp s27_salinity_subplot_'+yoi+'.png s27_temperature_subplot_'+yoi+'.png ./'+yoi+'/')
+os.system('montage  s27_CILtemp_anomaly.png s27_CILcore_anomaly.png s27_CILcoredepth_anomaly.png  -tile 1x3 -geometry +20+25  -background white  s27_CIL_subplots.png')
+os.system('montage  s27_vert_temp_anomaly.png s27_vert_sal_anomaly.png -tile 1x2 -geometry +1+25  -background white  s27_TS_subplots.png')
+os.system('montage  s27_vert_temp_anomalyFR.png s27_vert_sal_anomalyFR.png -tile 1x2 -geometry +1+25  -background white  s27_TS_subplotsFR.png')
+os.system('cp s27_mld_monthly.png s27_mld_plot.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png ./'+yoi+'/')
+os.system('cp s27_TS_subplots.png s27_TS_subplotsFR.png s27_CIL_subplots.png ./'+yoi+'/')
 os.system('mv s27*.png ./stn27')
 os.system('mv *.csv *.pkl ./operation_files')
 
@@ -346,7 +385,7 @@ os.system('mv *.png bottom_temp_stats/')
 
 ## ---------------  Sections plots ------------- ## (FINISHED/WORKING - 2023)
 year = int(yoi)
-sections = ['SI', 'BB', 'FC']
+sections = ['SI', 'BB', 'FC', 'WB']
 seasons = ['summer']
 #Ensure that climatologies have been set up
 for section in sections:
@@ -354,7 +393,7 @@ for section in sections:
         azsct.section_clim(
             SECTION=section,
             SEASON=season,
-            YEARS=[1950,int(yoi)],
+            YEARS=[1928,int(yoi)],
             CLIM_YEAR=[1991,2020],
             dlat=2,
             dlon=2,
@@ -365,8 +404,9 @@ for section in sections:
             bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
             )
 os.system('mv temp_section_*.png AZMP_lines/')
-os.system('mv *.pkl operation_files/')
+os.system('mv *.pkl *.csv operation_files/')
 variables = ['temperature', 'salinity']
+sections = ['SI', 'BB', 'FC']
 for section in sections:
     for season in seasons:
         for var in variables:
@@ -416,8 +456,6 @@ os.system('mv *.csv operation_files/')
 
 
 ## ----------- AZMP SAR / IROC ---------------- ##
-#%my_run azmp_CIL_stats.py 
-%my_run azmp_CIL_stats_update.py # <---- preferred if only an update is needed (need to edit sections)
 %my_run azmp_sar_input.py
 #os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../'+yoi)
 

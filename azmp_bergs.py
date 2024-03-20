@@ -31,7 +31,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-current_year = 2021
+current_year = 2023
 
 ## ----  Prepare the data ---- ##
 # Legacy - Load from Excel sheets
@@ -63,7 +63,7 @@ df_annual_std_anom.to_pickle('bergs_std_anom.pkl')
 
 
 # Monthly mean
-df_monthly = df[df.index==current_year]
+df_monthly = df[df.index==2021]
 df_monthly_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 df_monthly_std = df_monthly_clim.std(axis=0)
 df_monthly_clim = df_monthly_clim.mean(axis=0)
@@ -77,7 +77,7 @@ fig, ax = plt.subplots()
 rects1 = ax.bar(ind - width/2, df_monthly_clim.values, width, yerr=df_monthly_std.values*.5,
                 label='1991-2020')
 rects2 = ax.bar(ind + width/2, np.squeeze(df_monthly.values), width, yerr=None,
-                label=str(current_year))
+                label=str(2021))
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel('Counts')
@@ -161,7 +161,7 @@ hpad, wpad = 0, 0
 fig, ax = plt.subplots() 
 ax.bar(df_annual.index, df_annual.values, width)
 ax.set_ylabel('Counts')
-plt.xlim([1899.5, 2021.5])
+plt.xlim([1899.5, current_year+0.5])
 plt.grid()
 ax.axhspan(df_annual_clim.mean()-df_annual_clim.std()/2, df_annual_clim.mean()+df_annual_clim.std()/2, alpha=0.25, color='gray')
 
