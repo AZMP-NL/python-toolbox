@@ -192,10 +192,10 @@ azS27.climatology_plotter(ts_monthly_clim,annual_mean,'temperature')
 #Determine the CIL metrics
 cil_temp,cil_core,cil_coredepth,cil_thickness = azS27.CIL_calculator(df)
 #Create the CIL figures
-azS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly')
-azS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly')
-azS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly')
-azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly')
+azS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly',YLIM=[-3,3])
+azS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly',YLIM=[-4,4])
+azS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly',YLIM=[-4,4])
+azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly',YLIM=[-5,5])
 
 #Create anomaly output for salinity
 df = pd.read_pickle('S27_salinity_monthly.pkl')
