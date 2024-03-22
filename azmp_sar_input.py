@@ -245,8 +245,8 @@ for depth in depth_range:
         df_clim_period = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
         monthly_clim_mean = df_clim_period.groupby(df_clim_period.index.month).mean()
         monthly_clim_stdv = df_clim_period.groupby(df_clim_period.index.month).std()
-        ts_monthly_clim = monthly_clim_mean.mean(axis=1)
-        ts_monthly_std = monthly_clim_stdv.mean(axis=1)
+        #ts_monthly_clim = monthly_clim_mean.mean(axis=1)
+        #ts_monthly_std = monthly_clim_stdv.mean(axis=1)
         #Tile the climatology for however many years are present
         years = len(df.index.year.unique())
         month_start = ts_stack.index.values[0][1] - stn27_months[0]
@@ -262,14 +262,17 @@ for depth in depth_range:
         for i in ['0_btm','depth','170_btm']:
             if i == '0_btm':
                 name = var_letter[x]+'_'+i
+                ts_monthly_clim = monthly_clim_mean[monthly_clim_mean.columns[(monthly_clim_mean.columns>=depth_range[depth][0])*(monthly_clim_mean.columns<=depth_range[depth][1])]].mean(axis=1)
                 anom_monthly = anom_mi.mean(axis=1)
                 std_anom_monthly = std_anom_mi.mean(axis=1)
             if i == 'depth':
                 name = var_letter[x]+'_'+d_name
+                ts_monthly_clim = monthly_clim_mean[monthly_clim_mean.columns[(monthly_clim_mean.columns>=depth_range[depth][0])*(monthly_clim_mean.columns<=depth_range[depth][1])]].mean(axis=1)
                 anom_monthly = anom_mi[anom_mi.columns[(anom_mi.columns>=depth_range[depth][0])*(anom_mi.columns<=depth_range[depth][1])]].mean(axis=1)
                 std_anom_monthly = std_anom_mi[std_anom_mi.columns[(std_anom_mi.columns>=depth_range[depth][0])*(std_anom_mi.columns<=depth_range[depth][1])]].mean(axis=1)
             if i == '170_btm':
                 name = var_letter[x]+'_'+i
+                ts_monthly_clim = monthly_clim_mean[monthly_clim_mean.columns[(monthly_clim_mean.columns>=170)]].mean(axis=1)
                 anom_monthly = anom_mi[anom_mi.columns[(anom_mi.columns>=170)]].mean(axis=1)
                 std_anom_monthly = std_anom_mi[std_anom_mi.columns[(std_anom_mi.columns>=170)]].mean(axis=1)
             monthly_stdanom = std_anom_monthly.unstack()
@@ -300,6 +303,12 @@ for depth in depth_range:
     # monthly anom and normalized anom
     monthly_anom = ts_unstack - ts_monthly_clim 
     monthly_stdanom = (ts_unstack - ts_monthly_clim) /  ts_monthly_std
+
+    #See if each year has enough data present
+    nom = np.sum(~np.isnan(monthly_anom.values),axis=1)
+    monthly_anom.iloc[nom<3] = np.nan
+    monthly_stdanom.iloc[nom<3] = np.nan
+
     # annual normalized anomaly
     anom_std = monthly_stdanom.mean(axis=1)
     anom_std.index = pd.to_datetime(anom_std.index, format='%Y')

@@ -752,9 +752,13 @@ def stratification_plotter(strat_shallow_path,strat_deep_path,years_flag,current
 		strat_monthly_stack = strat_clim_period.groupby([(strat_clim_period.index.year),(strat_clim_period.index.month)]).mean()
 		strat_monthly_clim[i] = strat_monthly_stack.groupby(level=1).mean()
 		strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
-		monthly_anom = strat_unstack - strat_monthly_clim[i] 
+		monthly_anom = strat_unstack - strat_monthly_clim[i]
 		monthly_stdanom = (strat_unstack - strat_monthly_clim[i]) /  strat_monthly_std
-		anom_std[i] = monthly_stdanom.mean(axis=1) 
+		#See if each year has enough data present
+		nom = np.sum(~np.isnan(monthly_anom.values),axis=1)
+		monthly_anom.iloc[nom<3] = np.nan
+		monthly_stdanom.iloc[nom<3] = np.nan
+		anom_std[i] = monthly_stdanom.mean(axis=1)
 		anom_std[i].index = pd.to_datetime(anom_std[i].index, format='%Y')
 		anom[i] = monthly_anom.mean(axis=1)*1000 
 		anom[i].index = pd.to_datetime(anom[i].index, format='%Y')
