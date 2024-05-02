@@ -114,7 +114,11 @@ def stn27_climatology(file_location,year_clim,current_year,zbin=5,binning=True,m
 		monthly_clim.index = pd.to_datetime(monthly_clim.index.values, format='%m')
 		monthly_clim.to_pickle('S27_' + variable + '_monthly_clim.pkl')
 		#Weekly clim (upsample monthly clim to weekly)
-		weekly_clim[variable] = monthly_clim.resample('W').mean().interpolate(method='linear') 
+		last_row = monthly_clim.iloc[0]
+		last_row.name = np.datetime64('1901-01-01')
+		monthly_clim = monthly_clim._append(last_row)
+		weekly_clim[variable] = monthly_clim.resample('W').mean().interpolate(method='linear')
+		weekly_clim[variable] = weekly_clim[variable].iloc[:-1]
 		weekly_clim[variable].to_pickle('S27_' + variable + '_weekly_clim.pkl')
 		# Update climatology index to current year
 		weekly_clim[variable].index = pd.to_datetime(str(current_year) + '-' + weekly_clim[variable].index.month.astype(str) + '-' + weekly_clim[variable].index.day.astype(str))
@@ -1161,11 +1165,13 @@ def scorecard_strat_processor(file_location,year_clim,year_plot):
 	strat_monthly_std = strat_monthly_stack.groupby(level=1).std()
 	monthly_anom = strat_unstack - strat_monthly_clim
 	monthly_stdanom = (strat_unstack - strat_monthly_clim)/strat_monthly_std
+	nom = np.sum(~np.isnan(monthly_anom.values),axis=1)
 	#Seasonal and annual anomalies
 	strat_winter_anom = monthly_stdanom[[1,2,3]].mean(axis=1)
 	strat_spring_anom = monthly_stdanom[[4,5,6]].mean(axis=1)
 	strat_summer_anom = monthly_stdanom[[7,8,9]].mean(axis=1)
 	strat_fall_anom = monthly_stdanom[[10,11,12]].mean(axis=1)
+	monthly_stdanom.iloc[nom < 3] = np.nan
 	strat_annual_anom = monthly_stdanom.mean(axis=1)
 	#Mean values for climatology period (for last columns)
 	strat_winter_clim = strat_monthly_clim[[1,2,3]]
