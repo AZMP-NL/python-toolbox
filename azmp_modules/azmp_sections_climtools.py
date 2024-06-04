@@ -432,7 +432,7 @@ def temperature_clim_fill(clim, year_data, df_stn, dz, year, section, season, me
 
 
 
-    return cil_vol, cil_core
+    return cil_vol, cil_core, year_merged
 
 '''
 SECTION = 'FC'
@@ -805,6 +805,17 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     cil_core_stn_clim = np.full(years.shape, np.nan)
     cil_core_stn_man_clim = np.full(years.shape, np.nan)
     cil_core_itp_clim = np.full(years.shape, np.nan)
+    df_section_itp_meanT = np.full(years.shape, np.nan)
+    df_section_stn_meanT = np.full(years.shape, np.nan)
+    df_section_stn_man_meanT = np.full(years.shape, np.nan)
+    if SECTION == 'FC':
+        df_section_itp_meanT_shelf = np.full(years.shape, np.nan)
+        df_section_stn_meanT_shelf = np.full(years.shape, np.nan)
+        df_section_stn_man_meanT_shelf = np.full(years.shape, np.nan)
+        df_section_itp_meanT_cap = np.full(years.shape, np.nan)
+        df_section_stn_meanT_cap = np.full(years.shape, np.nan)
+        df_section_stn_man_meanT_cap = np.full(years.shape, np.nan)
+
 
     #Cycle through each of the years
     for YEAR in years:
@@ -816,15 +827,23 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             #Import the year of interest data
             year_data = df_itp_mindex.T[[YEAR]].copy()
             year_data = year_data.T.droplevel('year').T
+            num_of_stns = year_data.columns.size
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='itp')
+            cil_vol,cil_core,year_merged = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='itp')
 
             #Record the CIL vol
             cil_vol_itp_clim[np.where(YEAR == years)[0][0]] = cil_vol
             #Record the CIL core
             cil_core_itp_clim[np.where(YEAR == years)[0][0]] = cil_core
+
+            #Record the depth-station average
+            if num_of_stns/year_merged.index.size >= 0.5:
+                df_section_itp_meanT[np.where(YEAR == years)[0][0]] = year_merged.mean(axis=1).mean()
+            if SECTION == 'FC':
+                df_section_itp_meanT_shelf[np.where(YEAR == years)[0][0]] = year_merged.iloc[:20].mean(axis=1).mean()
+                df_section_itp_meanT_cap[np.where(YEAR == years)[0][0]] = year_merged.iloc[14:].mean(axis=1).mean()
 
         ## -------- Method 2: Station_ID -------- ##
         if np.isin(YEAR, stn_years):
@@ -836,12 +855,19 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='stn')
+            cil_vol,cil_core, year_merged = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='stn')
 
             #Record the CIL vol
             cil_vol_stn_clim[np.where(YEAR == years)[0][0]] = cil_vol
             #Record the CIL core
             cil_core_stn_clim[np.where(YEAR == years)[0][0]] = cil_core
+
+            #Record the depth-station average
+            if num_of_stns/year_merged.index.size >= 0.5:
+                df_section_stn_meanT[np.where(YEAR == years)[0][0]] = year_merged.mean(axis=1).mean()
+            if SECTION == 'FC':
+                df_section_stn_meanT_shelf[np.where(YEAR == years)[0][0]] = year_merged.iloc[:20].mean(axis=1).mean()
+                df_section_stn_meanT_cap[np.where(YEAR == years)[0][0]] = year_merged.iloc[14:].mean(axis=1).mean()
 
         ## -------- Method 3: Station_ID_manual -------- ##
         if np.isin(YEAR, stn_man_years):
@@ -853,12 +879,19 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             year_data = year_data.reindex(columns=stn_clim.columns, fill_value=np.nan)
 
             #Determine the new CIL
-            cil_vol,cil_core = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='stnman')
+            cil_vol,cil_core,year_merged = temperature_clim_fill(stn_clim, year_data, df_stn, dz, YEAR, SECTION, SEASON, method='stnman')
 
             #Record the CIL vol
             cil_vol_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_vol
             #Record the CIL core
             cil_core_stn_man_clim[np.where(YEAR == years)[0][0]] = cil_core
+
+            #Record the depth-station average
+            if num_of_stns/year_merged.index.size >= 0.5:
+                df_section_stn_man_meanT[np.where(YEAR == years)[0][0]] = year_merged.mean(axis=1).mean()
+            if SECTION == 'FC':
+                df_section_stn_man_meanT_shelf[np.where(YEAR == years)[0][0]] = year_merged.iloc[:20].mean(axis=1).mean()
+                df_section_stn_man_meanT_cap[np.where(YEAR == years)[0][0]] = year_merged.iloc[14:].mean(axis=1).mean()
 
         print(' -> CIL climatology fill: '+str(YEAR)+' done! ')
 
@@ -877,3 +910,24 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     df.columns = ['station-ID', 'interp_field']
     outfile = 'CIL_area_' + SECTION + '.csv'
     df.to_csv(outfile)
+
+    #Save the meanT
+    df_meanT= pd.DataFrame([df_section_itp_meanT,df_section_stn_meanT,df_section_stn_man_meanT]).T
+    df_meanT.index = years
+    df_meanT.index.name = 'year'
+    df_meanT.columns = ['itp_meanT','stn_meanT','stn_man_meanT']
+    picklename = 'df_' + SECTION + '_meanT_' + SEASON + '.pkl'
+    df_meanT.to_pickle(picklename)
+    if SECTION == 'FC':
+        df_meanT= pd.DataFrame([df_section_itp_meanT_shelf,df_section_stn_meanT_shelf,df_section_stn_man_meanT_shelf]).T
+        df_meanT.index = years
+        df_meanT.index.name = 'year'
+        df_meanT.columns = ['itp_meanT_shelf','stn_meanT_shelf','stn_man_meanT_shelf']
+        picklename = 'df_' + SECTION + '_meanT_shelf_' + SEASON + '.pkl'
+        df_meanT.to_pickle(picklename)
+        df_meanT= pd.DataFrame([df_section_itp_meanT_cap,df_section_stn_meanT_cap,df_section_stn_man_meanT_cap]).T
+        df_meanT.index = years
+        df_meanT.index.name = 'year'
+        df_meanT.columns = ['itp_meanT_cap','stn_meanT_cap','stn_man_meanT_cap']
+        picklename = 'df_' + SECTION + '_meanT_cap_' + SEASON + '.pkl'
+        df_meanT.to_pickle(picklename)

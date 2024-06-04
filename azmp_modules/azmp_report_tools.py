@@ -989,14 +989,14 @@ def bottom_salinity(
 
     # Convert to a subplot
     if NSRF_plot:
-        save_end = 'sfa'
+        save_end = 'sfa_'
     else:
         save_end = ''
-    os.system('montage bottom_sal_climato_' + season + '_' + year + '.png bottom_sal_' + season + '_' + year + '.png bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomS_' + season + year + '.png') 
+    os.system('montage bottom_sal_climato_' + season + '_' + year + '.png bottom_sal_' + season + '_' + year + '.png bottom_sal_anomaly_' + season + '_' + year + '.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'bottomS_' + season + year + '.png') 
     # French
-    os.system('montage bottom_sal_climato_' + season + '_' + year + '_FR.png bottom_sal_' + season + '_' + year + '_FR.png bottom_sal_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'_bottomS_' + season + year + '_FR.png') 
+    os.system('montage bottom_sal_climato_' + season + '_' + year + '_FR.png bottom_sal_' + season + '_' + year + '_FR.png bottom_sal_anomaly_' + season + '_' + year + '_FR.png  -tile 3x1 -geometry +10+10  -background white  '+save_end+'bottomS_' + season + year + '_FR.png') 
     # Move to year folder
-    os.system('cp '+save_end+'_bottomS_' + season + year + '.png '+save_end+'_bottomS_' + season + year + '_FR.png ' + year)
+    os.system('cp '+save_end+'bottomS_' + season + year + '.png '+save_end+'bottomS_' + season + year + '_FR.png ' + year)
 
 
 #### bottom_stats
@@ -1103,6 +1103,11 @@ def bottom_stats(
     shape = [polygon4Vs.buffer(0), polygon4Vn.buffer(0), polygon4W.buffer(0), polygon4X.buffer(0)]
     shape_4VWX = unary_union(shape)
     shape_5Y = Polygon(zip(nafo_div['5Y']['lon'], nafo_div['5Y']['lat']))
+    shape_0B = Polygon(zip(nafo_div['0B']['lon'], nafo_div['0B']['lat']))
+    shape_1C = Polygon(zip(nafo_div['1C']['lon'], nafo_div['1C']['lat']))
+    shape_1D = Polygon(zip(nafo_div['1D']['lon'], nafo_div['1D']['lat']))
+    shape_1E = Polygon(zip(nafo_div['1E']['lon'], nafo_div['1E']['lat']))
+    shape_1F = Polygon(zip(nafo_div['1F']['lon'], nafo_div['1F']['lat']))
 
     dict_stats_3LNO = {}
     dict_stats_3M = {}
@@ -1123,6 +1128,11 @@ def bottom_stats(
     dict_stats_4T = {}
     dict_stats_4VWX = {}
     dict_stats_5Y = {}
+    dict_stats_0B = {}
+    dict_stats_1C = {}
+    dict_stats_1D = {}
+    dict_stats_1E = {}
+    dict_stats_1F = {}
 
     #Get the bottom temperature for each year
     year_file = netcdf_path
@@ -1140,7 +1150,7 @@ def bottom_stats(
         Tbot = place1
         Tdict_together[year][var_strt+'bot'] = Tbot
 
-    # NAFO division stats    
+    # NAFO division stats
     dict_stats_2GH = azu.polygon_temperature_stats(Tdict_together, shape_2GH, var=var)
     dict_stats_2G = azu.polygon_temperature_stats(Tdict_together, shape_2G, var=var)
     dict_stats_2H = azu.polygon_temperature_stats(Tdict_together, shape_2H, var=var)
@@ -1152,6 +1162,12 @@ def bottom_stats(
     dict_stats_3K = azu.polygon_temperature_stats(Tdict_together, shape_3K, var=var)
     dict_stats_3L = azu.polygon_temperature_stats(Tdict_together, shape_3L, var=var)
     dict_stats_3O = azu.polygon_temperature_stats(Tdict_together, shape_3O, var=var)
+    dict_stats_4VWX = azu.polygon_temperature_stats(Tdict_together, shape_4VWX, var=var)
+    dict_stats_0B = azu.polygon_temperature_stats(Tdict_together, shape_0B, var=var)
+    dict_stats_1C = azu.polygon_temperature_stats(Tdict_together, shape_1C, var=var)
+    dict_stats_1D = azu.polygon_temperature_stats(Tdict_together, shape_1D, var=var)
+    dict_stats_1E = azu.polygon_temperature_stats(Tdict_together, shape_1E, var=var)
+    dict_stats_1F = azu.polygon_temperature_stats(Tdict_together, shape_1F, var=var)
 
     # Append bottom temperature for multi-index export
     df_list = []
@@ -1181,6 +1197,11 @@ def bottom_stats(
     df_4T = pd.DataFrame.from_dict(dict_stats_4T, orient='index')
     df_4VWX = pd.DataFrame.from_dict(dict_stats_4VWX, orient='index')
     #df_5Y = pd.DataFrame.from_dict(dict_stats_5Y, orient='index')
+    df_0B = pd.DataFrame.from_dict(dict_stats_0B, orient='index')
+    df_1C = pd.DataFrame.from_dict(dict_stats_1C, orient='index')
+    df_1D = pd.DataFrame.from_dict(dict_stats_1D, orient='index')
+    df_1E = pd.DataFrame.from_dict(dict_stats_1E, orient='index')
+    df_1F = pd.DataFrame.from_dict(dict_stats_1F, orient='index')
 
     if var == 'salinity':
         season = season + '_' + var
@@ -1216,10 +1237,21 @@ def bottom_stats(
     ## df_4RST.to_pickle(outname)
     ## outname = 'stats_4T_' + season + '.pkl'
     ## df_4T.to_pickle(outname)
-    ## outname = 'stats_4VWX_' + season + '.pkl'
-    ## df_4VWX.to_pickle(outname)
+    outname = 'stats_4VWX_' + season + '.pkl'
+    df_4VWX.to_pickle(outname)
     #outname = 'stats_5Y_' + season + '.pkl'
     #df_5Y.to_pickle(outname)
+    outname = 'stats_0B_' + season + '.pkl'
+    df_0B.to_pickle(outname)
+    outname = 'stats_1C_' + season + '.pkl'
+    df_1C.to_pickle(outname)
+    outname = 'stats_1D_' + season + '.pkl'
+    df_1D.to_pickle(outname)
+    outname = 'stats_1E_' + season + '.pkl'
+    df_1E.to_pickle(outname)
+    outname = 'stats_1F_' + season + '.pkl'
+    df_1F.to_pickle(outname)
+
 
     # Save in multi-index  dataFrame
     year_index = pd.Series(years)
@@ -2104,7 +2136,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     percent_coverage = df.percent_coverage.values.copy()
     # Flag bad years (no or weak sampling):
     #bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
-    bad_years = np.array([1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2020])
+    bad_years = np.array([1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2020, 2023])
     for i in bad_years:
         df[df.index.year==i]=np.nan
     df['area_colder0'] = df['area_colder0']/1000 # In 1000km

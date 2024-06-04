@@ -130,7 +130,7 @@ infile = 'operation_files/stats_3Ps_spring.pkl'
 df = pd.read_pickle(infile)
 df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
-bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
+bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020, 2023])
 for i in bad_years:
     df[df.index.year==i]=np.nan
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
