@@ -43,9 +43,9 @@ import cc_tools as cc
 import azmp_stn27_newtest as azS27
 
 #Choose a year of interest
-yoi = '2023'
+yoi = '2024'
 #Choose a working directory name
-work_name = 'CSAS_temp'
+work_name = 'CSAS_2023'
 
 ## Preamble (create folders to dump figures and data)
 if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
@@ -545,8 +545,8 @@ azrt.sfa_bottom_stats(
 os.system('mv *.pkl operation_files/')
 
 #Create the accompanying bottom scorecards
-azrt.sfa_bottom_scorecards(years=np.arange(2006,int(year)+1),clim_year=[2006,2020])
-azrt.sfa_bottomS_scorecards(years=np.arange(2006,int(year)+1),clim_year=[2006,2020])
+azrt.sfa_bottom_scorecards(years=np.arange(2006,int(year)+1),season='summer',clim_year=[2006,2020])
+azrt.sfa_bottomS_scorecards(years=np.arange(2006,int(year)+1),season='summer',clim_year=[2006,2020])
 os.system('cp scorecards_botT_SFA2-4_summer.png scorecards_botT_SFA2-4_summer_FR.png '+yoi)
 os.system('cp scorecards_botS_SFA2-4_summer.png scorecards_botS_SFA2-4_summer_FR.png '+yoi)
 os.system('mv scorecards_botT_SFA*.png bottomT*.csv bottom_temp/')

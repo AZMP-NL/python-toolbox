@@ -446,7 +446,7 @@ def get_bottomT_climato(
         ds_bath = xr.open_dataset(os.path.expanduser(bath_file))
         ds_bath = ds_bath.isel(lon=(ds_bath.lon>=lonLims[0])*(ds_bath.lon<=lonLims[1]))
         ds_bath = ds_bath.isel(lat=(ds_bath.lat>=latLims[0])*(ds_bath.lat<=latLims[1]))
-        Zitp = ds_bath.elevation[::10,::10].values
+        Zitp = ds_bath.elevation[::30,::30].values
 
         #Save the climatology
         h5f = h5py.File(h5_outputfile, 'w')
@@ -534,7 +534,7 @@ def get_bottomS_climato(
         ds_bath = xr.open_dataset(bath_file)
         ds_bath = ds_bath.isel(lon=(ds_bath.lon>=lonLims[0])*(ds_bath.lon<=lonLims[1]))
         ds_bath = ds_bath.isel(lat=(ds_bath.lat>=latLims[0])*(ds_bath.lat<=latLims[1]))
-        Zitp = ds_bath.elevation[::10,::10].values
+        Zitp = ds_bath.elevation[::30,::30].values
 
         #Save the climatology
         h5f = h5py.File(h5_outputfile, 'w')

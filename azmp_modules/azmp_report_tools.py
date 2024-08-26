@@ -193,6 +193,8 @@ def bottom_temperature(
             shrimp_area['2'] = np.array(shapes[idx].points)
         elif rec[1] == 'Western Assessment Zone':
             shrimp_area['3'] = np.array(shapes[idx].points)
+        elif rec[0] == '6':
+            shrimp_area['6'] = np.array(shapes[idx].points)[:126]
         else:
             shrimp_area[rec[0]] = np.array(shapes[idx].points)
 
@@ -291,7 +293,10 @@ def bottom_temperature(
     # Temperature anomaly:
     anom = Tbot-Tbot_climato
     if NSRF_plot:
-        div_toplot = ['sfa2','sfa3','sfa4']
+        if season == 'summer':
+            div_toplot = ['sfa2','sfa3','sfa4']
+        elif season == 'fall':
+            div_toplot = ['sfa4','sfa5','sfa6','sfa7']
     else:
         div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 
@@ -329,7 +334,11 @@ def bottom_temperature(
 
     #Add gridlines
     if NSRF_plot:
-        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+        if season == 'summer':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+        elif season == 'fall':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-45,-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
             dms=True, x_inline=False, y_inline=False, linestyle='--')
     else:
         gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
@@ -412,7 +421,11 @@ def bottom_temperature(
 
     #Add gridlines
     if NSRF_plot:
-        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+        if season == 'summer':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+        elif season == 'fall':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-45,-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
             dms=True, x_inline=False, y_inline=False, linestyle='--')
     else:
         gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
@@ -493,7 +506,11 @@ def bottom_temperature(
 
     #Add gridlines
     if NSRF_plot:
-        gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+        if season == 'summer':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+        elif season == 'fall':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-45,-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
             dms=True, x_inline=False, y_inline=False, linestyle='--')
     else:
         gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
@@ -646,6 +663,8 @@ def bottom_salinity(
             shrimp_area['2'] = np.array(shapes[idx].points)
         elif rec[1] == 'Western Assessment Zone':
             shrimp_area['3'] = np.array(shapes[idx].points)
+        elif rec[0] == '6':
+            shrimp_area['6'] = np.array(shapes[idx].points)[:126]
         else:
             shrimp_area[rec[0]] = np.array(shapes[idx].points)
 
@@ -746,7 +765,10 @@ def bottom_salinity(
     # Salinity anomaly:
     anom = Sbot-Sbot_climato
     if NSRF_plot:
-        div_toplot = ['sfa2','sfa3','sfa4']
+        if season == 'summer':
+            div_toplot = ['sfa2','sfa3','sfa4']
+        elif season == 'fall':
+            div_toplot = ['sfa4','sfa5','sfa6','sfa7']
     else:
         div_toplot = ['2H', '2J', '3K', '3L', '3N', '3O', '3Ps', '4R']
 
@@ -784,7 +806,11 @@ def bottom_salinity(
     
     #Add gridlines
     if NSRF_plot:
-        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+        if season == 'summer':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+        elif season == 'fall':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-45,-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
             dms=True, x_inline=False, y_inline=False, linestyle='--')
     else:
         gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
@@ -867,7 +893,11 @@ def bottom_salinity(
 
     #Add gridlines
     if NSRF_plot:
-        gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+        if season == 'summer':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+        elif season == 'fall':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-45,-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
             dms=True, x_inline=False, y_inline=False, linestyle='--')
     else:
         gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
@@ -944,7 +974,11 @@ def bottom_salinity(
         plt.title('Bottom Salinity Climatology')
 
     if NSRF_plot:
-        gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+        if season == 'summer':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=np.arange(-68,-54,2), ylocs=np.arange(58,68,2),
+            dms=True, x_inline=False, y_inline=False, linestyle='--')
+        elif season == 'fall':
+            gl = ax.gridlines(draw_labels=['bottom'], xlocs=[-45,-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
             dms=True, x_inline=False, y_inline=False, linestyle='--')
     else:
         gl = ax.gridlines(draw_labels=['bottom','left'], xlocs=[-50,-55,-60], ylocs=[40, 45, 50, 55, 60],
@@ -1350,6 +1384,8 @@ def sfa_bottom_stats(
             shrimp_area['2'] = np.array(shapes[idx].points)
         elif rec[1] == 'Western Assessment Zone':
             shrimp_area['3'] = np.array(shapes[idx].points)
+        elif rec[0] == '6':
+            shrimp_area['6'] = np.array(shapes[idx].points)[:126]
         else:
             shrimp_area[rec[0]] = np.array(shapes[idx].points)
 
@@ -2260,7 +2296,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+10  -background white  scorecards_botT_spring_FR.png')
 
     
-def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
+def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
 
 
     '''
@@ -2271,433 +2307,890 @@ def sfa_bottom_scorecards(years, clim_year=[2006, 2020]):
 
     '''
 
-    #### ------------- For summer ---------------- ####
-    # 0.
-    infile = 'operation_files/stats_sfa2_summer.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
-    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    # Flag bad years (no or weak sampling):
-    bad_years = np.array([])
-    for i in bad_years:
-        df[df.index.year==i]=np.nan
-    year_list = df.index.year.astype('str')
-    year_list = [i[2:4] for i in year_list] # 2-digit year
-    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
-    df['area_warmer2'] = df['area_warmer2']/1000
-    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
-    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
-    std_anom = std_anom.T
-    std_anom['MEAN'] = df_clim.mean(axis=0)
-    std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
-    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-    # Save in .csv for future use
-    std_anom.to_csv('bottomT_stn_anom_sfa2_summer.csv', sep=',', float_format='%0.3f')
+    if season == 'summer':
+        #### ------------- For summer ---------------- ####
+        # 0.
+        infile = 'operation_files/stats_sfa2_summer.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        year_list = df.index.year.astype('str')
+        year_list = [i[2:4] for i in year_list] # 2-digit year
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa2_summer.csv', sep=',', float_format='%0.3f')
+            
+        # Get text values +  cell color
+        year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+        year_list.append(r'sd')   
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0
+        #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+
+        # Build the colormap
+        vmin = -3.49
+        vmax = 3.49
+        midpoint = 0
+        levels = np.linspace(vmin, vmax, 15)
+        midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+        colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+        normal = plt.Normalize(-3.49, 3.49)
+        reds = plt.cm.Reds(np.linspace(0,1, num=7))
+        blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+        whites = [(1,1,1,1)]*2
+        colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+        colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+        cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+        cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+        # Common parameters
+        #hcell, wcell = 0.5, 0.6
+        #hpad, wpad = 0, 0
+
+        ## normal = plt.Normalize(-4.49, 4.49)
+        ## cmap = plt.cm.get_cmap('seismic', 9) 
+        #cmap = plt.cm.get_cmap('seismic', 15) 
+
+        nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+        hcell, wcell = 0.5, 0.5
+        hpad, wpad = 1, 1    
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA2 / EAZ Summer --'],
+                              loc='center'
+                              )
+        header.set_fontsize(13)
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1, 0.5]
+                            )
+        # change font color to white where needed:
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            elif key[0] == 0: #year's row = no color
+                pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_summer_SFA2.png", dpi=300)
+        os.system('convert -trim scorecards_summer_SFA2.png scorecards_summer_SFA2.png')
+
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        year_list[-1] = u'ET'
+
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA2 / EAZ --'],
+                              loc='center'
+                              )
+        header.set_fontsize(13)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1, 0.5]
+                            )
+        # change font color to white where needed:
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            elif key[0] == 0: #year's row = no color
+                pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_summer_SFA2_FR.png", dpi=300)
+        os.system('convert -trim scorecards_summer_SFA2_FR.png scorecards_summer_SFA2_FR.png')
+
+     # 1.
+        infile = 'operation_files/stats_sfa3_summer.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([2006, 2008, 2010, 2012])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa3_summer.csv', sep=',', float_format='%0.3f')
+
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0 
+        #normal = plt.Normalize(-4.49, 4.49)
+        #cmap = plt.cm.get_cmap('seismic', 9) 
+        nrows, ncols = std_anom.index.size, std_anom.columns.size
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA3 / WAZ Summer --'],
+                              loc='center'
+                              )
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_summer_SFA3.png", dpi=300)
+        os.system('convert -trim scorecards_summer_SFA3.png scorecards_summer_SFA3.png')
+
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA3 / WAZ --'],
+                              loc='center'
+                              )
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_summer_SFA3_FR.png", dpi=300)
+        os.system('convert -trim scorecards_summer_SFA3_FR.png scorecards_summer_SFA3_FR.png')
+
+
+        # 2.
+        infile = 'operation_files/stats_sfa4_summer.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa4_summer.csv', sep=',', float_format='%0.3f')
+            
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0 
+        #normal = plt.Normalize(-4.49, 4.49)
+        #cmap = plt.cm.get_cmap('seismic', 9) 
+        nrows, ncols = std_anom.index.size, std_anom.columns.size
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA4 --'],
+                              loc='center'
+                              )
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_summer_SFA4.png", dpi=300)
+        os.system('convert -trim scorecards_summer_SFA4.png scorecards_summer_SFA4.png')
+
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA4 --'],
+                              loc='center'
+                              )
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_summer_SFA4_FR.png", dpi=300)
+        os.system('convert -trim scorecards_summer_SFA4_FR.png scorecards_summer_SFA4_FR.png')
+        plt.close('all')
+
+
+        ## **SFA4 in stand-alone (with years row)
+        # rename back to English
+        std_anom = std_anom.rename({r'$\rm T_{fond}$' : r'$\rm T_{bot}$', r'$\rm T_{fond_{<200m}}$' : r'$\rm T_{bot_{<200m}}$', r'$\rm Aire_{>2^{\circ}C}~$ ' : r'$\rm Area_{>2^{\circ}C}$', r'$\rm Aire_{<1^{\circ}C}~$ ' : r'$\rm Area_{<1^{\circ}C}$'})
+        year_list[-1] = u'SD'
+        #do the table
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA4 Summer --'],
+                              loc='center'
+                              )
+        header.set_fontsize(13)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.5]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            elif key[0] == 0: #year's row = no color
+                pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_botT_SFA4.png", dpi=300)
+        os.system('convert -trim scorecards_botT_SFA4.png scorecards_botT_SFA4.png')
+
+        # French table (SFA4 with years)
+        #std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        year_list[-1] = u'ET'
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA4 Summer --'],
+                              loc='center'
+                              )
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            elif key[0] == 0: #year's row = no color
+                pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_botT_SFA4_FR.png", dpi=300)
+        os.system('convert -trim scorecards_botT_SFA4_FR.png scorecards_botT_SFA4_FR.png')
+        plt.close('all')
+
         
-    # Get text values +  cell color
-    year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
-    year_list.append(r'sd')   
-    vals = np.around(std_anom.values,1)
-    vals[vals==-0.] = 0.
-    vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
-    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
-    vals_color[:,-2] = 0
-    #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+        ## Montage all SFAs in subplot - English
+        os.system('montage  scorecards_summer_SFA2.png scorecards_summer_SFA3.png scorecards_summer_SFA4.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_SFA2-4_summer.png') 
+        # French
+        os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3_FR.png scorecards_summer_SFA4_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_SFA2-4_summer_FR.png')
+        # Same, but EAZ/WAZ only
+        os.system('montage  scorecards_summer_SFA2.png scorecards_summer_SFA3.png -tile 1x2 -geometry +1+1  -background white  scorecards_botT_SFA2-3_summer.png')
+        os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3_FR.png -tile 1x2 -geometry +1+1  -background white  scorecards_botT_SFA2-3_summer_FR.png')    
+        # remove leftowvers
+        os.system('rm scorecards_summer_*.png')
 
-    # Build the colormap
-    vmin = -3.49
-    vmax = 3.49
-    midpoint = 0
-    levels = np.linspace(vmin, vmax, 15)
-    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
-    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
-    normal = plt.Normalize(-3.49, 3.49)
-    reds = plt.cm.Reds(np.linspace(0,1, num=7))
-    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
-    whites = [(1,1,1,1)]*2
-    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
-    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
-    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
-    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
-    # Common parameters
-    #hcell, wcell = 0.5, 0.6
-    #hpad, wpad = 0, 0
+    if season == 'fall':
+        #### ------------- For fall ---------------- ####
+        # 0.
+        infile = 'operation_files/stats_sfa4_fall.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        year_list = df.index.year.astype('str')
+        year_list = [i[2:4] for i in year_list] # 2-digit year
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa4_fall.csv', sep=',', float_format='%0.3f')
+            
+        # Get text values +  cell color
+        year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+        year_list.append(r'sd')   
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1 # Reverse last row colorscale
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0
+        #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
 
-    ## normal = plt.Normalize(-4.49, 4.49)
-    ## cmap = plt.cm.get_cmap('seismic', 9) 
-    #cmap = plt.cm.get_cmap('seismic', 15) 
+        # Build the colormap
+        vmin = -3.49
+        vmax = 3.49
+        midpoint = 0
+        levels = np.linspace(vmin, vmax, 15)
+        midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+        colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+        normal = plt.Normalize(-3.49, 3.49)
+        reds = plt.cm.Reds(np.linspace(0,1, num=7))
+        blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+        whites = [(1,1,1,1)]*2
+        colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+        colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+        cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+        cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+        # Common parameters
+        #hcell, wcell = 0.5, 0.6
+        #hpad, wpad = 0, 0
 
-    nrows, ncols = std_anom.index.size+1, std_anom.columns.size
-    hcell, wcell = 0.5, 0.5
-    hpad, wpad = 1, 1    
-    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
-    ax = fig.add_subplot(111)
-    ax.axis('off')
-    #do the table
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA2 / EAZ --'],
-                          loc='center'
-                          )
-    header.set_fontsize(13)
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1, 0.5]
-                        )
-    # change font color to white where needed:
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    table_props = the_table.properties()
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        elif key[0] == 0: #year's row = no color
-            pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
+        ## normal = plt.Normalize(-4.49, 4.49)
+        ## cmap = plt.cm.get_cmap('seismic', 9) 
+        #cmap = plt.cm.get_cmap('seismic', 15) 
 
-    plt.savefig("scorecards_summer_SFA2.png", dpi=300)
-    os.system('convert -trim scorecards_summer_SFA2.png scorecards_summer_SFA2.png')
+        nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+        hcell, wcell = 0.5, 0.5
+        hpad, wpad = 1, 1    
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA4 Fall --'],
+                              loc='center'
+                              )
+        header.set_fontsize(13)
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1, 0.5]
+                            )
+        # change font color to white where needed:
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            elif key[0] == 0: #year's row = no color
+                pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
 
-    # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
-    year_list[-1] = u'ET'
+        plt.savefig("scorecards_fall_SFA4.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA4.png scorecards_fall_SFA4.png')
 
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA2 / EAZ --'],
-                          loc='center'
-                          )
-    header.set_fontsize(13)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1, 0.5]
-                        )
-    # change font color to white where needed:
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    table_props = the_table.properties()
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        elif key[0] == 0: #year's row = no color
-            pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        year_list[-1] = u'ET'
 
-    plt.savefig("scorecards_summer_SFA2_FR.png", dpi=300)
-    os.system('convert -trim scorecards_summer_SFA2_FR.png scorecards_summer_SFA2_FR.png')
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA4 --'],
+                              loc='center'
+                              )
+        header.set_fontsize(13)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1, 0.5]
+                            )
+        # change font color to white where needed:
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            elif key[0] == 0: #year's row = no color
+                pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
 
- # 1.
-    infile = 'operation_files/stats_sfa3_summer.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
-    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    # Flag bad years (no or weak sampling):
-    bad_years = np.array([2006, 2008, 2010, 2012])
-    for i in bad_years:
-        df[df.index.year==i]=np.nan
-    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
-    df['area_warmer2'] = df['area_warmer2']/1000
-    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
-    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
-    std_anom = std_anom.T
-    std_anom['MEAN'] = df_clim.mean(axis=0)
-    std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
-    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-    # Save in .csv for future use
-    std_anom.to_csv('bottomT_stn_anom_sfa3_summer.csv', sep=',', float_format='%0.3f')
+        plt.savefig("scorecards_fall_SFA4_FR.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA4_FR.png scorecards_fall_SFA4_FR.png')
 
-    vals = np.around(std_anom.values,1)
-    vals[vals==-0.] = 0.
-    vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
-    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
-    vals_color[:,-2] = 0 
-    #normal = plt.Normalize(-4.49, 4.49)
-    #cmap = plt.cm.get_cmap('seismic', 9) 
-    nrows, ncols = std_anom.index.size, std_anom.columns.size
-    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
-    ax = fig.add_subplot(111)
-    ax.axis('off')
-    #do the table
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA3 / WAZ --'],
-                          loc='center'
-                          )
-    header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
-                        )
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    # change font color to white where needed:
-    table_props = the_table.properties()
-    #table_cells = table_props['child_artists']
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        #elif key[0] == 0:# <--- remove when no years
-        #    pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
+     # 1.
+        infile = 'operation_files/stats_sfa5_fall.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([2006, 2008, 2010, 2012])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa5_fall.csv', sep=',', float_format='%0.3f')
 
-    plt.savefig("scorecards_summer_SFA3.png", dpi=300)
-    os.system('convert -trim scorecards_summer_SFA3.png scorecards_summer_SFA3.png')
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0 
+        #normal = plt.Normalize(-4.49, 4.49)
+        #cmap = plt.cm.get_cmap('seismic', 9) 
+        nrows, ncols = std_anom.index.size, std_anom.columns.size
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA5 Fall --'],
+                              loc='center'
+                              )
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
 
-    # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA3 / WAZ --'],
-                          loc='center'
-                          )
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-    header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
-                        )
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    # change font color to white where needed:
-    table_props = the_table.properties()
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        #elif key[0] == 0:# <--- remove when no years
-        #    pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
+        plt.savefig("scorecards_fall_SFA5.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA5.png scorecards_fall_SFA5.png')
 
-    plt.savefig("scorecards_summer_SFA3_FR.png", dpi=300)
-    os.system('convert -trim scorecards_summer_SFA3_FR.png scorecards_summer_SFA3_FR.png')
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA5 Fall --'],
+                              loc='center'
+                              )
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
 
-
-    # 2.
-    infile = 'operation_files/stats_sfa4_summer.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
-    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    # Flag bad years (no or weak sampling):
-    bad_years = np.array([])
-    for i in bad_years:
-        df[df.index.year==i]=np.nan
-    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
-    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
-    df['area_warmer2'] = df['area_warmer2']/1000
-    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
-    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
-    std_anom = std_anom.T
-    std_anom['MEAN'] = df_clim.mean(axis=0)
-    std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
-    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
-    # Save in .csv for future use
-    std_anom.to_csv('bottomT_stn_anom_sfa4_summer.csv', sep=',', float_format='%0.3f')
-        
-    vals = np.around(std_anom.values,1)
-    vals[vals==-0.] = 0.
-    vals_color = vals.copy()
-    vals_color[-1,] = vals_color[-1,]*-1
-    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
-    vals_color[:,-2] = 0 
-    #normal = plt.Normalize(-4.49, 4.49)
-    #cmap = plt.cm.get_cmap('seismic', 9) 
-    nrows, ncols = std_anom.index.size, std_anom.columns.size
-    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
-    ax = fig.add_subplot(111)
-    ax.axis('off')
-    #do the table
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA4 --'],
-                          loc='center'
-                          )
-    header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
-                        )
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    # change font color to white where needed:
-    table_props = the_table.properties()
-    #table_cells = table_props['child_artists']
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        #elif key[0] == 0:# <--- remove when no years
-        #    pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
-
-    plt.savefig("scorecards_summer_SFA4.png", dpi=300)
-    os.system('convert -trim scorecards_summer_SFA4.png scorecards_summer_SFA4.png')
-
-    # French table
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA4 --'],
-                          loc='center'
-                          )
-    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
-    header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
-                        )
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    # change font color to white where needed:
-    table_props = the_table.properties()
-    #table_cells = table_props['child_artists']
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        #elif key[0] == 0:# <--- remove when no years
-        #    pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
-
-    plt.savefig("scorecards_summer_SFA4_FR.png", dpi=300)
-    os.system('convert -trim scorecards_summer_SFA4_FR.png scorecards_summer_SFA4_FR.png')
-    plt.close('all')
+        plt.savefig("scorecards_fall_SFA5_FR.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA5_FR.png scorecards_fall_SFA5_FR.png')
 
 
-    ## **SFA4 in stand-alone (with years row)
-    # rename back to English
-    std_anom = std_anom.rename({r'$\rm T_{fond}$' : r'$\rm T_{bot}$', r'$\rm T_{fond_{<200m}}$' : r'$\rm T_{bot_{<200m}}$', r'$\rm Aire_{>2^{\circ}C}~$ ' : r'$\rm Area_{>2^{\circ}C}$', r'$\rm Aire_{<1^{\circ}C}~$ ' : r'$\rm Area_{<1^{\circ}C}$'})
-    year_list[-1] = u'SD'
-    #do the table
-    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
-    ax = fig.add_subplot(111)
-    ax.axis('off')
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA4 --'],
-                          loc='center'
-                          )
-    header.set_fontsize(13)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.5]
-                        )
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    # change font color to white where needed:
-    table_props = the_table.properties()
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        elif key[0] == 0: #year's row = no color
-            pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
+        # 2.
+        infile = 'operation_files/stats_sfa6_fall.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa6_fall.csv', sep=',', float_format='%0.3f')
+            
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0 
+        #normal = plt.Normalize(-4.49, 4.49)
+        #cmap = plt.cm.get_cmap('seismic', 9) 
+        nrows, ncols = std_anom.index.size, std_anom.columns.size
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA6 Fall --'],
+                              loc='center'
+                              )
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
 
-    plt.savefig("scorecards_botT_SFA4.png", dpi=300)
-    os.system('convert -trim scorecards_botT_SFA4.png scorecards_botT_SFA4.png')
+        plt.savefig("scorecards_fall_SFA6.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA6.png scorecards_fall_SFA6.png')
 
-    # French table (SFA4 with years)
-    #std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}$', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}$'})
-    std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
-    year_list[-1] = u'ET'
-    header = ax.table(cellText=[['']],
-                          colLabels=['-- SFA4 --'],
-                          loc='center'
-                          )
-    header.set_fontsize(12.5)
-    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list, 
-                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
-                        bbox=[0, 0, 1.0, 0.50]
-                        )
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12.5)
-    # change font color to white where needed:
-    table_props = the_table.properties()
-    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
-    for key, cell in the_table.get_celld().items():
-        cell_text = cell.get_text().get_text()
-        if is_number(cell_text) == False:
-            pass
-        elif key[0] == 0: #year's row = no color
-            pass
-        elif key[1] in last_columns:
-             cell._text.set_color('darkslategray')
-        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
-            cell._text.set_color('white')
-        elif (cell_text=='nan'):
-            cell._set_facecolor('lightgray')
-            cell._text.set_color('lightgray')
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA6 Fall --'],
+                              loc='center'
+                              )
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
 
-    plt.savefig("scorecards_botT_SFA4_FR.png", dpi=300)
-    os.system('convert -trim scorecards_botT_SFA4_FR.png scorecards_botT_SFA4_FR.png')
-    plt.close('all')
+        plt.savefig("scorecards_fall_SFA6_FR.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA6_FR.png scorecards_fall_SFA6_FR.png')
+        plt.close('all')
 
-    
-    ## Montage all SFAs in subplot - English
-    os.system('montage  scorecards_summer_SFA2.png scorecards_summer_SFA3.png scorecards_summer_SFA4.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_SFA2-4_summer.png') 
-    # French
-    os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3_FR.png scorecards_summer_SFA4_FR.png -tile 1x3 -geometry +1+1  -background white  scorecards_botT_SFA2-4_summer_FR.png')
-    # Same, but EAZ/WAZ only
-    os.system('montage  scorecards_summer_SFA2.png scorecards_summer_SFA3.png -tile 1x2 -geometry +1+1  -background white  scorecards_botT_SFA2-3_summer.png')
-    os.system('montage  scorecards_summer_SFA2_FR.png scorecards_summer_SFA3_FR.png -tile 1x2 -geometry +1+1  -background white  scorecards_botT_SFA2-3_summer_FR.png')    
-    # remove leftowvers
-    os.system('rm scorecards_summer_*.png')
+
+        # 2.
+        infile = 'operation_files/stats_sfa7_fall.pkl'
+        df = pd.read_pickle(infile)
+        df.index = pd.to_datetime(df.index) # update index to datetime
+        df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        # Flag bad years (no or weak sampling):
+        bad_years = np.array([])
+        for i in bad_years:
+            df[df.index.year==i]=np.nan
+        df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+        df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+        df['area_warmer2'] = df['area_warmer2']/1000
+        df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+        std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+        std_anom = std_anom.T
+        std_anom['MEAN'] = df_clim.mean(axis=0)
+        std_anom['SD'] = df_clim.std(axis=0)
+        std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'area_warmer2', 'area_colder1'])
+        std_anom = std_anom.rename({'Tmean': r'$\rm T_{bot}$', 'Tmean_sha200': r'$\rm T_{bot_{<200m}}$', 'area_warmer2': r'$\rm Area_{>2^{\circ}C}$', 'area_colder1': r'$\rm Area_{<1^{\circ}C}$'})
+        std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+        # Save in .csv for future use
+        std_anom.to_csv('bottomT_stn_anom_sfa7_fall.csv', sep=',', float_format='%0.3f')
+            
+        vals = np.around(std_anom.values,1)
+        vals[vals==-0.] = 0.
+        vals_color = vals.copy()
+        vals_color[-1,] = vals_color[-1,]*-1
+        vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+        vals_color[:,-2] = 0 
+        #normal = plt.Normalize(-4.49, 4.49)
+        #cmap = plt.cm.get_cmap('seismic', 9) 
+        nrows, ncols = std_anom.index.size, std_anom.columns.size
+        fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        #do the table
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA7 --'],
+                              loc='center'
+                              )
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_fall_SFA7.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA7.png scorecards_fall_SFA7.png')
+
+        # French table
+        std_anom = std_anom.rename({r'$\rm T_{bot}$' : r'$\rm T_{fond}$', r'$\rm T_{bot_{<200m}}$' : r'$\rm T_{fond_{<200m}}$', r'$\rm Area_{>2^{\circ}C}$' : r'$\rm Aire_{>2^{\circ}C}~$ ', r'$\rm Area_{<1^{\circ}C}$' : r'$\rm Aire_{<1^{\circ}C}~$ '})
+        header = ax.table(cellText=[['']],
+                              colLabels=['-- SFA7 --'],
+                              loc='center'
+                              )
+        #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+        header.set_fontsize(12.5)
+        the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                            loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                            bbox=[0, 0, 1.0, 0.50]
+                            )
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(12.5)
+        # change font color to white where needed:
+        table_props = the_table.properties()
+        #table_cells = table_props['child_artists']
+        last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+        for key, cell in the_table.get_celld().items():
+            cell_text = cell.get_text().get_text()
+            if is_number(cell_text) == False:
+                pass
+            #elif key[0] == 0:# <--- remove when no years
+            #    pass
+            elif key[1] in last_columns:
+                 cell._text.set_color('darkslategray')
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+                cell._text.set_color('white')
+            elif (cell_text=='nan'):
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+
+        plt.savefig("scorecards_fall_SFA7_FR.png", dpi=300)
+        os.system('convert -trim scorecards_fall_SFA7_FR.png scorecards_fall_SFA7_FR.png')
+        plt.close('all')
+
+
+        ## Montage all SFAs in subplot - English
+        os.system('montage  scorecards_fall_SFA4.png scorecards_fall_SFA5.png scorecards_fall_SFA6.png scorecards_fall_SFA7.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_SFA4-7_fall.png') 
+        # French
+        os.system('montage  scorecards_fall_SFA4_FR.png scorecards_fall_SFA5_FR.png scorecards_fall_SFA6_FR.png scorecards_fall_SFA7_FR.png -tile 1x4 -geometry +1+1  -background white  scorecards_botT_SFA4-7_fall_FR.png')
+        # remove leftowvers
+        #os.system('rm scorecards_summer_*.png')
+
 
 
 def bottomS_scorecards(years, clim_year=[2006, 2021]):
