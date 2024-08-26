@@ -43,9 +43,9 @@ import cc_tools as cc
 import azmp_stn27_newtest as azS27
 
 #Choose a year of interest
-yoi = '2024'
+yoi = '2023'
 #Choose a working directory name
-work_name = 'CSAS_2023'
+work_name = 'reporting_2023'
 
 ## Preamble (create folders to dump figures and data)
 if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
@@ -357,10 +357,9 @@ os.system('mv bottomT_*.png bottom_temp_*.png bottom_temp/')
 os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 
 
-## WE'RE HERE I THINK ##
 
 # For NAFO STACFEN and STACFIS input: [NEED TO DO]
-#azrt.bottom_temperature(season='summer', year='2022', climato_file='Tbot_climato_SA4_summer_0.10.h5')
+# -> check if we have everything needed.
 
 
 # bottom stats and scorecards (arange year+1)
