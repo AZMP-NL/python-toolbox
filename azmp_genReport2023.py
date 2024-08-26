@@ -64,6 +64,10 @@ if os.path.isdir('SAR_files') != True: os.system('mkdir SAR_files')
 
 
 ## ---- 2023 update ---- ##
+# 0. Update CASTS and CABOTS.
+# (separate scripts)    
+    
+
 # 1.  NAO, AO, AMO
 azgen.nao(int(yoi),'~/data/AZMP/climate_indices/nao_data.csv')
 azgen.ao(int(yoi),'~/data/AZMP/climate_indices/ao_data.csv')
@@ -403,11 +407,12 @@ for section in sections:
             CASTS_path='~/data/CASTS/',
             bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
             )
-os.system('mv temp_section_*.png AZMP_lines/')
+#os.system('mv temp_section_*.png AZMP_lines/')
 os.system('mv *.pkl *.csv operation_files/')
 variables = ['temperature', 'salinity']
 sections = ['SI', 'BB', 'FC']
 for section in sections:
+print('Processing Section - ' + section)
     for season in seasons:
         for var in variables:
             #Ensure that STANDARD_SECTIONS.xlsx has been put in operation_files/
