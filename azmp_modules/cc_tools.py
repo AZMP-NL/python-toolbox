@@ -32,6 +32,7 @@ from shapely.geometry.polygon import Polygon
 from shapely.ops import cascaded_union
 from area import area # external fns to compute surface area
 from seawater import extras as swx
+import gsw
 
 ## from matplotlib.colors import Normalize
 from matplotlib.colors import from_levels_and_colors
@@ -43,8 +44,11 @@ import cartopy. crs as ccrs
 import cartopy.feature as cpf
 import matplotlib.ticker as mticker
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-sys.path.append('/home/jcoyne/Documents/AZMP-NL_python-toolbox/python-toolbox/cc_tools')
-import cc_variable_list as vl
+
+# AZMP modules
+import cc_variable_list2 as vl
+import cc_variable_list_NL as vlNL
+import azmp_sections_tools as azst
 
 def HUD2014_to_multiindex(section, z_vec):
     """
@@ -236,14 +240,36 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     extent = v[7]
 
     # Figure name (to avoid parenthesis, etc.)
-    if VARIABLE == 'Omega_Aragonite_(unitless)':
+    if VARIABLE == 'Temperature_(degC)':
+        FIG_VAR = 'Temperature'
+        FIG_LABEL = 'T'
+    elif VARIABLE == 'Salinity_(psu)':
+        FIG_VAR = 'Salinity'
+        FIG_LABEL = 'S'
+    elif VARIABLE == 'Total_Alkalinity_(umol/kg)':
+        FIG_VAR = 'TA'
+        FIG_LABEL = 'TA'
+    elif VARIABLE == 'Inorganic_Carbon_(umol/kg)':
+        FIG_VAR = 'DIC'
+        FIG_LABEL = 'DIC'
+    elif VARIABLE == 'pCO2_(uatm)':
+        FIG_VAR = 'pCO2'
+        FIG_LABEL = r'$pCO_2$'
+    elif VARIABLE == 'Omega_Aragonite_(unitless)':
         FIG_VAR = 'OmegaA'
+        FIG_LABEL = r'$\Omega_{\rm arg}$'
+    elif VARIABLE == 'Omega_Calcite_(unitless)':
+        FIG_VAR = 'OmegaC'
+        FIG_LABEL = r'$\Omega_{\rm cal}$'
     elif VARIABLE == 'pH_Total_(total_scale)':
         FIG_VAR = 'pH'
+        FIG_LABEL = 'pH'
     elif VARIABLE == 'Oxygen_Saturation_(%)':
         FIG_VAR = 'DO_perc'    
+        FIG_LABEL = r'$O_2$'
     elif VARIABLE == 'Dissolved_Oxygen_(mL/L)':
         FIG_VAR = 'DO'
+        FIG_LABEL = r'$O_2$'
 
     
     # Read the entire AZMP dataset
@@ -263,7 +289,7 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
         df = df[(df.index.month>=7) & (df.index.month<=9)]
     elif SEASON == 'fall':
         dfng = df[~df.Region.str.contains('MAR')]
-        dfng = dfng.assign(x=dfng.index.strftime('%m-%d')).query("'10-15' <= x <= '12-31'").drop('x',1)
+        dfng = dfng.assign(x=dfng.index.strftime('%m-%d')).query("'10-15' <= x <= '12-31'").drop('x',axis=1)
         dfss = df[df.Region.str.contains('MAR')]
         dfss = dfss[(dfss.index.month>=9) & (dfss.index.month<=12)]
         df = pd.concat([dfng, dfss], axis=0)
@@ -390,10 +416,25 @@ def seasonal_map(VARIABLE, YEAR, SEASON, DEPTH):
     cb.set_label(axis_label, fontsize=12, fontweight='normal')
 
     # add text
-    SEASON_TEXT = ax.text(-72, 56, SEASON + ' ' +  str(YEAR), horizontalalignment='left', verticalalignment = 'top', color='white',
-        fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
-    DEPTH_TEXT = ax.text(-72, 56, DEPTH, horizontalalignment='left', verticalalignment = 'bottom', color='white',
-        fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+    SEASON_TEXT = ax.text(-72, 56, SEASON + ' ' +  str(YEAR), horizontalalignment='left', verticalalignment = 'top', color='white', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+    DEPTH_TEXT = ax.text(-72, 56, DEPTH + ' ' + FIG_LABEL, horizontalalignment='left', verticalalignment = 'bottom', color='white', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+
+    # add letter ID (for Fgiures 6-8 in manuscript):
+    if SEASON == 'fall':
+        if DEPTH == 'surface':
+            if ((VARIABLE=='Temperature_(degC)') | (VARIABLE=='Total_Alkalinity_(umol/kg)') | (VARIABLE=='pH_Total_(total_scale)')):
+                ID_TEXT = ax.text(-72, 57, 'a) ', horizontalalignment='right', verticalalignment = 'bottom', color='black', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+            elif ((VARIABLE=='Salinity_(psu)') | (VARIABLE=='Inorganic_Carbon_(umol/kg)') | (VARIABLE=='Omega_Aragonite_(unitless)')):
+                  ID_TEXT = ax.text(-72, 57, 'c) ', horizontalalignment='right', verticalalignment = 'bottom', color='black', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+            elif ((VARIABLE=='Oxygen_Saturation_(%)') | (VARIABLE=='pCO2_(uatm)') | (VARIABLE=='Omega_Calcite_(unitless)')):
+                  ID_TEXT = ax.text(-72, 57, 'e) ', horizontalalignment='right', verticalalignment = 'bottom', color='black', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+        elif DEPTH == 'bottom':
+            if ((VARIABLE=='Temperature_(degC)') | (VARIABLE=='Total_Alkalinity_(umol/kg)') | (VARIABLE=='pH_Total_(total_scale)')):
+                ID_TEXT = ax.text(-72, 57, 'b) ', horizontalalignment='right', verticalalignment = 'bottom', color='black', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+            elif ((VARIABLE=='Salinity_(psu)') | (VARIABLE=='Inorganic_Carbon_(umol/kg)') | (VARIABLE=='Omega_Aragonite_(unitless)')):
+                  ID_TEXT = ax.text(-72, 57, 'd) ', horizontalalignment='right', verticalalignment = 'bottom', color='black', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())
+            elif ((VARIABLE=='Oxygen_Saturation_(%)') | (VARIABLE=='pCO2_(uatm)') | (VARIABLE=='Omega_Calcite_(unitless)')):
+                  ID_TEXT = ax.text(-72, 57, 'f) ', horizontalalignment='right', verticalalignment = 'bottom', color='black', fontsize=12, fontweight='bold', transform=ccrs.PlateCarree())    
 
          
     # Save figure
@@ -668,3 +709,293 @@ def seasonal_map_NL(VARIABLE, YEAR, SEASON, DEPTH):
     fig.savefig(fig_name, dpi=300)
     os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
+
+def section_plot(VAR, YEAR, SEASON, SECTION, ZMAX, REGION='NL', FRENCH=False):
+
+    """
+
+    To produce section plots.
+    This is an adaptation of the script 
+    cs_section_plot.py
+
+    Possible variables:
+    'Omega_Aragonite_(unitless)'
+    'pH_Total_(total_scale)'
+    'Oxygen_Saturation_(%)'
+    'Dissolved_Oxygen_(mL/L)'
+    'Phosphate_Concentration_(mmol/m3)'
+    'Temperature_(degC)'
+    'pH_tot'
+    'Omega_Aragonite_(--)'
+    'Salinity_(psu)'
+    'Total_Alkalinity_(umol/kg)'
+    'Inorganic_Carbon_(umol/kg)'
+    'AOU'
+    ...
+
+    Originally made for work on OA15 paper
+    Frederic.Cyr@dfo-mpo.gc.ca
+    Sept. 2023
+
+    """
+
+    # File to load
+    my_file = '/home/cyrf0006/github/AZMP-NL/datasets/carbonates/AZMP_carbon_data.csv'
+    # For colorbar:
+    if REGION == 'NL':
+        import cc_variable_list_NL as vl
+    else:
+        import cc_variable_list2 as vl
+    # Ajust plotting parameters
+    vv = vl.variable_parameters(VAR)
+    num_levels = vv[0]
+    vmin = vv[1]
+    vmax = vv[2]
+    midpoint = vv[3]
+    colors = vv[4]
+    ticks = vv[5]
+    axis_label = vv[6]
+    extent = vv[7]
+    v_anom = np.linspace(vv[8], vv[9], vv[10])
+
+    # Text for figure:
+    section_EN = ['BI', 'MB', 'SI', 'WB', 'BB', 'S27', 'FC', 'SEGB', 'SWSPB']
+    section_FR = ['IB', 'MB', 'IS', 'WB', 'BB', 'S27', 'BF', 'GBSE', 'SWSPB']
+    SECTION_FR = section_FR[section_EN.index(SECTION)]
+    season_EN = ['spring', 'summer', 'fall']
+    season_FR = ['printemps', 'été', 'automne']
+    SEASON_FR = season_FR[season_EN.index(SEASON)]
+    VAR_text = VAR.split('(')[0][0:-1] 
+    if VAR == 'Oxygen_Saturation_(%)':
+        title = 'Oxygen Saturation for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR)
+        title_FR = 'Saturation en oxygène pour la section ' + SECTION_FR + ' - ' + SEASON_FR + ' ' + str(YEAR)
+    elif VAR == 'pH_Total_(total_scale)':
+        title = 'pH Total for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR)
+        title_FR = 'pH Total pour la section ' + SECTION_FR + ' - ' + SEASON_FR + ' ' + str(YEAR)
+    elif VAR == 'Omega_Aragonite_(unitless)':
+        title = 'Aragonite saturation state for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR)
+        title_FR = 'Saturation en aragonite pour la section ' + SECTION_FR + ' - ' + SEASON_FR + ' ' + str(YEAR)
+    elif VAR == 'Inorganic_Carbon_(umol/kg)':
+        title = 'Inorganic Carbon for section' + SECTION + ' - ' + SEASON + ' ' + str(YEAR)
+        title_FR = 'Carbone inorganique pour la section ' + SECTION_FR + ' - ' + SEASON_FR + ' ' + str(YEAR)
+    elif VAR == 'Total_Alkalinity_(umol/kg)':
+        title = 'Total Alkalinity for section' + SECTION + ' - ' + SEASON + ' ' + str(YEAR)
+        title_FR = 'Alkalinité totale pour la section ' + SECTION_FR + ' - ' + SEASON_FR + ' ' + str(YEAR)
+    elif VAR == 'AOU':
+        VAR_text = 'AOU'
+        title = 'AOU for section ' + SECTION + ' - ' + SEASON + ' ' + str(YEAR)
+        title_FR = 'UAO pour la section ' + SECTION_FR + ' - ' + SEASON_FR + ' ' + str(YEAR)
+    else:
+        title=VAR_text
+        title_FR=VAR_text
+    
+    # adjust the colorbar
+    levels = np.linspace(vmin, vmax, num_levels)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    vals = np.interp(midp, [vmin, midpoint, vmax], [0, 0.5, 1])
+    colors = colors(vals)
+    colors=np.concatenate([[colors[0,:]], colors, [colors[-1,:]]],0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend=extent)
+
+    # Get the data
+    df = pd.read_csv(my_file)
+    # set index
+    df.index = pd.to_datetime(df.Timestamp)
+    df.drop(columns='Timestamp', inplace=True)
+    # Extract NL data
+    df = df[df.Region==REGION]
+    # Extract section
+    df = df.loc[(df.Station_Name.str.contains(SECTION))]
+
+    # Extract season
+    #df = df[df.index.year == YEAR]
+    if SEASON == 'spring':
+        df = df[df.index.month <= 5]
+    elif SEASON == 'summer':
+        df = df[(df.index.month>=6) & (df.index.month<=8)]
+    elif SEASON == 'fall':
+        df = df[df.index.month >= 9]
+
+    # Calculate Apparent Oxygen Utilisation (AOU) if needed
+    if VAR == 'AOU':
+        SA = gsw.SA_from_SP(df['Salinity_(psu)'], df['Depth_(dbar)'], df['Longitude_(degEast)'], df['Latitude_(degNorth)'])
+        CT = gsw.CT_from_t(SA, df['Temperature_(degC)'], df['Depth_(dbar)'])
+        O2sol = gsw.O2sol(SA, CT, df['Depth_(dbar)'],  df['Longitude_(degEast)'], df['Latitude_(degNorth)']) # in umol/kg
+        O2sol = O2sol/43.570 # in ml/l 
+        df['AOU'] = O2sol - df['Dissolved_Oxygen_(mL/L)'] 
+
+    # Build climatology
+    df_list = []
+    for i in df.index.year.unique():
+        df_tmp = df[df.index.year == i]
+        # Extract variable
+        df_tmp = df_tmp[['Depth_(dbar)', 'Station_Name', VAR]]
+        df_tmp = df_tmp.pivot(index='Depth_(dbar)', columns='Station_Name') #<--- this is cool!
+        df_tmp = df_tmp[VAR]
+        # So I re-define a constant vertical axis every 5m.
+        depth_range = np.arange(2.5, 2000, 5) # range to look for data
+        reg_depth = (depth_range[1:] + depth_range[:-1]) / 2 # mid point of the range
+        df_tmp = df_tmp.groupby(pd.cut(df_tmp.index, depth_range)).mean() # <--- This is cool!
+        df_tmp.index = reg_depth # replace range by mean depth
+        # interpolate vertically and horisontally where possible
+        df_tmp.interpolate(axis=0, limit_area='inside', inplace=True)
+        df_tmp.interpolate(axis=1, limit_area='inside', inplace=True)
+        df_list.append(df_tmp)
+
+    # Break if empty (no data at all for this season)
+    if len(df_list) == 0:
+        print('No data for this season [return]')
+        return
+        
+    # Create multi-index
+    df_all = pd.concat(df_list, keys=df.index.year.unique(), sort=True)
+
+    # extract year current year
+    if YEAR in df_all.index.levels[0]:
+        df_year = df_all.xs((YEAR), level=('Timestamp'))
+    else:
+        print('No data for this year [return]')
+        return
+        
+    # compute climatology
+    df_clim = df_all.groupby(level=1).apply(lambda x: x.mean())
+
+    # vertically fill NaNs
+    df_year.interpolate(axis=0, limit_area='inside', inplace=True)
+    df_clim.interpolate(axis=0, limit_area='inside', inplace=True)
+    # horizontally fill NaNs
+    df_year.interpolate(axis=1, limit_area='inside', inplace=True)
+    df_clim.interpolate(axis=1, limit_area='inside', inplace=True)
+
+    # calculate anomaly
+    df_anom = df_year-df_clim
+
+    ## ---- Load station lat/lon ---- ##
+    df_stn = pd.read_excel('/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx')
+    df_stn = df_stn.drop(['SECTION', 'LONG'], axis=1)
+    df_stn = df_stn.rename(columns={'LONG.1': 'LON'})
+    df_stn = df_stn.dropna()
+    df_stn = df_stn[df_stn.STATION.str.contains(SECTION)]
+    df_stn = df_stn.reset_index(drop=True)
+
+    ## ---- Compute distance vector ---- ##
+    distance = np.full((df_clim.keys().shape), np.nan)
+    lat0 = df_stn[df_stn.index==0]['LAT']
+    lon0 = df_stn[df_stn.index==0]['LON']
+    for i, stn in enumerate(df_clim.keys().values):
+        stn = stn.replace('_','-') # replace in case underscore is used
+        lat_stn = df_stn[df_stn.STATION==str(stn)]['LAT']
+        lon_stn = df_stn[df_stn.STATION==str(stn)]['LON']      
+        distance[i] = azst.haversine(lon0, lat0, lon_stn, lat_stn)
+        XLIM =distance.max()
+
+    ## ---- Retrieve bathymetry using function ---- ##
+    if REGION == 'NL':
+        bathymetry = azst.section_bathymetry(SECTION)
+    else:
+        bathymetry = []
+
+    ## ---- plot Figure ---- ##
+    fig = plt.figure()
+    # ax1
+    ax = plt.subplot2grid((3, 1), (0, 0))
+    c = plt.contourf(distance, df_year.index, df_year, levels, cmap=cmap, extend='both')
+    #c_sig1 = plt.contour(distance_sigt, df_sigt_year.columns, df_sigt_year, v_sig, colors='gray', linewidths=1)
+    for i in distance:
+        plt.plot([i, i], [0, ZMAX], '--k', alpha=.5)
+    ax.set_ylim([0, ZMAX])
+    ax.set_xlim([0, XLIM])
+    #plt.clabel(c_sig1, inline=1, fontsize=10, colors='gray', fmt='%1.1f')
+    ax.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax.invert_yaxis()
+    if REGION == 'NL':
+        Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
+        ax.add_patch(Bgon)
+    cb = plt.colorbar(c)
+    cb.ax.tick_params(labelsize=8)
+    cb.set_label(axis_label, fontsize=12, fontweight='normal')
+    ax.xaxis.label.set_visible(False)
+    ax.tick_params(labelbottom='off')
+    ax.set_title(title)
+
+    # ax2
+    ax2 = plt.subplot2grid((3, 1), (1, 0))
+    c = plt.contourf(distance, df_clim.index, df_clim, levels, cmap=cmap, extend='both')
+    #c_sig2 = plt.contour(distance, df_sigt_clim.columns, df_sigt_clim, v_sig, colors='gray', linewidths=1)
+    for i in distance:
+        plt.plot([i, i], [0, ZMAX], '--k', alpha=.5)
+    ax2.set_ylim([0, ZMAX])
+    ax2.set_xlim([0,  XLIM])
+    #plt.clabel(c_sig2, inline=1, fontsize=10, colors='gray', fmt='%1.1f')
+    ax2.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax2.invert_yaxis()
+    if REGION == 'NL':
+        Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
+        ax2.add_patch(Bgon)
+    cb = plt.colorbar(c)
+    cb.ax.tick_params(labelsize=8)
+    cb.set_label(axis_label, fontsize=12, fontweight='normal')
+    ax2.xaxis.label.set_visible(False)
+    ax2.tick_params(labelbottom='off')
+    ax2.set_title('Climatology (2014-2020)')
+
+    # ax3
+    ax3 = plt.subplot2grid((3, 1), (2, 0))
+    #c = plt.contourf(distance, df_anom.index, df_anom, v_anom, cmap=cmo.cm.seismic, extend='both')
+    c = plt.contourf(distance, df_anom.index, df_anom, v_anom, cmap=plt.cm.RdBu_r, extend='both')
+    ax3.set_ylim([0, ZMAX])
+    ax3.set_xlim([0,  XLIM])
+    ax3.set_ylabel('Depth (m)', fontweight = 'bold')
+    ax3.set_xlabel('Distance (km)', fontweight = 'bold')
+    ax3.invert_yaxis()
+    if REGION == 'NL':
+        Bgon = plt.Polygon(bathymetry,color=np.multiply([1,.9333,.6667],.4), alpha=1, zorder=10)
+        ax3.add_patch(Bgon)
+    cb = plt.colorbar(c)
+    cb.ax.tick_params(labelsize=8)
+    cb.set_label(axis_label, fontsize=12, fontweight='normal')
+    ax3.set_title(r'Anomaly')
+
+    fig.set_size_inches(w=8,h=12)
+    fig_name = 'btl_' + VAR_text + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '.png' 
+    fig.savefig(fig_name, dpi=200)
+    os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+    ## French figure
+    if FRENCH:
+        ax.set_title(title_FR)
+        ax2.set_title('Climatologie (2014-2020)')
+        ax3.set_title(r'Anomalie')
+        ax.set_ylabel('Profondeur (m)', fontweight = 'bold')
+        ax2.set_ylabel('Profondeur (m)', fontweight = 'bold')
+        ax3.set_ylabel('Profondeur (m)', fontweight = 'bold')
+        fig.set_size_inches(w=8,h=12)
+        fig_name = 'btl_' + VAR_text + '_' + SECTION + '_' + SEASON + '_' + str(YEAR) + '_FR.png' 
+        fig.savefig(fig_name, dpi=200)
+        os.system('convert -trim ' + fig_name + ' ' + fig_name)
+
+    # For NL ResDoc
+    ## montage btl_Omega_Aragonite_SI_summer_2019.png btl_Omega_Aragonite_SI_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_Omega_Aragonite_SI_2019-2020_summer.png
+    ## montage btl_Omega_Aragonite_BB_summer_2019.png btl_Omega_Aragonite_BB_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_Omega_Aragonite_BB_2019-2020_summer.png
+    ## montage btl_Omega_Aragonite_FC_summer_2019.png btl_Omega_Aragonite_FC_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_Omega_Aragonite_FC_2019-2020_summer.png
+    
+    ## montage btl_Oxygen_Saturation_SI_summer_2019.png btl_Oxygen_Saturation_SI_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_Oxygen_Saturation_SI_2019-2020_summer.png
+    ## montage btl_Oxygen_Saturation_BB_summer_2019.png btl_Oxygen_Saturation_BB_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_Oxygen_Saturation_BB_2019-2020_summer.png
+    ## montage btl_Oxygen_Saturation_FC_summer_2019.png btl_Oxygen_Saturation_FC_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_Oxygen_Saturation_FC_2019-2020_summer.png
+    
+    ## montage btl_pH_Total_SI_summer_2019.png btl_pH_Total_SI_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_pH_Total_SI_2019-2020_summer.png
+    ## montage btl_pH_Total_BB_summer_2019.png btl_pH_Total_BB_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_pH_Total_BB_2019-2020_summer.png
+    ## montage btl_pH_Total_FC_summer_2019.png btl_pH_Total_FC_summer_2020.png -tile 2x1 -geometry +10+10  -background white NL_OA_pH_Total_FC_2019-2020_summer.png
+    
+    ## In French:
+    ## montage btl_Omega_Aragonite_SI_summer_2019_FR.png btl_Omega_Aragonite_SI_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_Omega_Aragonite_SI_2019-2020_summer_FR.png
+    ## montage btl_Omega_Aragonite_BB_summer_2019_FR.png btl_Omega_Aragonite_BB_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_Omega_Aragonite_BB_2019-2020_summer_FR.png
+    ## montage btl_Omega_Aragonite_FC_summer_2019_FR.png btl_Omega_Aragonite_FC_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_Omega_Aragonite_FC_2019-2020_summer_FR.png
+    
+    ## montage btl_Oxygen_Saturation_SI_summer_2019_FR.png btl_Oxygen_Saturation_SI_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_Oxygen_Saturation_SI_2019-2020_summer_FR.png
+    ## montage btl_Oxygen_Saturation_BB_summer_2019_FR.png btl_Oxygen_Saturation_BB_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_Oxygen_Saturation_BB_2019-2020_summer_FR.png
+    ## montage btl_Oxygen_Saturation_FC_summer_2019_FR.png btl_Oxygen_Saturation_FC_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_Oxygen_Saturation_FC_2019-2020_summer_FR.png
+    
+    ## montage btl_pH_Total_SI_summer_2019_FR.png btl_pH_Total_SI_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_pH_Total_SI_2019-2020_summer_FR.png
+    ## montage btl_pH_Total_BB_summer_2019_FR.png btl_pH_Total_BB_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_pH_Total_BB_2019-2020_summer_FR.png
+    ## montage btl_pH_Total_FC_summer_2019_FR.png btl_pH_Total_FC_summer_2020_FR.png -tile 2x1 -geometry +10+10  -background white NL_OA_pH_Total_FC_2019-2020_summer_FR.png

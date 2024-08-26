@@ -32,7 +32,7 @@ lonLims = [-70, -35]
 latLims = [38, 68]
 proj = 'merc'
 decim_scale = 4
-stationFile = '/home/cyrf0006/github/AZMP-NL/data/STANDARD_SECTIONS.xlsx'
+stationFile = '/home/cyrf0006/github/AZMP-NL/utils/STANDARD_SECTIONS.xlsx'
 #fig_name = 'map_NL_CSAS.png'
 fig_name = 'map_STACFIS.png'
 AZMP_airTemp_file = '/home/cyrf0006/github/AZMP-NL/utils/airTemp_sites.xlsx'
@@ -155,28 +155,28 @@ m.drawmeridians(np.arange(-80, 5, 5), labels=[0,0,0,1], fontsize=12, fontweight=
 
 
 # plot SST_boxes
-abbr = df_box.abbr.values
-lat_min = df_box.lat_min.values
-lat_max = df_box.lat_max.values
-lon_min = df_box.lon_min.values
-lon_max = df_box.lon_max.values
+## abbr = df_box.abbr.values
+## lat_min = df_box.lat_min.values
+## lat_max = df_box.lat_max.values
+## lon_min = df_box.lon_min.values
+## lon_max = df_box.lon_max.values
 
-for idx, name in enumerate(abbr):
-    xbox = np.array([lon_min[idx], lon_max[idx], lon_max[idx], lon_min[idx], lon_min[idx]])
-    ybox = np.array([lat_min[idx], lat_min[idx], lat_max[idx], lat_max[idx], lat_min[idx]])
-    x, y = m(xbox, ybox)
-    if (name=='CLS') :
-        m.plot(x,y,color='w', zorder=200)
-        x, y = m(xbox, ybox+1.5)
-        plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold', zorder=200)
-    elif (name=='NCLS'):
-        m.plot(x,y,color='w', zorder=200)
-        plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold', zorder=200)
-    elif (name=='GS') | (name=='HS'):
-        m.plot(x,y,color='w', zorder=200)
-        plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold', zorder=200)
-    else:
-        pass
+## for idx, name in enumerate(abbr):
+##     xbox = np.array([lon_min[idx], lon_max[idx], lon_max[idx], lon_min[idx], lon_min[idx]])
+##     ybox = np.array([lat_min[idx], lat_min[idx], lat_max[idx], lat_max[idx], lat_min[idx]])
+##     x, y = m(xbox, ybox)
+##     if (name=='CLS') :
+##         m.plot(x,y,color='w', zorder=200)
+##         x, y = m(xbox, ybox+1.5)
+##         plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold', zorder=200)
+##     elif (name=='NCLS'):
+##         m.plot(x,y,color='w', zorder=200)
+##         plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold', zorder=200)
+##     elif (name=='GS') | (name=='HS'):
+##         m.plot(x,y,color='w', zorder=200)
+##         plt.text(x.mean(), y.mean(), name, horizontalalignment='center', verticalalignment='center', fontsize=10, color='w', fontweight='bold', zorder=200)
+##     else:
+##         pass
 
     
 # plot AZMP stations
@@ -247,6 +247,7 @@ x, y = m(np.mean(US_poly['EGOM']['lon']), np.mean(US_poly['EGOM']['lat']))
 m.scatter(x,y,100,marker='*',color='m', zorder=100)
 plt.text(x, y, 'EGOM ', horizontalalignment='right', verticalalignment='bottom', fontsize=10, color='m', fontweight='bold', zorder=100)
 
+
 # add air temperature stations
 x, y = m(air_stationLon,air_stationLat)
 plt.scatter(x,y,100, marker='.', color='saddlebrown', zorder=100)
@@ -278,9 +279,14 @@ for div in div_toplot:
 # Add USA polygons:
 ## poly_lon, poly_lat = m(US_poly['NEC']['lon'], US_poly['NEC']['lat'])
 ## m.plot(poly_lon, poly_lat, 'm', linewidth=2, zorder=10)
+
 # Add CLS polygons:
-## poly_lon, poly_lat = m(CLS_poly['CLS']['lon'], CLS_poly['CLS']['lat'])
-## m.plot(poly_lon, poly_lat, 'm', linewidth=2, zorder=10)
+poly_lon, poly_lat = m(CLS_poly['CLS']['lon'], CLS_poly['CLS']['lat'])
+m.plot(poly_lon, poly_lat, 'w', linewidth=2, zorder=10)
+#x, y = m(poly_lon, poly_lat)
+plt.text(np.mean(poly_lon), np.mean(poly_lat), 'CLS', horizontalalignment='right', verticalalignment='bottom', fontsize=10, color='w', fontweight='bold', zorder=100)
+
+##         plt.text
 
 ## patches = []
 ## NEC = np.array([[-66.80, 42.20], [-66.00, 42.20], [-66.00, 42.60], [-66.80, 42.60], [-66.80, 42.20]])

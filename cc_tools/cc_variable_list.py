@@ -13,7 +13,7 @@ def variable_parameters(my_variable):
 
     print(my_variable)
     if my_variable == 'pH':
-        return [9, 7.4, 8.2, 7.8, cmo.thermal_r, [7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 8.0, 8.1, 8.2], r'$\rm pH_{T,is}$', 'both']
+        return [8, 7.2, 8.2, 7.8, cmo.thermal_r, [7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 8.0, 8.1, 8.2], r'$\rm pH_{T,is}$', 'both']
         #return [17, 7.4, 8.2, 7.7, cmo.halin_r, [7.4, 7.6, 7.8, 8.0, 8.2], r'$\rm pH_{T,is}$', 'both']
 #        return [17, 7.5, 8.3, 7.8, cmo.thermal, [7.5, 7.7, 7.9, 8.1, 8.3], r'$\rm pH_{T,is}$', 'both']
 
