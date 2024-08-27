@@ -588,7 +588,7 @@ def anomaly_calculator(df,years_flag,current_year,year_clim):
 	return df,anom_std,anom,annual_mean,ts_monthly_clim
 
 
-def anomaly_plotter(anom_std,variable,YLIM=[-3,3]):
+def anomaly_plotter(anom_std,variable,XLIM,YLIM=[-3,3]):
 	#Plot the vertically averaged anomaly
 	df1 = anom_std[anom_std>0]
 	df2 = anom_std[anom_std<0]
@@ -601,6 +601,7 @@ def anomaly_plotter(anom_std,variable,YLIM=[-3,3]):
 	plt.ylabel('Normalized anomaly')
 	plt.title('Station 27 - Average '+variable+' (0-176m)')
 	plt.ylim(YLIM)
+	plt.xlim(XLIM)
 	plt.grid()
 	# Save Figure
 	fig.set_size_inches(w=12,h=6)
@@ -680,7 +681,7 @@ def CIL_calculator(df):
 	cil_summer_stats.to_pickle('S27_CIL_summer_stats.pkl')
 	return cil_temp,cil_core,cil_coredepth,cil_thickness
 
-def CIL_plotter(cil_stat,title,title_FR,save_title,year_clim=[1991,2020],YLIM=[-5,5]):
+def CIL_plotter(cil_stat,title,title_FR,save_title,XLIM,year_clim=[1991,2020],YLIM=[-5,5]):
 	#Define the variable and climatology
 	my_ts = cil_stat
 	my_clim = my_ts[(my_ts.index.year>=year_clim[0]) & (my_ts.index.year<=year_clim[1])]
@@ -701,6 +702,7 @@ def CIL_plotter(cil_stat,title,title_FR,save_title,year_clim=[1991,2020],YLIM=[-
 	plt.ylabel('Normalized anomaly')
 	plt.title('Station 27 - '+title)
 	plt.ylim(YLIM)
+	plt.xlim(XLIM)
 	plt.grid()
 	#Save Figure
 	fig.set_size_inches(w=12,h=6)
@@ -855,8 +857,8 @@ def stratification_timeseries_mean(
 		plt.legend(loc=3, ncol=4)
 		x += 1
 	# Save Figure
-	fig.set_size_inches(w=12,h=6)
-	fig_name = 's27_stratif_plot_means_nolines.png'
+	fig.set_size_inches(w=8,h=6)
+	fig_name = 's27_stratif_plot_means_withlines.png'
 	fig.savefig(fig_name, dpi=300)
 	os.system('convert -trim ' + fig_name + ' ' + fig_name)
 

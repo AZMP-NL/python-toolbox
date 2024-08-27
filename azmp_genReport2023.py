@@ -191,22 +191,23 @@ years_flag = [1950,1980]
 df = pd.read_pickle('S27_temperature_monthly.pkl')
 df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the temperature anomaly
-azS27.anomaly_plotter(anom_std,'temperature',YLIM=[-2,2])
+XLIM = [anom_std.index[0],anom_std.index[-1]+datetime.timedelta(days=180)]
+azS27.anomaly_plotter(anom_std,'temperature',XLIM=XLIM,YLIM=[-2,2])
 #Plot the temperature climatology
 azS27.climatology_plotter(ts_monthly_clim,annual_mean,'temperature')
 #Determine the CIL metrics
 cil_temp,cil_core,cil_coredepth,cil_thickness = azS27.CIL_calculator(df)
 #Create the CIL figures
-azS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly',YLIM=[-3,3])
-azS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly',YLIM=[-4,4])
-azS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly',YLIM=[-4,4])
-azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly',YLIM=[-5,5])
+azS27.CIL_plotter(cil_temp,'CIL mean temperature','Température moyenne de la CIF','s27_CILtemp_anomaly',XLIM=XLIM,YLIM=[-3,3])
+azS27.CIL_plotter(cil_core,'CIL core temperature','Température du coeur de la CIF','s27_CILcore_anomaly',XLIM=XLIM,YLIM=[-4,4])
+azS27.CIL_plotter(cil_coredepth,'CIL core depth','Profondeur du coeur de la CIF','s27_CILcoredepth_anomaly',XLIM=XLIM,YLIM=[-4,4])
+azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILthickness_anomaly',XLIM=XLIM,YLIM=[-5,5])
 
 #Create anomaly output for salinity
 df = pd.read_pickle('S27_salinity_monthly.pkl')
 df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the salinity anomaly
-azS27.anomaly_plotter(anom_std,'salinity',YLIM=[-2.5,2.5])
+azS27.anomaly_plotter(anom_std,'salinity',XLIM=XLIM,YLIM=[-2.5,2.5])
 
 #Get the stratification ready for plotting
 strat_shallow_path = 'S27_stratif_0-50_monthly.pkl'
@@ -282,14 +283,14 @@ azS27.scorecard_plotter(
 #Montage all the figures together
 os.system('convert scorecards_s27_T.png scorecards_s27_S.png scorecards_s27_CIL.png scorecards_s27_MLD.png scorecards_s27_strat_0-50m.png scorecards_s27_strat_10-150m.png  -gravity East -append -geometry +1+1 scorecards_s27.png')
 os.system('convert scorecards_s27_T_FR.png scorecards_s27_S_FR.png scorecards_s27_CIL_FR.png scorecards_s27_MLD_FR.png scorecards_s27_strat_0-50m_FR.png scorecards_s27_strat_10-150m_FR.png  -gravity East -append -geometry +1+1 scorecards_s27_FR.png')
-os.system('cp scorecards_s27.png cp scorecards_s27_FR.png ./'+yoi+'/')
+os.system('cp scorecards_s27.png scorecards_s27_FR.png ./'+yoi+'/')
 os.system('rm scorecards_s27*.png')
 
 # Clean the files:
 os.system('montage  s27_CILtemp_anomaly.png s27_CILcore_anomaly.png s27_CILcoredepth_anomaly.png  -tile 1x3 -geometry +20+25  -background white  s27_CIL_subplots.png')
 os.system('montage  s27_vert_temp_anomaly.png s27_vert_sal_anomaly.png -tile 1x2 -geometry +1+25  -background white  s27_TS_subplots.png')
 os.system('montage  s27_vert_temp_anomalyFR.png s27_vert_sal_anomalyFR.png -tile 1x2 -geometry +1+25  -background white  s27_TS_subplotsFR.png')
-os.system('cp s27_mld_monthly.png s27_mld_plot.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png s27_stratif_plot_means_nolines.png ./'+yoi+'/')
+os.system('cp s27_mld_monthly.png s27_mld_plot.png s27_stratif_monthly_deep.png  s27_stratif_monthly_shallow.png s27_stratif_plot_means_withlines.png ./'+yoi+'/')
 os.system('cp s27_TS_subplots.png s27_TS_subplotsFR.png s27_CIL_subplots.png ./'+yoi+'/')
 os.system('mv s27*.png ./stn27')
 os.system('mv *.csv *.pkl ./operation_files')
@@ -412,7 +413,7 @@ os.system('mv *.pkl *.csv operation_files/')
 variables = ['temperature', 'salinity']
 sections = ['SI', 'BB', 'FC']
 for section in sections:
-print('Processing Section - ' + section)
+    print('Processing Section - ' + section)
     for season in seasons:
         for var in variables:
             #Ensure that STANDARD_SECTIONS.xlsx has been put in operation_files/
