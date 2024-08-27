@@ -417,7 +417,15 @@ def bottom_temperature(
         plt.title('Bottom Temperature ' + year)
 
     #Plot the cast locations
-    ax.scatter(lons, lats, s=2, marker='.', c='k', transform=ccrs.PlateCarree())
+    #Check to see if numpy file exists
+    files = os.listdir(os.path.expanduser(netcdf_path.split('CABOTS_')[0]))
+    if 'CASTS_profilesused_'+season+'_'+year+'.npy' in files:
+        CASTS_profiles = np.load(os.path.expanduser(netcdf_path.split('CABOTS_')[0]+'CASTS_profilesused_'+season+'_'+year+'.npy'))
+        ax.scatter(CASTS_profiles[:,0],CASTS_profiles[:,1], s=2, marker='.', c='k', transform=ccrs.PlateCarree())
+        print('.csv file available! CASTS profiles used in CABOTS plotted.')
+    else:
+        ax.scatter(lons, lats, s=2, marker='.', c='k', transform=ccrs.PlateCarree())
+        print('.csv file not available. All CASTS profiles plotted.')
 
     #Add gridlines
     if NSRF_plot:
@@ -889,7 +897,15 @@ def bottom_salinity(
         plt.title('Bottom Salinity ' + year)
 
     #Plot the cast locations
-    ax.scatter(lons, lats, s=2, marker='.', c='k', transform=ccrs.PlateCarree())
+    #Check to see if numpy file exists
+    files = os.listdir(os.path.expanduser(netcdf_path.split('CABOTS_')[0]))
+    if 'CASTS_profilesused_'+season+'_'+year+'.npy' in files:
+        CASTS_profiles = np.load(os.path.expanduser(netcdf_path.split('CABOTS_')[0]+'CASTS_profilesused_'+season+'_'+year+'.npy'))
+        ax.scatter(CASTS_profiles[:,0],CASTS_profiles[:,1], s=2, marker='.', c='k', transform=ccrs.PlateCarree())
+        print('.csv file available! CASTS profiles used in CABOTS plotted.')
+    else:
+        ax.scatter(lons, lats, s=2, marker='.', c='k', transform=ccrs.PlateCarree())
+        print('.csv file not available. All CASTS profiles plotted.')
 
     #Add gridlines
     if NSRF_plot:
