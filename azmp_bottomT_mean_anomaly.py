@@ -10,6 +10,7 @@ import numpy as  np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import datetime
 
 
 # Adjust fontsize/weight
@@ -21,12 +22,17 @@ plt.rc('font', **font)
 width = 0.7
 clim_year = [1991, 2020]
 years = [1980, 2024]
+path='~/data/CABOTS/csv_averages/'
+
 
 #### ------------- For fall ---------------- ####
 # 0.
-infile = 'operation_files/stats_2H_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = path+'fall_2H_regional_averages.csv'
+df = pd.read_csv(infile)
+#Update index to datetime
+df = df.rename(columns={'Unnamed: 0': 'year'})
+df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 # Flag bad years (no or weak sampling):
 bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009, 2022])
 for i in bad_years:
@@ -37,9 +43,12 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom2H = std_anom[['Tmean', 'Tmean_sha200']]
 
 # 1.
-infile = 'operation_files/stats_2J_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = path+'fall_2J_regional_averages.csv'
+df = pd.read_csv(infile)
+#Update index to datetime
+df = df.rename(columns={'Unnamed: 0': 'year'})
+df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 # Flag bad years (no or weak sampling):
 bad_years = np.array([1995, 2022])
 for i in bad_years:
@@ -50,18 +59,24 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom2J = std_anom[['Tmean', 'Tmean_sha200']]
 
 # 2.
-infile = 'operation_files/stats_3K_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = path+'fall_3K_regional_averages.csv'
+df = pd.read_csv(infile)
+#Update index to datetime
+df = df.rename(columns={'Unnamed: 0': 'year'})
+df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 df['area_colder0'] = df['area_colder0']/1000 # In 1000km
 df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3K = std_anom[['Tmean', 'Tmean_sha300']]
 
 # 3.
-infile = 'operation_files/stats_3LNO_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = path+'fall_3LNO_regional_averages.csv'
+df = pd.read_csv(infile)
+#Update index to datetime
+df = df.rename(columns={'Unnamed: 0': 'year'})
+df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 # Flag bad years (no or weak sampling):
 bad_years = np.array([2021])
 for i in bad_years:
@@ -113,9 +128,12 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 #### ------------- For Spring ---------------- ####
 # 1.
-infile = 'operation_files/stats_3LNO_spring.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = path+'spring_3LNO_regional_averages.csv'
+df = pd.read_csv(infile)
+#Update index to datetime
+df = df.rename(columns={'Unnamed: 0': 'year'})
+df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 # Flag bad years (no or weak sampling):
 bad_years = np.array([2020, 2021])
 for i in bad_years:
@@ -126,9 +144,12 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3LNO = std_anom[['Tmean', 'Tmean_sha100']]
 
 # 2.
-infile = 'operation_files/stats_3Ps_spring.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = path+'spring_3Ps_regional_averages.csv'
+df = pd.read_csv(infile)
+#Update index to datetime
+df = df.rename(columns={'Unnamed: 0': 'year'})
+df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
 # Flag bad years (no or weak sampling):
 bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020, 2023])
 for i in bad_years:
@@ -263,7 +284,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Normalized anomaly')
@@ -304,7 +325,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Anomalie Normalisée')

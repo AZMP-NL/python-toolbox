@@ -465,10 +465,10 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
     lat_reg = np.arange(latLims[0]+dc/2, latLims[1]-dc/2, dc)
 
     ## --------- Get Bathymetry -------- ####
-    bathy_file = 'operation_files/' + SECTION + '_bathy.npy'
-    if os.path.isfile(bathy_file):
+    bathy_file = '~/github/AZMP-NL/bathymetry/' + SECTION + '_bathy.npy'
+    if os.path.isfile(os.path.expanduser(bathy_file)):
         print('Load saved bathymetry!')
-        Zitp = np.load(bathy_file)
+        Zitp = np.load(os.path.expanduser(bathy_file))
 
     else:
         print('Get bathy...')
@@ -563,7 +563,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
 
         ## -------- Get CTD data -------- ##
         year_file = CASTS_path + str(YEAR) + '.nc'
-        print('Get ' + year_file)
+        #print('Get ' + year_file)
         ds = xr.open_dataset(year_file)
         ds.load()
 
@@ -605,7 +605,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
 
         ## -------- Method 1: Interpolation -------- ##
         #Temperature to Pandas Dataframe
-        print('Process temperature')
+        #print('Process temperature')
         df = da_temp.to_pandas()
         #Rename columns with 'bins'
         df.columns = bins[0:-1]
@@ -619,10 +619,10 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             df_section_itp_T = IDW_variable_3D(df, df_stn, lonsT, latsT, 0.25)
         else:
             df_section_itp_T = pd.DataFrame(index=stn_list, columns=df.columns.values).T
-        print(' -> Done!')
+        #print(' -> Done!')
 
         #Salinity to Pandas Dataframe
-        print('Process salinity')
+        #print('Process salinity')
         df = da_sal.to_pandas()
         #Rename columns with 'bins'
         df.columns = bins[0:-1]
@@ -636,7 +636,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
             df_section_itp_S = IDW_variable_3D(df, df_stn, lonsS, latsS, 1)
         else:
             df_section_itp_S = pd.DataFrame(index=stn_list, columns=df.columns.values).T
-        print(' -> Done!')
+        #print(' -> Done!')
 
         #Mask out the bathymetry
         V_coords = np.array([[x,y] for x in lat_reg for y in lon_reg])
@@ -893,7 +893,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
                 df_section_stn_man_meanT_shelf[np.where(YEAR == years)[0][0]] = year_merged.iloc[:20].mean(axis=1).mean()
                 df_section_stn_man_meanT_cap[np.where(YEAR == years)[0][0]] = year_merged.iloc[14:].mean(axis=1).mean()
 
-        print(' -> CIL climatology fill: '+str(YEAR)+' done! ')
+        #print(' -> CIL climatology fill: '+str(YEAR)+' done! ')
 
     # Save CIL timseries
     df_CIL= pd.DataFrame([cil_vol_stn_clim, cil_vol_stn_man_clim, cil_vol_itp_clim, cil_core_stn_clim, cil_core_stn_man_clim, cil_core_itp_clim]).T

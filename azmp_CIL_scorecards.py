@@ -43,11 +43,13 @@ def is_number(s):
 #### ---- Load the data and compute anomalies ---- ####
 
 #Determine the name of the working directory
+work_name = './'
+'''
 work_name = input('What is the working directory (ex: "~/AZMP")? [default: "./"]: ')
 if work_name == '':
     work_name='./'
 print('  -> '+work_name+' used as working directory!')
-
+'''
 #Files come from azmp_section_clim.py
 df_SI = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_SI_summer_climfill.pkl'))
 df_BB = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_BB_summer_climfill.pkl'))

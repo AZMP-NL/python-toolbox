@@ -35,11 +35,13 @@ rplstn_FC = np.concatenate((np.arange(1950,1992),np.array([1992,1993,1994,1995,1
 
 
 #Determine the name of the working directory
+work_name = './'
+'''
 work_name = input('What is the working directory (ex: "~/AZMP")? [default: "./"]: ')
 if work_name == '':
     work_name='./'
 print('  -> '+work_name+' used as working directory!')
-
+'''
 #### ---- Load the data and compute anomalies ---- ####
 df_SI = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_SI_summer_climfill.pkl')).astype('float')
 df_BB = pd.read_pickle(os.path.join(work_name, 'operation_files/df_CIL_BB_summer_climfill.pkl')).astype('float')

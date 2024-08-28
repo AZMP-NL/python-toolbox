@@ -35,11 +35,13 @@ width = 0.7
 
 
 #Determine the name of the working directory
+work_name = './'
+'''
 work_name = input('What is the working directory (ex: "~/AZMP")? [default: "./"]: ')
 if work_name == '':
     work_name='./'
 print('  -> '+work_name+' used as working directory!')
-
+'''
 #### ---- LOAD THE DATA (and prepare) ---- ####
 # 1. NAO
 nao = pd.read_pickle(os.path.join(work_name, 'operation_files/NAO_winter.pkl'))
@@ -315,7 +317,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Normalized anomaly')
@@ -370,7 +372,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_xlabel(r'')
 ax.set_ylabel(r'Anomalie normalisée cummulée')
@@ -437,7 +439,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_ylim([-1.6, 1.6])
 ax.set_xlabel(r'')
@@ -730,7 +732,7 @@ ticks = ax.xaxis.get_ticklocs()
 ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
 ax.xaxis.set_ticks(ticks[::n])
 ax.xaxis.set_ticklabels(ticklabels[::n])
-plt.fill_between([ticks[0], ticks[-1]], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
+plt.fill_between([ticks[0]-1, ticks[-1]+1], [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.grid('on')
 ax.set_ylim([-1.6, 1.6])
 ax.set_xlabel(r'')
