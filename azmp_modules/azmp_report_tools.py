@@ -24,6 +24,7 @@ import netCDF4
 import h5py
 import xarray as xr
 import pandas as pd
+import datetime
 # maps
 os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 #from mpl_toolkits.basemap import Basemap
@@ -1493,7 +1494,7 @@ def sfa_bottom_stats(
     df_mindex.to_pickle(season + '_sfa_bottom_'+var+'.pkl')
 
 
-def bottom_scorecards(years, clim_year=[1991, 2020]):
+def bottom_scorecards(path, years, clim_year=[1991, 2020]):
 
 
     '''
@@ -1502,18 +1503,23 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     usage example:
 
-
     bottom_scorecards(years=[1980, 2019], clim_year=[1981, 2010]):
+
+    path='~/data/CABOTS/csv_averages/'
+    years=[1980, int(yoi)]
+    clim_year=[1991, 2020]
 
     '''
 
     #### ------------- For fall ---------------- ####
     # 0.
-    infile = 'operation_files/stats_2H_fall.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_2H_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy().round(0)
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     #bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009, 2022])
     bad_years = np.array([1982, 1984, 1985, 1986, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
@@ -1665,11 +1671,13 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_2H_FR.png scorecards_fall_2H_FR.png')
 
  # 1.
-    infile = 'operation_files/stats_2J_fall.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_2J_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy()
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     #bad_years = np.array([1995, 2022])
     bad_years = np.array([1995])
@@ -1790,11 +1798,13 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     
     # 2.
-    infile = 'operation_files/stats_3K_fall.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_3K_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy()
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     ## bad_years = np.array([2003])
     ## for i in bad_years:
@@ -1913,11 +1923,13 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_3K_FR.png scorecards_fall_3K_FR.png')
 
     # 3.
-    infile = 'operation_files/stats_3LNO_fall.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_3LNO_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy()
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = np.array([2021])
     for i in bad_years:
@@ -2047,11 +2059,13 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
     #### ------------- For Spring ---------------- ####
     # 1.
-    infile = 'operation_files/stats_3LNO_spring.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'spring_3LNO_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy()
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     #bad_years = np.array([2020, 2021])
     bad_years = np.array([2020])
@@ -2181,11 +2195,13 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
 
 
     # 2.
-    infile = 'operation_files/stats_3Ps_spring.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'spring_3Ps_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy()
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     #bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
     bad_years = np.array([1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2020, 2023])
@@ -2312,7 +2328,7 @@ def bottom_scorecards(years, clim_year=[1991, 2020]):
     os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+10  -background white  scorecards_botT_spring_FR.png')
 
     
-def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
+def sfa_bottom_scorecards(path, years, season, clim_year=[2006, 2020]):
 
 
     '''
@@ -2326,10 +2342,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
     if season == 'summer':
         #### ------------- For summer ---------------- ####
         # 0.
-        infile = 'operation_files/stats_sfa2_summer.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'summer_sfa2_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([])
         for i in bad_years:
@@ -2459,10 +2478,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
         os.system('convert -trim scorecards_summer_SFA2_FR.png scorecards_summer_SFA2_FR.png')
 
      # 1.
-        infile = 'operation_files/stats_sfa3_summer.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'summer_sfa3_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([2006, 2008, 2010, 2012])
         for i in bad_years:
@@ -2562,10 +2584,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
 
 
         # 2.
-        infile = 'operation_files/stats_sfa4_summer.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'summer_sfa4_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([])
         for i in bad_years:
@@ -2755,10 +2780,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
     if season == 'fall':
         #### ------------- For fall ---------------- ####
         # 0.
-        infile = 'operation_files/stats_sfa4_fall.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'fall_sfa4_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([])
         for i in bad_years:
@@ -2888,10 +2916,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
         os.system('convert -trim scorecards_fall_SFA4_FR.png scorecards_fall_SFA4_FR.png')
 
      # 1.
-        infile = 'operation_files/stats_sfa5_fall.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'fall_sfa5_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([2006, 2008, 2010, 2012])
         for i in bad_years:
@@ -2991,10 +3022,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
 
 
         # 2.
-        infile = 'operation_files/stats_sfa6_fall.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'fall_sfa6_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([])
         for i in bad_years:
@@ -3096,10 +3130,13 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
 
 
         # 2.
-        infile = 'operation_files/stats_sfa7_fall.pkl'
-        df = pd.read_pickle(infile)
-        df.index = pd.to_datetime(df.index) # update index to datetime
+        infile = path+'fall_sfa7_regional_averages.csv'
+        df = pd.read_csv(infile)
+        #Update index to datetime
+        df = df.rename(columns={'Unnamed: 0': 'year'})
+        df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
         df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+        percent_coverage = df.T_percent_coverage.values.copy().round(0)
         # Flag bad years (no or weak sampling):
         bad_years = np.array([])
         for i in bad_years:
@@ -3209,7 +3246,7 @@ def sfa_bottom_scorecards(years, season, clim_year=[2006, 2020]):
 
 
 
-def bottomS_scorecards(years, clim_year=[2006, 2021]):
+def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
 
 
     '''
@@ -3223,11 +3260,13 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
 
     #### ------------- For summer ---------------- ####
     # 0.
-    infile = 'operation_files/stats_2H_fall_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_2H_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy().round(0)
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:
@@ -3239,8 +3278,8 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200', 'S_percent_coverage'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$', 'S_percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_2H_fall.csv', sep=',', float_format='%0.3f')
@@ -3366,11 +3405,13 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
     os.system('convert -trim scorecards_fallS_2H_FR.png scorecards_fallS_2H_FR.png')
 
  # 1.
-    infile = 'operation_files/stats_2J_fall_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_2J_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy().round(0)
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:
@@ -3380,8 +3421,8 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200', 'S_percent_coverage'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$', 'S_percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_2J_fall.csv', sep=',', float_format='%0.3f')
@@ -3481,11 +3522,13 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
 
 
     # 2.
-    infile = 'operation_files/stats_3K_fall_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_3K_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy().round(0)
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:
@@ -3495,8 +3538,8 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200', 'S_percent_coverage'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$', 'S_percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_3K_fall.csv', sep=',', float_format='%0.3f')
@@ -3598,11 +3641,13 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
     plt.close('all')
 
     # 3.
-    infile = 'operation_files/stats_3LNO_fall_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'fall_3LNO_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.percent_coverage.values.copy().round(0)
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:
@@ -3612,8 +3657,8 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200', 'percent_coverage'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$', 'percent_coverage': '% Cov'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200', 'S_percent_coverage'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$', 'S_percent_coverage': '% Cov'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_3LNO_fall.csv', sep=',', float_format='%0.3f')
@@ -3728,7 +3773,7 @@ def bottomS_scorecards(years, clim_year=[2006, 2021]):
 
 
 
-def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
+def sfa_bottomS_scorecards(path, years, clim_year=[2006, 2021]):
 
 
     '''
@@ -3742,10 +3787,13 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
 
     #### ------------- For summer ---------------- ####
     # 0.
-    infile = 'operation_files/stats_sfa2_summer_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'summer_sfa2_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = np.array([])
     for i in bad_years:
@@ -3757,12 +3805,12 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_sfa2_summer.csv', sep=',', float_format='%0.3f')
-        
+
     # Get text values +  cell color
     year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
     year_list.append(r'sd')   
@@ -3867,10 +3915,13 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
     os.system('convert -trim scorecards_summerS_SFA2_FR.png scorecards_summerS_SFA2_FR.png')
 
  # 1.
-    infile = 'operation_files/stats_sfa3_summer_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'summer_sfa3_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = np.array([2006, 2008, 2010, 2012])
     for i in bad_years:
@@ -3880,8 +3931,8 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_sfa3_summer.csv', sep=',', float_format='%0.3f')
@@ -3964,10 +4015,13 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
 
 
     # 2.
-    infile = 'operation_files/stats_sfa4_summer_salinity.pkl'
-    df = pd.read_pickle(infile)
-    df.index = pd.to_datetime(df.index) # update index to datetime
+    infile = path+'summer_sfa4_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = np.array([])
     for i in bad_years:
@@ -3977,8 +4031,8 @@ def sfa_bottomS_scorecards(years, clim_year=[2006, 2021]):
     std_anom = std_anom.T
     std_anom['MEAN'] = df_clim.mean(axis=0)
     std_anom['SD'] = df_clim.std(axis=0)
-    std_anom = std_anom.reindex(['Tmean', 'Tmean_sha200'])
-    std_anom = std_anom.rename({'Tmean': r'$\rm S_{bot}$', 'Tmean_sha200': r'$\rm S_{bot_{<200m}}$'})
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$'})
     std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
     # Save in .csv for future use
     std_anom.to_csv('bottomS_stn_anom_sfa4_summer.csv', sep=',', float_format='%0.3f')

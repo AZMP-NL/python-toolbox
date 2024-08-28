@@ -366,19 +366,8 @@ os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 # For NAFO STACFEN and STACFIS input: [NEED TO DO]
 # -> check if we have everything needed.
 
-
-# bottom stats and scorecards (arange year+1)
-#[need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
-# Would be nice that we don;t need to run the whole thing every year...
-for season in ['spring','summer','fall']:
-    azrt.bottom_stats(
-        years=np.arange(1980, int(yoi)+1),
-        season=season,
-        var='temperature',
-        netcdf_path='~/data/CABOTS/CABOTS_'+season+'.nc'
-        )
-os.system('mv *.pkl operation_files/')
-azrt.bottom_scorecards(years=[1980, int(yoi)], clim_year=[1991, 2020])
+# bottom scorecards (arange year+1)
+azrt.bottom_scorecards(path='~/data/CABOTS/csv_averages/', years=[1980, int(yoi)], clim_year=[1991, 2020])
 os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png '+yoi+'')
 os.system('mv *.png *.csv bottom_temp_stats/')
 
@@ -530,28 +519,9 @@ os.system('mv sfa_bottomS*.png bottom_saln/')
 os.system('rm bottom_temp*.png ')
 os.system('rm bottom_sal*.png ')
 
-#Calculate the bottom stats for temperature and salinity, SFA
-azrt.sfa_bottom_stats(
-    years=np.arange(2006,int(year)+1),
-    season='summer',
-    time_adjust=False,
-    netcdf_path='~/data/CABOTS/CABOTS_summer.nc',
-    climato_file='operation_files/Tbot_NSRFx_timeadjust_climato_summer_2006-2021_0.10.h5',
-    var='temperature',
-    )
-azrt.sfa_bottom_stats(
-    years=np.arange(2006,int(year)+1),
-    season='summer',
-    time_adjust=False,
-    netcdf_path='~/data/CABOTS/CABOTS_summer.nc',
-    climato_file='operation_files/Sbot_NSRFx_timeadjust_climato_summer_2006-2021_0.10.h5',
-    var='salinity',
-    )
-os.system('mv *.pkl operation_files/')
-
-#Create the accompanying bottom scorecards
-azrt.sfa_bottom_scorecards(years=np.arange(2006,int(year)+1),season='summer',clim_year=[2006,2020])
-azrt.sfa_bottomS_scorecards(years=np.arange(2006,int(year)+1),season='summer',clim_year=[2006,2020])
+#Create the sfa bottom scorecards
+azrt.sfa_bottom_scorecards(path='~/data/CABOTS/csv_averages/', season='summer', years=np.arange(2006,int(year)+1),clim_year=[2006,2020])
+azrt.sfa_bottomS_scorecards(path='~/data/CABOTS/csv_averages/', years=np.arange(2006,int(year)+1),clim_year=[2006,2020])
 os.system('cp scorecards_botT_SFA2-4_summer.png scorecards_botT_SFA2-4_summer_FR.png '+yoi)
 os.system('cp scorecards_botS_SFA2-4_summer.png scorecards_botS_SFA2-4_summer_FR.png '+yoi)
 os.system('mv scorecards_botT_SFA*.png bottomT*.csv bottom_temp/')
