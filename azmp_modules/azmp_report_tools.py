@@ -1923,7 +1923,7 @@ def bottom_scorecards(path, years, clim_year=[1991, 2020]):
     os.system('convert -trim scorecards_fall_3K_FR.png scorecards_fall_3K_FR.png')
 
     # 3.
-    infile = path+'fall_3LNO_regional_averages.csv'
+    infile = path+'fall_3LNO_grandbanks_regional_averages.csv'
     df = pd.read_csv(infile)
     #Update index to datetime
     df = df.rename(columns={'Unnamed: 0': 'year'})
@@ -3258,7 +3258,7 @@ def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
     ** Note that varuables inside .pkl files are name "Tmean" isntead of "Smean"
     '''
 
-    #### ------------- For summer ---------------- ####
+    #### ------------- For fall ---------------- ####
     # 0.
     infile = path+'fall_2H_regional_averages.csv'
     df = pd.read_csv(infile)
@@ -3641,7 +3641,7 @@ def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
     plt.close('all')
 
     # 3.
-    infile = path+'fall_3LNO_regional_averages.csv'
+    infile = path+'fall_3LNO_grandbanks_regional_averages.csv'
     df = pd.read_csv(infile)
     #Update index to datetime
     df = df.rename(columns={'Unnamed: 0': 'year'})
@@ -3770,6 +3770,277 @@ def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
 
 
 
+
+
+    #### ------------- For Spring ---------------- ####
+    # 0.
+    infile = path+'spring_3LNO_grandbanks_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = df.index.year.values[percent_coverage < 80]
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200', 'S_percent_coverage'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$', 'S_percent_coverage': '% Cov'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomS_stn_anom_3LNO_spring.csv', sep=',', float_format='%0.3f')
+
+    #Re-fill the percent coverage
+    std_anom.iloc[-1][:-2] = percent_coverage
+    std_anom.iloc[-1][-2:] = np.nan
+
+    # Get text values +  cell color
+    year_list.append(r'$\rm \overline{x}$') # add 2 extra columns
+    year_list.append(r'sd')   
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    vals_color[-1,:] = 0
+    #vals_color[(vals_color<0.5) & (vals_color>-.5)] = 0.
+
+    # Build the colormap
+    vmin = -3.49
+    vmax = 3.49
+    midpoint = 0
+    levels = np.linspace(vmin, vmax, 15)
+    midp = np.mean(np.c_[levels[:-1], levels[1:]], axis=1)
+    colvals = np.interp(midp, [vmin, midpoint, vmax], [-1, 0., 1])
+    normal = plt.Normalize(-3.49, 3.49)
+    reds = plt.cm.Reds(np.linspace(0,1, num=7))
+    blues = plt.cm.Blues_r(np.linspace(0,1, num=7))
+    whites = [(1,1,1,1)]*2
+    colors = np.vstack((blues[0:-1,:], whites, reds[1:,:]))
+    colors = np.concatenate([[colors[0,:]], colors, [colors[-1,:]]], 0)
+    cmap, norm = from_levels_and_colors(levels, colors, extend='both')
+    cmap_r, norm_r = from_levels_and_colors(levels, np.flipud(colors), extend='both')
+    # Common parameters
+    nrows, ncols = std_anom.index.size+1, std_anom.columns.size
+    hcell, wcell = 0.5, 0.5
+    hpad, wpad = 1, 1    
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 3LNO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[0] == 3:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_springS_3LNO.png", dpi=300)
+    os.system('convert -trim scorecards_springS_3LNO.png scorecards_springS_3LNO.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm S_{bot}$' : r'$\rm S_{fond}$', r'$\rm S_{bot_{<200m}}$' : r'$\rm S_{fond_{<200m}}$', '% Coverage': '% Cov'})
+    year_list[-1] = u'ET'
+
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 3LNO de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(13)
+    #the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=std_anom.columns, 
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=year_list,
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1, 0.5]
+                        )
+    # change font color to white where needed:
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        elif key[0] == 0: #year's row = no color
+            pass
+        elif key[0] == 3:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_springS_3LNO_FR.png", dpi=300)
+    os.system('convert -trim scorecards_springS_3LNO_FR.png scorecards_springS_3LNO_FR.png')
+
+    # 1.
+    infile = path+'spring_3Ps_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = df.index.year.values[percent_coverage < 80]
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = std_anom.T
+    std_anom['MEAN'] = df_clim.mean(axis=0)
+    std_anom['SD'] = df_clim.std(axis=0)
+    std_anom = std_anom.reindex(['Smean', 'Smean_sha200', 'S_percent_coverage'])
+    std_anom = std_anom.rename({'Smean': r'$\rm S_{bot}$', 'Smean_sha200': r'$\rm S_{bot_{<200m}}$', 'S_percent_coverage': '% Cov'})
+    std_anom.rename(columns={'MEAN': r'$\rm \overline{x}$', 'SD': r'sd'}, inplace=True)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomS_stn_anom_3Ps_fall.csv', sep=',', float_format='%0.3f')
+
+    #Re-fill the percent coverage
+    std_anom.iloc[-1][:-2] = percent_coverage
+    std_anom.iloc[-1][-2:] = np.nan
+
+    vals = np.around(std_anom.values,1)
+    vals[vals==-0.] = 0.
+    vals_color = vals.copy()
+    vals_color[:,-1] = 0 # No color to last two columns (mean and STD)
+    vals_color[:,-2] = 0
+    vals_color[-1,:] = 0
+    #normal = plt.Normalize(-4.49, 4.49)
+    #cmap = plt.cm.get_cmap('seismic', 9) 
+    nrows, ncols = std_anom.index.size, std_anom.columns.size
+    fig=plt.figure(figsize=(ncols*wcell+wpad, nrows*hcell+hpad))
+    ax = fig.add_subplot(111)
+    ax.axis('off')
+    #do the table
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- NAFO division 3Ps --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_springS_3Ps.png", dpi=300)
+    os.system('convert -trim scorecards_springS_3Ps.png scorecards_springS_3Ps.png')
+
+    # French table
+    std_anom = std_anom.rename({r'$\rm S_{bot}$' : r'$\rm S_{fond}$', r'$\rm S_{bot_{<200m}}$' : r'$\rm S_{fond_{<200m}}$', '% Coverage': '% Cov'})
+    header = ax.table(cellText=[['']],
+                          colLabels=['-- Division 3Ps de l\'OPANO --'],
+                          loc='center'
+                          )
+    header.set_fontsize(12.5)
+    the_table=ax.table(cellText=vals, rowLabels=std_anom.index, colLabels=None, 
+                        loc='center', cellColours=cmap(normal(vals_color)), cellLoc='center',
+                        bbox=[0, 0, 1.0, 0.50]
+                        )
+    the_table.auto_set_font_size(False)
+    the_table.set_fontsize(12.5)
+    # change font color to white where needed:
+    table_props = the_table.properties()
+    #table_cells = table_props['child_artists']
+    last_columns = np.arange(vals.shape[1]-2, vals.shape[1]) # last columns
+    for key, cell in the_table.get_celld().items():
+        cell_text = cell.get_text().get_text()
+        if is_number(cell_text) == False:
+            pass
+        #elif key[0] == 0:# <--- remove when no years
+        #    pass
+        elif key[0] == 2:
+            if cell_text == 'nan':
+                cell._set_facecolor('lightgray')
+                cell._text.set_color('lightgray')
+            elif key[1] != -1:
+                cell._text.set_text(int(float(cell_text)))
+        elif key[1] in last_columns:
+             cell._text.set_color('darkslategray')
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
+            cell._text.set_color('white')
+        elif (cell_text=='nan'):
+            cell._set_facecolor('lightgray')
+            cell._text.set_color('lightgray')
+
+    plt.savefig("scorecards_springS_3Ps_FR.png", dpi=300)
+    os.system('convert -trim scorecards_springS_3Ps_FR.png scorecards_springS_3Ps_FR.png')
+    plt.close('all')
+
+    # English montage
+    os.system('montage  scorecards_springS_3LNO.png scorecards_springS_3Ps.png -tile 1x3 -geometry +1+10  -background white  scorecards_botS_spring.png')
+    # French montage
+    os.system('montage  scorecards_springS_3LNO_FR.png scorecards_springS_3Ps_FR.png -tile 1x3 -geometry +1+10  -background white  scorecards_botS_spring_FR.png')
 
 
 
