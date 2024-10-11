@@ -31,7 +31,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-current_year = 2023
+current_year = 2024
 
 ## ----  Prepare the data ---- ##
 # Legacy - Load from Excel sheets

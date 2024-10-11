@@ -71,7 +71,7 @@ std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 std_anom3K = std_anom[['Tmean', 'Tmean_sha300']]
 
 # 3.
-infile = path+'fall_3LNO_regional_averages.csv'
+infile = path+'fall_3LNO_grandbanks_regional_averages.csv'
 df = pd.read_csv(infile)
 #Update index to datetime
 df = df.rename(columns={'Unnamed: 0': 'year'})
@@ -128,7 +128,7 @@ os.system('convert -trim ' + fig_name + ' ' + fig_name)
 
 #### ------------- For Spring ---------------- ####
 # 1.
-infile = path+'spring_3LNO_regional_averages.csv'
+infile = path+'spring_3LNO_grandbanks_regional_averages.csv'
 df = pd.read_csv(infile)
 #Update index to datetime
 df = df.rename(columns={'Unnamed: 0': 'year'})

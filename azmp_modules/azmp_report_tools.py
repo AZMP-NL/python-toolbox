@@ -2059,7 +2059,7 @@ def bottom_scorecards(path, years, clim_year=[1991, 2020]):
 
     #### ------------- For Spring ---------------- ####
     # 1.
-    infile = path+'spring_3LNO_regional_averages.csv'
+    infile = path+'spring_3LNO_grandbanks_regional_averages.csv'
     df = pd.read_csv(infile)
     #Update index to datetime
     df = df.rename(columns={'Unnamed: 0': 'year'})
