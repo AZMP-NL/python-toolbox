@@ -3780,7 +3780,7 @@ def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
     df = df.rename(columns={'Unnamed: 0': 'year'})
     df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.T_percent_coverage.values.copy().round(0)
+    percent_coverage = df.S_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:
@@ -3925,7 +3925,7 @@ def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
     df = df.rename(columns={'Unnamed: 0': 'year'})
     df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
-    percent_coverage = df.T_percent_coverage.values.copy().round(0)
+    percent_coverage = df.S_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:

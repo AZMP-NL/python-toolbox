@@ -369,7 +369,7 @@ os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 # bottom scorecards (arange year+1)
 azrt.bottom_scorecards(path='~/data/CABOTS/csv_averages/', years=[1980, int(yoi)], clim_year=[1991, 2020])
 azrt.bottomS_scorecards(path='~/data/CABOTS/csv_averages/', years=[1980, int(yoi)], clim_year=[1991, 2020])
-os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png '+yoi+'')
+os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecards_botT_fall_FR.png scorecards_botT_fall.png scorecards_botS_spring.png scorecards_botS_spring_FR.png '+yoi+'')
 os.system('mv *.png *.csv bottom_temp_stats/')
 
 # bottom temperature bar plots [need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
