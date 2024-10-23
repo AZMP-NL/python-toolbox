@@ -23,6 +23,7 @@ __author__ = 'Frederic.Cyr@dfo-mpo.gc.ca'
 __version__ = '0.1'
 
 import os
+import wget
 import re
 import numpy as np
 import pandas as pd
@@ -44,7 +45,26 @@ import matplotlib.pyplot as plt
 os.environ['PROJ_LIB'] = '/home/cyrf0006/anaconda3/share/proj'
 #from mpl_toolkits.basemap import Basemap
 
-    
+
+
+def CASTS_update(
+    years,
+    version,
+    out_path='~/data/CASTS/',
+    url='https://g-772fa5.cd4fe.0ec8.data.globus.org/1/published/publication_734/submitted_data/',):
+    '''
+    Update CASTS using wget directly from FRDR.
+    Dowloads the yearly files for specified years.
+    '''
+    for year in years:
+        if os.path.exists(os.path.expanduser(out_path+year+'.nc')):
+            os.remove(url+version+'/'+year+'.nc')
+        wget.download(
+            url+version+'/'+year+'.nc',
+            os.path.expanduser(out_path))
+        print(year+' CASTS files updated.')
+
+
 def nao(
     YEAR,
     nao_file_loc,

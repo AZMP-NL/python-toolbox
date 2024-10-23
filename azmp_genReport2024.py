@@ -65,8 +65,16 @@ if os.path.isdir('SAR_files') != True: os.system('mkdir SAR_files')
 
 ## ---- 2023 update ---- ##
 # 0. Update CASTS and CABOTS.
-# (separate scripts)    
-    
+# (separate scripts)
+
+# Update CASTS from FRDR if wanted
+print('Would you like to update CASTS? [yes/no]')
+CASTS_up = input()
+if CASTS_up == 'yes':
+    azgen.CASTS_update(years=np.arange(1912,int(yoi)).astype(str),version='CASTS_2023')
+elif 'no':
+    print('No update to CASTS made.')
+
 
 # 1.  NAO, AO, AMO
 azgen.nao(int(yoi),'~/data/AZMP/climate_indices/nao_data.csv')

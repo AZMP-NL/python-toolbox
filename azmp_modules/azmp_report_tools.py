@@ -3927,6 +3927,9 @@ def bottomS_scorecards(path, years, clim_year=[2006, 2021]):
     df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
     percent_coverage = df.S_percent_coverage.values.copy().round(0)
     # Flag bad years (no or weak sampling):
+    bad_years = np.array([1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2020, 2023])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
     bad_years = df.index.year.values[percent_coverage < 80]
     for i in bad_years:
         df[df.index.year==i]=np.nan
