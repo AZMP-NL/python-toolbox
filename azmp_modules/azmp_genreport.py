@@ -23,8 +23,8 @@ __author__ = 'Frederic.Cyr@dfo-mpo.gc.ca'
 __version__ = '0.1'
 
 import os
-import wget
 import re
+import requests
 import numpy as np
 import pandas as pd
 import sys
@@ -53,16 +53,19 @@ def CASTS_update(
     out_path='~/data/CASTS/',
     url='https://g-772fa5.cd4fe.0ec8.data.globus.org/1/published/publication_734/submitted_data/',):
     '''
-    Update CASTS using wget directly from FRDR.
+    Update CASTS using request directly from FRDR.
     Dowloads the yearly files for specified years.
     '''
     for year in years:
         if os.path.exists(os.path.expanduser(out_path+year+'.nc')):
-            os.remove(url+version+'/'+year+'.nc')
-        wget.download(
-            url+version+'/'+year+'.nc',
-            os.path.expanduser(out_path))
+            os.remove(os.path.expanduser(out_path+year+'.nc'))
+        res = requests.get(url+version+'/'+year+'.nc')
+        #http 200 means success
+        if res.status_code == 200:
+            with open(os.path.expanduser(out_path)+year+'.nc', 'wb') as file_handle:  # wb means Write Binary
+                file_handle.write(res.content)
         print(year+' CASTS files updated.')
+
 
 
 def nao(
