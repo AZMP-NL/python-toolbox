@@ -49,7 +49,7 @@ work_name = 'reporting_2024'
 
 ## Preamble (create folders to dump figures and data)
 if os.path.isdir('operation_files') != True: os.system('mkdir operation_files')
-if os.path.isdir('2023') != True: os.system('mkdir '+yoi)
+if os.path.isdir(yoi) != True: os.system('mkdir '+yoi)
 if os.path.isdir('climate_indices') != True: os.system('mkdir climate_indices')
 if os.path.isdir('air_temperature') != True: os.system('mkdir air_temperature')
 if os.path.isdir('stn27') != True: os.system('mkdir stn27')
@@ -63,7 +63,7 @@ if os.path.isdir('NLCI') != True: os.system('mkdir NLCI')
 if os.path.isdir('SAR_files') != True: os.system('mkdir SAR_files')
 
 
-## ---- 2023 update ---- ##
+## ---- Yearly update ---- ##
 # 0. Update CASTS and CABOTS.
 # (separate scripts)
 
