@@ -67,7 +67,7 @@ air.name = 'Air Temp'
 if clim_year[0] == 1981:
     ice = pd.read_csv('~/github/AZMP-NL/external_data/Galbraith_data/ice-area-thick.NL.ClimateIndex.1981-2010.dat', header=None, sep=' ')
 else:
-    ice = pd.read_csv('~/github/AZMP-NL/external_data/Galbraith_data/ice-area-thick.NL.ClimateIndex.1991-2020.dat', header=None, sep=' ')
+    ice = pd.read_csv('~/github/AZMP-NL/external_data/Galbraith_data/ice-area-thick.NL.ClimateIndex.dat', header=None, sep=' ')
 ice.set_index(0, inplace=True)
 ice.index.name='Year'
 ice.rename(columns={ice.columns[0]: "Sea Ice" }, inplace = True)
