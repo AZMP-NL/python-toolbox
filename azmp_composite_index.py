@@ -31,18 +31,18 @@ n=5
 #df_CIL_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_SI_summer.pkl')
 #df_CIL_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_BB_summer.pkl')
 #df_CIL_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/sections_plots/CIL/df_CIL_FC_summer.pkl')
-df_CIL_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_CIL_SI_summer_climfill.pkl')
-df_CIL_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_CIL_BB_summer_climfill.pkl')
-df_CIL_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_CIL_FC_summer_climfill.pkl')
+df_CIL_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_CIL_SI_summer_climfill.pkl')
+df_CIL_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_CIL_BB_summer_climfill.pkl')
+df_CIL_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_CIL_FC_summer_climfill.pkl')
 
 
 # 2. NAO & AO [years: Value] [DONE 2024]
-nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/NAO_winter.pkl')
+nao_winter = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/NAO_winter.pkl')
 nao_winter = nao_winter[nao_winter.index<=yearf]
-ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/AO_annual.pkl')
+ao = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/AO_annual.pkl')
 
 # 3. Air Temperature [DONE 2024]
-df_air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/airT_monthly.pkl')
+df_air = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/airT_monthly.pkl')
 df_air = df_air.resample('YS').mean()
 df_air.index = df_air.index.year
 
@@ -63,7 +63,7 @@ df_sst = df_sst[df_sst.index<=yearf]
 # 5. Bottom temperature [DONE 2024]
 # [TO DO: remove bad years from .pkl file]
 # 3LNO - Spring
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_3LNO_spring.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_3LNO_spring.pkl')
 df.index = df.index.astype('int')
 bad_years = np.array([2020, 2021])
 for i in bad_years:
@@ -72,7 +72,7 @@ df_3LNO_spring = df.Tmean
 del df
 
 # 3Ps - Spring
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_3Ps_spring.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_3Ps_spring.pkl')
 df.index = df.index.astype('int')
 bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
 for i in bad_years:
@@ -81,7 +81,7 @@ df_3Ps_spring = df.Tmean
 del df
 
 # 2H - Fall
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_2H_fall.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_2H_fall.pkl')
 df.index = df.index.astype('int')
 bad_years = np.array([1980, 1982, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1992, 1993, 1994, 1995, 1996, 2000, 2002, 2003, 2005, 2007, 2009])
 for i in bad_years:
@@ -90,19 +90,19 @@ df_2H_fall = df.Tmean
 del df
 
 # 2J - Fall
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_2J_fall.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_2J_fall.pkl')
 df.index = df.index.astype('int')
 df_2J_fall = df.Tmean
 del df
 
 # 3K - Fall
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_3K_fall.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_3K_fall.pkl')
 df.index = df.index.astype('int')
 df_3K_fall = df.Tmean
 del df
 
 # 3LNO - Fall
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_3LNO_fall.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_3LNO_fall.pkl')
 df.index = df.index.astype('int')
 bad_years = np.array([2021])
 for i in bad_years:
@@ -111,7 +111,7 @@ df_3LNO_fall = df.Tmean
 del df
 
 # 3M - Summer now using CABOTS
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_3M_summer.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_3M_summer.pkl')
 df.index = df.index.astype('int')
 bad_years = np.array([1983, 1984, 1994, 2007])
 for i in bad_years:
@@ -120,7 +120,7 @@ df_3M_summer = df.Tmean
 del df
 
 # 4VWX - Summer now using CABOTS
-df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/stats_4VWX_summer.pkl')
+df = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/stats_4VWX_summer.pkl')
 df.index = df.index.astype('int')
 bad_years = np.array([])
 for i in bad_years:
@@ -150,7 +150,7 @@ plt.ylabel(r'$\rm T(^{\circ}C)$')
 
 # 6. Fixed stations [CHECK!]
 # S27
-df_s27 = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/S27_temperature_monthly.pkl')
+df_s27 = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/S27_temperature_monthly.pkl')
 df_s27 = df_s27.resample('YS').mean() 
 df_s27.index = df_s27.index.year
 df_s27_mean = df_s27.mean(axis=1)
@@ -195,19 +195,19 @@ df_p5_90 = df_p5_90[df_p5_90.index<=yearf]
 # 7. Section average Temperature (should eventually add salinity in these dataFrame, see azmp_CIL_stats.py) [DONE 2024]
 # New from 2024:
 # SI
-df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_SI_meanT_summer.pkl')
+df_SI = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_SI_meanT_summer.pkl')
 df_SI = df_SI['stn_meanT']
 # BB
-df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_BB_meanT_summer.pkl')
+df_BB = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_BB_meanT_summer.pkl')
 df_BB = df_BB['stn_meanT']
 # FC
-df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_FC_meanT_summer.pkl')
+df_FC = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_FC_meanT_summer.pkl')
 df_FC = df_FC['stn_meanT']
 # FC shelf
-df_FC_shelf = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_FC_meanT_shelf_summer.pkl')
+df_FC_shelf = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_FC_meanT_shelf_summer.pkl')
 df_FC_shelf = df_FC_shelf['stn_meanT_shelf']
 # FC cap
-df_FC_cap = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/2023_report/operation_files/df_FC_meanT_cap_summer.pkl')
+df_FC_cap = pd.read_pickle('/home/cyrf0006/AZMP/state_reports/reporting_2023/operation_files/df_FC_meanT_cap_summer.pkl')
 df_FC_cap = df_FC_cap['stn_meanT_cap']
 
 # 8. Greenland Fylla and Cape Desolation (from IROC) [NOT UPDATE SINCE 2019] [DONE 2024]
@@ -256,11 +256,17 @@ df_comp_3LNO = pd.concat([df_s27_mean,
                           df_CIL_SI.vol_itp, df_CIL_BB.vol_itp, df_CIL_FC.vol_itp,
                           df_sst['3L'], df_sst['3N'], df_sst['3O'] 
                           ], axis=1)
-
+df_comp_3LNO.sort_index(inplace=True)
 df_3LNO_clim = df_comp_3LNO[(df_comp_3LNO.index>=clim_year[0]) & (df_comp_3LNO.index<=clim_year[1])]
 std_anom_3LNO = (df_comp_3LNO-df_3LNO_clim.mean(axis=0))/df_3LNO_clim.std(axis=0)
 # revert CIL volume
 std_anom_3LNO['vol_itp'] = std_anom_3LNO['vol_itp']*-1
+
+# Save individual indices (for Andie Perreault - 2024-12-10)
+composite_3LNO_individual = std_anom_3LNO.copy()
+composite_3LNO_individual = composite_3LNO_individual.set_axis(['S27T', 'botT_spring', 'botT_fall', 'SI_T', 'BB_T', 'FC_T', 'CIL_SI', 'CIL_BB', 'CIL_FC', 'SST_3L', 'SST_3N', 'SST_3O'], axis='columns')
+composite_3LNO_individual = composite_3LNO_individual.iloc[composite_3LNO_individual.index>=1950]
+composite_3LNO_individual.to_csv('composite_3LNO_individual.csv', float_format='%.2f')
 # mean anomaly
 composite_3LNO = std_anom_3LNO.mean(axis=1)
 composite_3LNO.to_csv('composite_3LNO.csv', float_format='%.2f')
