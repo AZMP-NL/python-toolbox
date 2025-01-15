@@ -51,10 +51,12 @@ df.rename(columns={'OCT':'Oct', 'NOV':'Nov', 'DEC':'Dec', 'JAN':'Jan', 'FEB':'Fe
 #df_BB.index = pd.to_datetime('15-' + df_BB.index.get_level_values(1) + '-' + df_BB.index.get_level_values(0).values.astype(np.str))
 
 # Annual mean
+# We now get the annual number from Section 2.2 of the Ice and Environmental Conditions in Ice Year 202* report
 df_annual = df.sum(axis=1)
 # Temporary:
 df_annual.loc[2022] = 58
 df_annual.loc[2023] = 385
+df_annual.loc[2024] = 22
 df_annual.to_pickle('bergs_annual.pkl')
 df_annual_clim = df_annual[(df_annual.index>=clim_year[0]) & (df_annual.index<=clim_year[1])]
 df_annual_anom = df_annual - df_annual_clim.mean()
