@@ -124,8 +124,19 @@ def stn27_climatology(file_location,year_clim,current_year,zbin=5,binning=True,m
 		weekly_clim[variable].index = pd.to_datetime(str(current_year) + '-' + weekly_clim[variable].index.month.astype(str) + '-' + weekly_clim[variable].index.day.astype(str))
 		#Yearly average
 		df_year[variable] = df[variable][df[variable].index.year==current_year]
-		df_monthly[variable] = df_year[variable].resample('MS').mean().interpolate(method='linear')
-		df_weekly[variable] = df_year[variable].resample('W-MON').mean().interpolate(method='linear') 
+
+		#Average to monthly and interpolate temporally, no greater than 2 months
+		df_monthly[variable] = df_year[variable].resample('MS').mean()#.interpolate(method='linear')
+		s = df_monthly[variable].notnull()
+		s = s.ne(s.shift()).cumsum()
+		m_df_monthly = pd.DataFrame([df_monthly[variable].groupby([s[i], df_monthly[variable][i].isnull()])[i].transform('size').where(df_monthly[variable][i].isnull()) for i in s.columns]).T
+		df_monthly[variable] = df_monthly[variable].interpolate(limit_area='inside', method='linear').mask(m_df_monthly>2)
+		#Average to monthly and interpolate temporally, no greater than 2 months (8 weeks)
+		df_weekly[variable] = df_year[variable].resample('W-MON').mean()
+		s = df_weekly[variable].notnull()
+		s = s.ne(s.shift()).cumsum()
+		m_df_weekly = pd.DataFrame([df_weekly[variable].groupby([s[i], df_weekly[variable][i].isnull()])[i].transform('size').where(df_weekly[variable][i].isnull()) for i in s.columns]).T
+		df_weekly[variable] = df_weekly[variable].interpolate(limit_area='inside', method='linear').mask(m_df_weekly>8)
 		weekly = weekly_clim[variable].resample('W-MON').mean().interpolate(method='linear')
 		anom[variable] = df_weekly[variable] - weekly
 	return df, df_monthly, weekly_clim, df_weekly, df_year, anom
