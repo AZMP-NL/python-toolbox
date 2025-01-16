@@ -692,6 +692,11 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df_itp_temp.append(df_section_itp_T)
         df_section_itp_S.index.name = 'station'
         df_section_itp_S.columns.name = 'depth'
+        #Code is temporary for bad 2024 data at BB summer - should be removed eventually
+        if SECTION == 'BB':
+            if SEASON == 'summer':
+                if YEAR == 2024:
+                    df_section_itp_S.iloc[:2,:10] = np.nan
         df_itp_sal.append(df_section_itp_S)
 
         ## -------- Method 2: Station_ID -------- ##
@@ -714,6 +719,11 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df_stn_temp.append(df_section_stn_T)
         df_section_stn_S.index.name = 'station'
         df_section_stn_S.columns.name = 'depth'
+        #Code is temporary for bad 2024 data at BB summer - should be removed eventually
+        if SECTION == 'BB':
+            if SEASON == 'summer':
+                if YEAR == 2024:
+                    df_section_stn_S.iloc[:2,:10] = np.nan
         df_stn_sal.append(df_section_stn_S)
 
         ## -------- Method 3: Station_ID_manual -------- ##
@@ -735,7 +745,14 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df_stn_man_temp.append(df_section_stn_man_T)
         df_section_stn_man_S.index.name = 'station'
         df_section_stn_man_S.columns.name = 'depth'
+        #Code is temporary for bad 2024 data at BB summer - should be removed eventually
+        if SECTION == 'BB':
+            if SEASON == 'summer':
+                if YEAR == 2024:
+                    df_section_stn_man_S.iloc[:2,:10] = np.nan
         df_stn_man_sal.append(df_section_stn_man_S)
+
+
 
 
     #Concatenate all temperature measurements

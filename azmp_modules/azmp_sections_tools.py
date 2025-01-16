@@ -299,7 +299,15 @@ def get_section(section_name, year, season, var_name, bath_path, CASTS_path, dla
     df_section_stn.set_index('distance', append=True, inplace=True)
     df_section_itp['distance'] = np.round(distance_itp, 1)
     df_section_itp.set_index('distance', append=True, inplace=True)
-    
+
+    #Code is temporary for bad 2024 data at BB summer - should be removed eventually
+    if section_name == 'BB':
+        if season == 'summer':
+            if year == 2024:
+                if var_name == 'salinity':
+                    df_section_stn.iloc[:2,:10] = np.nan
+                    df_section_itp.iloc[:2,:10] = np.nan
+
     return df_section_stn, df_section_itp
 
 def standard_section_plot(nc_file, survey_name, section_name, var_name):
