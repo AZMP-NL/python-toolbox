@@ -164,9 +164,10 @@ def IDW_variable_3D(df,df_stn,lonsV,latsV,dc):
 
 
 #Temperature and salinity based upon station ID or station ID manual
-def name_variable(ds,z,bins,stn_list,station_ID,manual=False):
+def name_variable(ds,z,bins,stn_list,station_ID,station_ID_strip,manual=False):
     #Set up a place to record potential stations
     section_only = []
+    #station_ID_strip = np.array([i.strip().split(' ')[-1] for i in station_ID]).astype(str)
     for stn in stn_list:
         #Determine where potential stations are
         if manual:
@@ -178,8 +179,12 @@ def name_variable(ds,z,bins,stn_list,station_ID,manual=False):
         else:
             if ds.time.size == 1:
                 ds_V = ds.isel(time = [station_ID == stn])
+                if ds_V.time.size == 0:
+                    ds_V = ds.isel(time = [station_ID_strip == stn])
             else:
                 ds_V = ds.isel(time = station_ID == stn)
+                if ds_V.time.size == 0:
+                    ds_V = ds.isel(time = station_ID_strip == stn)
             ds_V['station_ID'] = (['time'], np.tile(stn, ds_V.time.size))
         if ds_V.time.size > 1:
             #If more than 1 measurement, average (shouldn't happen for station_ID)
@@ -575,6 +580,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         #Take the station ID and station ID manual
         station_ID = ds.station_ID.values.astype(str)
         station_ID_manual = ds.station_ID_manual.values.astype(str)
+        station_ID_strip = np.array([i.strip().split(' ')[-1] for i in station_ID]).astype(str)
 
         #Do the bin average here
         bins = np.arange(z1, 2000, dz)
@@ -585,14 +591,17 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         if SEASON == 'summer':
             station_ID = station_ID[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
             station_ID_manual = station_ID_manual[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
+            station_ID_strip = station_ID_strip[(ds['time.month'].values>=6)*(ds['time.month'].values<=9)]
             ds = ds.sel(time=((ds['time.month']>=6)) & ((ds['time.month']<=9)))
         elif SEASON == 'spring':
             station_ID = station_ID[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
             station_ID_manual = station_ID_manual[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
+            station_ID_strip = station_ID_strip[(ds['time.month'].values>=3)*(ds['time.month'].values<=5)]
             ds = ds.sel(time=((ds['time.month']>=3)) & ((ds['time.month']<=5)))
         elif SEASON == 'fall':
             station_ID = station_ID[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
             station_ID_manual = station_ID_manual[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
+            station_ID_strip = station_ID_strip[(ds['time.month'].values>=10)*(ds['time.month'].values<=12)]
             ds = ds.sel(time=((ds['time.month']>=10)) & ((ds['time.month']<=12)))
         else:
             print('!! no season specified, used them all! !!')
@@ -687,7 +696,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
 
         ## -------- Method 2: Station_ID -------- ##
         z = df.columns.values
-        df_section_stn_T,df_section_stn_S = name_variable(ds, z, bins, stn_list, station_ID.squeeze(), manual=False)
+        df_section_stn_T,df_section_stn_S = name_variable(ds, z, bins, stn_list, station_ID.squeeze(), station_ID_strip.squeeze(), manual=False)
 
         #Compute the distance between stations
         distance_stn = np.full(df_section_stn_T.index.shape, np.nan)
@@ -708,7 +717,7 @@ def section_clim(SECTION,SEASON,YEARS,CLIM_YEAR,dlat,dlon,z1,dz,dc,CASTS_path,ba
         df_stn_sal.append(df_section_stn_S)
 
         ## -------- Method 3: Station_ID_manual -------- ##
-        df_section_stn_man_T,df_section_stn_man_S = name_variable(ds, z, bins, stn_list, station_ID_manual.squeeze(), manual=True)
+        df_section_stn_man_T,df_section_stn_man_S = name_variable(ds, z, bins, stn_list, station_ID_manual.squeeze(), station_ID_strip.squeeze(), manual=True)
 
         #Compute the distance between stations
         distance_stn_man = np.full(df_section_stn_man_T.index.shape, np.nan)
