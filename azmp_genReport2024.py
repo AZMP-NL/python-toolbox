@@ -365,7 +365,6 @@ for season in ['spring','fall']:
         )
     print('    -> '+season+' done!')
 os.system('cp bottomT_spring'+yoi+'.png bottomT_spring'+yoi+'_FR.png bottomT_fall'+yoi+'.png bottomT_fall2023_FR.png '+yoi+'')
-os.system('cp bottomS_spring'+yoi+'.png bottomS_spring'+yoi+'_FR.png bottomS_fall'+yoi+'.png bottomS_fall2023_FR.png '+yoi+'')
 os.system('mv bottomT_*.png bottom_temp_*.png bottom_temp/')
 os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 
@@ -464,8 +463,8 @@ os.system('mv *.csv operation_files/')
 #os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../'+yoi)
 
 ## ----------- CSAS DATA ---------------- ##
-%my_run csas_crab_stats.py
-%my_run azmp_bottomT_habitat.py
+#%my_run csas_crab_stats.py
+#%my_run azmp_bottomT_habitat.py
 #%my_run NSRF_bottomT.py 
 #%my_run NSRF_bottomS.py
 #%my_run NSRF_bottomT_habitat.py 
