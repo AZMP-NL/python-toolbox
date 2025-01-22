@@ -186,7 +186,7 @@ with open('iroc_stn27.csv','w',newline='') as fd:
     wr.writerow(['Averaging Method:'])
     wr.writerow(['Notes:'])
     wr.writerow(['Data Source:','Northwest Atlantic Fisheries Centre - Canada'])
-    wr.writerow(['Contact Name (email):','Frederic Cyr (Frederic.Cyr@dfo-mpo.gc.ca)'])
+    wr.writerow(['Contact Name (email):','Jonathan Coyne (Jonathan.Coyne@dfo-mpo.gc.ca)'])
     wr.writerow(['Location of source datasets:','Northwest Atlantic Fisheries Centre - Canada'])
     wr.writerow(['Data Protection:','Include on ICES website for free distribution.'])
     wr.writerow(['Year','Temperature Â°C','Temperature Anomaly Â°C','Temperature Anomaly Normalised Â°C','Salinity','Salinity Anomaly','Salinity Anomaly Normalised'])

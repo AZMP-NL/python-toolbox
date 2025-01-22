@@ -427,6 +427,8 @@ def density_calculator(df,file_location):
 	df_hydroT = df['temperature']
 	df_hydroS = df['salinity']
 	#Ensure that the measurement for each are present
+	df_hydroS = df_hydroS.iloc[np.unique(df_hydroS.index.values,return_index=True)[1]]
+	df_hydroT = df_hydroT.iloc[np.unique(df_hydroT.index.values,return_index=True)[1]]
 	df_hydroS = df_hydroS.iloc[np.isin(df_hydroS.index.values,df_hydroT.index)]
 	df_hydroT = df_hydroT.iloc[np.isin(df_hydroT.index.values,df_hydroS.index)]
 	#Remove nans from each
@@ -452,6 +454,7 @@ def density_calculator(df,file_location):
 	df_sig = pd.DataFrame(SIG0, index=df_temp.index, columns=df_temp.columns)
 	#Quick QA/QC check
 	idx_to_remove = []
+	idx_to_sort = []
 	for i in np.arange(1,13):
 		#Isolate the densities for each month
 		df_tmp = df_rho[df_rho.index.month == i]
@@ -461,16 +464,32 @@ def density_calculator(df,file_location):
 				idx_to_remove.append(idx)
 				df_tmp = df_tmp.drop(idx)
 			#Check to see if the cast is monotonic
-			elif ~np.all(np.diff(df_tmp.loc[idx].dropna().values.squeeze())>0):
+			elif np.sum(~(np.diff(df_tmp.loc[idx].dropna().values.squeeze())>0)) > 5:
 				idx_to_remove.append(idx)
-				df_tmp = df_tmp.drop(idx) 
-			else: 
+				df_tmp = df_tmp.drop(idx)
+			elif np.sum(~(np.diff(df_tmp.loc[idx].dropna().values.squeeze())>0)) > 0:
+				idx_to_sort.append(idx)
+				df_tmp = df_tmp.drop(idx)
+			else:
 				continue
+
 	#Remove idx_to_remove
 	df_rho.drop(idx_to_remove, inplace=True)
 	df_sig.drop(idx_to_remove, inplace=True)
 	df_SA.drop(idx_to_remove, inplace=True)
 	df_CT.drop(idx_to_remove, inplace=True)
+
+	#Update df_rho and df_sig with sorted values
+	for i,value in enumerate(idx_to_sort):
+		raw_data = df_rho.loc[value].values
+		values_sorted = np.sort(raw_data[~np.isnan(raw_data)])
+		raw_data[~np.isnan(raw_data)] = values_sorted
+		df_rho.loc[value] = raw_data
+		raw_data = df_sig.loc[value].values
+		values_sorted = np.sort(raw_data[~np.isnan(raw_data)])
+		raw_data[~np.isnan(raw_data)] = values_sorted
+		df_sig.loc[value] = raw_data
+
 	ds = xr.open_dataset(file_location)
 	ds = ds.isel(time = ~np.isin(ds.time, np.array(idx_to_remove, dtype='datetime64')))
 	#Vertically interpolate density
