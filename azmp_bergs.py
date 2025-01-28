@@ -39,6 +39,7 @@ current_year = 2024
 #df = df.drop(columns = 'TOT SEASON')
 
 # Since 2021, load from NSIDC (https://nsidc.org/data/G10028/versions/1)
+# This file is updated manually using the IIP 202* North Atlantic Iceberg Summary (Contact Alexis Denton)
 df = pd.read_csv('~/github/AZMP-NL/external_data/NSIDC/Icebergs/G10028_Icebergs_South_of_48N.csv', index_col='YEAR') 
 df = df.drop(columns = 'TOTAL')
 
@@ -65,7 +66,7 @@ df_annual_std_anom.to_pickle('bergs_std_anom.pkl')
 
 
 # Monthly mean
-df_monthly = df[df.index==2021]
+df_monthly = df[df.index==current_year]
 df_monthly_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 df_monthly_std = df_monthly_clim.std(axis=0)
 df_monthly_clim = df_monthly_clim.mean(axis=0)
@@ -79,7 +80,7 @@ fig, ax = plt.subplots()
 rects1 = ax.bar(ind - width/2, df_monthly_clim.values, width, yerr=df_monthly_std.values*.5,
                 label='1991-2020')
 rects2 = ax.bar(ind + width/2, np.squeeze(df_monthly.values), width, yerr=None,
-                label=str(2021))
+                label=str(current_year))
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel('Counts')
