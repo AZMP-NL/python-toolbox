@@ -16,7 +16,7 @@ import os
 #import re
 
 
-INFILE = '/home/cyrf0006/github/AZMP-NL/external_data/LC_transport/lc_index.txt'
+INFILE = '~/reporting_2024/operation_files/lc_index.txt'
 
 # Adjust fontsize/weight
 font = {'family' : 'normal',
@@ -27,7 +27,7 @@ plt.rc('font', **font)
 ## ----  Read data ---- ## (I just drop column that was there)
 df = pd.read_csv(INFILE, header=None, delimiter='\s+', names=['year', 'NL', 'SS'])
 df = df.set_index('year')
-df.to_csv('LC_index.csv', float_format='%.2f')
+df.to_csv('operation_files/LC_index.csv', float_format='%.2f')
 
 ave_ss = .6
 std_ss = .3
@@ -39,7 +39,7 @@ df.SS = df.SS*std_ss + ave_ss
 
 df.to_csv('LC_transport.csv', float_format='%.2f')
 
-XLIMS = [1990, 2024]
+XLIMS = [1990, 2024+1]
 
 ## ---- plot ---- ##
 fig = plt.figure(1)
@@ -93,8 +93,8 @@ plt.fill_between(XLIMS, [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('LC index')
 plt.title('NL slope')
 plt.xlim(XLIMS)
-plt.ylim([-2,2])
-plt.text(XLIMS[0], -1.8,  r'$\,\rm \overline{x} = $' + str(ave_nl) + r' $\pm$ ' +  str(std_nl) + ' Sv')
+plt.ylim([-3,3])
+plt.text(XLIMS[0], -2.8,  r'$\,\rm \overline{x} = $' + str(ave_nl) + r' $\pm$ ' +  str(std_nl) + ' Sv')
 plt.grid()
 ax.tick_params(labelbottom=False) # can pass a series of params here
 
@@ -108,8 +108,8 @@ plt.fill_between(XLIMS, [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.title('SS slope')
 plt.ylabel('LC index')
 plt.xlim(XLIMS)
-plt.ylim([-2,2])
-plt.text(XLIMS[0], -1.8,  r'$\,\rm \overline{x} = $' + str(ave_ss) + r' $\pm$ ' +  str(std_ss) + ' Sv')
+plt.ylim([-3,3])
+plt.text(XLIMS[0], -2.8,  r'$\,\rm \overline{x} = $' + str(ave_ss) + r' $\pm$ ' +  str(std_ss) + ' Sv')
 plt.grid()
 
 fig.set_size_inches(w=7,h=5)
@@ -132,8 +132,8 @@ plt.fill_between(XLIMS, [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.ylabel('Index CL')
 plt.title('Talus du Labrador')
 plt.xlim(XLIMS)
-plt.ylim([-2,2])
-plt.text(XLIMS[0], -1.6,  r'$\,\rm \overline{x} = $' + str(ave_nl) + r' $\pm$ ' +  str(std_nl) + ' Sv')
+plt.ylim([-3,3])
+plt.text(XLIMS[0], -2.6,  r'$\,\rm \overline{x} = $' + str(ave_nl) + r' $\pm$ ' +  str(std_nl) + ' Sv')
 plt.grid()
 ax.tick_params(labelbottom=False) # can pass a series of params here
 
@@ -147,8 +147,8 @@ plt.fill_between(XLIMS, [-.5, -.5], [.5, .5], facecolor='gray', alpha=.2)
 plt.title('Talus Néo-Écossais')
 plt.ylabel('Index CL')
 plt.xlim(XLIMS)
-plt.ylim([-2,2])
-plt.text(XLIMS[0], 1.5,  r'$\,\rm \overline{x} = $' + str(ave_ss) + r' $\pm$ ' +  str(std_ss) + ' Sv')
+plt.ylim([-3,3])
+plt.text(XLIMS[0], 2.5,  r'$\,\rm \overline{x} = $' + str(ave_ss) + r' $\pm$ ' +  str(std_ss) + ' Sv')
 plt.grid()
 
 fig.set_size_inches(w=7,h=5)

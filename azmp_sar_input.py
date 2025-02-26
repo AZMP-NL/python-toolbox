@@ -47,93 +47,93 @@ flag_WB_stn = flag_WB_itp
 
 #### -------------1. bottom temperature ---------------- ####
 ## 2J fall
-infile = path + 'stats_2J_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = '~/data/CABOTS/csv_averages/fall_2J_regional_averages.csv'
+df = pd.read_csv(infile,index_col=0)
+#df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
 bad_years = np.array([1995])
 for i in bad_years:
-    df[df.index.year==i]=np.nan
+    df[df.index==i]=np.nan
 # compute std anom
-df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+df_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 # std anom for temperature
 df['std_anom'] = std_anom['Tmean']
 # keep only 2 columns
 df = df[['Tmean', 'std_anom']]
-df.index = df.index.year
+#df.index = df.index.year
 df.to_csv('BT_2J_fall.dat', header=False, sep = ' ', float_format='%.2f')
 
 ## 3K fall
-infile = path + 'stats_3K_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = '~/data/CABOTS/csv_averages/fall_3K_regional_averages.csv'
+df = pd.read_csv(infile,index_col=0)
+#df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
 bad_years = np.array([])
 for i in bad_years:
-    df[df.index.year==i]=np.nan
+    df[df.index==i]=np.nan
 # compute std anom
-df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+df_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 # std anom for temperature
 df['std_anom'] = std_anom['Tmean']
 # keep only 2 columns
 df = df[['Tmean', 'std_anom']]
-df.index = df.index.year
+#df.index = df.index.year
 df.to_csv('BT_3K_fall.dat', header=False, sep = ' ', float_format='%.2f')
 
 ## 3LNO fall
-infile = path + 'stats_3LNO_fall.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = '~/data/CABOTS/csv_averages/fall_3LNO_grandbanks_regional_averages.csv'
+df = pd.read_csv(infile,index_col=0)
+#df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
 bad_years = np.array([2021])
 for i in bad_years:
-    df[df.index.year==i]=np.nan
+    df[df.index==i]=np.nan
 # compute std anom
-df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+df_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 # std anom for temperature
 df['std_anom'] = std_anom['Tmean']
 # keep only 2 columns
 df = df[['Tmean', 'std_anom']]
-df.index = df.index.year
+#df.index = df.index.year
 df.to_csv('BT_3LNO_fall.dat', header=False, sep = ' ', float_format='%.2f')
 
 ## 3LNO spring
-infile = path + 'stats_3LNO_spring.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = '~/data/CABOTS/csv_averages/spring_3LNO_grandbanks_regional_averages.csv'
+df = pd.read_csv(infile,index_col=0)
+#df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
 bad_years = np.array([2020, 2021])
 for i in bad_years:
-    df[df.index.year==i]=np.nan
+    df[df.index==i]=np.nan
 # compute std anom
-df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+df_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 # std anom for temperature
 df['std_anom'] = std_anom['Tmean']
 # keep only 2 columns
 df = df[['Tmean', 'std_anom']]
-df.index = df.index.year
+#df.index = df.index.year
 df.to_csv('BT_3LNO_spring.dat', header=False, sep = ' ', float_format='%.2f')
 
 ## 3Ps spring 
-infile = path + 'stats_3Ps_spring.pkl'
-df = pd.read_pickle(infile)
-df.index = pd.to_datetime(df.index) # update index to datetime
+infile = '~/data/CABOTS/csv_averages/spring_3Ps_regional_averages.csv'
+df = pd.read_csv(infile,index_col=0)
+#df.index = pd.to_datetime(df.index) # update index to datetime
 # Flag bad years (no or weak sampling):
 bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006, 2020])
 for i in bad_years:
-    df[df.index.year==i]=np.nan
+    df[df.index==i]=np.nan
 # compute std anom
-df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+df_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
 # std anom for temperature
 df['std_anom'] = std_anom['Tmean']
 # keep only 2 columns
 df = df[['Tmean', 'std_anom']]
-df.index = df.index.year
+#df.index = df.index.year
 df.to_csv('BT_3Ps_spring.dat', header=False, sep = ' ', float_format='%.2f')
 
 #### ------------- 2. winter NAO ---------------- ####
@@ -154,7 +154,7 @@ df.to_csv('BT_3Ps_spring.dat', header=False, sep = ' ', float_format='%.2f')
 ## df_winter.index = year_unique
 ## df_winter.to_csv('NAO_DJFM.dat', header=False, sep = ' ', float_format='%.2f')
 
-df_winter = pd.read_pickle('operation_files/NAO_winter.pkl')
+#df_winter = pd.read_pickle('operation_files/NAO_winter.pkl')
 
 
 #### ------------- 3. CIL ---------------- ####
@@ -332,5 +332,5 @@ for depth in depth_range:
         df_stn27.to_csv('S27_deep_Integrated.dat', header=True, sep = ' ', na_rep='-99', float_format='%.3f')
 
 #Zip the files
-os.system('zip SAR_azmp-nl_2019.zip *.dat')
+os.system('zip SAR_azmp-nl_2024.zip *.dat')
 os.system('mv *.dat *.zip SAR_files')

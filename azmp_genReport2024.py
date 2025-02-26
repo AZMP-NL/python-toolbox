@@ -215,7 +215,7 @@ azS27.CIL_plotter(cil_thickness,'CIL thickness','Épaisseur de la CIF','s27_CILt
 df = pd.read_pickle('S27_salinity_monthly.pkl')
 df,anom_std,anom,annual_mean,ts_monthly_clim = azS27.anomaly_calculator(df,years_flag,current_year,year_clim)
 #Plot the salinity anomaly
-azS27.anomaly_plotter(anom_std,'salinity',XLIM=XLIM,YLIM=[-2.5,2.5])
+azS27.anomaly_plotter(anom_std,'salinity',XLIM=XLIM,YLIM=[-2,3.5])
 
 #Get the stratification ready for plotting
 strat_shallow_path = 'S27_stratif_0-50_monthly.pkl'
