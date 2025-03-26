@@ -2327,7 +2327,59 @@ def bottom_scorecards(path, years, clim_year=[1991, 2020]):
     # French montage
     os.system('montage  scorecards_spring_3LNO_FR.png scorecards_spring_3Ps_FR.png -tile 1x3 -geometry +1+10  -background white  scorecards_botT_spring_FR.png')
 
-    
+
+    #### ------------- For Summer (don't plot) ---------------- ####
+    # 1.
+    infile = path+'summer_3M_flemishcap_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    #bad_years = np.array([2020, 2021])
+    bad_years = np.array([1983, 1984, 1994, 2007, 2020])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_3M_summer.csv', sep=',', float_format='%0.3f')
+
+    # 2.
+    infile = path+'summer_4VWX_scotianshelf_regional_averages.csv'
+    df = pd.read_csv(infile)
+    #Update index to datetime
+    df = df.rename(columns={'Unnamed: 0': 'year'})
+    df.index = [datetime.datetime.strptime(str(year),'%Y') for year in df['year'].values]
+    df = df[(df.index.year>=years[0]) & (df.index.year<=years[-1])]
+    percent_coverage = df.T_percent_coverage.values.copy().round(0)
+    # Flag bad years (no or weak sampling):
+    bad_years = np.array([2020])
+    for i in bad_years:
+        df[df.index.year==i]=np.nan
+    year_list = df.index.year.astype('str')
+    year_list = [i[2:4] for i in year_list] # 2-digit year
+    df.index = pd.to_datetime(df.index) # update index to datetime
+    df['area_colder0'] = df['area_colder0']/1000 # In 1000km
+    df['area_colder1'] = df['area_colder1']/1000 # In 1000km
+    df['area_warmer2'] = df['area_warmer2']/1000
+    df_clim = df[(df.index.year>=clim_year[0]) & (df.index.year<=clim_year[1])]
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    std_anom = (df-df_clim.mean(axis=0))/df_clim.std(axis=0)
+    # Save in .csv for future use
+    std_anom.to_csv('bottomT_stn_anom_4VWX_summer.csv', sep=',', float_format='%0.3f')
+
+
+
 def sfa_bottom_scorecards(path, years, season, clim_year=[2006, 2020]):
 
 

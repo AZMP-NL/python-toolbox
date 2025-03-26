@@ -161,7 +161,7 @@ header = ax.table(cellText=[['']],
                       colLabels=['-- Climate indices --'],
                       loc='center'
                       )
-header.set_fontsize(13)
+header.set_fontsize(16)
 header.scale(1,2)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
                     loc='center', cellColours=cmap_r(norm_r(vals_color)), cellLoc='center',
@@ -201,7 +201,7 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.scale(1,2)
-header.set_fontsize(13)
+header.set_fontsize(16)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=year_list,
                     loc='center', cellColours=cmap_r(norm(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
@@ -255,7 +255,7 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.scale(1,2)
-header.set_fontsize(13)
+header.set_fontsize(16)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
                     loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
@@ -288,7 +288,7 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.scale(1,2)
-header.set_fontsize(13)
+header.set_fontsize(16)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
                     loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
@@ -340,7 +340,7 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.scale(1,2)
-header.set_fontsize(13)
+header.set_fontsize(16)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
                     loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
@@ -373,7 +373,7 @@ header = ax.table(cellText=[['']],
                       loc='center'
                       )
 header.scale(1,2)
-header.set_fontsize(13)
+header.set_fontsize(16)
 the_table=ax.table(cellText=vals, rowLabels=my_df.index, colLabels=None,
                     loc='center', cellColours=cmap(norm(vals_color)), cellLoc='center',
                     bbox=[0, 0, 1, 0.5]
@@ -401,7 +401,7 @@ os.system('convert -trim scorecards_annualAirT_FR.png scorecards_annualAirT_FR.p
 
 #4. Merge all together
 # English
-os.system('montage  scorecards_nao.png scorecards_winterAirT.png scorecards_annualAirT.png -tile 1x3 -geometry +1+12  -background white  scorecards_air.png') 
+os.system('montage  scorecards_nao.png scorecards_winterAirT.png scorecards_annualAirT.png -tile 1x3 -geometry +1+12  -background white scorecards_air.png') 
 # French
 os.system('montage  scorecards_nao_FR.png scorecards_winterAirT_FR.png scorecards_annualAirT_FR.png -tile 1x3 -geometry +1+12  -background white  scorecards_air_FR.png') 
 
