@@ -14,7 +14,7 @@ import unicodedata
 from matplotlib.colors import from_levels_and_colors
 
 clim_year = [1990, 2020]
-years = [1980, 2024]
+years = [1980, 2025]
 
 badstn_SI = [1983,1989,1998,2000,2003,2004,2022]
 badstn_BB = [1997,1999,2000,2001,2002,2022]

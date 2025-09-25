@@ -21,7 +21,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-years = [1950, 2024]
+years = [1950, 2025]
 
 baditp_SI = [1950,1966,1967,1968,2022]
 baditp_BB = [1966,1967,1968,2022]

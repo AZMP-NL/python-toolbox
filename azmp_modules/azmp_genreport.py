@@ -162,7 +162,7 @@ def nao(
     # pickle DataFrame for scorecards:
     df.to_pickle('NAO_monthly.pkl')
     df.to_csv('NAO_monthly.csv')
-    df_annual = df.resample('As').mean()
+    df_annual = df.resample('YS').mean()
     df_annual.index = df_annual.index.year
     df_annual.to_pickle('NAO_annual.pkl')
     df_winter.to_pickle('NAO_winter.pkl')
@@ -280,7 +280,7 @@ def ao(
     # Resample
     # pickle DataFrame for scorecards:
     #df.to_pickle('AO_monthly.pkl')
-    df_annual = df.resample('As').mean()
+    df_annual = df.resample('YS').mean()
     df_annual.index = df_annual.index.year
     df_annual.to_pickle('AO_annual.pkl')
 
@@ -391,7 +391,7 @@ def amo(YEAR,amo_file_loc,url_loc='https://www.esrl.noaa.gov/psd/data/correlatio
 
     # pickle DataFrame for scorecards:
     df.to_pickle('AMO_monthly.pkl')
-    df_annual = df.resample('As').mean()
+    df_annual = df.resample('YS').mean()
     df_annual.index = df_annual.index.year
     df_annual.to_pickle('AMO_annual.pkl')
 

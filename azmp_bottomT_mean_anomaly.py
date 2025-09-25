@@ -21,7 +21,7 @@ plt.rc('font', **font)
 
 width = 0.7
 clim_year = [1991, 2020]
-years = [1980, 2024]
+years = [1980, 2025]
 path='~/data/CABOTS/csv_averages/'
 
 

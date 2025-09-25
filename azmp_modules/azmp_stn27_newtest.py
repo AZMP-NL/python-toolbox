@@ -73,9 +73,9 @@ def stn27_dataisolate(file_location,CASTS_path,s27_loc,dc,problem_casts):
 			if ds[i].dtype == 'O':
 				ds[i] = ds[i].astype('U40')
 		#Save data
-		time_attrs = ds['time'].attrs
-		time_attrs['_FillValue'] = -99.9999
-		ds['time'].attrs = time_attrs
+		#time_attrs = ds['time'].attrs
+		#time_attrs['_FillValue'] = -99.9999
+		#ds['time'].attrs = time_attrs
 		warnings.simplefilter(action='ignore', category=FutureWarning)
 		ds.to_netcdf(file_location)
 

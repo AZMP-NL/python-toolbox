@@ -33,7 +33,7 @@ import cartopy.feature as cfeature
 # interpolation tools
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
-from scipy.interpolate.interpnd import _ndim_coords_from_arrays
+#from scipy.interpolate.interpnd import _ndim_coords_from_arrays
 from scipy.spatial import cKDTree
 # Shaping tools
 from shapely.geometry import Point

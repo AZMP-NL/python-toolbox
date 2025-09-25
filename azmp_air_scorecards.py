@@ -80,7 +80,7 @@ df = pd.read_pickle('./operation_files/airT_monthly.pkl')
 df = df[(df.index.year>=years[0]-1) & (df.index.year<=years[1])]
 
 # 1. Annual mean !!! Verify if better to do average of monthly anomalies for next year (see azmp_stn27_scorecards for MLD and Stratif)
-df_annual = df.resample('As').mean()
+df_annual = df.resample('YS').mean()
 df_annual = df_annual[df_annual.index.year>=years[0]]
 clim_annual = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].mean()
 std_annual = df_annual[(df_annual.index.year>=clim_year[0]) & (df_annual.index.year<=clim_year[1])].std()

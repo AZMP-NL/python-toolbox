@@ -29,7 +29,7 @@ from scipy.interpolate import griddata
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-from shapely.ops import cascaded_union
+#from shapely.ops import cascaded_union
 from area import area # external fns to compute surface area
 from seawater import extras as swx
 import gsw

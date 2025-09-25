@@ -34,11 +34,11 @@ import matplotlib.pyplot as plt
 import xarray as xr
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d  # to remove NaNs in profiles
-from scipy.interpolate.interpnd import _ndim_coords_from_arrays
+#from scipy.interpolate.interpnd import _ndim_coords_from_arrays
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-from shapely.ops import cascaded_union
+#from shapely.ops import cascaded_union
 import shapefile 
 from area import area # external fns to compute surface area
 #from seawater import extras as swx

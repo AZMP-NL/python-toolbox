@@ -28,7 +28,7 @@ plt.rc('font', **font)
 
 
 YEAR_MIN = 1950
-YEAR_MAX = 2024
+YEAR_MAX = 2025
 #clim_year = [1981, 2010]
 clim_year = [1991, 2020]
 width = 0.7

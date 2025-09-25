@@ -9,6 +9,8 @@
 
 # Update 2022 with Gen.3, may want to use this address:
 # https://www.canada.ca/en/environment-climate-change/services/climate-change/science-research-data/climate-trends-variability/adjusted-homogenized-canadian-data/surface-air-temperature-access.html
+# The above version is out-of-date, use below!
+# https://open.canada.ca/data/dataset/542b90f7-ab39-452c-be5c-2afebdc4724c
 #
 # Since these are available with delay, it is sometimes necessary to use standard monthly temperature:
 # http://climate.weather.gc.ca/prods_servs/cdn_climate_summary_e.html
@@ -98,62 +100,62 @@ if use_climate_summaries:
     if NL_01.empty:
         NL_01 = empty_frame_NL
     else:
-        NL_01 = NL_01.loc[['8400601','8403505','8501106']].Tm
+        NL_01 = NL_01.reindex(['8400601','8403505','8501106']).Tm
     NL_02 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_02-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_02.empty:
         NL_02 = empty_frame_NL
     else:
-        NL_02 = NL_02.loc[['8400601','8403505','8501106']].Tm
+        NL_02 = NL_02.reindex(['8400601','8403505','8501106']).Tm
     NL_03 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_03-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_03.empty:
         NL_03 = empty_frame_NL
     else:
-        NL_03 = NL_03.loc[['8400601','8403505','8501106']].Tm
+        NL_03 = NL_03.reindex(['8400601','8403505','8501106']).Tm
     NL_04 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_04-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_04.empty:
         NL_04 = empty_frame_NL
     else:
-        NL_04 = NL_04.loc[['8400601','8403505','8501106']].Tm
+        NL_04 = NL_04.reindex(['8400601','8403505','8501106']).Tm
     NL_05 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_05-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_05.empty:
         NL_05 = empty_frame_NL
     else:
-        NL_05 = NL_05.loc[['8400601','8403505','8501106']].Tm
+        NL_05 = NL_05.reindex(['8400601','8403505','8501106']).Tm
     NL_06 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_06-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_06.empty:
         NL_06 = empty_frame_NL
     else:
-        NL_06 = NL_06.loc[['8400601','8403505','8501106']].Tm
+        NL_06 = NL_06.reindex(['8400601','8403505','8501106']).Tm
     NL_07 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_07-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_07.empty:
         NL_07 = empty_frame_NL
     else:
-        NL_07 = NL_07.loc[['8400601','8403505','8501106']].Tm
+        NL_07 = NL_07.reindex(['8400601','8403505','8501106']).Tm
     NL_08 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_08-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_08.empty:
         NL_08 = empty_frame_NL
     else:
-        NL_08 = NL_08.loc[['8400601','8403505','8501106']].Tm
+        NL_08 = NL_08.reindex(['8400601','8403505','8501106']).Tm
     NL_09 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_09-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_09.empty:
         NL_09 = empty_frame_NL
     else:
-        NL_09 = NL_09.loc[['8400601','8403505','8501106']].Tm
+        NL_09 = NL_09.reindex(['8400601','8403505','8501106']).Tm
     NL_10 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_10-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_10.empty:
         NL_10 = empty_frame_NL
     else:
-        NL_10 = NL_10.loc[['8400601','8403505','8501106']].Tm
+        NL_10 = NL_10.reindex(['8400601','8403505','8501106']).Tm
     NL_11 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_11-' + str(current_year) + '.csv', index_col='Clim_ID')
     if NL_11.empty:
         NL_11 = empty_frame_NL
     else:
-        NL_11 = NL_11.loc[['8400601','8403505','8501106']].Tm
+        NL_11 = NL_11.reindex(['8400601','8403505','8501106']).Tm
     NL_12 = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/climate_summaries/en_climate_summaries_NL_12-' + str(current_year) + '.csv', index_col='Clim_ID')      
     if NL_12.empty:
         NL_12 = empty_frame_NL
     else:
-        NL_12 = NL_12.loc[['8400601','8403505','8501106']].Tm
+        NL_12 = NL_12.reindex(['8400601','8403505','8501106']).Tm
     df_NL = pd.concat([NL_01,NL_02,NL_03,NL_04,NL_05,NL_06,NL_07,NL_08,NL_09,NL_10,NL_11,NL_12], axis=1).T
     months = pd.Series(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']) 
     df_NL.index = pd.to_datetime('15-' + months + '-' + str(current_year)) 
@@ -223,20 +225,15 @@ if use_climate_summaries:
     
 ## ---- Read 4 stations of interest (AHCCD) ---- ##
 ## 1. Bonavista - 8400601
-# tmp file without blank space
-with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm8400601.txt'), 'r') as f:
-    lines = f.readlines()
-lines = [line.replace(' ', '') for line in lines]
-with open('/tmp/tmp.txt', 'w') as f:
-    f.writelines(lines)
-df = pd.read_csv('/tmp/tmp.txt', header=2, usecols=['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-df = df.drop(df.index[0]) # Drop French columns
-# set Year as index
-df = df.set_index('Year')  
-# Remove white space in Year values
-df = df.set_index(df.index.str.strip())
+#Read the new homogenized data
+df = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/CanHomT_mlyV4/8400601.csv')
+#Group the tmean by year and month
+df = df.tmean.groupby([df.Year,df.Month]).mean().unstack()
+df.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+#Convert the index to a string
+df.index = df.index.astype(str)
 # Stack months under Years (pretty cool!)
-df = df.stack() 
+df = df.stack()
 # Transform to a series with values based the 15th of each month
 df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0))
 # Transform series to numeric
@@ -249,22 +246,16 @@ del df
 if use_climate_summaries:
     df_BB = pd.concat([df_BB,df_NL['8400601']])
 
-
 ## 2. St. John's - 8403505
-# tmp file without blank space
-with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm8403505.txt'), 'r') as f:
-    lines = f.readlines()
-lines = [line.replace(' ', '') for line in lines]
-with open('/tmp/tmp.txt', 'w') as f:
-    f.writelines(lines)
-df = pd.read_csv('/tmp/tmp.txt', header=2, usecols=['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-df = df.drop(df.index[0]) # Drop French columns
-# set Year as index
-df = df.set_index('Year')  
-# Remove white space in Year values
-df = df.set_index(df.index.str.strip())
+#Read the new homogenized data
+df = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/CanHomT_mlyV4/8403505.csv')
+#Group the tmean by year and month
+df = df.tmean.groupby([df.Year,df.Month]).mean().unstack()
+df.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+#Convert the index to a string
+df.index = df.index.astype(str)
 # Stack months under Years (pretty cool!)
-df = df.stack() 
+df = df.stack()
 # Transform to a series with values based the 15th of each month
 df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0))
 # Transform series to numeric
@@ -276,22 +267,17 @@ del df
 # Append climate summaries if needed
 if use_climate_summaries:
     df_SJ = pd.concat([df_SJ,df_NL['8403505']])
-    
+
 ## 3. Cartwright - 8501106
-# tmp file without blank space
-with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm8501106.txt'), 'r') as f:
-    lines = f.readlines()
-lines = [line.replace(' ', '') for line in lines]
-with open('/tmp/tmp.txt', 'w') as f:
-    f.writelines(lines)
-df = pd.read_csv('/tmp/tmp.txt', header=2, usecols=['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-df = df.drop(df.index[0]) # Drop French columns
-# set Year as index
-df = df.set_index('Year')  
-# Remove white space in Year values
-df = df.set_index(df.index.str.strip())
+#Read the new homogenized data
+df = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/CanHomT_mlyV4/8501106.csv')
+#Group the tmean by year and month
+df = df.tmean.groupby([df.Year,df.Month]).mean().unstack()
+df.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+#Convert the index to a string
+df.index = df.index.astype(str)
 # Stack months under Years (pretty cool!)
-df = df.stack() 
+df = df.stack()
 # Transform to a series with values based the 15th of each month
 df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0))
 # Transform series to numeric
@@ -303,22 +289,17 @@ del df
 # Append climate summaries if needed
 if use_climate_summaries:
     df_CA = pd.concat([df_CA,df_NL['8501106']])
-    
+
 ## 4. Iqaluit - 2402592
-# tmp file without blank space
-with open(os.path.expanduser('~/github/AZMP-NL/external_data/ECCC/homog_monthly_mean_temp/mm2402592.txt'), 'r') as f:
-    lines = f.readlines()
-lines = [line.replace(' ', '') for line in lines]
-with open('/tmp/tmp.txt', 'w') as f:
-    f.writelines(lines)
-df = pd.read_csv('/tmp/tmp.txt', header=2, usecols=['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-df = df.drop(df.index[0]) # Drop French columns
-# set Year as index
-df = df.set_index('Year')  
-# Remove white space in Year values
-df = df.set_index(df.index.str.strip())
+#Read the new homogenized data
+df = pd.read_csv('~/github/AZMP-NL/external_data/ECCC/CanHomT_mlyV4/2402592.csv')
+#Group the tmean by year and month
+df = df.tmean.groupby([df.Year,df.Month]).mean().unstack()
+df.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+#Convert the index to a string
+df.index = df.index.astype(str)
 # Stack months under Years (pretty cool!)
-df = df.stack() 
+df = df.stack()
 # Transform to a series with values based the 15th of each month
 df.index = pd.to_datetime('15-' + df.index.get_level_values(1) + '-' + df.index.get_level_values(0))
 # Transform series to numeric
@@ -330,9 +311,9 @@ del df
 # Append climate summaries if needed
 if use_climate_summaries:
     df_IQ = pd.concat([df_IQ,df_NU['2402592']])
-    
+
 ## 5. NUUK - see azmp_dmi_nuukAirT.py
-df_NUUK = pd.read_pickle('Nuuk_air_temp.pkl')  
+df_NUUK = pd.read_pickle('Nuuk_air_temp.pkl')
 
 ## ---- Concatenate all timeseries ---- ##
 df = pd.concat([df_NUUK, df_IQ, df_CA, df_BB, df_SJ], axis=1)

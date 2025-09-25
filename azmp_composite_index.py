@@ -71,12 +71,12 @@ df_3LNO_spring = df.Tmean
 del df
 
 # 3Ps - Spring
-df = pd.read_csv('~/data/CABOTS/csv_averages/spring_3Pn_regional_averages.csv',index_col=0)
+df = pd.read_csv('~/data/CABOTS/csv_averages/spring_3Ps_regional_averages.csv',index_col=0)
 bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 2006])
 for i in bad_years:
     df[df.index==i]=np.nan
 df_3Ps_spring = df.Tmean
-del df
+del dfW
 
 # 2H - Fall
 df = pd.read_csv('~/data/CABOTS/csv_averages/fall_2H_regional_averages.csv',index_col=0)
