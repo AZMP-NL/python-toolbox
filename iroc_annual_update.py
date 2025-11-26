@@ -24,10 +24,16 @@ airT_anom = pd.read_pickle('operation_files/airT_anom.pkl')
 airT_anom = airT_anom[['Cartwright']]
 airT_anom = airT_anom[airT_anom.index>=1935]
 airT_mnth = pd.read_pickle('operation_files/airT_monthly.pkl')
-airT_mnth = airT_mnth.groupby(airT_mnth.index.year).mean()
-airT_mnth = airT_mnth[['Cartwright']]
+df_clim_period = airT_mnth[(airT_mnth.index.year>=clim_years[0]) & (airT_mnth.index.year<=clim_years[1])]
+df_monthly_stack = df_clim_period.groupby([(df_clim_period.index.year),(df_clim_period.index.month)]).mean()
+df_monthly_clim = df_monthly_stack.groupby(level=1).mean()
+df_stack = airT_mnth.groupby([(airT_mnth.index.year),(airT_mnth.index.month)]).mean() 
+df_stack_anom = df_stack.sub(df_monthly_clim, level=1)
+df_annual_anom = df_stack_anom.groupby(level=0).mean()
+df_annual_star =  df_annual_anom + df_monthly_clim.mean() 
+#airT_mnth = airT_mnth.groupby(airT_mnth.index.year).mean()
+airT_mnth = df_annual_star[['Cartwright']]
 airT_mnth = airT_mnth[airT_mnth.index>=1935]
-
 airT = pd.concat([airT_mnth,airT_anom], axis=1)
 
 #Set up the meta-data
