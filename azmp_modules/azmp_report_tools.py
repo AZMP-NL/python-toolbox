@@ -2520,7 +2520,7 @@ def sfa_bottom_scorecards(path, years, season, clim_year=[2006, 2020]):
                 pass
             elif key[1] in last_columns:
                  cell._text.set_color('darkslategray')
-            elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
                 cell._text.set_color('white')
             elif (cell_text=='nan'):
                 cell._set_facecolor('lightgray')
@@ -2958,7 +2958,7 @@ def sfa_bottom_scorecards(path, years, season, clim_year=[2006, 2020]):
                 pass
             elif key[1] in last_columns:
                  cell._text.set_color('darkslategray')
-            elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+            elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
                 cell._text.set_color('white')
             elif (cell_text=='nan'):
                 cell._set_facecolor('lightgray')
@@ -4645,7 +4645,7 @@ def SS_bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')
@@ -4682,7 +4682,7 @@ def SS_bottom_scorecards(years, clim_year=[1991, 2020]):
             pass
         elif key[1] in last_columns:
              cell._text.set_color('darkslategray')
-        elif (np.float(cell_text) <= -1.5) | (np.float(cell_text) >= 1.5) :
+        elif (float(cell_text) <= -1.5) | (float(cell_text) >= 1.5) :
             cell._text.set_color('white')
         elif (cell_text=='nan'):
             cell._set_facecolor('lightgray')

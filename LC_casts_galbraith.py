@@ -24,8 +24,8 @@ plt.rc('font', **font)
 
 # This is a dataset
 # in /home/cyrf0006/research/AZMP_database/netCDF_first_set
-year = '2024'
-ds = xr.open_dataset('/home/jcoyne/data/CASTS/'+year+'.nc')
+year = '2025'
+ds = xr.open_dataset('/home/coynej/data/CASTS/'+year+'.nc')
 
 # Selection of a subset region
 ds = ds.where((ds.longitude>-61) & (ds.longitude<-56), drop=True)

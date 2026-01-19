@@ -39,7 +39,7 @@ import azmp_sections_climtools as azsct
 import azmp_report_tools as azrt
 import azmp_genreport as azgen
 import azmp_utils as azu
-import cc_tools as cc
+#import cc_tools as cc
 import azmp_stn27_newtest as azS27
 
 #Choose a year of interest
@@ -323,7 +323,7 @@ for season in ['spring','summer','fall']:
         INFILES='~/data/CABOTS/CABOTS_'+season+'.nc',
         lonLims=[-63, -45],
         latLims=[42, 58],
-        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        bath_file='~/data/GEBCO/gebco_2025_n90.0_s0.0_w-120.0_e0.0.nc',
         year_lims=[1991, 2020],
         season=season,
         time_adjust=False,
@@ -333,7 +333,7 @@ for season in ['spring','summer','fall']:
         INFILES='~/data/CABOTS/CABOTS_'+season+'.nc',
         lonLims=[-63, -45],
         latLims=[42, 58],
-        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        bath_file='~/data/GEBCO/gebco_2025_n90.0_s0.0_w-120.0_e0.0.nc',
         year_lims=[1991, 2020],
         season=season,
         time_adjust=False,
@@ -364,7 +364,7 @@ for season in ['spring','fall']:
         CASTS_path='~/data/CASTS/'
         )
     print('    -> '+season+' done!')
-os.system('cp bottomT_spring'+yoi+'.png bottomT_spring'+yoi+'_FR.png bottomT_fall'+yoi+'.png bottomT_fall2023_FR.png '+yoi+'')
+os.system('cp bottomT_spring'+yoi+'.png bottomT_spring'+yoi+'_FR.png bottomT_fall'+yoi+'.png bottomT_fall_'+yoi+'_FR.png')
 os.system('mv bottomT_*.png bottom_temp_*.png bottom_temp/')
 os.system('mv bottomS_*.png bottom_sal_*.png bottom_saln/')
 
@@ -403,7 +403,7 @@ for section in sections:
             dz=5,
             dc=0.2,
             CASTS_path='~/data/CASTS/',
-            bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc'
+            bath_path='~/data/GEBCO/gebco_2025_n90.0_s0.0_w-120.0_e0.0.nc'
             )
 #os.system('mv temp_section_*.png AZMP_lines/')
 os.system('mv *.pkl *.csv operation_files/')
@@ -419,7 +419,7 @@ for section in sections:
                 VAR=var,
                 SECTION=section,
                 SEASON=season,
-                bath_path='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+                bath_path='~/data/GEBCO/gebco_2025_n90.0_s0.0_w-120.0_e0.0.nc',
                 CASTS_path='~/data/CASTS/',
                 YEAR=year,
                 ZMAX=500,
@@ -480,7 +480,7 @@ for season in ['summer']:
         INFILES='~/data/CABOTS/CABOTS_'+season+'.nc',
         lonLims=[-70, -56],
         latLims=[57, 67],
-        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        bath_file='~/data/GEBCO/gebco_2025_n90.0_s0.0_w-120.0_e0.0.nc',
         year_lims=[2006, 2021],
         time_adjust=False,
         season=season,
@@ -490,7 +490,7 @@ for season in ['summer']:
         INFILES='~/data/CABOTS/CABOTS_'+season+'.nc',
         lonLims=[-70, -56],
         latLims=[57, 67],
-        bath_file='~/data/GEBCO/GEBCO_2023_sub_ice_topo.nc',
+        bath_file='~/data/GEBCO/gebco_2025_n90.0_s0.0_w-120.0_e0.0.nc',
         year_lims=[2006, 2021],
         time_adjust=False,
         season=season,
