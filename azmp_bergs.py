@@ -31,7 +31,7 @@ font = {'family' : 'sans-serif',
 plt.rc('font', **font)
 
 clim_year = [1991, 2020]
-current_year = 2024
+current_year = 2025
 
 ## ----  Prepare the data ---- ##
 # Legacy - Load from Excel sheets
@@ -58,6 +58,7 @@ df_annual = df.sum(axis=1)
 df_annual.loc[2022] = 58
 df_annual.loc[2023] = 385
 df_annual.loc[2024] = 22
+df_annual.loc[2025] = 250
 df_annual.to_pickle('bergs_annual.pkl')
 df_annual_clim = df_annual[(df_annual.index>=clim_year[0]) & (df_annual.index<=clim_year[1])]
 df_annual_anom = df_annual - df_annual_clim.mean()
@@ -66,6 +67,7 @@ df_annual_std_anom.to_pickle('bergs_std_anom.pkl')
 
 
 # Monthly mean
+'''
 df_monthly = df[df.index==current_year]
 df_monthly_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 df_monthly_std = df_monthly_clim.std(axis=0)
@@ -104,7 +106,7 @@ ax.set_xticklabels(french_months, rotation='horizontal')
 fig_name = 'bergs_monthly_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
-
+'''
 
 ## ---- plot annual ---- ##
 width = 0.75  # the width of the bars

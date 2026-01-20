@@ -85,13 +85,13 @@ os.system('mv *.pkl *.csv operation_files')
 os.system('mv *.png climate_indices')
 
 # 2. Air temperature (need to download AHCCD and download NUUK update) [Done 2023!]
-%my_run azmp_dmi_nuukAirT.py
-%my_run azmp_airTemp.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_dmi_nuukAirT.py')
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_airTemp.py')
 os.system('cp air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png ./'+yoi+'/')
 os.system('mv air_temp_'+yoi+'.png air_temp_'+yoi+'_FR.png air_temp_anom.png air_temp_anom_FR.png air_temp_climate_index.png air_temp_climate_index_FR.png air_temperature')
 os.system('mv *.pkl operation_files')
 # Air Scorecards
-%my_run azmp_air_scorecards.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_air_scorecards.py')
 os.system('cp scorecards_air.png scorecards_air_FR.png ./'+yoi+'/')
 # delete tmp files
 os.system('rm scorecards_*Air*.png scorecards_*nao*.png ')
@@ -309,7 +309,7 @@ os.system('mv *.csv *.pkl ./operation_files')
 
 
 # 6. Icebergs (/home/cyrf0006/AZMP/state_reports/bergs) [FRED to UPDATE]
-%my_run azmp_bergs.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_bergs.py')
 os.system('cp icebergs_climate*.png ./'+yoi+'')
 #os.system('cp bergs_annual_FR.png bergs_annual.png bergs_monthly_FR.png bergs_monthly.png ../2023')
 os.system('mv *.png ./bergs')
@@ -380,7 +380,7 @@ os.system('cp scorecards_botT_spring.png scorecards_botT_spring_FR.png scorecard
 os.system('mv *.png *.csv bottom_temp_stats/')
 
 # bottom temperature bar plots [need to flag years if coverage insufficient] (FINISHED/WORKING - 2023)
-%my_run azmp_bottomT_mean_anomaly.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_bottomT_mean_anomaly.py')
 os.system('cp bottomT_anomalies_climateindex.png bottomT_anomalies_climateindex_FR.png '+yoi)
 os.system('mv *.pkl operation_files/')
 os.system('mv *.png bottom_temp_stats/')
@@ -438,18 +438,18 @@ os.system('mv *.png AZMP_lines/')
 os.system('mv *.csv *.pkl operation_files/')
 
 # Section CIL [DONE 2023]
-%my_run azmp_CIL_scorecards.py  # update year in script!
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_CIL_scorecards.py') # update year in script!
 os.system('cp scorecards_CIL.png scorecards_CIL_FR.png ./'+yoi)
 os.system('mv *.png AZMP_lines/')
 
 #(FINISHED/WORKING - 2023)
-%my_run azmp_CIL_mean_anomaly.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_CIL_mean_anomaly.py') # update year in script!
 os.system('cp CIL_volume_climateindex.png CIL_volume_climateindex_FR.png ./'+yoi)
 os.system('mv *.png AZMP_lines/')
 os.system('mv *.pkl operation_files/')
 
 ## ----------- NLCI ---------------- ##
-%my_run azmp_climate_index.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_climate_index.py') # update year in script!
 os.system('cp NL_climate_index_ms*.png ./'+yoi)
 os.system('mv *.png NLCI/')
 os.system('mv *.csv operation_files/')
@@ -459,7 +459,7 @@ os.system('mv *.csv operation_files/')
 
 
 ## ----------- AZMP SAR / IROC ---------------- ##
-%my_run azmp_sar_input.py
+os.system('python ~/github/AZMP-NL/python-toolbox/azmp_sar_input.py')
 #os.system('cp NL_climate_index_ms_scorecards_FR.png NL_climate_index_ms_scorecards.png NL_climate_index_ms_FR.png NL_climate_index_ms.png ../'+yoi)
 
 ## ----------- CSAS DATA ---------------- ##
