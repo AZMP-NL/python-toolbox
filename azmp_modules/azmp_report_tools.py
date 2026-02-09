@@ -249,6 +249,7 @@ def bottom_temperature(
                     else:
                         Tbot[j,i] = np.nan
                         Tbot_orig[j,i] = np.nan
+                        Tbot_climato[j,i] = np.nan
         if season == 'fall':
             for i, xx in enumerate(lon_reg):
                 for j,yy in enumerate(lat_reg):
@@ -258,6 +259,7 @@ def bottom_temperature(
                     else:
                         Tbot[j,i] = np.nan
                         Tbot_orig[j,i] = np.nan
+                        Tbot_climato[j,i] = np.nan
     else:
         if season == 'spring':
             for i, xx in enumerate(lon_reg):
@@ -268,6 +270,7 @@ def bottom_temperature(
                     else:
                         Tbot[j,i] = np.nan
                         Tbot_orig[j,i] = np.nan
+                        Tbot_climato[j,i] = np.nan
 
         elif season == 'fall':
             for i, xx in enumerate(lon_reg):
@@ -278,6 +281,7 @@ def bottom_temperature(
                     else:
                         Tbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
                         Tbot_orig[j,i] = np.nan
+                        Tbot_climato[j,i] = np.nan
                         #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
 
         elif season == 'summer':
@@ -729,6 +733,7 @@ def bottom_salinity(
                     else:
                         Sbot[j,i] = np.nan
                         Sbot_orig[j,i] = np.nan
+                        Sbot_climato[j,i] = np.nan
         if season == 'fall':
             for i, xx in enumerate(lon_reg):
                 for j,yy in enumerate(lat_reg):
@@ -738,6 +743,7 @@ def bottom_salinity(
                     else:
                         Sbot[j,i] = np.nan
                         Sbot_orig[j,i] = np.nan
+                        Sbot_climato[j,i] = np.nan
     else:
         if season == 'spring':
             for i, xx in enumerate(lon_reg):
@@ -748,6 +754,7 @@ def bottom_salinity(
                     else:
                         Sbot[j,i] = np.nan
                         Sbot_orig[j,i] = np.nan
+                        Sbot_climato[j,i] = np.nan
 
         elif season == 'fall':
             for i, xx in enumerate(lon_reg):
@@ -758,6 +765,7 @@ def bottom_salinity(
                     else:
                         Sbot[j,i] = np.nan ### <--------------------- Do mask the fall / OR / 
                         Sbot_orig[j,i] = np.nan
+                        Sbot_climato[j,i] = np.nan
                         #Tbot[j,i] = np.nan ### <--------------------- Do not mask the fall!!!!!
 
         elif season == 'summer':

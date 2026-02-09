@@ -373,7 +373,7 @@ plt.grid('on')
 ax.set_ylabel(r'[$^{\circ}$C]')
 ax.set_title(str(current_year) + ' Air temperature anomalies')
 #ax.legend(loc='upper center')
-plt.ylim([-10, 15])
+plt.ylim([-10, 20])
 
 fig = ax.get_figure()
 fig.set_size_inches(w=9,h=6)
