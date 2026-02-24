@@ -16,7 +16,7 @@ import os
 #import re
 
 
-INFILE = '~/reporting_2024/operation_files/lc_index.txt'
+INFILE = '~/reporting_2025/operation_files/lc_index.txt'
 
 # Adjust fontsize/weight
 font = {'family' : 'normal',

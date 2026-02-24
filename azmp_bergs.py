@@ -22,7 +22,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import seaborn as sns
+#import seaborn as sns
  
 # Adjust fontsize/weight
 font = {'family' : 'sans-serif',
@@ -67,7 +67,6 @@ df_annual_std_anom.to_pickle('bergs_std_anom.pkl')
 
 
 # Monthly mean
-'''
 df_monthly = df[df.index==current_year]
 df_monthly_clim = df[(df.index>=clim_year[0]) & (df.index<=clim_year[1])]
 df_monthly_std = df_monthly_clim.std(axis=0)
@@ -106,7 +105,6 @@ ax.set_xticklabels(french_months, rotation='horizontal')
 fig_name = 'bergs_monthly_FR.png'
 fig.savefig(fig_name, dpi=300)
 os.system('convert -trim ' + fig_name + ' ' + fig_name)
-'''
 
 ## ---- plot annual ---- ##
 width = 0.75  # the width of the bars
