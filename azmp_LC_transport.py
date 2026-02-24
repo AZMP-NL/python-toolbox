@@ -30,8 +30,8 @@ df = df.set_index('year')
 df.to_csv('operation_files/LC_index.csv', float_format='%.2f')
 
 ave_ss = .6
-std_ss = .3
-ave_nl = 13
+std_ss = .4
+ave_nl = 13.2
 std_nl = 1.4
 
 df.NL = df.NL*std_nl + ave_nl
@@ -39,7 +39,7 @@ df.SS = df.SS*std_ss + ave_ss
 
 df.to_csv('LC_transport.csv', float_format='%.2f')
 
-XLIMS = [1990, 2024+1]
+XLIMS = [1990, 2025+1]
 
 ## ---- plot ---- ##
 fig = plt.figure(1)
