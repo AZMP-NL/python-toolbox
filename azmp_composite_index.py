@@ -20,10 +20,10 @@ from matplotlib.colors import from_levels_and_colors
 import cmocean as cmo
 
 clim_year = [1991, 2020]
-years = [1980, 2024]
+years = [1980, 2025]
 width = 0.5
 year0 = 1985
-yearf = 2024
+yearf = 2025
 n=5
 
 #### ---- LOAD THE DATA ---- ####
@@ -76,7 +76,7 @@ bad_years = np.array([1980, 1981, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992
 for i in bad_years:
     df[df.index==i]=np.nan
 df_3Ps_spring = df.Tmean
-del dfW
+del df
 
 # 2H - Fall
 df = pd.read_csv('~/data/CABOTS/csv_averages/fall_2H_regional_averages.csv',index_col=0)
@@ -122,11 +122,11 @@ del df
 
 
 # 4VWX from Layton
-df_4v = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/summerGroundfishBottomTemperature_4V.dat', delimiter=r",", index_col='year', header=10)
-df_4vn = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/summerGroundfishBottomTemperature_4Vn.dat', delimiter=r",", index_col='year', header=10)
-df_4vs = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/summerGroundfishBottomTemperature_4Vs.dat', delimiter=r",", index_col='year', header=10)
-df_4w = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/summerGroundfishBottomTemperature_4W.dat', delimiter=r",", index_col='year', header=10)
-df_4x = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/summerGroundfishBottomTemperature_4X.dat', delimiter=r",", index_col='year', header=10)
+df_4v = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/summerGroundfishBottomTemperature_4V.dat', delimiter=r",", index_col='year', header=10)
+df_4vn = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/summerGroundfishBottomTemperature_4Vn.dat', delimiter=r",", index_col='year', header=10)
+df_4vs = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/summerGroundfishBottomTemperature_4Vs.dat', delimiter=r",", index_col='year', header=10)
+df_4w = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/summerGroundfishBottomTemperature_4W.dat', delimiter=r",", index_col='year', header=10)
+df_4x = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/summerGroundfishBottomTemperature_4X.dat', delimiter=r",", index_col='year', header=10)
 # Merge weird formatting.
 df_4vwx = pd.concat([df_4v['temperature'],df_4w['temperature'],df_4x['temperature']], axis=1)
 df_4vwx = df_4vwx.replace(r'\s+', '', regex=True)
@@ -152,7 +152,7 @@ df_s27_mean = df_s27.mean(axis=1) #potential depth bias doing a blind vertical a
 #df_hfx2_surf = df_hfx2_surf.iloc[:,0]
 #df_hfx2_surf.index = np.array(df_hfx2_surf.index, dtype=int) 
 #df_hfx2_surf = pd.to_numeric(df_hfx2_surf, errors='coerce').astype('Float64')
-df_hfx2_surf = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/H2_0-50m_integrated.dat', sep=' ', skiprows=[1], index_col='Year')
+df_hfx2_surf = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/H2_0-50m_integrated.dat', sep=' ', skiprows=[1], index_col='Year')
 df_hfx2_surf = df_hfx2_surf['T'].astype('float')
 df_hfx2_surf = df_hfx2_surf.replace(-99.00, np.nan)
 df_hfx2_surf = df_hfx2_surf[df_hfx2_surf.index<=yearf]
@@ -160,7 +160,7 @@ df_hfx2_surf = df_hfx2_surf[df_hfx2_surf.index<=yearf]
 # HFX-2 150m
 #df_hfx2_150 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/HFX2_150m_Temperature.csv', header=2, index_col='Year')
 #df_hfx2_150 = df_hfx2_150.iloc[:,2]
-df_hfx2_150 = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/HFX2_150m_temp.dat', sep=' ')
+df_hfx2_150 = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/HFX2_150m_temp.dat', sep=' ')
 df_hfx2_150.columns=['year', 'temp']
 df_hfx2_150.set_index('year', inplace=True)
 df_hfx2_150 = df_hfx2_150.replace(-99.00, np.nan)
@@ -168,7 +168,7 @@ df_hfx2_150 = df_hfx2_150[df_hfx2_150.index<=yearf]
 
 # Prince-5 0-50m
 #df_p5_surf = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_Annual_Series_0-50m.csv', header=1, index_col='Year')
-df_p5_surf = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/P5_0-50m_integrated.dat', sep=' ', skiprows=[1], index_col='Year')
+df_p5_surf = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/P5_0-50m_integrated.dat', sep=' ', skiprows=[1], index_col='Year')
 df_p5_surf = df_p5_surf['T'].astype('float')
 df_p5_surf = df_p5_surf.replace(-99.00, np.nan)
 df_p5_surf = df_p5_surf[df_p5_surf.index<=yearf]
@@ -176,7 +176,7 @@ df_p5_surf = df_p5_surf[df_p5_surf.index<=yearf]
 # Prince-5 0-90m (Have to manually tweak it)
 #df_p5_90 = pd.read_csv('/home/cyrf0006/data/Hebert_timeseries/P5_Integrated_0-90m.csv', header=0, index_col='Year')
 #df_p5_90 = df_p5_90.iloc[:,1]
-df_p5_90 = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2024/prince5IntegratedTemperature0-90m.dat', index_col='year', header=10)
+df_p5_90 = pd.read_csv('~/github/AZMP-NL/external_data/BIO_timeseries/2025/prince5IntegratedTemperature0-90m.dat', index_col='year', header=10)
 df_p5_90 = df_p5_90.replace(-99.00, np.nan)
 df_p5_90 = df_p5_90.replace(r'\s+', '', regex=True)
 df_p5_90 = df_p5_90.replace('NA', np.nan)
@@ -203,19 +203,19 @@ df_FC_cap = pd.read_pickle('operation_files/df_FC_meanT_cap_summer.pkl')
 df_FC_cap = df_FC_cap['stn_meanT_cap']
 
 # 8. Greenland Fylla and Cape Desolation (from IROC website) [NOT UPDATE SINCE 2019] [DONE 2024]
-df_FB4 = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/Greenland_Fylla_0-50_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
-df_CD3_2000 = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/Greenland_Desolation_2000_Annual.csv', header=14, index_col='Year', encoding = "ISO-8859-1")
-df_CD3_200 = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/Greenland_Desolation_75-200_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
+df_FB4 = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/BBAY_003_Greenland_FB4-TI_0-50_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
+df_CD3_2000 = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/BBAY_002_Greenland_Desolation_2000_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
+df_CD3_200 = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/BBAY_001_Greenland_Desolation_75-200_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
 # Keep only tempeprature
 df_FB4 = df_FB4.iloc[:,0]
 df_CD3_2000 = df_CD3_2000.iloc[:,0]
 df_CD3_200 = df_CD3_200.iloc[:,0]
 
 # 9. Scotian shelf and GoM timeseries (from IROC) [DONE 2024]
-df_emeral = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/Scotian_Emerald_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
-df_misaine = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/Scotian_Misaine_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
-df_egom =  pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/USA_EGOM_Annual.csv', header=19, index_col='Year', encoding = "ISO-8859-1")
-df_nec = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/USA_NEC_Annual.csv', header=19, index_col='Year', encoding = "ISO-8859-1")
+df_emeral = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/NEAS_008_Scotian_Emerald_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
+df_misaine = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/NEAS_010_Scotian_Misaine_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
+df_egom =  pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/NEAS_012_USA_EGOM_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
+df_nec = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/NEAS_013_USA_NEC_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
 ##  Keep only temperature
 df_emeral = df_emeral.iloc[:,1] # Already stn anom!!
 df_misaine = df_misaine.iloc[:,1] # already std anom!!
@@ -230,12 +230,12 @@ df_nec = df_nec.iloc[:,0] #This is the Northeast Channel
 ## df_cls = df_cls[df_cls.index<=yearf]
 
 # Shallow Lab Sea
-df_cls_shal = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/LabradorSea_0050-0200_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
+df_cls_shal = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/SPNA_020_CentralLabradorSea_Upper_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
 df_cls_shal = df_cls_shal.iloc[:,0]
 df_cls_shal.index = df_cls_shal.index.astype('int')
 df_cls_shal = df_cls_shal[df_cls_shal.index<=yearf]
 # Deep Lab Sea
-df_cls_deep = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2024/LabradorSea_1000-1800_Annual.csv', header=15, index_col='Year', encoding = "ISO-8859-1")
+df_cls_deep = pd.read_csv('~/github/AZMP-NL/external_data/IROC_timeseries/2025/SPNA_021_CentralLabradorSea_Intermediate_Annual.csv', header=18, index_col='Year', encoding = "ISO-8859-1")
 df_cls_deep = df_cls_deep.iloc[:,0]
 df_cls_deep.index = df_cls_deep.index.astype('int')
 df_cls_deep = df_cls_deep[df_cls_deep.index<=yearf]

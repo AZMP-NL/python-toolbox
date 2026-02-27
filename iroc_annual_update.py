@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 clim_years = [1991, 2020]
-year = 2024
+year = 2025
 
 ## -- 1. Air T Cartwright -- ##
 airT_anom = pd.read_pickle('operation_files/airT_anom.pkl')
