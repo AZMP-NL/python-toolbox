@@ -71,7 +71,7 @@ if os.path.isdir('SAR_files') != True: os.system('mkdir SAR_files')
 print('Would you like to update CASTS? [yes/no]')
 CASTS_up = input()
 if CASTS_up == 'yes':
-    azgen.CASTS_update(years=np.arange(1912,int(yoi)).astype(str),version='CASTS_2023')
+    azgen.CASTS_update(years=np.arange(1912,int(yoi)).astype(str),version='CASTS_2024')
 elif 'no':
     print('No update to CASTS made.')
 

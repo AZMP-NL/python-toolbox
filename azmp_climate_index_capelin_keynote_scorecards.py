@@ -276,15 +276,19 @@ years_list = [
 [67, 72]
 ]
 
+
+# Colorblind frienly colors
 years_colors = [
-['green'],
-['red'],
-['green'],
-['red'],
-['green'],
-['red'],
-['green']
-]
+['#59A14F'],#green
+['#E15759'],#red
+['#59A14F'],#...
+['#E15759'],
+['#59A14F'],
+['#E15759'],
+['#59A14F'],
+['#E15759'],
+['#59A14F']]
+
         
 for years in years_list:
     plt.plot([years[0], years[0]], [-1.55, 1.55], '--k')

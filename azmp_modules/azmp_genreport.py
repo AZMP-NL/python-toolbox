@@ -59,7 +59,7 @@ def CASTS_update(
     for year in years:
         if os.path.exists(os.path.expanduser(out_path+year+'.nc')):
             os.remove(os.path.expanduser(out_path+year+'.nc'))
-        res = requests.get(url+version+'/V2/'+year+'.nc')
+        res = requests.get(url+version+'/'+year+'.nc')
         #http 200 means success
         if res.status_code == 200:
             with open(os.path.expanduser(out_path)+year+'.nc', 'wb') as file_handle:  # wb means Write Binary
